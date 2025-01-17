@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Auth } from './entities/auth.entity';
 import { Repository } from 'typeorm';
@@ -17,26 +16,16 @@ export class AuthService {
     private authRepository: Repository<Auth>,
     private JwtService: JwtService,
   ) {}
-  create(createAuthDto: CreateAuthDto) {
-    return 'This action adds a new user';
-  }
 
-  findAll() {
-    return `This action returns all user`;
+  getUserInfo(user: CreateAuthDto) {
+    console.log('user: ', user);
+    return {
+      buttons: ['B_CODE1', 'B_CODE2', 'B_CODE3'],
+      roles: ['R_SUPER'],
+      userId: '0',
+      userName: 'Soybean',
+    };
   }
-
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
-
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} user`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} user`;
-  }
-
   async login(body: CreateAuthDto) {
     const findUser = await this.authRepository.findOne({
       where: { userName: body.userName },
@@ -55,11 +44,13 @@ export class AuthService {
 
     // 排除密码
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { userName, nickname } = findUser;
-
+    const { password, salt, ...payload } = findUser;
+    const token = await this.JwtService.signAsync(payload, {
+      secret: process.env.NEST_JWT_SECRET,
+    });
     return {
-      token: this.JwtService.sign({ userName, nickname }),
-      refreshToken: this.JwtService.sign({ userName, nickname }),
+      token: token,
+      refreshToken: token,
     };
   }
 

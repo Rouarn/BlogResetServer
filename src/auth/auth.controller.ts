@@ -1,20 +1,16 @@
 import {
-  Controller,
   Get,
   Post,
   Body,
-  Patch,
-  Param,
-  Delete,
-  UseInterceptors,
-  ClassSerializerInterceptor,
   Req,
   Res,
   Session,
+  Controller,
+  UseInterceptors,
+  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 import { Public } from 'src/utils/decorators/public';
 import { User } from 'src/utils/decorators/user';
 import type { Request, Response } from 'express';
@@ -36,35 +32,14 @@ export class AuthController {
     return this.authService.captcha(req, res, session);
   }
 
-  @Post()
-  create(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.authService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-    return this.authService.update(+id, updateAuthDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
+  @Get('getUserInfo')
+  getUserInfo(@User() user: CreateAuthDto) {
+    return this.authService.getUserInfo(user);
   }
 
   @Public()
   @Post('login')
-  login(@Body() body: CreateAuthDto, @Req() req: Request, @User() user: any) {
-    console.log('user: ', user);
+  login(@Body() body: CreateAuthDto) {
     return this.authService.login(body);
   }
 

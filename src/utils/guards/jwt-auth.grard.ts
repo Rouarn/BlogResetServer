@@ -24,10 +24,10 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       context.getHandler(),
       context.getClass(),
     ]);
-    console.log('isPublic: ', isPublic);
-    // console.log(context.getHandler(), '||', context.getClass(), '||', context);
+
     if (isPublic) return true;
     // 校验token
+
     return super.canActivate(context);
   }
 

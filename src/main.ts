@@ -3,20 +3,68 @@ import * as session from 'express-session';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import { NestFactory } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config';
 import { RoleGuard } from 'src/utils/guards/global-guard';
 import { HttpFilter } from 'src/utils/api/filter';
 import { Response as commonResponse } from 'src/utils/api/response';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import {
-  useSession,
-  useStaticAssets,
-  corsOptions,
-  swaggerOptions,
-} from './common/config';
+import type { ServeStaticOptions } from '@nestjs/platform-express/interfaces/serve-static-options.interface';
+
+// ///////////////////////////////// 变量区域 ////////////////////////////////////////
+const configService = new ConfigService();
 
 // ///////////////////////////////// 常量区域 ////////////////////////////////////////
+// jwt
+export const jwtOptions = {
+  secret: configService.get('NSET_JWT_SECRET'),
+  expiresIn: configService.get('NEST_JWT_ACCESS_TOKEN_TTL'),
+};
+
+// useSession
+export const useSession = {
+  secret: configService.get('NSET_COOKIE_SIGN_KEY'),
+  name: configService.get('NSET_COOKIE_NAME'),
+  rolling: true,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: Number(configService.get('NSET_COOKIE_MAXAGE')),
+    httpOnly: configService.get('NSET_COOKIE_HTTP_ONLY') === 'true',
+    secure: configService.get('NSET_COOKIE_SECURE') === 'true',
+    sameSite: configService.get('NSET_COOKIE_SAME_SITE'),
+    domain: configService.get('NSET_COOKIE_DOMAIN'),
+    path: configService.get('NSET_COOKIE_PATH'),
+    signed: configService.get('NSET_COOKIE_SIGN') === 'true',
+  },
+};
+
+// useStaticAssets
+export const useStaticAssets = {
+  root: configService.get('NEST_STATIC_ASSETS_PATH'),
+  options: {
+    prefix: configService.get('NEST_STATIC_ASSETS_URL'),
+    maxAge: configService.get('NEST_STATIC_ASSETS_MAXAGE'),
+  } as ServeStaticOptions,
+};
+
+// whiteList
+export const whiteList = ['/login/code', '/login/create'];
+
+// corsOptions
+export const corsOptions = {
+  origin: ['http://localhost:9527', 'http://192.168.31.32:8848'],
+  credentials: true,
+};
+
+// swaggerOptions
+export const swaggerOptions = {
+  title: configService.get('NSET_SWAGGER_TITLE'),
+  description: configService.get('NSET_SWAGGER_DESCRIPTION'),
+  version: configService.get('NSET_SWAGGER_VERSION'),
+  prefix: configService.get('NSET_SWAGGER_PREFIX'),
+};
 
 // ///////////////////////////////// 函数区域 ////////////////////////////////////////
 
