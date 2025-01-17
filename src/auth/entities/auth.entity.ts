@@ -1,0 +1,76 @@
+import * as bcrypt from 'bcryptjs';
+import { Exclude } from 'class-transformer';
+import { Role } from 'src/utils/enums/role.enum';
+import { Gender } from 'src/utils/enums/gender.enum';
+import { BeforeInsert, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+
+@Entity('ra_users')
+export class Auth {
+  @PrimaryGeneratedColumn('uuid', { comment: '用户id' })
+  id: string; // 用户id
+
+  @Column({ length: 100, unique: true, comment: '用户名' })
+  userName: string; // 用户名
+
+  @Column({ length: 100, nullable: true, default: '用户', comment: '昵称' })
+  nickname: string; //昵称
+
+  @Exclude()
+  @Column({ comment: '密码' })
+  password: string; // 密码
+
+  @Column({ length: 100, nullable: true, comment: '盐' })
+  salt: string;
+
+  @Column({ nullable: true, comment: '头像' })
+  avatar: string; //头像
+
+  @Column('simple-enum', {
+    enum: Gender,
+    default: 2,
+    nullable: true,
+    comment: '性别',
+  })
+  gender: number; // 性别
+
+  @Column({ length: 11, nullable: true, comment: '手机号' })
+  mobile: string; // 手机号
+
+  @Column('simple-enum', {
+    enum: Role,
+    default: 'R_USER',
+    comment: '用户角色',
+    nullable: false,
+  })
+  roles: string; // 用户角色
+
+  @Column({
+    name: 'create_time',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    comment: '创建时间',
+  })
+  createTime: Date;
+
+  @Column({
+    name: 'update_time',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    comment: '更新时间',
+  })
+  updateTime: Date;
+
+  @BeforeInsert()
+  async encryptPwd() {
+    try {
+      const saltRounds = 10;
+      // 同步地生成一个随机的盐
+      const salt = bcrypt.genSaltSync(saltRounds);
+      this.salt = salt;
+      // 同步地使用新生成的盐对密码进行哈希处理
+      this.password = bcrypt.hashSync(this.password, salt);
+    } catch (err) {
+      console.error('Error during hashing:', err);
+    }
+  }
+}
