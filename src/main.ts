@@ -26,12 +26,11 @@ export const jwtOptions = {
 export const useSession = {
   secret: configService.get('NSET_COOKIE_SIGN_KEY'),
   name: configService.get('NSET_COOKIE_NAME'),
-  rolling: true,
-  resave: false,
-  saveUninitialized: false,
+  rolling: configService.get('NSET_COOKIE_ROLLING') === 'true',
+  resave: configService.get('NSET_COOKIE_RESAVE') === 'true',
+  saveUninitialized: configService.get('NSET_COOKIE_SAVE_UNINIT') === 'true',
   cookie: {
     maxAge: Number(configService.get('NSET_COOKIE_MAXAGE')),
-    httpOnly: configService.get('NSET_COOKIE_HTTP_ONLY') === 'true',
     secure: configService.get('NSET_COOKIE_SECURE') === 'true',
     sameSite: configService.get('NSET_COOKIE_SAME_SITE'),
     domain: configService.get('NSET_COOKIE_DOMAIN'),

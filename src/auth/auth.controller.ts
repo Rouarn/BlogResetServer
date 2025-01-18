@@ -4,7 +4,6 @@ import {
   Body,
   Req,
   Res,
-  Session,
   Controller,
   UseInterceptors,
   ClassSerializerInterceptor,
@@ -13,8 +12,7 @@ import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { Public } from 'src/utils/decorators/public';
 import { User } from 'src/utils/decorators/user';
-import type { Request, Response } from 'express';
-import type { Session as sessionType } from 'express-session';
+import type { Response } from 'express';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('auth')
@@ -24,12 +22,8 @@ export class AuthController {
   // 图片验证码
   @Public()
   @Get('captcha')
-  captcha(
-    @Req() req: Request,
-    @Res() res: Response,
-    @Session() session: sessionType,
-  ) {
-    return this.authService.captcha(req, res, session);
+  captcha(@Req() req: any, @Res() res: Response) {
+    return this.authService.captcha(req, res);
   }
 
   @Get('getUserInfo')
@@ -47,5 +41,22 @@ export class AuthController {
   @Post('register')
   register(@Body() body: CreateAuthDto) {
     return this.authService.register(body);
+  }
+
+  @Public()
+  @Post('create')
+  createUser(@Req() req: any, @Body() body: any) {
+    console.log(req.session, body);
+    if (
+      req.session.code.toLocaleLowerCase() === body?.code?.toLocaleLowerCase()
+    ) {
+      return {
+        message: '验证码正确',
+      };
+    } else {
+      return {
+        message: '验证码错误',
+      };
+    }
   }
 }

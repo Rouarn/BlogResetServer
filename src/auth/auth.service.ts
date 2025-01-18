@@ -18,12 +18,11 @@ export class AuthService {
   ) {}
 
   getUserInfo(user: CreateAuthDto) {
-    console.log('user: ', user);
     return {
       buttons: ['B_CODE1', 'B_CODE2', 'B_CODE3'],
-      roles: ['R_SUPER'],
-      userId: '0',
-      userName: 'Soybean',
+      roles: new Array<string>(user.roles),
+      userId: user.id,
+      userName: user.nickname,
     };
   }
   async login(body: CreateAuthDto) {
@@ -68,7 +67,10 @@ export class AuthService {
     return '注册成功';
   }
 
-  captcha(req: Request, res: Response, session: Session & { code?: string }) {
+  captcha(
+    req: Request & { session: Session & { code: string } },
+    res: Response,
+  ) {
     const captcha = svgCaptcha.create({
       size: 4,
       ignoreChars: '0o1i',
@@ -77,11 +79,9 @@ export class AuthService {
       width: 100,
       height: 40,
     });
-    session.code = captcha.text;
+    req.session['code'] = captcha.text;
     res.type('image/svg+xml');
     res.send(captcha.data);
-
-    return '验证码获取成功';
   }
 }
 
