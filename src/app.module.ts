@@ -1,7 +1,12 @@
-import { Module } from '@nestjs/common';
+import { Module, ValidationPipe } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
-import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core/constants';
+import {
+  APP_FILTER,
+  APP_GUARD,
+  APP_INTERCEPTOR,
+  APP_PIPE,
+} from '@nestjs/core/constants';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
@@ -18,6 +23,7 @@ import {
   appConfig,
   jwtOptions,
 } from './config';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -25,12 +31,15 @@ import {
     AppConfigModule,
 
     // JWT模块
-    JwtModule.register({
+    JwtModule.registerAsync({
       global: true,
-      secret: jwtOptions.secret,
-      signOptions: {
-        expiresIn: jwtOptions.expiresIn,
-      },
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        secret: jwtOptions.secret,
+        signOptions: {
+          expiresIn: jwtOptions.expiresIn,
+        },
+      }),
     }),
 
     // 数据库模块
@@ -40,7 +49,7 @@ import {
       retryDelay: 500,
       retryAttempts: 10,
     }),
-    
+
     // Redis模块 (可选)
     ...(appConfig.redisEnabled ? [RedisModule] : []),
 
@@ -70,6 +79,12 @@ import {
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseInterceptor,
+    },
+
+    // 全局管道
+    {
+      provide: APP_PIPE,
+      useClass: ValidationPipe,
     },
     // 全局过滤器
     {

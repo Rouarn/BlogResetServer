@@ -55,8 +55,8 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     ]);
 
     if (isPublic) return true;
-    // 校验token
 
+    // 校验token
     return super.canActivate(context);
   }
 

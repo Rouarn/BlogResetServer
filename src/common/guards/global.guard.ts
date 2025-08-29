@@ -51,7 +51,11 @@ export class GlobalGuard implements CanActivate {
 
     // 如果 Redis 服务不可用，跳过限流检查
     if (!this.redisService) {
-      this.logger.debug('Redis 服务未启用，跳过限流检查');
+      // 只在第一次请求时记录日志，避免日志过多
+      if (Math.random() < 0.001) {
+        // 0.1% 的概率记录日志
+        this.logger.log('Redis 服务未启用，限流功能已禁用');
+      }
       return true;
     }
 

@@ -129,7 +129,9 @@ export class AppConfigService {
 
   // Redis 开关控制
   get redisEnabled(): boolean {
-    return this.configService.get<string>('NEST_REDIS_ENABLED') === 'true' || false;
+    return (
+      this.configService.get<string>('NEST_REDIS_ENABLED') === 'true' || false
+    );
   }
 
   // Redis 连接配置
