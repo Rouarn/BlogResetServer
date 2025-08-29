@@ -27,22 +27,22 @@ export class Auth {
 
   @Column('simple-enum', {
     enum: Gender,
-    default: 2,
+    default: Gender.UNKNOWN,
     nullable: true,
     comment: '性别',
   })
-  gender: number; // 性别
+  gender: Gender; // 性别
 
   @Column({ length: 11, nullable: true, comment: '手机号' })
   mobile: string; // 手机号
 
   @Column('simple-enum', {
     enum: Role,
-    default: 'R_USER',
+    default: Role.USER,
     comment: '用户角色',
     nullable: false,
   })
-  roles: string; // 用户角色
+  roles: Role; // 用户角色
 
   @Column({
     name: 'create_time',

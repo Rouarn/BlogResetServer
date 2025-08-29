@@ -1,4 +1,6 @@
 import { IsNotEmpty, IsString, Length } from 'class-validator';
+import { Role } from 'src/utils/enums/role.enum';
+import { Gender } from 'src/utils/enums/gender.enum';
 
 export class CreateAuthDto {
   id: string;
@@ -10,9 +12,9 @@ export class CreateAuthDto {
   password: string;
   nickname: string;
   avatar: string;
-  gender: number;
+  gender: Gender;
   phone: string;
-  roles: string;
+  roles: Role;
   createTime: Date;
   updateTime: Date;
 }
