@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { StorageAdapter, StorageConfig } from '../interfaces';
-import { appConfig } from '../../config';
+import { appConfig } from 'src/config';
 
 @Injectable()
 export class StorageService implements StorageAdapter {

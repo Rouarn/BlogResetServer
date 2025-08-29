@@ -11,7 +11,6 @@ import {
   UseInterceptors,
   UseGuards,
   Res,
-  HttpStatus,
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
@@ -34,7 +33,6 @@ import {
   ChunkUploadInitDto,
   ChunkUploadDto,
   ChunkUploadCompleteDto,
-  BatchUploadInitDto,
 } from '../dto';
 import {
   FileUploadSuccessResponse,

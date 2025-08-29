@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { CreateAuthDto as JwtPayload } from 'src/auth/dto/create-auth.dto';
+import { CreateAuthDto as JwtPayload } from 'src/modules/auth/dto/create-auth.dto';
 
 @Injectable()
 // 验证请求头中的token

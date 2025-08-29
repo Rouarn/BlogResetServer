@@ -15,19 +15,12 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiBody,
-  ApiParam,
 } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { CaptchaVerifyDto } from './dto/captcha-verify.dto';
 import { CreateUserDto } from './dto/create-user.dto';
-import {
-  LoginResponseDto,
-  UserInfoResponseDto,
-  CaptchaResponseDto,
-  CommonResponseDto,
-} from './dto/auth-response.dto';
 import { Public } from 'src/utils/decorators/public';
 import { User } from 'src/utils/decorators/user';
 
