@@ -3,7 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { File, UploadChunk } from '../entities';
 import { FileStatus } from '../enums';
-import { ChunkUploadInitDto, ChunkUploadDto, ChunkUploadCompleteDto } from '../dto';
+import {
+  ChunkUploadInitDto,
+  ChunkUploadDto,
+  ChunkUploadCompleteDto,
+} from '../dto';
 import { ChunkUploadInfo, ChunkUploadResult } from '../interfaces';
 import { StorageService } from './storage.service';
 import { ValidationService } from './validation.service';
@@ -28,8 +32,12 @@ export class ChunkService {
     userId?: string,
   ): Promise<ChunkUploadInfo> {
     const uploadId = randomUUID();
-    const filename = this.validationService.generateUniqueFilename(initDto.filename);
-    const fileType = initDto.fileType || this.validationService.getFileType('application/octet-stream');
+    const filename = this.validationService.generateUniqueFilename(
+      initDto.filename,
+    );
+    const fileType =
+      initDto.fileType ||
+      this.validationService.getFileType('application/octet-stream');
 
     // 创建文件记录
     const fileEntity = this.fileRepository.create({
@@ -96,7 +104,9 @@ export class ChunkService {
     }
 
     // 验证分块哈希
-    const calculatedHash = this.validationService.generateFileHash(chunkFile.buffer);
+    const calculatedHash = this.validationService.generateFileHash(
+      chunkFile.buffer,
+    );
     if (chunkHash && chunkHash !== calculatedHash) {
       throw new BadRequestException('分块哈希验证失败');
     }
@@ -130,7 +140,9 @@ export class ChunkService {
     };
   }
 
-  async completeChunkUpload(completeDto: ChunkUploadCompleteDto): Promise<File> {
+  async completeChunkUpload(
+    completeDto: ChunkUploadCompleteDto,
+  ): Promise<File> {
     const { uploadId, chunks } = completeDto;
 
     // 查找文件记录
@@ -144,11 +156,15 @@ export class ChunkService {
     }
 
     // 验证所有分块都已上传
-    const uploadedChunks = file.chunks.map(chunk => chunk.chunkNumber).sort((a, b) => a - b);
+    const uploadedChunks = file.chunks
+      .map((chunk) => chunk.chunkNumber)
+      .sort((a, b) => a - b);
     const expectedChunks = chunks.sort((a, b) => a - b);
 
-    if (uploadedChunks.length !== expectedChunks.length || 
-        !uploadedChunks.every((chunk, index) => chunk === expectedChunks[index])) {
+    if (
+      uploadedChunks.length !== expectedChunks.length ||
+      !uploadedChunks.every((chunk, index) => chunk === expectedChunks[index])
+    ) {
       throw new BadRequestException('分块不完整，无法完成上传');
     }
 
@@ -159,7 +175,7 @@ export class ChunkService {
     file.path = finalPath;
     file.status = FileStatus.COMPLETED;
     file.hash = await this.calculateFinalHash(file);
-    
+
     const completedFile = await this.fileRepository.save(file);
 
     // 清理分块文件
@@ -172,7 +188,7 @@ export class ChunkService {
   private async mergeChunks(file: File): Promise<string> {
     const datePath = new Date().toISOString().slice(0, 7);
     const finalPath = path.join(datePath, file.filename);
-    
+
     // 按顺序读取所有分块并合并
     const chunks = file.chunks.sort((a, b) => a.chunkNumber - b.chunkNumber);
     const buffers: Buffer[] = [];
@@ -183,7 +199,7 @@ export class ChunkService {
     }
 
     const finalBuffer = Buffer.concat(buffers);
-    
+
     // 创建模拟的 Multer 文件对象
     const mockFile: any = {
       buffer: finalBuffer,
@@ -208,7 +224,10 @@ export class ChunkService {
       // 由于我们的存储服务目前只支持删除单个文件，这里先记录日志
       this.logger.log(`Should cleanup chunk directory: ${chunkDir}`);
     } catch (error) {
-      this.logger.error(`Failed to cleanup chunks for upload: ${uploadId}`, error);
+      this.logger.error(
+        `Failed to cleanup chunks for upload: ${uploadId}`,
+        error,
+      );
     }
   }
 
@@ -227,9 +246,10 @@ export class ChunkService {
       throw new BadRequestException('无效的上传ID');
     }
 
-    const progress = file.totalChunks > 0 
-      ? Math.round((file.uploadedChunks / file.totalChunks) * 100)
-      : 0;
+    const progress =
+      file.totalChunks > 0
+        ? Math.round((file.uploadedChunks / file.totalChunks) * 100)
+        : 0;
 
     return {
       uploadId,

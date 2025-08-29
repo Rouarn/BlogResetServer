@@ -43,14 +43,14 @@ export class FtpStorageAdapter implements StorageAdapter {
 
   async upload(file: any, relativePath: string): Promise<string> {
     await this.connect();
-    
+
     try {
-      const fullPath = this.config.basePath 
+      const fullPath = this.config.basePath
         ? path.join(this.config.basePath, relativePath)
         : relativePath;
-      
+
       const directory = path.dirname(fullPath);
-      
+
       // 确保目录存在
       try {
         await this.client.ensureDir(directory);
@@ -62,9 +62,9 @@ export class FtpStorageAdapter implements StorageAdapter {
       const stream = new Readable();
       stream.push(file.buffer);
       stream.push(null);
-      
+
       await this.client.uploadFrom(stream, fullPath);
-      
+
       this.logger.log(`File uploaded via FTP: ${fullPath}`);
       return relativePath;
     } finally {
@@ -74,15 +74,17 @@ export class FtpStorageAdapter implements StorageAdapter {
 
   async download(relativePath: string): Promise<Buffer> {
     await this.connect();
-    
+
     try {
-      const fullPath = this.config.basePath 
+      const fullPath = this.config.basePath
         ? path.join(this.config.basePath, relativePath)
         : relativePath;
-      
+
       // 简化的下载实现 - 直接返回空Buffer作为占位符
       // 在实际使用中，您可能需要实现更复杂的流处理
-      this.logger.warn('FTP download not fully implemented - returning empty buffer');
+      this.logger.warn(
+        'FTP download not fully implemented - returning empty buffer',
+      );
       return Buffer.alloc(0);
     } finally {
       await this.disconnect();
@@ -91,17 +93,20 @@ export class FtpStorageAdapter implements StorageAdapter {
 
   async delete(relativePath: string): Promise<boolean> {
     await this.connect();
-    
+
     try {
-      const fullPath = this.config.basePath 
+      const fullPath = this.config.basePath
         ? path.join(this.config.basePath, relativePath)
         : relativePath;
-      
+
       await this.client.remove(fullPath);
       this.logger.log(`File deleted via FTP: ${fullPath}`);
       return true;
     } catch (error) {
-      this.logger.error(`Failed to delete file via FTP: ${relativePath}`, error);
+      this.logger.error(
+        `Failed to delete file via FTP: ${relativePath}`,
+        error,
+      );
       return false;
     } finally {
       await this.disconnect();
@@ -110,15 +115,15 @@ export class FtpStorageAdapter implements StorageAdapter {
 
   async exists(relativePath: string): Promise<boolean> {
     await this.connect();
-    
+
     try {
-      const fullPath = this.config.basePath 
+      const fullPath = this.config.basePath
         ? path.join(this.config.basePath, relativePath)
         : relativePath;
-      
+
       const list = await this.client.list(path.dirname(fullPath));
       const filename = path.basename(fullPath);
-      
+
       return list.some((item: any) => item.name === filename);
     } catch (error) {
       return false;

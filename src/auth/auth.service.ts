@@ -9,14 +9,14 @@ import * as bcryptjs from 'bcryptjs';
 
 /**
  * 认证服务类
- * 
+ *
  * 提供用户认证相关的核心功能，包括：
  * - 用户登录/注册
  * - JWT令牌管理
  * - 验证码生成和验证（无状态实现）
  * - 密码加密和验证
  * - 用户信息管理
- * 
+ *
  * 特性：
  * - 支持防爬机制的验证码系统
  * - 无状态验证码实现（基于JWT）
@@ -33,7 +33,7 @@ export class AuthService {
 
   /**
    * 获取用户信息
-   * 
+   *
    * @param user 用户数据传输对象
    * @returns 包含用户权限、角色、ID和用户名的信息对象
    */
@@ -48,9 +48,9 @@ export class AuthService {
 
   /**
    * 用户登录
-   * 
+   *
    * 验证用户凭据并生成JWT令牌
-   * 
+   *
    * @param body 包含用户名和密码的登录数据
    * @returns 成功时返回token和refreshToken，失败时返回错误消息
    */
@@ -84,9 +84,9 @@ export class AuthService {
 
   /**
    * 用户注册
-   * 
+   *
    * 创建新用户账号，检查用户名是否已存在
-   * 
+   *
    * @param body 包含用户注册信息的数据传输对象
    * @returns 注册结果消息
    */

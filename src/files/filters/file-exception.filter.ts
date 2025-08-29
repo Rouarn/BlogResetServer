@@ -36,7 +36,7 @@ export class FileExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
-      
+
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
       } else if (typeof exceptionResponse === 'object') {
@@ -48,7 +48,7 @@ export class FileExceptionFilter implements ExceptionFilter {
     } else if (exception instanceof Error) {
       message = exception.message;
       errorCode = this.getErrorCodeFromMessage(exception.message);
-      
+
       // 特殊错误处理
       if (exception.message.includes('文件大小超出限制')) {
         status = HttpStatus.PAYLOAD_TOO_LARGE;

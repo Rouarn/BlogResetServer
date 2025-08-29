@@ -1,5 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsNumber, IsEnum, IsBoolean, Min, Max } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsNumber,
+  IsEnum,
+  IsBoolean,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { FileType, FileStatus } from '../enums';
 
@@ -11,7 +19,12 @@ export class FileQueryDto {
   @Min(1)
   page?: number = 1;
 
-  @ApiPropertyOptional({ description: '每页数量', default: 10, minimum: 1, maximum: 100 })
+  @ApiPropertyOptional({
+    description: '每页数量',
+    default: 10,
+    minimum: 1,
+    maximum: 100,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
@@ -40,7 +53,10 @@ export class FileQueryDto {
   @Type(() => Boolean)
   publicOnly?: boolean;
 
-  @ApiPropertyOptional({ description: '排序字段', enum: ['createdAt', 'size', 'filename'] })
+  @ApiPropertyOptional({
+    description: '排序字段',
+    enum: ['createdAt', 'size', 'filename'],
+  })
   @IsOptional()
   @IsString()
   sortBy?: 'createdAt' | 'size' | 'filename' = 'createdAt';

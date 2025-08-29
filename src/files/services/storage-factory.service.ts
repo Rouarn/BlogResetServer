@@ -1,9 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { StorageAdapter } from '../interfaces/storage.interface';
-import { StorageFactory, StorageFactoryConfig, StorageType } from '../interfaces/storage-factory.interface';
+import {
+  StorageFactory,
+  StorageFactoryConfig,
+  StorageType,
+} from '../interfaces/storage-factory.interface';
 import { StorageService } from './storage.service';
-import { FtpStorageAdapter, FtpConfig } from '../adapters/ftp-storage-simple.adapter';
+import {
+  FtpStorageAdapter,
+  FtpConfig,
+} from '../adapters/ftp-storage-simple.adapter';
 import { S3StorageAdapter, S3Config } from '../adapters/s3-storage.adapter';
 
 @Injectable()
@@ -53,8 +60,11 @@ export class StorageFactoryService implements StorageFactory {
   }
 
   createFromConfig(): StorageAdapter {
-    const storageType = this.configService.get<StorageType>('STORAGE_TYPE', StorageType.LOCAL);
-    
+    const storageType = this.configService.get<StorageType>(
+      'STORAGE_TYPE',
+      StorageType.LOCAL,
+    );
+
     const config: StorageFactoryConfig = {
       type: storageType,
       config: this.getStorageConfig(storageType),
@@ -68,7 +78,10 @@ export class StorageFactoryService implements StorageFactory {
       case StorageType.LOCAL:
         return {
           basePath: this.configService.get('UPLOAD_PATH', './uploads'),
-          maxFileSize: this.configService.get('MAX_FILE_SIZE', 10 * 1024 * 1024),
+          maxFileSize: this.configService.get(
+            'MAX_FILE_SIZE',
+            10 * 1024 * 1024,
+          ),
           allowedTypes: this.configService.get('ALLOWED_FILE_TYPES', []),
         };
 

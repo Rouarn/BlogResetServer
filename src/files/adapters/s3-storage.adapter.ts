@@ -29,7 +29,7 @@ export class S3StorageAdapter implements StorageAdapter {
 
   async upload(file: any, relativePath: string): Promise<string> {
     try {
-      const key = this.config.basePath 
+      const key = this.config.basePath
         ? `${this.config.basePath}/${relativePath}`
         : relativePath;
 
@@ -41,7 +41,7 @@ export class S3StorageAdapter implements StorageAdapter {
       // });
 
       // await this.s3Client.send(command);
-      
+
       this.logger.log(`File uploaded to S3: ${key}`);
       return relativePath;
     } catch (error) {
@@ -52,7 +52,7 @@ export class S3StorageAdapter implements StorageAdapter {
 
   async download(relativePath: string): Promise<Buffer> {
     try {
-      const key = this.config.basePath 
+      const key = this.config.basePath
         ? `${this.config.basePath}/${relativePath}`
         : relativePath;
 
@@ -63,13 +63,13 @@ export class S3StorageAdapter implements StorageAdapter {
 
       // const response = await this.s3Client.send(command);
       // const chunks: Buffer[] = [];
-      
+
       // for await (const chunk of response.Body as any) {
       //   chunks.push(chunk);
       // }
-      
+
       // return Buffer.concat(chunks);
-      
+
       // 临时返回空Buffer，实际使用时需要取消注释上面的代码
       return Buffer.alloc(0);
     } catch (error) {
@@ -80,7 +80,7 @@ export class S3StorageAdapter implements StorageAdapter {
 
   async delete(relativePath: string): Promise<boolean> {
     try {
-      const key = this.config.basePath 
+      const key = this.config.basePath
         ? `${this.config.basePath}/${relativePath}`
         : relativePath;
 
@@ -90,7 +90,7 @@ export class S3StorageAdapter implements StorageAdapter {
       // });
 
       // await this.s3Client.send(command);
-      
+
       this.logger.log(`File deleted from S3: ${key}`);
       return true;
     } catch (error) {
@@ -101,7 +101,7 @@ export class S3StorageAdapter implements StorageAdapter {
 
   async exists(relativePath: string): Promise<boolean> {
     try {
-      const key = this.config.basePath 
+      const key = this.config.basePath
         ? `${this.config.basePath}/${relativePath}`
         : relativePath;
 
@@ -118,10 +118,10 @@ export class S3StorageAdapter implements StorageAdapter {
   }
 
   getUrl(relativePath: string): string {
-    const key = this.config.basePath 
+    const key = this.config.basePath
       ? `${this.config.basePath}/${relativePath}`
       : relativePath;
-    
+
     return `https://${this.config.bucket}.s3.${this.config.region}.amazonaws.com/${key}`;
   }
 }

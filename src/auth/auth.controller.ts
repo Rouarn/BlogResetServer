@@ -9,17 +9,24 @@ import {
   Headers,
   Ip,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiBody,
+  ApiParam,
+} from '@nestjs/swagger';
 import type { Request } from 'express';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { CaptchaVerifyDto } from './dto/captcha-verify.dto';
 import { CreateUserDto } from './dto/create-user.dto';
-import { 
-  LoginResponseDto, 
-  UserInfoResponseDto, 
-  CaptchaResponseDto, 
-  CommonResponseDto 
+import {
+  LoginResponseDto,
+  UserInfoResponseDto,
+  CaptchaResponseDto,
+  CommonResponseDto,
 } from './dto/auth-response.dto';
 import { Public } from 'src/utils/decorators/public';
 import { User } from 'src/utils/decorators/user';
@@ -35,9 +42,9 @@ export class AuthController {
    * 返回验证码图片和对应的token
    * 支持防爬机制
    */
-  @ApiOperation({ 
-    summary: '获取验证码', 
-    description: '生成验证码图片和对应的token，支持防爬机制和安全增强' 
+  @ApiOperation({
+    summary: '获取验证码',
+    description: '生成验证码图片和对应的token，支持防爬机制和安全增强',
   })
   @ApiResponse({
     status: 200,
@@ -48,25 +55,25 @@ export class AuthController {
         image: {
           type: 'string',
           description: '验证码图片的base64编码',
-          example: 'data:image/svg+xml;base64,PHN2Zy4uLg=='
+          example: 'data:image/svg+xml;base64,PHN2Zy4uLg==',
         },
         token: {
           type: 'string',
           description: '验证码token，用于后续验证',
-          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
         },
         expiresIn: {
           type: 'number',
           description: '过期时间（秒）',
-          example: 300
+          example: 300,
         },
         nonce: {
           type: 'string',
           description: '防重放攻击的随机数',
-          example: 'abc123def456'
-        }
-      }
-    }
+          example: 'abc123def456',
+        },
+      },
+    },
   })
   @Public()
   @Get('captcha')
@@ -78,10 +85,10 @@ export class AuthController {
     const result = await this.authService.generateCaptcha(clientInfo);
 
     return {
-        image: result.captchaImage,
-        token: result.captchaToken,
-        expiresIn: result.expiresIn,
-        nonce: result.nonce,
+      image: result.captchaImage,
+      token: result.captchaToken,
+      expiresIn: result.expiresIn,
+      nonce: result.nonce,
     };
   }
 
@@ -90,13 +97,13 @@ export class AuthController {
    * 独立的验证接口，遵循RESTful设计
    * 包含安全验证机制
    */
-  @ApiOperation({ 
-    summary: '验证验证码', 
-    description: '验证用户输入的验证码是否正确，包含安全验证机制' 
+  @ApiOperation({
+    summary: '验证验证码',
+    description: '验证用户输入的验证码是否正确，包含安全验证机制',
   })
   @ApiBody({
     description: '验证码验证请求',
-    type: CaptchaVerifyDto
+    type: CaptchaVerifyDto,
   })
   @ApiResponse({
     status: 200,
@@ -107,20 +114,20 @@ export class AuthController {
         success: {
           type: 'boolean',
           description: '验证是否成功',
-          example: true
+          example: true,
         },
         message: {
           type: 'string',
           description: '验证结果消息',
-          example: '验证码验证成功'
+          example: '验证码验证成功',
         },
         timestamp: {
           type: 'string',
           description: '时间戳',
-          example: '2023-12-01T10:00:00.000Z'
-        }
-      }
-    }
+          example: '2023-12-01T10:00:00.000Z',
+        },
+      },
+    },
   })
   @Public()
   @Post('captcha/verify')
@@ -155,9 +162,9 @@ export class AuthController {
     };
   }
 
-  @ApiOperation({ 
-    summary: '获取用户信息', 
-    description: '获取当前登录用户的详细信息，包括权限和角色' 
+  @ApiOperation({
+    summary: '获取用户信息',
+    description: '获取当前登录用户的详细信息，包括权限和角色',
   })
   @ApiResponse({
     status: 200,
@@ -169,26 +176,26 @@ export class AuthController {
           type: 'array',
           items: { type: 'string' },
           description: '用户权限按钮',
-          example: ['B_CODE1', 'B_CODE2', 'B_CODE3']
+          example: ['B_CODE1', 'B_CODE2', 'B_CODE3'],
         },
         roles: {
           type: 'array',
           items: { type: 'string' },
           description: '用户角色',
-          example: ['admin', 'user']
+          example: ['admin', 'user'],
         },
         userId: {
           type: 'number',
           description: '用户ID',
-          example: 1
+          example: 1,
         },
         userName: {
           type: 'string',
           description: '用户名',
-          example: 'john_doe'
-        }
-      }
-    }
+          example: 'john_doe',
+        },
+      },
+    },
   })
   @ApiBearerAuth()
   @Get('getUserInfo')
@@ -196,13 +203,13 @@ export class AuthController {
     return this.authService.getUserInfo(user);
   }
 
-  @ApiOperation({ 
-    summary: '用户登录', 
-    description: '用户使用用户名和密码进行登录认证' 
+  @ApiOperation({
+    summary: '用户登录',
+    description: '用户使用用户名和密码进行登录认证',
   })
   @ApiBody({
     description: '登录请求',
-    type: CreateAuthDto
+    type: CreateAuthDto,
   })
   @ApiResponse({
     status: 200,
@@ -215,22 +222,22 @@ export class AuthController {
             token: {
               type: 'string',
               description: 'JWT访问令牌',
-              example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+              example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
             },
             refreshToken: {
               type: 'string',
               description: 'JWT刷新令牌',
-              example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
-            }
-          }
+              example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+            },
+          },
         },
         {
           type: 'string',
           description: '错误消息',
-          example: '用户不存在'
-        }
-      ]
-    }
+          example: '用户不存在',
+        },
+      ],
+    },
   })
   @Public()
   @Post('login')
@@ -238,13 +245,13 @@ export class AuthController {
     return this.authService.login(body);
   }
 
-  @ApiOperation({ 
-    summary: '用户注册', 
-    description: '新用户注册账号' 
+  @ApiOperation({
+    summary: '用户注册',
+    description: '新用户注册账号',
   })
   @ApiBody({
     description: '注册请求',
-    type: CreateAuthDto
+    type: CreateAuthDto,
   })
   @ApiResponse({
     status: 200,
@@ -252,8 +259,8 @@ export class AuthController {
     schema: {
       type: 'string',
       description: '注册结果消息',
-      example: '注册成功'
-    }
+      example: '注册成功',
+    },
   })
   @Public()
   @Post('register')
@@ -265,13 +272,13 @@ export class AuthController {
    * 创建用户（需要验证码验证）
    * 使用无状态验证码验证机制
    */
-  @ApiOperation({ 
-    summary: '创建用户', 
-    description: '创建新用户，需要验证码验证，使用无状态验证码验证机制' 
+  @ApiOperation({
+    summary: '创建用户',
+    description: '创建新用户，需要验证码验证，使用无状态验证码验证机制',
   })
   @ApiBody({
     description: '创建用户请求',
-    type: CreateUserDto
+    type: CreateUserDto,
   })
   @ApiResponse({
     status: 200,
@@ -282,32 +289,29 @@ export class AuthController {
         success: {
           type: 'boolean',
           description: '操作是否成功',
-          example: true
+          example: true,
         },
         message: {
           type: 'string',
           description: '结果消息',
-          example: '用户创建成功'
+          example: '用户创建成功',
         },
         data: {
           type: 'object',
           description: '用户数据',
-          additionalProperties: true
+          additionalProperties: true,
         },
         timestamp: {
           type: 'string',
           description: '时间戳',
-          example: '2023-12-01T10:00:00.000Z'
-        }
-      }
-    }
+          example: '2023-12-01T10:00:00.000Z',
+        },
+      },
+    },
   })
   @Public()
   @Post('create')
-  async createUser(
-    @Body() body: CreateUserDto,
-    @Req() req: Request,
-  ) {
+  async createUser(@Body() body: CreateUserDto, @Req() req: Request) {
     const { captchaToken, captchaCode, ...userData } = body;
 
     // 验证必要参数

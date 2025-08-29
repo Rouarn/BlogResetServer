@@ -236,7 +236,7 @@ nestjs-template/
 │   │   ├── auth.controller.ts    # 认证控制器
 │   │   ├── auth.service.ts       # 认证服务
 │   │   └── auth.module.ts        # 认证模块
-│   ├── files/                    # 文件管理模块
+│   ├── files/                    # 文件管理模块（已集成静态资源配置）
 │   │   ├── adapters/             # 存储适配器
 │   │   │   ├── ftp-storage.adapter.ts      # FTP存储适配器
 │   │   │   └── s3-storage.adapter.ts       # S3存储适配器
@@ -244,8 +244,8 @@ nestjs-template/
 │   │   │   ├── files.controller.ts         # 文件管理控制器
 │   │   │   └── protocols.controller.ts     # 协议支持控制器
 │   │   ├── services/             # 服务类
-│   │   │   ├── files.service.ts            # 文件管理服务
-│   │   │   ├── storage.service.ts          # 存储服务
+│   │   │   ├── files.service.ts            # 文件管理服务（已集成配置）
+│   │   │   ├── storage.service.ts          # 存储服务（已集成配置）
 │   │   │   ├── chunk.service.ts            # 分块上传服务
 │   │   │   └── validation.service.ts       # 文件验证服务
 │   │   ├── entities/             # 数据库实体
@@ -282,6 +282,48 @@ nestjs-template/
 ├── tsconfig.json                 # TypeScript配置
 └── README.md                     # 项目说明
 ```
+
+## 📁 静态资源配置集成
+
+### Files模块配置更新
+
+Files模块已经完全集成了项目的静态资源配置系统，确保文件上传和访问使用统一的配置管理。
+
+#### 主要改进
+- ✅ **统一路径管理**: 使用`src/config`中的静态资源配置
+- ✅ **环境变量支持**: 通过`NEST_STATIC_ASSETS_PATH`配置存储路径
+- ✅ **URL前缀配置**: 通过`NEST_STATIC_ASSETS_URL`配置访问路径
+- ✅ **缓存控制**: 支持静态资源缓存时间配置
+
+#### 相关环境变量
+```bash
+# 静态资源路径（文件存储位置）
+NEST_STATIC_ASSETS_PATH=./static
+
+# 静态资源URL前缀（文件访问路径）
+NEST_STATIC_ASSETS_URL=/static
+
+# 静态资源缓存时间（秒）
+NEST_STATIC_ASSETS_MAXAGE=86400
+```
+
+#### 文件存储结构
+```
+static/                    # 配置的静态资源根目录
+├── 2025-08/              # 按年月分组
+│   ├── file1_timestamp.jpg
+│   ├── file2_timestamp.pdf
+│   └── ...
+├── 2025-09/
+│   └── ...
+```
+
+#### 访问方式
+- **直接访问**: `http://localhost:8848/static/2025-08/filename.jpg`
+- **API下载**: `http://localhost:8848/files/{fileId}/download`
+- **API预览**: `http://localhost:8848/files/{fileId}/preview`
+
+详细配置说明请参考：`src/files/README.md`
 
 ## 🔧 环境变量配置
 
@@ -392,27 +434,86 @@ Content-Type: application/json
 Authorization: Bearer <your-jwt-token>
 ```
 
-## 📁 文件上传下载模块
+## 📁 文件上传下载模块 API 文档
 
-### 功能特性
-- ✅ **多种上传方式**: 单文件上传、批量文件上传、分块上传
-- ✅ **断点续传**: 支持大文件分块上传和断点续传机制
-- ✅ **多协议支持**: HTTP、FTP协议文件传输
-- ✅ **安全验证**: 文件类型校验、大小限制、哈希验证
-- ✅ **权限控制**: JWT认证集成，基于用户的文件访问控制
-- ✅ **存储适配器**: 本地存储、FTP存储、云存储支持
+### 概述
 
-### 核心API接口
+本文档详细描述了 NestJS 文件上传下载模块的所有 API 接口。该模块提供了完整的文件管理功能，包括单文件上传、批量上传、分块上传、断点续传、文件下载、预览等功能。
 
-#### 1. 单文件上传
+### 基础信息
+
+- **Base URL**: `/files`
+- **认证方式**: JWT Bearer Token
+- **支持格式**: JSON, multipart/form-data
+- **API版本**: v1.0
+
+### 认证说明
+
+所有 API 接口都需要在请求头中携带有效的 JWT Token：
+
+```http
+Authorization: Bearer <your-jwt-token>
+```
+
+### 通用响应格式
+
+#### 成功响应
+```json
+{
+  "success": true,
+  "data": {
+    // 具体数据
+  },
+  "message": "操作成功"
+}
+```
+
+#### 错误响应
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "错误描述",
+    "details": "详细错误信息"
+  },
+  "timestamp": "2024-01-01T00:00:00.000Z"
+}
+```
+
+## API 接口详情
+
+### 1. 文件上传
+
+#### 1.1 单文件上传
+
+**接口地址**: `POST /files/upload`
+
+**请求格式**: `multipart/form-data`
+
+**请求参数**:
+| 参数名 | 类型 | 必填 | 描述 |
+|--------|------|------|------|
+| file | File | 是 | 要上传的文件 |
+| description | string | 否 | 文件描述 |
+| tags | string | 否 | 文件标签，多个标签用逗号分隔 |
+
+**请求示例**:
 ```http
 POST /files/upload
-Authorization: Bearer <jwt-token>
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 Content-Type: multipart/form-data
 
-Form Data:
-- file: <文件>
-- description: "文件描述" (可选)
+--boundary
+Content-Disposition: form-data; name="file"; filename="example.pdf"
+Content-Type: application/pdf
+
+[文件二进制数据]
+--boundary
+Content-Disposition: form-data; name="description"
+
+这是一个示例PDF文件
+--boundary--
 ```
 
 **响应示例**:
@@ -420,29 +521,51 @@ Form Data:
 {
   "success": true,
   "data": {
-    "id": "uuid-string",
-    "filename": "example.pdf",
-    "originalName": "原始文件名.pdf",
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "filename": "example_20240101_123456.pdf",
+    "originalName": "example.pdf",
     "size": 1048576,
     "mimeType": "application/pdf",
-    "downloadUrl": "/files/uuid-string/download",
-    "uploadedAt": "2024-01-01T00:00:00.000Z"
+    "hash": "sha256:a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+    "description": "这是一个示例PDF文件",
+    "tags": [],
+    "downloadUrl": "/files/550e8400-e29b-41d4-a716-446655440000/download",
+    "previewUrl": "/files/550e8400-e29b-41d4-a716-446655440000/preview",
+    "uploadedAt": "2024-01-01T12:34:56.789Z"
   },
   "message": "文件上传成功"
 }
 ```
 
-#### 2. 批量文件上传
+#### 1.2 批量文件上传
+
+**接口地址**: `POST /files/upload/batch`
+
+**请求格式**: `multipart/form-data`
+
+**请求参数**:
+| 参数名 | 类型 | 必填 | 描述 |
+|--------|------|------|------|
+| files | File[] | 是 | 要上传的文件数组（最多10个） |
+| description | string | 否 | 批量文件描述 |
+
+**请求示例**:
 ```http
 POST /files/upload/batch
-Authorization: Bearer <jwt-token>
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 Content-Type: multipart/form-data
 
-Form Data:
-- files: <文件1>
-- files: <文件2>
-- files: <文件3>
-(最多10个文件)
+--boundary
+Content-Disposition: form-data; name="files"; filename="file1.jpg"
+Content-Type: image/jpeg
+
+[文件1二进制数据]
+--boundary
+Content-Disposition: form-data; name="files"; filename="file2.png"
+Content-Type: image/png
+
+[文件2二进制数据]
+--boundary--
 ```
 
 **响应示例**:
@@ -452,118 +575,468 @@ Form Data:
   "data": {
     "uploaded": [
       {
-        "id": "uuid-1",
-        "filename": "file1.jpg",
-        "size": 204800
+        "id": "550e8400-e29b-41d4-a716-446655440001",
+        "filename": "file1_20240101_123456.jpg",
+        "originalName": "file1.jpg",
+        "size": 204800,
+        "mimeType": "image/jpeg"
       },
       {
-        "id": "uuid-2", 
-        "filename": "file2.png",
-        "size": 512000
+        "id": "550e8400-e29b-41d4-a716-446655440002",
+        "filename": "file2_20240101_123457.png",
+        "originalName": "file2.png",
+        "size": 512000,
+        "mimeType": "image/png"
       }
     ],
     "failed": [],
     "total": 2,
-    "successCount": 2
+    "successCount": 2,
+    "failedCount": 0
   },
   "message": "批量上传完成"
 }
 ```
 
-#### 3. 分块上传（大文件）
+#### 1.3 分块上传（大文件）
 
-**步骤1: 初始化分块上传**
-```http
-POST /files/upload/chunk/init
-Authorization: Bearer <jwt-token>
-Content-Type: application/json
+分块上传适用于大文件（>10MB），支持断点续传功能。
 
+##### 1.3.1 初始化分块上传
+
+**接口地址**: `POST /files/upload/chunk/init`
+
+**请求格式**: `application/json`
+
+**请求参数**:
+| 参数名 | 类型 | 必填 | 描述 |
+|--------|------|------|------|
+| filename | string | 是 | 文件名 |
+| fileSize | number | 是 | 文件总大小（字节） |
+| chunkSize | number | 是 | 分块大小（字节，建议1MB） |
+| totalChunks | number | 是 | 总分块数 |
+| mimeType | string | 是 | 文件MIME类型 |
+| description | string | 否 | 文件描述 |
+
+**请求示例**:
+```json
 {
   "filename": "large-video.mp4",
   "fileSize": 104857600,
   "chunkSize": 1048576,
   "totalChunks": 100,
-  "mimeType": "video/mp4"
+  "mimeType": "video/mp4",
+  "description": "大视频文件"
 }
 ```
 
-**步骤2: 上传分块**
+**响应示例**:
+```json
+{
+  "success": true,
+  "data": {
+    "uploadId": "upload_550e8400-e29b-41d4-a716-446655440000",
+    "chunkSize": 1048576,
+    "totalChunks": 100,
+    "expiresAt": "2024-01-01T13:34:56.789Z"
+  },
+  "message": "分块上传初始化成功"
+}
+```
+
+##### 1.3.2 上传分块
+
+**接口地址**: `POST /files/upload/chunk`
+
+**请求格式**: `multipart/form-data`
+
+**请求参数**:
+| 参数名 | 类型 | 必填 | 描述 |
+|--------|------|------|------|
+| uploadId | string | 是 | 上传ID（来自初始化响应） |
+| chunkNumber | number | 是 | 分块序号（从1开始） |
+| chunk | File | 是 | 分块数据 |
+
+**请求示例**:
 ```http
 POST /files/upload/chunk
-Authorization: Bearer <jwt-token>
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 Content-Type: multipart/form-data
 
-Form Data:
-- uploadId: "uuid-from-init"
-- chunkNumber: 1
-- chunk: <分块数据>
+--boundary
+Content-Disposition: form-data; name="uploadId"
+
+upload_550e8400-e29b-41d4-a716-446655440000
+--boundary
+Content-Disposition: form-data; name="chunkNumber"
+
+1
+--boundary
+Content-Disposition: form-data; name="chunk"; filename="chunk"
+Content-Type: application/octet-stream
+
+[分块二进制数据]
+--boundary--
 ```
 
-**步骤3: 完成上传**
-```http
-POST /files/upload/chunk/complete
-Authorization: Bearer <jwt-token>
-Content-Type: application/json
-
+**响应示例**:
+```json
 {
-  "uploadId": "uuid-from-init",
-  "chunks": [1, 2, 3, ..., 100]
+  "success": true,
+  "data": {
+    "uploadId": "upload_550e8400-e29b-41d4-a716-446655440000",
+    "chunkNumber": 1,
+    "chunkHash": "sha256:b5d4045c3f466fa91fe2cc6abe79232a1a57cdf104f7a26e716e0a1e2789df78",
+    "uploadedChunks": [1],
+    "remainingChunks": 99
+  },
+  "message": "分块上传成功"
 }
 ```
 
-#### 4. 文件下载
-```http
-GET /files/:fileId/download
-Authorization: Bearer <jwt-token>
+##### 1.3.3 完成分块上传
+
+**接口地址**: `POST /files/upload/chunk/complete`
+
+**请求格式**: `application/json`
+
+**请求参数**:
+| 参数名 | 类型 | 必填 | 描述 |
+|--------|------|------|------|
+| uploadId | string | 是 | 上传ID |
+| chunks | number[] | 是 | 已上传的分块序号数组 |
+
+**请求示例**:
+```json
+{
+  "uploadId": "upload_550e8400-e29b-41d4-a716-446655440000",
+  "chunks": [1, 2, 3, 4, 5, ..., 100]
+}
 ```
 
-#### 5. 文件预览
-```http
-GET /files/:fileId/preview
-Authorization: Bearer <jwt-token>
+**响应示例**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "filename": "large-video_20240101_123456.mp4",
+    "originalName": "large-video.mp4",
+    "size": 104857600,
+    "mimeType": "video/mp4",
+    "hash": "sha256:c3499c2729730a7f807efb8676a92dcb6f8a3f8f6c7a5c6c5c6c5c6c5c6c5c6c",
+    "downloadUrl": "/files/550e8400-e29b-41d4-a716-446655440000/download",
+    "uploadedAt": "2024-01-01T12:45:30.123Z"
+  },
+  "message": "文件上传完成"
+}
 ```
 
-#### 6. 文件列表查询
-```http
-GET /files?page=1&limit=10&type=image&search=关键词
-Authorization: Bearer <jwt-token>
+##### 1.3.4 查询上传状态
+
+**接口地址**: `GET /files/upload/chunk/status/:uploadId`
+
+**请求参数**: 无
+
+**响应示例**:
+```json
+{
+  "success": true,
+  "data": {
+    "uploadId": "upload_550e8400-e29b-41d4-a716-446655440000",
+    "status": "uploading",
+    "totalChunks": 100,
+    "uploadedChunks": [1, 2, 3, 5, 7],
+    "missingChunks": [4, 6, 8, 9, 10, ..., 100],
+    "progress": 5.0,
+    "expiresAt": "2024-01-01T13:34:56.789Z"
+  },
+  "message": "获取上传状态成功"
+}
 ```
 
-**查询参数**:
-- `page`: 页码 (默认: 1)
-- `limit`: 每页数量 (默认: 10, 最大: 100)
-- `type`: 文件类型过滤 (image/video/document/audio)
-- `search`: 文件名搜索关键词
+### 2. 文件下载
 
-#### 7. 文件详情
+#### 2.1 文件下载
+
+**接口地址**: `GET /files/:fileId/download`
+
+**请求参数**: 无
+
+**响应**: 文件流
+
+**请求示例**:
 ```http
-GET /files/:fileId
-Authorization: Bearer <jwt-token>
+GET /files/550e8400-e29b-41d4-a716-446655440000/download
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
-#### 8. 删除文件
+**响应头**:
 ```http
-DELETE /files/:fileId
-Authorization: Bearer <jwt-token>
+HTTP/1.1 200 OK
+Content-Type: application/pdf
+Content-Disposition: attachment; filename="example.pdf"
+Content-Length: 1048576
 ```
 
-#### 9. 获取支持的协议
+#### 2.2 文件预览
+
+**接口地址**: `GET /files/:fileId/preview`
+
+**请求参数**: 无
+
+**响应**: 文件流（inline显示）
+
+**请求示例**:
+```http
+GET /files/550e8400-e29b-41d4-a716-446655440000/preview
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**响应头**:
+```http
+HTTP/1.1 200 OK
+Content-Type: application/pdf
+Content-Disposition: inline; filename="example.pdf"
+Content-Length: 1048576
+```
+
+### 3. 文件管理
+
+#### 3.1 获取文件列表
+
+**接口地址**: `GET /files`
+
+**请求参数**:
+| 参数名 | 类型 | 必填 | 描述 |
+|--------|------|------|------|
+| page | number | 否 | 页码（默认: 1） |
+| limit | number | 否 | 每页数量（默认: 10，最大: 100） |
+| type | string | 否 | 文件类型过滤（image/video/document/audio） |
+| search | string | 否 | 文件名搜索关键词 |
+| sortBy | string | 否 | 排序字段（createdAt/size/filename） |
+| sortOrder | string | 否 | 排序方向（asc/desc，默认: desc） |
+
+**请求示例**:
+```http
+GET /files?page=1&limit=10&type=image&search=avatar&sortBy=createdAt&sortOrder=desc
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**响应示例**:
+```json
+{
+  "success": true,
+  "data": {
+    "files": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440001",
+        "filename": "avatar_20240101_123456.jpg",
+        "originalName": "avatar.jpg",
+        "size": 204800,
+        "mimeType": "image/jpeg",
+        "description": "用户头像",
+        "tags": ["avatar", "profile"],
+        "downloadUrl": "/files/550e8400-e29b-41d4-a716-446655440001/download",
+        "previewUrl": "/files/550e8400-e29b-41d4-a716-446655440001/preview",
+        "uploadedAt": "2024-01-01T12:34:56.789Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 10,
+      "total": 25,
+      "totalPages": 3,
+      "hasNext": true,
+      "hasPrev": false
+    }
+  },
+  "message": "获取文件列表成功"
+}
+```
+
+#### 3.2 获取文件详情
+
+**接口地址**: `GET /files/:fileId`
+
+**请求参数**: 无
+
+**请求示例**:
+```http
+GET /files/550e8400-e29b-41d4-a716-446655440000
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**响应示例**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "filename": "example_20240101_123456.pdf",
+    "originalName": "example.pdf",
+    "size": 1048576,
+    "mimeType": "application/pdf",
+    "hash": "sha256:a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+    "description": "这是一个示例PDF文件",
+    "tags": ["document", "example"],
+    "downloadUrl": "/files/550e8400-e29b-41d4-a716-446655440000/download",
+    "previewUrl": "/files/550e8400-e29b-41d4-a716-446655440000/preview",
+    "uploadProtocol": "HTTP",
+    "status": "COMPLETED",
+    "uploadedAt": "2024-01-01T12:34:56.789Z",
+    "updatedAt": "2024-01-01T12:34:56.789Z"
+  },
+  "message": "获取文件详情成功"
+}
+```
+
+#### 3.3 更新文件信息
+
+**接口地址**: `PATCH /files/:fileId`
+
+**请求格式**: `application/json`
+
+**请求参数**:
+| 参数名 | 类型 | 必填 | 描述 |
+|--------|------|------|------|
+| description | string | 否 | 文件描述 |
+| tags | string[] | 否 | 文件标签数组 |
+
+**请求示例**:
+```json
+{
+  "description": "更新后的文件描述",
+  "tags": ["updated", "document", "important"]
+}
+```
+
+**响应示例**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "description": "更新后的文件描述",
+    "tags": ["updated", "document", "important"],
+    "updatedAt": "2024-01-01T13:00:00.000Z"
+  },
+  "message": "文件信息更新成功"
+}
+```
+
+#### 3.4 删除文件
+
+**接口地址**: `DELETE /files/:fileId`
+
+**请求参数**: 无
+
+**请求示例**:
+```http
+DELETE /files/550e8400-e29b-41d4-a716-446655440000
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**响应示例**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "deleted": true
+  },
+  "message": "文件删除成功"
+}
+```
+
+### 4. 协议支持
+
+#### 4.1 获取支持的协议
+
+**接口地址**: `GET /files/protocols/supported`
+
+**请求参数**: 无
+
+**请求示例**:
 ```http
 GET /files/protocols/supported
-Authorization: Bearer <jwt-token>
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
-### 配置说明
+**响应示例**:
+```json
+{
+  "success": true,
+  "data": {
+    "protocols": ["HTTP", "FTP"],
+    "count": 2,
+    "details": {
+      "HTTP": {
+        "name": "HTTP协议",
+        "description": "标准HTTP文件传输",
+        "maxFileSize": 10485760,
+        "supportedFeatures": ["单文件上传", "批量上传", "分块上传", "断点续传"]
+      },
+      "FTP": {
+        "name": "FTP协议",
+        "description": "FTP文件传输协议",
+        "maxFileSize": 104857600,
+        "supportedFeatures": ["单文件上传", "文件下载"]
+      }
+    }
+  },
+  "message": "获取支持的协议列表成功"
+}
+```
 
-#### 环境变量配置
-在 `.env.development` 或 `.env.production` 中添加：
+## 错误码说明
+
+### 通用错误码
+
+| 错误码 | HTTP状态码 | 描述 |
+|--------|------------|------|
+| UNAUTHORIZED | 401 | 未授权访问 |
+| FORBIDDEN | 403 | 禁止访问 |
+| NOT_FOUND | 404 | 资源不存在 |
+| INTERNAL_ERROR | 500 | 服务器内部错误 |
+
+### 文件相关错误码
+
+| 错误码 | HTTP状态码 | 描述 |
+|--------|------------|------|
+| FILE_TOO_LARGE | 400 | 文件大小超出限制 |
+| INVALID_FILE_TYPE | 400 | 不支持的文件类型 |
+| FILE_NOT_FOUND | 404 | 文件不存在 |
+| UPLOAD_FAILED | 500 | 文件上传失败 |
+| DOWNLOAD_FAILED | 500 | 文件下载失败 |
+| STORAGE_ERROR | 500 | 存储服务错误 |
+
+### 分块上传错误码
+
+| 错误码 | HTTP状态码 | 描述 |
+|--------|------------|------|
+| INVALID_UPLOAD_ID | 400 | 无效的上传ID |
+| UPLOAD_EXPIRED | 400 | 上传会话已过期 |
+| CHUNK_MISSING | 400 | 分块缺失 |
+| CHUNK_OUT_OF_RANGE | 400 | 分块序号超出范围 |
+| CHUNK_SIZE_MISMATCH | 400 | 分块大小不匹配 |
+
+## 配置说明
+
+### 环境变量
+
+在 `.env.development` 或 `.env.production` 中配置：
 
 ```bash
-# 文件上传配置
+# 文件上传基础配置
 MAX_FILE_SIZE=10485760          # 最大文件大小 (10MB)
 MAX_BATCH_FILES=10              # 批量上传最大文件数
 UPLOAD_PATH=./uploads           # 本地存储路径
-ALLOWED_FILE_TYPES=image/jpeg,image/png,application/pdf  # 允许的文件类型
+ALLOWED_FILE_TYPES=image/jpeg,image/png,image/gif,application/pdf,text/plain
+
+# 分块上传配置
+CHUNK_UPLOAD_TIMEOUT=3600       # 分块上传超时时间（秒）
+DEFAULT_CHUNK_SIZE=1048576      # 默认分块大小 (1MB)
 
 # FTP配置 (可选)
 FTP_HOST=ftp.example.com
@@ -585,110 +1058,287 @@ AWS_S3_BASE_PATH=uploads
 STORAGE_TYPE=LOCAL              # LOCAL | FTP | AWS_S3
 ```
 
-### 使用注意事项
+### 文件类型配置
 
-#### 安全性
-- ✅ 所有文件操作都需要JWT认证
-- ✅ 用户只能访问自己上传的文件
-- ✅ 文件类型白名单验证
-- ✅ 文件大小限制保护
-- ✅ 文件哈希验证防篡改
+支持的文件类型：
 
-#### 性能优化
-- ✅ 大文件自动启用分块上传
-- ✅ 支持断点续传，网络中断可恢复
-- ✅ 批量上传并发处理
-- ✅ 文件存储路径优化
-
-#### 错误处理
-常见错误码：
-- `FILE_TOO_LARGE`: 文件大小超出限制
-- `INVALID_FILE_TYPE`: 不支持的文件类型
-- `UPLOAD_FAILED`: 上传失败
-- `FILE_NOT_FOUND`: 文件不存在
-- `ACCESS_DENIED`: 无权限访问
-- `CHUNK_MISSING`: 分块缺失
-- `STORAGE_ERROR`: 存储服务错误
-
-#### 最佳实践
-
-**前端集成示例**:
-```javascript
-// 单文件上传
-const uploadFile = async (file) => {
-  const formData = new FormData();
-  formData.append('file', file);
+```typescript
+const ALLOWED_MIME_TYPES = {
+  // 图片
+  'image/jpeg': ['.jpg', '.jpeg'],
+  'image/png': ['.png'],
+  'image/gif': ['.gif'],
+  'image/webp': ['.webp'],
   
-  const response = await fetch('/files/upload', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`
-    },
-    body: formData
-  });
+  // 文档
+  'application/pdf': ['.pdf'],
+  'text/plain': ['.txt'],
+  'application/msword': ['.doc'],
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
   
-  return response.json();
+  // 音频
+  'audio/mpeg': ['.mp3'],
+  'audio/wav': ['.wav'],
+  
+  // 视频
+  'video/mp4': ['.mp4'],
+  'video/avi': ['.avi']
 };
+```
 
-// 分块上传大文件
-const uploadLargeFile = async (file) => {
-  const chunkSize = 1024 * 1024; // 1MB
-  const totalChunks = Math.ceil(file.size / chunkSize);
-  
-  // 1. 初始化
-  const initResponse = await fetch('/files/upload/chunk/init', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      filename: file.name,
-      fileSize: file.size,
-      chunkSize,
-      totalChunks,
-      mimeType: file.type
-    })
-  });
-  
-  const { uploadId } = await initResponse.json();
-  
-  // 2. 上传分块
-  for (let i = 0; i < totalChunks; i++) {
-    const start = i * chunkSize;
-    const end = Math.min(start + chunkSize, file.size);
-    const chunk = file.slice(start, end);
-    
+## 使用示例
+
+### JavaScript/TypeScript 客户端
+
+```typescript
+class FileUploadClient {
+  private baseUrl: string;
+  private token: string;
+
+  constructor(baseUrl: string, token: string) {
+    this.baseUrl = baseUrl;
+    this.token = token;
+  }
+
+  // 单文件上传
+  async uploadFile(file: File, description?: string): Promise<any> {
     const formData = new FormData();
-    formData.append('uploadId', uploadId);
-    formData.append('chunkNumber', i + 1);
-    formData.append('chunk', chunk);
-    
-    await fetch('/files/upload/chunk', {
+    formData.append('file', file);
+    if (description) {
+      formData.append('description', description);
+    }
+
+    const response = await fetch(`${this.baseUrl}/files/upload`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${this.token}`
       },
       body: formData
     });
+
+    return response.json();
   }
-  
-  // 3. 完成上传
-  const completeResponse = await fetch('/files/upload/chunk/complete', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      uploadId,
-      chunks: Array.from({length: totalChunks}, (_, i) => i + 1)
-    })
-  });
-  
-  return completeResponse.json();
-};
+
+  // 批量文件上传
+  async uploadFiles(files: File[]): Promise<any> {
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+
+    const response = await fetch(`${this.baseUrl}/files/upload/batch`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.token}`
+      },
+      body: formData
+    });
+
+    return response.json();
+  }
+
+  // 分块上传大文件
+  async uploadLargeFile(file: File, onProgress?: (progress: number) => void): Promise<any> {
+    const chunkSize = 1024 * 1024; // 1MB
+    const totalChunks = Math.ceil(file.size / chunkSize);
+
+    // 1. 初始化分块上传
+    const initResponse = await fetch(`${this.baseUrl}/files/upload/chunk/init`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        filename: file.name,
+        fileSize: file.size,
+        chunkSize,
+        totalChunks,
+        mimeType: file.type
+      })
+    });
+
+    const { data: { uploadId } } = await initResponse.json();
+
+    // 2. 上传分块
+    const uploadedChunks: number[] = [];
+    for (let i = 0; i < totalChunks; i++) {
+      const start = i * chunkSize;
+      const end = Math.min(start + chunkSize, file.size);
+      const chunk = file.slice(start, end);
+
+      const formData = new FormData();
+      formData.append('uploadId', uploadId);
+      formData.append('chunkNumber', (i + 1).toString());
+      formData.append('chunk', chunk);
+
+      const chunkResponse = await fetch(`${this.baseUrl}/files/upload/chunk`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.token}`
+        },
+        body: formData
+      });
+
+      if (chunkResponse.ok) {
+        uploadedChunks.push(i + 1);
+        if (onProgress) {
+          onProgress((uploadedChunks.length / totalChunks) * 100);
+        }
+      }
+    }
+
+    // 3. 完成上传
+    const completeResponse = await fetch(`${this.baseUrl}/files/upload/chunk/complete`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        uploadId,
+        chunks: uploadedChunks
+      })
+    });
+
+    return completeResponse.json();
+  }
+
+  // 获取文件列表
+  async getFiles(params: {
+    page?: number;
+    limit?: number;
+    type?: string;
+    search?: string;
+  } = {}): Promise<any> {
+    const queryParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) {
+        queryParams.append(key, value.toString());
+      }
+    });
+
+    const response = await fetch(`${this.baseUrl}/files?${queryParams}`, {
+      headers: {
+        'Authorization': `Bearer ${this.token}`
+      }
+    });
+
+    return response.json();
+  }
+
+  // 下载文件
+  async downloadFile(fileId: string): Promise<Blob> {
+    const response = await fetch(`${this.baseUrl}/files/${fileId}/download`, {
+      headers: {
+        'Authorization': `Bearer ${this.token}`
+      }
+    });
+
+    return response.blob();
+  }
+
+  // 删除文件
+  async deleteFile(fileId: string): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/files/${fileId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${this.token}`
+      }
+    });
+
+    return response.json();
+  }
+}
+
+// 使用示例
+const client = new FileUploadClient('http://localhost:8848', 'your-jwt-token');
+
+// 上传单个文件
+const file = document.getElementById('fileInput').files[0];
+client.uploadFile(file, '这是一个测试文件').then(result => {
+  console.log('上传成功:', result);
+});
+
+// 上传大文件并显示进度
+client.uploadLargeFile(file, (progress) => {
+  console.log(`上传进度: ${progress.toFixed(2)}%`);
+}).then(result => {
+  console.log('大文件上传成功:', result);
+});
 ```
+
+### cURL 示例
+
+```bash
+# 单文件上传
+curl -X POST \
+  http://localhost:8848/files/upload \
+  -H "Authorization: Bearer your-jwt-token" \
+  -F "file=@/path/to/your/file.pdf" \
+  -F "description=测试文件"
+
+# 获取文件列表
+curl -X GET \
+  "http://localhost:8848/files?page=1&limit=10&type=image" \
+  -H "Authorization: Bearer your-jwt-token"
+
+# 下载文件
+curl -X GET \
+  http://localhost:8848/files/550e8400-e29b-41d4-a716-446655440000/download \
+  -H "Authorization: Bearer your-jwt-token" \
+  -o downloaded-file.pdf
+
+# 删除文件
+curl -X DELETE \
+  http://localhost:8848/files/550e8400-e29b-41d4-a716-446655440000 \
+  -H "Authorization: Bearer your-jwt-token"
+```
+
+## 最佳实践
+
+### 1. 文件上传策略
+
+- **小文件（<10MB）**: 使用单文件上传或批量上传
+- **大文件（>10MB）**: 使用分块上传，支持断点续传
+- **批量文件**: 使用批量上传接口，最多10个文件
+
+### 2. 错误处理
+
+```typescript
+try {
+  const result = await client.uploadFile(file);
+  console.log('上传成功:', result);
+} catch (error) {
+  if (error.code === 'FILE_TOO_LARGE') {
+    console.error('文件太大，请选择小于10MB的文件');
+  } else if (error.code === 'INVALID_FILE_TYPE') {
+    console.error('不支持的文件类型');
+  } else {
+    console.error('上传失败:', error.message);
+  }
+}
+```
+
+### 3. 性能优化
+
+- 使用分块上传处理大文件
+- 实现上传进度显示
+- 支持断点续传功能
+- 合理设置分块大小（建议1MB）
+
+### 4. 安全考虑
+
+- 始终验证JWT Token
+- 检查文件类型和大小
+- 实现文件访问权限控制
+- 定期清理过期的分块上传会话
+
+---
+
+**文档版本**: v1.0  
+**最后更新**: 2024-01-01  
+**维护团队**: NestJS开发团队
 
 ## 📚 API文档
 

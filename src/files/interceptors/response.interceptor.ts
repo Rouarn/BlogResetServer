@@ -15,8 +15,13 @@ export interface SuccessResponse<T> {
 }
 
 @Injectable()
-export class ResponseInterceptor<T> implements NestInterceptor<T, SuccessResponse<T>> {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<SuccessResponse<T>> {
+export class ResponseInterceptor<T>
+  implements NestInterceptor<T, SuccessResponse<T>>
+{
+  intercept(
+    context: ExecutionContext,
+    next: CallHandler,
+  ): Observable<SuccessResponse<T>> {
     return next.handle().pipe(
       map((data) => {
         // 如果响应已经是标准格式，直接返回

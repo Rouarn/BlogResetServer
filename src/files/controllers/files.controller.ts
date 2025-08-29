@@ -15,12 +15,12 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { 
-  ApiTags, 
-  ApiOperation, 
-  ApiResponse, 
-  ApiConsumes, 
-  ApiBody, 
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiConsumes,
+  ApiBody,
   ApiBearerAuth,
   ApiQuery,
   ApiParam,
@@ -36,15 +36,18 @@ import {
   ChunkUploadCompleteDto,
   BatchUploadInitDto,
 } from '../dto';
-import { 
-  FileUploadSuccessResponse, 
-  BatchUploadSuccessResponse, 
+import {
+  FileUploadSuccessResponse,
+  BatchUploadSuccessResponse,
   ApiErrorResponse,
   FileListResponse,
 } from '../dto/swagger-responses.dto';
 import { GetCurrentUser, CurrentUser } from '../decorators';
 import { FileAccessGuard } from '../guards/file-access.guard';
-import { FileValidationPipe, FilesValidationPipe } from '../pipes/file-validation.pipe';
+import {
+  FileValidationPipe,
+  FilesValidationPipe,
+} from '../pipes/file-validation.pipe';
 
 @ApiTags('文件管理')
 @ApiBearerAuth()
@@ -75,23 +78,23 @@ export class FilesController {
       },
     },
   })
-  @ApiResponse({ 
-    status: 201, 
+  @ApiResponse({
+    status: 201,
     description: '文件上传成功',
     type: FileUploadSuccessResponse,
   })
-  @ApiResponse({ 
-    status: 400, 
+  @ApiResponse({
+    status: 400,
     description: '请求参数错误',
     type: ApiErrorResponse,
   })
-  @ApiResponse({ 
-    status: 413, 
+  @ApiResponse({
+    status: 413,
     description: '文件大小超出限制',
     type: ApiErrorResponse,
   })
-  @ApiResponse({ 
-    status: 415, 
+  @ApiResponse({
+    status: 415,
     description: '不支持的文件类型',
     type: ApiErrorResponse,
   })
@@ -101,7 +104,11 @@ export class FilesController {
     @Body() uploadDto: FileUploadDto,
     @GetCurrentUser() user?: CurrentUser,
   ) {
-    const result = await this.filesService.uploadSingleFile(file, uploadDto, user?.id);
+    const result = await this.filesService.uploadSingleFile(
+      file,
+      uploadDto,
+      user?.id,
+    );
     return {
       success: true,
       data: result,
@@ -132,13 +139,13 @@ export class FilesController {
       },
     },
   })
-  @ApiResponse({ 
-    status: 201, 
+  @ApiResponse({
+    status: 201,
     description: '批量文件上传完成',
     type: BatchUploadSuccessResponse,
   })
-  @ApiResponse({ 
-    status: 400, 
+  @ApiResponse({
+    status: 400,
     description: '请求参数错误',
     type: ApiErrorResponse,
   })
@@ -148,7 +155,11 @@ export class FilesController {
     @Body() uploadDto: FileUploadDto,
     @GetCurrentUser() user?: CurrentUser,
   ) {
-    const result = await this.filesService.uploadMultipleFiles(files, uploadDto, user?.id);
+    const result = await this.filesService.uploadMultipleFiles(
+      files,
+      uploadDto,
+      user?.id,
+    );
     return {
       success: true,
       data: result,
@@ -234,11 +245,21 @@ export class FilesController {
   @Get()
   @ApiOperation({ summary: '获取文件列表' })
   @ApiQuery({ name: 'page', required: false, description: '页码', example: 1 })
-  @ApiQuery({ name: 'limit', required: false, description: '每页数量', example: 10 })
-  @ApiQuery({ name: 'type', required: false, description: '文件类型', enum: ['IMAGE', 'VIDEO', 'AUDIO', 'DOCUMENT', 'ARCHIVE', 'OTHER'] })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: '每页数量',
+    example: 10,
+  })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    description: '文件类型',
+    enum: ['IMAGE', 'VIDEO', 'AUDIO', 'DOCUMENT', 'ARCHIVE', 'OTHER'],
+  })
   @ApiQuery({ name: 'search', required: false, description: '搜索关键词' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: '获取文件列表成功',
     type: FileListResponse,
   })
@@ -246,7 +267,10 @@ export class FilesController {
     @Query() queryDto: FileQueryDto,
     @GetCurrentUser() user?: CurrentUser,
   ) {
-    const { files, total } = await this.filesService.findFiles(queryDto, user?.id);
+    const { files, total } = await this.filesService.findFiles(
+      queryDto,
+      user?.id,
+    );
     return {
       success: true,
       data: {
@@ -265,8 +289,16 @@ export class FilesController {
   @ApiOperation({ summary: '获取文件详情' })
   @ApiParam({ name: 'id', description: '文件ID', example: 'uuid' })
   @ApiResponse({ status: 200, description: '获取文件详情成功' })
-  @ApiResponse({ status: 404, description: '文件不存在', type: ApiErrorResponse })
-  @ApiResponse({ status: 403, description: '无权限访问', type: ApiErrorResponse })
+  @ApiResponse({
+    status: 404,
+    description: '文件不存在',
+    type: ApiErrorResponse,
+  })
+  @ApiResponse({
+    status: 403,
+    description: '无权限访问',
+    type: ApiErrorResponse,
+  })
   @UseGuards(FileAccessGuard)
   async getFile(
     @Param('id', ParseUUIDPipe) id: string,
@@ -288,8 +320,11 @@ export class FilesController {
     @Res() res: Response,
     @GetCurrentUser() user?: CurrentUser,
   ) {
-    const { file, buffer } = await this.filesService.getFileBuffer(id, user?.id);
-    
+    const { file, buffer } = await this.filesService.getFileBuffer(
+      id,
+      user?.id,
+    );
+
     res.set({
       'Content-Type': file.mimeType,
       'Content-Disposition': `attachment; filename="${encodeURIComponent(file.originalName)}"`,
@@ -308,8 +343,11 @@ export class FilesController {
     @Res() res: Response,
     @GetCurrentUser() user?: CurrentUser,
   ) {
-    const { file, buffer } = await this.filesService.getFileBuffer(id, user?.id);
-    
+    const { file, buffer } = await this.filesService.getFileBuffer(
+      id,
+      user?.id,
+    );
+
     res.set({
       'Content-Type': file.mimeType,
       'Content-Disposition': `inline; filename="${encodeURIComponent(file.originalName)}"`,

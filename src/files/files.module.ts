@@ -29,8 +29,14 @@ import * as multer from 'multer';
           files: configService.get('MAX_BATCH_FILES', 10),
         },
         fileFilter: (req, file, cb) => {
-          const allowedTypes = configService.get<string[]>('ALLOWED_FILE_TYPES', []);
-          if (allowedTypes.length === 0 || allowedTypes.includes(file.mimetype)) {
+          const allowedTypes = configService.get<string[]>(
+            'ALLOWED_FILE_TYPES',
+            [],
+          );
+          if (
+            allowedTypes.length === 0 ||
+            allowedTypes.includes(file.mimetype)
+          ) {
             cb(null, true);
           } else {
             cb(new Error(`不支持的文件类型: ${file.mimetype}`), false);

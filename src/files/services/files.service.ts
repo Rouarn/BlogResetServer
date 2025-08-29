@@ -1,8 +1,13 @@
-import { Injectable, NotFoundException, BadRequestException, Logger, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Logger,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, Like } from 'typeorm';
+import { Repository } from 'typeorm';
 import { File } from '../entities';
-import { FileStatus, FileType } from '../enums';
+import { FileStatus } from '../enums';
 import { FileUploadDto, FileQueryDto } from '../dto';
 import { FileUploadResult, BatchUploadResult } from '../interfaces';
 import { StorageService } from './storage.service';
@@ -31,21 +36,25 @@ export class FilesService {
     await this.validationService.validateFile(file);
 
     // 生成文件信息
-    const filename = this.validationService.generateUniqueFilename(file.originalname);
+    const filename = this.validationService.generateUniqueFilename(
+      file.originalname,
+    );
     const fileHash = this.validationService.generateFileHash(file.buffer);
     const fileType = this.validationService.getFileType(file.mimetype);
-    
+
     // 检查文件是否已存在（基于hash）
-    const existingFile = await this.fileRepository.findOne({ where: { hash: fileHash } });
+    const existingFile = await this.fileRepository.findOne({
+      where: { hash: fileHash },
+    });
     if (existingFile) {
       return this.mapToUploadResult(existingFile);
     }
 
-    // 构建存储路径
+    // 构建存储路径，使用配置中的静态资源路径
     const datePath = new Date().toISOString().slice(0, 7); // YYYY-MM
     const relativePath = path.join(datePath, filename);
 
-    // 存储文件
+    // 存储文件（StorageService会自动使用配置的根路径）
     const storedPath = await this.storageService.upload(file, relativePath);
 
     // 保存文件记录
@@ -106,14 +115,20 @@ export class FilesService {
     return results;
   }
 
-  async findFiles(queryDto: FileQueryDto, userId?: string): Promise<{ files: File[]; total: number }> {
-    const { page, limit, type, status, search, publicOnly, sortBy, sortOrder } = queryDto;
-    
+  async findFiles(
+    queryDto: FileQueryDto,
+    userId?: string,
+  ): Promise<{ files: File[]; total: number }> {
+    const { page, limit, type, status, search, publicOnly, sortBy, sortOrder } =
+      queryDto;
+
     const queryBuilder = this.fileRepository.createQueryBuilder('file');
 
     // 基础过滤条件
     if (!publicOnly && userId) {
-      queryBuilder.where('file.userId = :userId OR file.isPublic = true', { userId });
+      queryBuilder.where('file.userId = :userId OR file.isPublic = true', {
+        userId,
+      });
     } else if (publicOnly) {
       queryBuilder.where('file.isPublic = true');
     }
@@ -132,7 +147,7 @@ export class FilesService {
     if (search) {
       queryBuilder.andWhere(
         '(file.originalName ILIKE :search OR file.filename ILIKE :search)',
-        { search: `%${search}%` }
+        { search: `%${search}%` },
       );
     }
 
@@ -150,7 +165,7 @@ export class FilesService {
 
   async findFileById(id: string, userId?: string): Promise<File> {
     const file = await this.fileRepository.findOne({ where: { id } });
-    
+
     if (!file) {
       throw new NotFoundException('文件不存在');
     }
@@ -179,7 +194,7 @@ export class FilesService {
 
   async deleteFile(id: string, userId?: string): Promise<boolean> {
     const file = await this.fileRepository.findOne({ where: { id } });
-    
+
     if (!file) {
       throw new NotFoundException('文件不存在');
     }
@@ -188,7 +203,7 @@ export class FilesService {
     if (userId && file.userId !== userId) {
       throw new ForbiddenException('只有文件所有者可以删除文件');
     }
-    
+
     // 删除物理文件
     const deleted = await this.storageService.delete(file.path);
     if (!deleted) {
@@ -202,7 +217,10 @@ export class FilesService {
     return true;
   }
 
-  async getFileBuffer(id: string, userId?: string): Promise<{ file: File; buffer: Buffer }> {
+  async getFileBuffer(
+    id: string,
+    userId?: string,
+  ): Promise<{ file: File; buffer: Buffer }> {
     const file = await this.findFileById(id, userId);
     const buffer = await this.storageService.download(file.path);
     return { file, buffer };

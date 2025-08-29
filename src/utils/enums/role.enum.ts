@@ -19,7 +19,7 @@ export const ROLE_VALUES = Object.values(Role);
 /**
  * 角色枚举类型
  */
-export type RoleType = typeof Role[keyof typeof Role];
+export type RoleType = (typeof Role)[keyof typeof Role];
 
 /**
  * 角色显示名称映射
@@ -111,12 +111,12 @@ export function canManageRole(managerRole: Role, targetRole: Role): boolean {
  */
 export function parseRole(roleStr: string): Role {
   const upperStr = roleStr.toUpperCase().trim();
-  
+
   // 直接匹配枚举值
   if (ROLE_VALUES.includes(upperStr as Role)) {
     return upperStr as Role;
   }
-  
+
   // 匹配简化形式
   switch (upperStr) {
     case 'SUPER':
@@ -137,13 +137,13 @@ export function parseRole(roleStr: string): Role {
  * 获取所有角色选项（用于表单选择）
  * @returns 包含值、标签和级别的选项数组
  */
-export function getRoleOptions(): Array<{ 
-  value: Role; 
-  label: string; 
-  level: number; 
-  description: string 
+export function getRoleOptions(): Array<{
+  value: Role;
+  label: string;
+  level: number;
+  description: string;
 }> {
-  return ROLE_VALUES.map(value => ({
+  return ROLE_VALUES.map((value) => ({
     value,
     label: getRoleLabel(value),
     level: getRoleLevel(value),
@@ -158,5 +158,5 @@ export function getRoleOptions(): Array<{
  */
 export function getSubordinateRoles(role: Role): Role[] {
   const currentLevel = getRoleLevel(role);
-  return ROLE_VALUES.filter(r => getRoleLevel(r) < currentLevel);
+  return ROLE_VALUES.filter((r) => getRoleLevel(r) < currentLevel);
 }

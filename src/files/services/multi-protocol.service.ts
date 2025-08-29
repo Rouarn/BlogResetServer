@@ -19,7 +19,10 @@ export class MultiProtocolService {
 
   private initializeAdapters(): void {
     // HTTP协议使用本地存储或配置的云存储
-    const httpStorageType = this.configService.get<StorageType>('HTTP_STORAGE_TYPE', StorageType.LOCAL);
+    const httpStorageType = this.configService.get<StorageType>(
+      'HTTP_STORAGE_TYPE',
+      StorageType.LOCAL,
+    );
     const httpAdapter = this.storageFactory.createAdapter({
       type: httpStorageType,
       config: this.storageFactory['getStorageConfig'](httpStorageType),
