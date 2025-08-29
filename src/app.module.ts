@@ -17,12 +17,8 @@ import { GlobalGuard } from './common/guards/global.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { AuthModule } from './modules/auth/auth.module';
 import { FilesModule } from './modules/files/files.module';
-import { RedisModule } from './modules/redis/redis.module';
-import {
-  ConfigModule as AppConfigModule,
-  appConfig,
-  jwtOptions,
-} from './config';
+
+import { ConfigModule as AppConfigModule, AppConfigService } from './config';
 import { ConfigService } from '@nestjs/config';
 
 @Module({
@@ -37,21 +33,24 @@ import { ConfigService } from '@nestjs/config';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('NEST_JWT_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>('NEST_JWT_ACCESS_TOKEN_TTL', '1d'),
+          expiresIn: configService.get<string>(
+            'NEST_JWT_ACCESS_TOKEN_TTL',
+            '1d',
+          ),
         },
       }),
     }),
 
     // 数据库模块
-    TypeOrmModule.forRoot({
-      ...appConfig.databaseConfig,
-      autoLoadEntities: true,
-      retryDelay: 500,
-      retryAttempts: 10,
+    TypeOrmModule.forRootAsync({
+      inject: [AppConfigService],
+      useFactory: (configService: AppConfigService) => ({
+        ...configService.databaseConfig,
+        autoLoadEntities: true,
+        retryDelay: 500,
+        retryAttempts: 10,
+      }),
     }),
-
-    // Redis模块 (可选)
-    ...(appConfig.redisEnabled ? [RedisModule] : []),
 
     // 业务模块
     AuthModule,

@@ -61,16 +61,5 @@ export default registerAs('app', () => ({
     },
   },
 
-  // Redis 开关控制 (默认关闭)
-  redisEnabled: process.env.NEST_REDIS_ENABLED === 'true' || false,
 
-  // Redis 连接配置
-  redis: {
-    host: process.env.NEST_REDIS_HOST || 'localhost',
-    port: process.env.NEST_REDIS_PORT
-      ? parseInt(process.env.NEST_REDIS_PORT, 10)
-      : 6379,
-    db: process.env.NEST_REDIS_DB ? parseInt(process.env.NEST_REDIS_DB, 10) : 0,
-    password: process.env.NEST_REDIS_PASSWORD || '',
-  },
 }));

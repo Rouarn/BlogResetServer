@@ -30,10 +30,5 @@ export const validationSchema = Joi.object({
   NEST_DATABASE_PASSWORD: Joi.string().required(),
   NEST_DATABASE_NAME: Joi.string().required(),
 
-  // Redis配置
-  NEST_REDIS_ENABLED: Joi.string().valid('true', 'false').default('false'),
-  NEST_REDIS_HOST: Joi.string().default('localhost'),
-  NEST_REDIS_PORT: Joi.number().default(6379),
-  NEST_REDIS_PASSWORD: Joi.string().allow('').default(''),
-  NEST_REDIS_DB: Joi.number().default(0),
+
 });

@@ -19,6 +19,3 @@ export { AppConfigService } from './app-config.service';
 export { ConfigModule } from './config.module';
 export { default as configuration } from './configuration';
 export { validationSchema } from './validation.schema';
-
-// 导出 Redis 配置
-export { createRedisClient, redisProvider, REDIS_CLIENT } from './redis.config';

@@ -5,11 +5,7 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { VersioningType } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-
-// ///////////////////////////////// 配置导入 ////////////////////////////////////////
 import { appConfig } from './config';
-
-// ///////////////////////////////// 函数区域 ////////////////////////////////////////
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -18,8 +14,7 @@ async function bootstrap() {
   app.use(cors(appConfig.corsOptions));
 
   //版本控制
-  app.enableVersioning({
-    type: VersioningType.URI,
+  app.enableVersioning({ type: VersioningType.URI,
     prefix: 'v',
     defaultVersion: '1',
   });
