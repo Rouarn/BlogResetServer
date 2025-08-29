@@ -127,8 +127,6 @@ export class AppConfigService {
     };
   }
 
-
-
   // 白名单路由
   get whiteList(): string[] {
     return ['/login/code', '/login/create'];

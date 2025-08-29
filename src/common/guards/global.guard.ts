@@ -33,7 +33,10 @@ export class GlobalGuard implements CanActivate {
   /**
    * 内存限流存储
    */
-  private readonly rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+  private readonly rateLimitStore = new Map<
+    string,
+    { count: number; resetTime: number }
+  >();
 
   constructor() {}
 
@@ -54,10 +57,13 @@ export class GlobalGuard implements CanActivate {
     // 基于内存的限流检查
     const now = Date.now();
     const stored = this.rateLimitStore.get(key);
-    
+
     if (!stored || now > stored.resetTime) {
       // 重置计数器
-      this.rateLimitStore.set(key, { count: 1, resetTime: now + window * 1000 });
+      this.rateLimitStore.set(key, {
+        count: 1,
+        resetTime: now + window * 1000,
+      });
     } else {
       // 增加计数
       stored.count++;
@@ -67,7 +73,8 @@ export class GlobalGuard implements CanActivate {
     }
 
     // 清理过期的记录（简单的内存管理）
-    if (Math.random() < 0.01) { // 1% 的概率清理
+    if (Math.random() < 0.01) {
+      // 1% 的概率清理
       for (const [k, v] of this.rateLimitStore.entries()) {
         if (now > v.resetTime) {
           this.rateLimitStore.delete(k);

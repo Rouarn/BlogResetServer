@@ -60,6 +60,4 @@ export default registerAs('app', () => ({
       timeout: 60000,
     },
   },
-
-
 }));

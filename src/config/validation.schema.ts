@@ -29,6 +29,4 @@ export const validationSchema = Joi.object({
   NEST_DATABASE_USER: Joi.string().required(),
   NEST_DATABASE_PASSWORD: Joi.string().required(),
   NEST_DATABASE_NAME: Joi.string().required(),
-
-
 });
