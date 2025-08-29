@@ -44,8 +44,8 @@ async function bootstrap() {
       SwaggerModule.setup(swaggerConfig.prefix, app, document);
 
       // 保存API文档为JSON文件，供第三方工具导入使用
-      const fs = require('fs');
-      const path = require('path');
+      const fs = await import('fs');
+      const path = await import('path');
       const apiDocPath = path.join(
         __dirname,
         `..${staticConfig.options.prefix}/api-docs.json`,

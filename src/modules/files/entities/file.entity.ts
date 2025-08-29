@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
-import { FileStatus, UploadProtocol, FileType } from '../enums';
+import { FileStatus, FileType } from '../enums';
 import { UploadChunk } from './upload-chunk.entity';
 
 @Entity('files')
@@ -37,11 +37,10 @@ export class File {
 
   @Column({
     name: 'upload_protocol',
-    type: 'enum',
-    enum: UploadProtocol,
-    default: UploadProtocol.HTTP,
+    type: 'varchar',
+    default: 'HTTP',
   })
-  uploadProtocol: UploadProtocol;
+  uploadProtocol: string;
 
   @Column({
     type: 'enum',

@@ -7,6 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { appConfig } from 'src/config';
 import * as svgCaptcha from 'svg-captcha';
 import * as bcryptjs from 'bcryptjs';
+import * as crypto from 'crypto';
 
 /**
  * 认证服务类
@@ -162,7 +163,6 @@ export class AuthService {
     ip?: string;
     userAgent?: string;
   }): string {
-    const crypto = require('crypto');
     const info = `${clientInfo.ip || 'unknown'}-${clientInfo.userAgent || 'unknown'}`;
     return crypto
       .createHash('sha256')
@@ -215,7 +215,7 @@ export class AuthService {
       }
 
       return { valid: true };
-    } catch (error) {
+    } catch {
       // token无效、过期或解析失败
       return { valid: false, reason: 'Token verification failed' };
     }

@@ -1,10 +1,9 @@
-import { UploadProtocol, FileType } from '../enums';
+import type { FileType } from '../enums';
 
 export interface FileUploadOptions {
   maxSize?: number;
   allowedTypes?: string[];
   uploadPath?: string;
-  protocol?: UploadProtocol;
 }
 
 export interface ChunkUploadInfo {

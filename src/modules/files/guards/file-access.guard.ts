@@ -28,7 +28,7 @@ export class FileAccessGuard implements CanActivate {
       // 检查用户是否有权限访问该文件
       await this.filesService.findFileById(fileId, user?.id);
       return true;
-    } catch (error) {
+    } catch {
       throw new ForbiddenException('无权限访问该文件');
     }
   }

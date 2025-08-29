@@ -9,7 +9,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { UploadProtocol, FileType } from '../enums';
+import { FileType } from '../enums';
 
 export class FileUploadDto {
   @ApiProperty({ description: '文件描述' })
@@ -22,10 +22,10 @@ export class FileUploadDto {
   @IsBoolean()
   isPublic?: boolean;
 
-  @ApiPropertyOptional({ enum: UploadProtocol, description: '上传协议' })
+  @ApiPropertyOptional({ description: '上传协议', default: 'HTTP' })
   @IsOptional()
-  @IsEnum(UploadProtocol)
-  protocol?: UploadProtocol;
+  @IsString()
+  protocol?: string;
 }
 
 export class ChunkUploadInitDto {

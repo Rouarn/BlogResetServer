@@ -12,7 +12,7 @@ import { FileUploadDto, FileQueryDto } from '../dto';
 import { FileUploadResult, BatchUploadResult } from '../interfaces';
 import { StorageService } from './storage.service';
 import { ValidationService } from './validation.service';
-import { MultiProtocolService } from './multi-protocol.service';
+
 import * as path from 'path';
 
 @Injectable()
@@ -24,7 +24,6 @@ export class FilesService {
     private fileRepository: Repository<File>,
     private storageService: StorageService,
     private validationService: ValidationService,
-    private multiProtocolService: MultiProtocolService,
   ) {}
 
   async uploadSingleFile(

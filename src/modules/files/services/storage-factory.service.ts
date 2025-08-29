@@ -7,7 +7,6 @@ import {
   StorageType,
 } from '../interfaces/storage-factory.interface';
 import { StorageService } from './storage.service';
-import { appConfig } from 'src/config';
 
 @Injectable()
 export class StorageFactoryService implements StorageFactory {
