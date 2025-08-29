@@ -35,15 +35,10 @@ export class AuthController {
     const result = await this.authService.generateCaptcha(clientInfo);
 
     return {
-      success: true,
-      data: {
         image: result.captchaImage,
         token: result.captchaToken,
         expiresIn: result.expiresIn,
         nonce: result.nonce,
-      },
-      message: '验证码生成成功',
-      timestamp: new Date().toISOString(),
     };
   }
 

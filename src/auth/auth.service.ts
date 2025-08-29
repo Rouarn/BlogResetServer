@@ -6,7 +6,6 @@ import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as svgCaptcha from 'svg-captcha';
 import * as bcryptjs from 'bcryptjs';
-import type { Response } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -106,8 +105,12 @@ export class AuthService {
       },
     );
 
+    // 将SVG转换为base64编码，添加正确的数据URI前缀
+    const svgBuffer = Buffer.from(captcha.data);
+    const base64Image = `data:image/svg+xml;base64,${svgBuffer.toString('base64')}`;
+
     return {
-      captchaImage: captcha.data,
+      captchaImage: base64Image,
       captchaToken,
       expiresIn: 300, // 5分钟 = 300秒
       nonce, // 返回nonce供客户端使用
