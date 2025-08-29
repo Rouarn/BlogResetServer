@@ -31,7 +31,11 @@ async function bootstrap() {
 
   // 静态资源配置
   const staticConfig = appConfig.staticAssetsOptions;
-  app.useStaticAssets(join(__dirname, staticConfig.root), staticConfig.options);
+  // 使用配置中的静态资源路径，处理相对路径
+  const staticPath = staticConfig.root.startsWith('./') 
+    ? join(__dirname, '..', staticConfig.root.substring(2))
+    : join(__dirname, staticConfig.root);
+  app.useStaticAssets(staticPath, staticConfig.options);
 
   // Swagger文档配置（仅在开发环境启用）
   if (appConfig.swaggerOptions.enabled) {
@@ -44,11 +48,11 @@ async function bootstrap() {
       .build();
     const document = SwaggerModule.createDocument(app, options);
     SwaggerModule.setup(swaggerConfig.prefix, app, document);
-
+    
     // 保存API文档为JSON文件，供Apifox导入使用
     const fs = require('fs');
     const path = require('path');
-    const apiDocPath = path.join(__dirname, '../uploads/api-docs.json');
+    const apiDocPath = path.join(__dirname, `..${staticConfig.options.prefix}/api-docs.json`);
     fs.writeFileSync(apiDocPath, JSON.stringify(document, null, 2));
     console.log(`📄 API文档已保存到: ${apiDocPath}`);
   }
@@ -63,7 +67,9 @@ async function bootstrap() {
     console.log(
       `📚 Swagger docs: ${await app.getUrl()}${appConfig.swaggerOptions.prefix}`,
     );
-    console.log(`🔗 Apifox导入地址: ${await app.getUrl()}/api-docs.json`);
+    console.log(
+      `🔗 Apifox导入地址: ${await app.getUrl()}${staticConfig.options.prefix}/api-docs.json`,
+    );
   }
 }
 bootstrap();
