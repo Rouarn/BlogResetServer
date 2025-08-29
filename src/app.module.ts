@@ -5,6 +5,7 @@ import { APP_GUARD } from '@nestjs/core/constants';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { FilesModule } from './files/files.module';
 import { JwtAuthGuard } from 'src/utils/guards/jwt-auth.grard';
 import { JwtAuthStrategy } from './utils/passport/jwt-auth.strategy';
 import { RolesGuard } from './utils/guards/roles.guard';
@@ -38,6 +39,7 @@ import {
 
     // 业务模块
     AuthModule,
+    FilesModule,
   ],
   controllers: [AppController],
   providers: [
