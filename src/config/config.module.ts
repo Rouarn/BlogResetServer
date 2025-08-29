@@ -11,10 +11,7 @@ import { validationSchema } from './validation.schema';
       load: [configuration],
       validationSchema,
       isGlobal: true,
-      envFilePath: [
-        `.env.${process.env.NODE_ENV || 'development'}`,
-        '.env',
-      ],
+      envFilePath: [`.env.${process.env.NODE_ENV || 'development'}`, '.env'],
     }),
   ],
   providers: [AppConfigService],

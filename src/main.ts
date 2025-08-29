@@ -18,21 +18,21 @@ import { appConfig } from './config';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  
+
   // 应用中间件
   app.use(cors(appConfig.corsOptions));
-  
+
   // 全局配置
   app.useGlobalGuards(new RoleGuard());
   app.useGlobalFilters(new HttpFilter());
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalInterceptors(new commonResponse());
   app.enableVersioning({ type: VersioningType.URI });
-  
+
   // 静态资源配置
   const staticConfig = appConfig.staticAssetsOptions;
   app.useStaticAssets(join(__dirname, staticConfig.root), staticConfig.options);
-  
+
   // Swagger文档配置（仅在开发环境启用）
   if (appConfig.swaggerOptions.enabled) {
     const swaggerConfig = appConfig.swaggerOptions;
@@ -51,9 +51,11 @@ async function bootstrap() {
   console.log(`🚀 Application is running on: ${await app.getUrl()}`);
   console.log(`📝 Title: ${appConfig.appTitle}`);
   console.log(`🌍 Environment: ${appConfig.environment}`);
-  
+
   if (appConfig.swaggerOptions.enabled) {
-    console.log(`📚 Swagger docs: ${await app.getUrl()}${appConfig.swaggerOptions.prefix}`);
+    console.log(
+      `📚 Swagger docs: ${await app.getUrl()}${appConfig.swaggerOptions.prefix}`,
+    );
   }
 }
 bootstrap();
