@@ -35,9 +35,9 @@ import { ConfigService } from '@nestjs/config';
       global: true,
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        secret: jwtOptions.secret,
+        secret: configService.get<string>('NEST_JWT_SECRET'),
         signOptions: {
-          expiresIn: jwtOptions.expiresIn,
+          expiresIn: configService.get<string>('NEST_JWT_ACCESS_TOKEN_TTL', '1d'),
         },
       }),
     }),
