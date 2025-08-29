@@ -29,15 +29,6 @@ export class MultiProtocolService {
     });
     this.adapters.set(UploadProtocol.HTTP, httpAdapter);
 
-    // FTP协议使用FTP存储
-    if (this.configService.get('FTP_HOST')) {
-      const ftpAdapter = this.storageFactory.createAdapter({
-        type: StorageType.FTP,
-        config: this.storageFactory['getStorageConfig'](StorageType.FTP),
-      });
-      this.adapters.set(UploadProtocol.FTP, ftpAdapter);
-    }
-
     this.logger.log(`Initialized ${this.adapters.size} storage adapters`);
   }
 

@@ -7,7 +7,7 @@ export interface StorageAdapter {
 }
 
 export interface StorageConfig {
-  type: 'local' | 'aws' | 'azure' | 'gcp';
+  type: 'local';
   basePath: string;
   maxFileSize: number;
   allowedTypes: string[];

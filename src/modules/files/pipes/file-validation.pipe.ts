@@ -11,10 +11,8 @@ export class FileValidationPipe implements PipeTransform {
     }
 
     // 验证文件大小
-    const maxSize = this.configService.get<number>(
-      'MAX_FILE_SIZE',
-      10 * 1024 * 1024,
-    );
+    const staticConfig = this.configService.get('app.static');
+    const maxSize = staticConfig.upload.maxFileSize;
     if (file.size > maxSize) {
       throw new BadRequestException(
         `文件大小超出限制，最大允许 ${maxSize / 1024 / 1024}MB`,
@@ -22,10 +20,7 @@ export class FileValidationPipe implements PipeTransform {
     }
 
     // 验证文件类型
-    const allowedTypes = this.configService.get<string[]>(
-      'ALLOWED_FILE_TYPES',
-      [],
-    );
+    const allowedTypes = staticConfig.upload.allowedTypes;
     if (allowedTypes.length > 0 && !allowedTypes.includes(file.mimetype)) {
       throw new BadRequestException(`不支持的文件类型: ${file.mimetype}`);
     }
@@ -43,7 +38,8 @@ export class FilesValidationPipe implements PipeTransform {
       throw new BadRequestException('文件列表不能为空');
     }
 
-    const maxFiles = this.configService.get<number>('MAX_BATCH_FILES', 10);
+    const staticConfig = this.configService.get('app.static');
+    const maxFiles = staticConfig.upload.maxBatchFiles;
     if (files.length > maxFiles) {
       throw new BadRequestException(
         `批量上传文件数量超出限制，最大允许 ${maxFiles} 个文件`,

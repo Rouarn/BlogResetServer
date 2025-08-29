@@ -11,13 +11,13 @@ export class StorageService implements StorageAdapter {
   private readonly config: StorageConfig;
 
   constructor(private configService: ConfigService) {
-    // 使用配置中的静态资源路径作为上传基础路径
-    const staticConfig = appConfig.staticAssetsOptions;
+    // 使用静态资源配置中的上传设置
+    const staticConfig = this.configService.get('app.static');
     this.config = {
       type: 'local',
-      basePath: this.configService.get('UPLOAD_PATH', staticConfig.root),
-      maxFileSize: this.configService.get('MAX_FILE_SIZE', 10 * 1024 * 1024),
-      allowedTypes: this.configService.get('ALLOWED_FILE_TYPES', []),
+      basePath: staticConfig.upload.path,
+      maxFileSize: staticConfig.upload.maxFileSize,
+      allowedTypes: staticConfig.upload.allowedTypes,
     };
     this.ensureUploadDirectory();
   }

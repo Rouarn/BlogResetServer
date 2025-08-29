@@ -25,12 +25,15 @@ import * as multer from 'multer';
       useFactory: async (configService: ConfigService) => ({
         storage: multer.memoryStorage(),
         limits: {
-          fileSize: configService.get('MAX_FILE_SIZE', 10 * 1024 * 1024), // 10MB
-          files: configService.get('MAX_BATCH_FILES', 10),
+          fileSize: configService.get(
+            'app.static.upload.maxFileSize',
+            10 * 1024 * 1024,
+          ), // 10MB
+          files: configService.get('app.static.upload.maxBatchFiles', 10),
         },
         fileFilter: (req, file, cb) => {
           const allowedTypes = configService.get<string[]>(
-            'ALLOWED_FILE_TYPES',
+            'app.static.upload.allowedTypes',
             [],
           );
           if (

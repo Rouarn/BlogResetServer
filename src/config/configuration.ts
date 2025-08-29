@@ -12,13 +12,27 @@ export default registerAs('app', () => ({
     accessTokenTtl: process.env.NEST_JWT_ACCESS_TOKEN_TTL || '1d',
   },
 
-  // 静态资源配置
+  // 静态资源配置（整合上传和静态资源）
   static: {
     root: process.env.NEST_STATIC_ASSETS_PATH || './static',
     prefix: process.env.NEST_STATIC_ASSETS_URL || '/static',
     maxAge: process.env.NEST_STATIC_ASSETS_MAXAGE
       ? parseInt(process.env.NEST_STATIC_ASSETS_MAXAGE, 10)
       : 86400,
+    // 文件上传配置 - 统一使用静态资源目录
+    upload: {
+      // 上传文件保存在静态资源目录下的 uploads 子目录
+      path: process.env.NEST_STATIC_ASSETS_PATH
+        ? `${process.env.NEST_STATIC_ASSETS_PATH}/uploads`
+        : './static/uploads',
+      maxFileSize: process.env.MAX_FILE_SIZE
+        ? parseInt(process.env.MAX_FILE_SIZE, 10)
+        : 10 * 1024 * 1024, // 10MB
+      allowedTypes: process.env.ALLOWED_FILE_TYPES
+        ? process.env.ALLOWED_FILE_TYPES.split(',')
+        : [], // 空数组表示允许所有类型
+      maxBatchFiles: 10, // 批量上传最大文件数
+    },
   },
 
   // CORS配置
