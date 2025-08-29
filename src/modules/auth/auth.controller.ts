@@ -21,8 +21,8 @@ import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { CaptchaVerifyDto } from './dto/captcha-verify.dto';
 import { CreateUserDto } from './dto/create-user.dto';
-import { Public } from 'src/utils/decorators/public';
-import { User } from 'src/utils/decorators/user';
+import { Public } from 'src/common/decorators/public';
+import { User } from 'src/common/decorators/user';
 
 @ApiTags('认证管理')
 @UseInterceptors(ClassSerializerInterceptor)

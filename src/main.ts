@@ -2,11 +2,8 @@ import * as cors from 'cors';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import { NestFactory } from '@nestjs/core';
-import { RoleGuard } from 'src/utils/guards/global-guard';
-import { HttpFilter } from 'src/utils/api/filter';
-import { Response as commonResponse } from 'src/utils/api/response';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { VersioningType } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 
 // ///////////////////////////////// 配置导入 ////////////////////////////////////////
@@ -20,12 +17,12 @@ async function bootstrap() {
   // 应用中间件
   app.use(cors(appConfig.corsOptions));
 
-  // 全局配置
-  app.useGlobalGuards(new RoleGuard());
-  app.useGlobalFilters(new HttpFilter());
-  app.useGlobalPipes(new ValidationPipe());
-  app.useGlobalInterceptors(new commonResponse());
-  app.enableVersioning({ type: VersioningType.URI });
+  //版本控制
+  app.enableVersioning({
+    type: VersioningType.URI,
+    prefix: 'v',
+    defaultVersion: '1',
+  });
 
   // 静态资源配置
   const staticConfig = appConfig.staticAssetsOptions;

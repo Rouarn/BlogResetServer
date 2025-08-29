@@ -127,6 +127,21 @@ export class AppConfigService {
     };
   }
 
+  // Redis 开关控制
+  get redisEnabled(): boolean {
+    return this.configService.get<string>('NEST_REDIS_ENABLED') === 'true' || false;
+  }
+
+  // Redis 连接配置
+  get redisConfig() {
+    return {
+      host: this.configService.get<string>('NEST_REDIS_HOST', 'localhost'),
+      port: this.configService.get<number>('NEST_REDIS_PORT', 6379),
+      password: this.configService.get<string>('NEST_REDIS_PASSWORD'),
+      db: this.configService.get<number>('NEST_REDIS_DB', 0),
+    };
+  }
+
   // 白名单路由
   get whiteList(): string[] {
     return ['/login/code', '/login/create'];
