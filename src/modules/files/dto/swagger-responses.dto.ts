@@ -19,18 +19,11 @@ export class ApiErrorResponse {
   @ApiProperty({ example: false })
   success: boolean;
 
-  @ApiProperty({
-    example: {
-      code: 'FILE_TOO_LARGE',
-      message: '文件大小超出限制',
-      details: null,
-    },
-  })
-  error: {
-    code: string;
-    message: string;
-    details?: any;
-  };
+  @ApiProperty({ example: 413, description: '错误状态码' })
+  code: number;
+
+  @ApiProperty({ example: '文件大小超出限制', description: '错误信息' })
+  message: string;
 
   @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
   timestamp: string;

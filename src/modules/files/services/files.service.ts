@@ -12,7 +12,6 @@ import { FileUploadDto, FileQueryDto } from '../dto';
 import { FileUploadResult, BatchUploadResult } from '../interfaces';
 import { StorageService } from './storage.service';
 import { ValidationService } from './validation.service';
-
 import * as path from 'path';
 
 @Injectable()

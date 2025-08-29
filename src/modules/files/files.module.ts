@@ -9,12 +9,7 @@ import { StorageService } from './services/storage.service';
 import { ChunkService } from './services/chunk.service';
 import { ValidationService } from './services/validation.service';
 import { FileAccessGuard } from './guards/file-access.guard';
-
 import { StorageFactoryService } from './services/storage-factory.service';
-
-import { FileExceptionFilter } from './filters/file-exception.filter';
-import { ResponseInterceptor } from './interceptors/response.interceptor';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import * as multer from 'multer';
 
 @Module({
@@ -57,15 +52,6 @@ import * as multer from 'multer';
     ValidationService,
     FileAccessGuard,
     StorageFactoryService,
-
-    {
-      provide: APP_FILTER,
-      useClass: FileExceptionFilter,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: ResponseInterceptor,
-    },
   ],
   exports: [FilesService, StorageService],
 })

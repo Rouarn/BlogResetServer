@@ -1,5 +1,7 @@
 import * as cors from 'cors';
 import { join } from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import { AppModule } from './app.module';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -16,11 +18,13 @@ async function bootstrap() {
     // 应用中间件
     app.use(cors(appConfig.corsOptions));
 
-    // 版本控制
+    // 版本控制 - 使用配置服务
+    const versionConfig = appConfig.apiVersioning;
+
     app.enableVersioning({
       type: VersioningType.URI,
-      prefix: 'v',
-      defaultVersion: '1',
+      prefix: `${versionConfig.prefix}/v`,
+      defaultVersion: versionConfig.defaultVersion,
     });
 
     // 静态资源配置
@@ -44,8 +48,6 @@ async function bootstrap() {
       SwaggerModule.setup(swaggerConfig.prefix, app, document);
 
       // 保存API文档为JSON文件，供第三方工具导入使用
-      const fs = await import('fs');
-      const path = await import('path');
       const apiDocPath = path.join(
         __dirname,
         `..${staticConfig.options.prefix}/api-docs.json`,
@@ -82,6 +84,9 @@ async function bootstrap() {
     logger.log(`│ 🏷️  应用名称: ${appConfig.appTitle}`);
     logger.log(`│ 🌍 运行环境: ${appConfig.environment}`);
     logger.log(`│ 🚀 服务地址: ${appUrl}`);
+    logger.log(
+      `│ 🔗 API 访问: ${appUrl}/${versionConfig.prefix}/v${versionConfig.defaultVersion}`,
+    );
     logger.log(`│ ⚡ 端口号码: ${appConfig.port}`);
     logger.log('└' + '─'.repeat(65) + '┘');
 

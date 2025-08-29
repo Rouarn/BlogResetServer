@@ -127,6 +127,17 @@ export class AppConfigService {
     };
   }
 
+  // API 版本控制配置
+  get apiVersioning() {
+    return {
+      prefix: this.configService.get<string>('API_PREFIX', 'api'),
+      defaultVersion: this.configService.get<string>(
+        'API_DEFAULT_VERSION',
+        '1',
+      ),
+    };
+  }
+
   // 白名单路由
   get whiteList(): string[] {
     return ['/login/code', '/login/create'];
