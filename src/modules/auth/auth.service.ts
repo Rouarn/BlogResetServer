@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Auth } from './entities/auth.entity';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
+import { appConfig } from 'src/config';
 import * as svgCaptcha from 'svg-captcha';
 import * as bcryptjs from 'bcryptjs';
 
@@ -74,7 +75,7 @@ export class AuthService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, salt, ...payload } = findUser;
     const token = await this.JwtService.signAsync(payload, {
-      secret: process.env.NEST_JWT_SECRET,
+      secret: appConfig.jwtOptions.secret,
     });
     return {
       token: token,
@@ -138,7 +139,6 @@ export class AuthService {
         clientHash: clientInfo ? this.hashClientInfo(clientInfo) : null,
       },
       {
-        secret: process.env.NEST_JWT_SECRET,
         expiresIn: '5m', // 验证码5分钟过期
       },
     );
@@ -184,9 +184,7 @@ export class AuthService {
   ): Promise<{ valid: boolean; reason?: string }> {
     try {
       // 验证并解析token
-      const payload = await this.JwtService.verifyAsync(captchaToken, {
-        secret: process.env.NEST_JWT_SECRET,
-      });
+      const payload = await this.JwtService.verifyAsync(captchaToken);
 
       // 检查token类型
       if (payload.type !== 'captcha') {

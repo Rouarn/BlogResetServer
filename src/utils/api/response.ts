@@ -13,7 +13,7 @@ export class Response<T = any> implements NestInterceptor {
       map((data) => {
         return {
           data,
-          status: 0,
+          code: 200,
           success: true,
           message: '请求成功',
         };
