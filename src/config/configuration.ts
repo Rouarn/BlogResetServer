@@ -43,7 +43,16 @@ export default registerAs('app', () => ({
     username: process.env.NEST_DATABASE_USER || 'root',
     password: process.env.NEST_DATABASE_PASSWORD || '',
     database: process.env.NEST_DATABASE_NAME || 'nestjs_app',
-    synchronize: process.env.NEST_USER_NODE_ENV === 'development',
-    logging: process.env.NEST_USER_NODE_ENV === 'development',
+    synchronize: process.env.NEST_DATABASE_SYNCHRONIZE === 'true' || process.env.NEST_USER_NODE_ENV === 'development',
+    // 精细化日志控制 - 默认关闭所有查询日志
+    logging: process.env.NEST_DATABASE_LOGGING === 'true' ? true : false,
+    // 关闭额外的数据库通知
+    logNotifications: false,
+    // 优化连接池配置
+    extra: {
+      connectionLimit: 10,
+      acquireTimeout: 60000,
+      timeout: 60000,
+    },
   },
 }));

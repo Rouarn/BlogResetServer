@@ -6,9 +6,16 @@ import type { ServeStaticOptions } from '@nestjs/platform-express/interfaces/ser
 export class AppConfigService {
   constructor(private configService: ConfigService) {}
 
-  // 应用配置
+  // 应用配置 (硬编码，所有环境相同)
   get appTitle(): string {
-    return this.configService.get<string>('NEST_GLOB_APP_TITLE', 'NestJS Application');
+    const envSuffix = this.isDevelopment
+      ? ' - 开发环境'
+      : this.environment === 'test'
+        ? ' - 测试环境'
+        : this.isProduction
+          ? ' - 生产环境'
+          : '';
+    return `我与夏季 Ra 系统${envSuffix}`;
   }
 
   get port(): number {
@@ -31,38 +38,71 @@ export class AppConfigService {
   get jwtOptions() {
     return {
       secret: this.configService.get<string>('NEST_JWT_SECRET'),
-      expiresIn: this.configService.get<string>('NEST_JWT_ACCESS_TOKEN_TTL', '1d'),
+      expiresIn: this.configService.get<string>(
+        'NEST_JWT_ACCESS_TOKEN_TTL',
+        '1d',
+      ),
     };
   }
-
 
   // 静态资源配置
   get staticAssetsOptions() {
     return {
-      root: this.configService.get<string>('NEST_STATIC_ASSETS_PATH', './static'),
+      root: this.configService.get<string>(
+        'NEST_STATIC_ASSETS_PATH',
+        './static',
+      ),
       options: {
-        prefix: this.configService.get<string>('NEST_STATIC_ASSETS_URL', '/static'),
-        maxAge: this.configService.get<string>('NEST_STATIC_ASSETS_MAXAGE', '86400'),
+        prefix: this.configService.get<string>(
+          'NEST_STATIC_ASSETS_URL',
+          '/static',
+        ),
+        maxAge: this.configService.get<string>(
+          'NEST_STATIC_ASSETS_MAXAGE',
+          '86400',
+        ),
       } as ServeStaticOptions,
     };
   }
 
   // CORS配置
   get corsOptions() {
+    const origins = this.configService.get<string>(
+      'NEST_CORS_ORIGINS',
+      'http://localhost:3000,http://localhost:9527',
+    );
     return {
-      origin: ['http://localhost:9527', 'http://192.168.31.32:8848'],
+      origin: origins.split(',').map((origin) => origin.trim()),
       credentials: true,
     };
   }
 
-  // Swagger配置
+  // 调试配置
+  get isDebugEnabled(): boolean {
+    return this.configService.get<string>('NEST_ENABLE_DEBUG') === 'true';
+  }
+
+  get logLevel(): string {
+    return this.configService.get<string>('NEST_LOG_LEVEL', 'info');
+  }
+
+  // Swagger配置 (应用信息硬编码)
   get swaggerOptions() {
+    const envSuffix = this.isDevelopment
+      ? ' - 开发版'
+      : this.environment === 'test'
+        ? ' - 测试版'
+        : '';
+
     return {
-      title: this.configService.get<string>('NEST_SWAGGER_TITLE', 'API Documentation'),
-      description: this.configService.get<string>('NEST_SWAGGER_DESCRIPTION', 'API文档'),
-      version: this.configService.get<string>('NEST_SWAGGER_VERSION', '1.0'),
-      prefix: this.configService.get<string>('NEST_SWAGGER_PREFIX', '/api-docs'),
-      enabled: this.isDevelopment, // 只在开发环境启用
+      title: `我与夏季 Ra API${envSuffix}`,
+      description: `我与夏季 Ra 系统API文档${this.isDevelopment ? ' - 开发环境' : ''}`,
+      version: '1.0.0',
+      prefix: this.configService.get<string>(
+        'NEST_SWAGGER_PREFIX',
+        '/api-docs',
+      ),
+      enabled: this.environment !== 'production', // 生产环境关闭
     };
   }
 
@@ -75,8 +115,15 @@ export class AppConfigService {
       username: this.configService.get<string>('NEST_DATABASE_USER'),
       password: this.configService.get<string>('NEST_DATABASE_PASSWORD'),
       database: this.configService.get<string>('NEST_DATABASE_NAME'),
-      synchronize: this.isDevelopment,
-      logging: this.isDevelopment,
+      synchronize:
+        this.configService.get<string>('NEST_DATABASE_SYNCHRONIZE') ===
+          'true' || this.isDevelopment,
+      // 强制关闭查询日志，只保留错误日志
+      logging:
+        this.configService.get<string>('NEST_DATABASE_LOGGING') === 'true'
+          ? true
+          : false,
+      logger: 'simple-console' as const,
     };
   }
 
