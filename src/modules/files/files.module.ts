@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MulterModule } from '@nestjs/platform-express';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { File, UploadChunk } from './entities';
-import { FilesController } from './controllers/files.controller';
+import { FilesController } from './files.controller';
 import { FilesService } from './services/files.service';
 import { StorageService } from './services/storage.service';
 import { ChunkService } from './services/chunk.service';

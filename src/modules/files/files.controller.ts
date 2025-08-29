@@ -25,23 +25,23 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { Response } from 'express';
-import { FilesService } from '../services/files.service';
-import { ChunkService } from '../services/chunk.service';
+import { FilesService } from './services/files.service';
+import { ChunkService } from './services/chunk.service';
 import {
   FileUploadDto,
   FileQueryDto,
   ChunkUploadInitDto,
   ChunkUploadDto,
   ChunkUploadCompleteDto,
-} from '../dto';
+} from './dto';
 import {
   FileUploadSuccessResponse,
   BatchUploadSuccessResponse,
   ApiErrorResponse,
   FileListResponse,
-} from '../dto/swagger-responses.dto';
+} from './dto/swagger-responses.dto';
 import { GetCurrentUser, CurrentUser } from 'src/common/decorators';
-import { FileAccessGuard } from '../guards/file-access.guard';
+import { FileAccessGuard } from './guards/file-access.guard';
 import {
   FileValidationPipe,
   FilesValidationPipe,
