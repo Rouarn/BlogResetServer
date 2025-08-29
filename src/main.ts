@@ -49,7 +49,7 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(app, options);
     SwaggerModule.setup(swaggerConfig.prefix, app, document);
     
-    // 保存API文档为JSON文件，供Apifox导入使用
+    // 保存API文档为JSON文件，供第三方工具导入使用
     const fs = require('fs');
     const path = require('path');
     const apiDocPath = path.join(__dirname, `..${staticConfig.options.prefix}/api-docs.json`);
@@ -68,7 +68,7 @@ async function bootstrap() {
       `📚 Swagger docs: ${await app.getUrl()}${appConfig.swaggerOptions.prefix}`,
     );
     console.log(
-      `🔗 Apifox导入地址: ${await app.getUrl()}${staticConfig.options.prefix}/api-docs.json`,
+      `🔗 API文档JSON地址: ${await app.getUrl()}${staticConfig.options.prefix}/api-docs.json`,
     );
   }
 }
