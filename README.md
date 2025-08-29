@@ -8,6 +8,9 @@
 - ✅ **类型安全**: 完全使用 TypeScript 开发
 - ✅ **数据库支持**: 集成 TypeORM，支持 MySQL
 - ✅ **身份认证**: JWT + Passport 认证体系
+- ✅ **文件管理**: 完整的文件上传下载系统，支持分块上传、断点续传
+- ✅ **多协议支持**: HTTP、FTP等多种文件传输协议
+- ✅ **存储适配器**: 本地存储、FTP、云存储等多种存储方案
 - ✅ **API文档**: 集成 Swagger 自动生成文档
 - ✅ **验证码系统**: SVG验证码，防爬虫机制
 - ✅ **环境配置**: 完善的环境变量管理
@@ -233,6 +236,26 @@ nestjs-template/
 │   │   ├── auth.controller.ts    # 认证控制器
 │   │   ├── auth.service.ts       # 认证服务
 │   │   └── auth.module.ts        # 认证模块
+│   ├── files/                    # 文件管理模块
+│   │   ├── adapters/             # 存储适配器
+│   │   │   ├── ftp-storage.adapter.ts      # FTP存储适配器
+│   │   │   └── s3-storage.adapter.ts       # S3存储适配器
+│   │   ├── controllers/          # 控制器
+│   │   │   ├── files.controller.ts         # 文件管理控制器
+│   │   │   └── protocols.controller.ts     # 协议支持控制器
+│   │   ├── services/             # 服务类
+│   │   │   ├── files.service.ts            # 文件管理服务
+│   │   │   ├── storage.service.ts          # 存储服务
+│   │   │   ├── chunk.service.ts            # 分块上传服务
+│   │   │   └── validation.service.ts       # 文件验证服务
+│   │   ├── entities/             # 数据库实体
+│   │   │   ├── file.entity.ts              # 文件实体
+│   │   │   └── upload-chunk.entity.ts      # 上传分块实体
+│   │   ├── dto/                  # 数据传输对象
+│   │   ├── guards/               # 权限守卫
+│   │   ├── decorators/           # 装饰器
+│   │   ├── interfaces/           # 接口定义
+│   │   └── files.module.ts       # 文件模块
 │   ├── common/                   # 公共模块
 │   ├── config/                   # 配置管理
 │   │   ├── configuration.ts     # 配置对象
@@ -367,6 +390,304 @@ Content-Type: application/json
 获取JWT令牌后，在后续请求中携带：
 ```http
 Authorization: Bearer <your-jwt-token>
+```
+
+## 📁 文件上传下载模块
+
+### 功能特性
+- ✅ **多种上传方式**: 单文件上传、批量文件上传、分块上传
+- ✅ **断点续传**: 支持大文件分块上传和断点续传机制
+- ✅ **多协议支持**: HTTP、FTP协议文件传输
+- ✅ **安全验证**: 文件类型校验、大小限制、哈希验证
+- ✅ **权限控制**: JWT认证集成，基于用户的文件访问控制
+- ✅ **存储适配器**: 本地存储、FTP存储、云存储支持
+
+### 核心API接口
+
+#### 1. 单文件上传
+```http
+POST /files/upload
+Authorization: Bearer <jwt-token>
+Content-Type: multipart/form-data
+
+Form Data:
+- file: <文件>
+- description: "文件描述" (可选)
+```
+
+**响应示例**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-string",
+    "filename": "example.pdf",
+    "originalName": "原始文件名.pdf",
+    "size": 1048576,
+    "mimeType": "application/pdf",
+    "downloadUrl": "/files/uuid-string/download",
+    "uploadedAt": "2024-01-01T00:00:00.000Z"
+  },
+  "message": "文件上传成功"
+}
+```
+
+#### 2. 批量文件上传
+```http
+POST /files/upload/batch
+Authorization: Bearer <jwt-token>
+Content-Type: multipart/form-data
+
+Form Data:
+- files: <文件1>
+- files: <文件2>
+- files: <文件3>
+(最多10个文件)
+```
+
+**响应示例**:
+```json
+{
+  "success": true,
+  "data": {
+    "uploaded": [
+      {
+        "id": "uuid-1",
+        "filename": "file1.jpg",
+        "size": 204800
+      },
+      {
+        "id": "uuid-2", 
+        "filename": "file2.png",
+        "size": 512000
+      }
+    ],
+    "failed": [],
+    "total": 2,
+    "successCount": 2
+  },
+  "message": "批量上传完成"
+}
+```
+
+#### 3. 分块上传（大文件）
+
+**步骤1: 初始化分块上传**
+```http
+POST /files/upload/chunk/init
+Authorization: Bearer <jwt-token>
+Content-Type: application/json
+
+{
+  "filename": "large-video.mp4",
+  "fileSize": 104857600,
+  "chunkSize": 1048576,
+  "totalChunks": 100,
+  "mimeType": "video/mp4"
+}
+```
+
+**步骤2: 上传分块**
+```http
+POST /files/upload/chunk
+Authorization: Bearer <jwt-token>
+Content-Type: multipart/form-data
+
+Form Data:
+- uploadId: "uuid-from-init"
+- chunkNumber: 1
+- chunk: <分块数据>
+```
+
+**步骤3: 完成上传**
+```http
+POST /files/upload/chunk/complete
+Authorization: Bearer <jwt-token>
+Content-Type: application/json
+
+{
+  "uploadId": "uuid-from-init",
+  "chunks": [1, 2, 3, ..., 100]
+}
+```
+
+#### 4. 文件下载
+```http
+GET /files/:fileId/download
+Authorization: Bearer <jwt-token>
+```
+
+#### 5. 文件预览
+```http
+GET /files/:fileId/preview
+Authorization: Bearer <jwt-token>
+```
+
+#### 6. 文件列表查询
+```http
+GET /files?page=1&limit=10&type=image&search=关键词
+Authorization: Bearer <jwt-token>
+```
+
+**查询参数**:
+- `page`: 页码 (默认: 1)
+- `limit`: 每页数量 (默认: 10, 最大: 100)
+- `type`: 文件类型过滤 (image/video/document/audio)
+- `search`: 文件名搜索关键词
+
+#### 7. 文件详情
+```http
+GET /files/:fileId
+Authorization: Bearer <jwt-token>
+```
+
+#### 8. 删除文件
+```http
+DELETE /files/:fileId
+Authorization: Bearer <jwt-token>
+```
+
+#### 9. 获取支持的协议
+```http
+GET /files/protocols/supported
+Authorization: Bearer <jwt-token>
+```
+
+### 配置说明
+
+#### 环境变量配置
+在 `.env.development` 或 `.env.production` 中添加：
+
+```bash
+# 文件上传配置
+MAX_FILE_SIZE=10485760          # 最大文件大小 (10MB)
+MAX_BATCH_FILES=10              # 批量上传最大文件数
+UPLOAD_PATH=./uploads           # 本地存储路径
+ALLOWED_FILE_TYPES=image/jpeg,image/png,application/pdf  # 允许的文件类型
+
+# FTP配置 (可选)
+FTP_HOST=ftp.example.com
+FTP_PORT=21
+FTP_USER=username
+FTP_PASSWORD=password
+FTP_SECURE=false
+FTP_BASE_PATH=/uploads
+
+# AWS S3配置 (可选)
+AWS_REGION=us-east-1
+AWS_S3_BUCKET=my-bucket
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AWS_S3_ENDPOINT=https://s3.amazonaws.com
+AWS_S3_BASE_PATH=uploads
+
+# 存储类型选择
+STORAGE_TYPE=LOCAL              # LOCAL | FTP | AWS_S3
+```
+
+### 使用注意事项
+
+#### 安全性
+- ✅ 所有文件操作都需要JWT认证
+- ✅ 用户只能访问自己上传的文件
+- ✅ 文件类型白名单验证
+- ✅ 文件大小限制保护
+- ✅ 文件哈希验证防篡改
+
+#### 性能优化
+- ✅ 大文件自动启用分块上传
+- ✅ 支持断点续传，网络中断可恢复
+- ✅ 批量上传并发处理
+- ✅ 文件存储路径优化
+
+#### 错误处理
+常见错误码：
+- `FILE_TOO_LARGE`: 文件大小超出限制
+- `INVALID_FILE_TYPE`: 不支持的文件类型
+- `UPLOAD_FAILED`: 上传失败
+- `FILE_NOT_FOUND`: 文件不存在
+- `ACCESS_DENIED`: 无权限访问
+- `CHUNK_MISSING`: 分块缺失
+- `STORAGE_ERROR`: 存储服务错误
+
+#### 最佳实践
+
+**前端集成示例**:
+```javascript
+// 单文件上传
+const uploadFile = async (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const response = await fetch('/files/upload', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    },
+    body: formData
+  });
+  
+  return response.json();
+};
+
+// 分块上传大文件
+const uploadLargeFile = async (file) => {
+  const chunkSize = 1024 * 1024; // 1MB
+  const totalChunks = Math.ceil(file.size / chunkSize);
+  
+  // 1. 初始化
+  const initResponse = await fetch('/files/upload/chunk/init', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      filename: file.name,
+      fileSize: file.size,
+      chunkSize,
+      totalChunks,
+      mimeType: file.type
+    })
+  });
+  
+  const { uploadId } = await initResponse.json();
+  
+  // 2. 上传分块
+  for (let i = 0; i < totalChunks; i++) {
+    const start = i * chunkSize;
+    const end = Math.min(start + chunkSize, file.size);
+    const chunk = file.slice(start, end);
+    
+    const formData = new FormData();
+    formData.append('uploadId', uploadId);
+    formData.append('chunkNumber', i + 1);
+    formData.append('chunk', chunk);
+    
+    await fetch('/files/upload/chunk', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+  }
+  
+  // 3. 完成上传
+  const completeResponse = await fetch('/files/upload/chunk/complete', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      uploadId,
+      chunks: Array.from({length: totalChunks}, (_, i) => i + 1)
+    })
+  });
+  
+  return completeResponse.json();
+};
 ```
 
 ## 📚 API文档
