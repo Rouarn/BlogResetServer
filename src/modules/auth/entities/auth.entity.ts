@@ -1,7 +1,7 @@
 import * as bcrypt from 'bcryptjs';
 import { Exclude } from 'class-transformer';
 import { Role } from 'src/common/enums/index';
-import { Gender } from 'src/common/enums/gender.enum';
+import { Gender } from 'src/common/enums';
 import { BeforeInsert, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('ra_users')

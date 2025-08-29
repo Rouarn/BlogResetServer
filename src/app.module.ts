@@ -9,12 +9,11 @@ import {
 } from '@nestjs/core/constants';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ResponseInterceptor } from './common/interceptors/response.interceptor';
-import { HttpExceptionFilter } from './common/filters/http-exception.filter';
-import { JwtAuthStrategy } from './common/strategies/jwt-auth.strategy';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { GlobalGuard } from './common/guards/global.guard';
-import { RolesGuard } from './common/guards/roles.guard';
+import { ResponseInterceptor } from './common/interceptors';
+import { HttpExceptionFilter } from './common/filters';
+import { JwtAuthStrategy } from './common/strategies';
+import { JwtAuthGuard } from './common/guards';
+import { GlobalGuard, RolesGuard } from './common/guards';
 import { AuthModule } from './modules/auth/auth.module';
 import { FilesModule } from './modules/files/files.module';
 

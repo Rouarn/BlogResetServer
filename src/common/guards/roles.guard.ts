@@ -1,7 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Role } from 'src/common/enums/index';
-import { ROLES_KEY } from 'src/common/decorators/roles';
+import { ROLES_KEY } from '../decorators';
 
 /**
  * 角色守卫（RolesGuard）
