@@ -26,7 +26,6 @@
 - **文档**: Swagger/OpenAPI
 - **包管理**: PNPM
 - **代码规范**: ESLint + Prettier
-- **测试**: Jest
 
 ## 🛠️ 环境要求
 

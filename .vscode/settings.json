@@ -1,0 +1,15 @@
+{
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+    "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb, .npmrc",
+    "tsconfig.json": "tsconfig.*.json, tsconfig.build.json",
+    ".eslintrc.js": ".eslintignore, .eslintrc.*, eslint.config.*",
+    ".prettierrc": ".prettierignore, prettier.config.*",
+    ".gitignore": ".gitattributes, .gitmodules, .gitmessage, .mailmap, .git-blame*",
+    "README.md": "CHANGELOG.md, CONTRIBUTING.md, LICENSE, AUTHORS, CONTRIBUTORS",
+    "nest-cli.json": "nest-cli.*.json, .nest-cli.json",
+    ".env": ".env.*, .envrc, env.d.ts",
+    "docker-compose.yml": "docker-compose.*.yml, .dockerignore, Dockerfile*"
+  }
+}
