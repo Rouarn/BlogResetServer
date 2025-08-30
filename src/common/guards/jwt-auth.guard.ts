@@ -8,7 +8,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from '../decorators';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
-import { AuthUtil } from 'src/utils';
+import { WhitelistAuth } from 'src/utils/auth';
 
 /**
  * JwtAuthGuard（JWT 认证守卫）
@@ -53,7 +53,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     const path = request.path || request.url;
 
     // 检查是否在白名单中
-    if (AuthUtil.isWhitelistedPath(path)) {
+    if (WhitelistAuth.isWhitelistedPath(path)) {
       return true;
     }
 

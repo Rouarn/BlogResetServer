@@ -8,11 +8,11 @@
  * 
  * @example
  * ```typescript
- * import { AuthUtil } from '@/utils/auth';
+ * import { WhitelistAuth } from '@/utils/auth';
  * 
  * // 检查路径是否在白名单中
- * const isWhitelisted = AuthUtil.isWhitelistedPath('/login/code');
+ * const isWhitelisted = WhitelistAuth.isWhitelistedPath('/login/code');
  * ```
  */
 
-export * from './auth.util';
+export * from './whitelist.auth';

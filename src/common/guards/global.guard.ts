@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
 import { Request } from 'express';
-import { AuthUtil } from 'src/utils';
+import { WhitelistAuth } from 'src/utils/auth';
 
 /**
  * 全局限流守卫（GlobalGuard）
@@ -53,7 +53,7 @@ export class GlobalGuard implements CanActivate {
     const ip = request.ip?.replace(/:/g, '-') || '127.0.0.1';
 
     // 白名单路由可以有更宽松的限流策略
-    const isWhitelisted = AuthUtil.isWhitelistedPath(path);
+    const isWhitelisted = WhitelistAuth.isWhitelistedPath(path);
 
     const key = `rate_limit:${ip}`;
     // 白名单路由使用更宽松的限制

@@ -1,9 +1,9 @@
 import { WHITE_LIST_ROUTES } from 'src/common/constants';
 
 /**
- * 认证工具函数
+ * 白名单认证工具
  */
-export class AuthUtil {
+export class WhitelistAuth {
   /**
    * 检查路径是否在白名单中
    * @param path 请求路径
