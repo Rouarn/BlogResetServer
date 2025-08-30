@@ -3,7 +3,6 @@
     "esbenp.prettier-vscode",
     "dbaeumer.vscode-eslint",
     "ms-vscode.vscode-typescript-next",
-    "bradlc.vscode-tailwindcss",
     "ms-vscode.vscode-json",
     "mikestead.dotenv",
     "formulahendry.auto-rename-tag",
@@ -11,7 +10,5 @@
     "ms-vscode.vscode-todo-highlight",
     "gruntfuggly.todo-tree"
   ],
-  "unwantedRecommendations": [
-    "ms-vscode.vscode-typescript"
-  ]
+  "unwantedRecommendations": ["ms-vscode.vscode-typescript"]
 }
