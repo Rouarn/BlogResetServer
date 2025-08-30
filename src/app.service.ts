@@ -14,6 +14,7 @@
  * @version 1.0.0
  */
 import { Injectable } from '@nestjs/common';
+import * as packageJson from '../package.json';
 
 /**
  * 应用根服务类
@@ -35,11 +36,13 @@ export class AppService {
    * @example
    * ```typescript
    * const message = appService.getHello();
-   * console.log(message); // "Hello World!"
+   * console.log(message); // "Hello NestJS-Template"
    * ```
    */
-  getHello(): string {
-    return 'Hello World!';
+  getHello(): { message: string } {
+    return {
+      message: `Hello ${packageJson.name}`,
+    };
   }
 
   /**
@@ -51,13 +54,12 @@ export class AppService {
    * - 支持版本管理和监控
    *
    * @returns 版本信息对象
-   *
-   * @future 可从 package.json 或环境变量中读取
    */
-  getVersion(): { version: string; name: string } {
+  getVersion(): { version: string; name: string; description?: string } {
     return {
-      version: '1.0.0',
-      name: 'NestJS Template',
+      version: packageJson.version,
+      name: packageJson.name,
+      description: packageJson.description,
     };
   }
 }

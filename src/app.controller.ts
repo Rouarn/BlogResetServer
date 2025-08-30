@@ -47,12 +47,44 @@ export class AppController {
     description: '成功返回欢迎信息',
     schema: {
       type: 'string',
-      example: 'Hello World!',
+      example: 'Hello NestJS-Template',
     },
   })
   @Public() // 公共接口，无需认证
   @Get()
-  getHello(): string {
+  getHello(): { message: string } {
     return this.appService.getHello();
+  }
+
+  /**
+   * 获取应用版本信息
+   *
+   * 用途:
+   * - 提供应用的版本号
+   * - 用于版本管理和监控
+   * - 展示应用的构建信息
+   *
+   * @returns 版本信息对象
+   */
+  @ApiOperation({
+    summary: '获取版本信息',
+    description: '返回应用的版本号和构建信息',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '成功返回版本信息',
+    schema: {
+      type: 'object',
+      example: {
+        version: '1.0.0',
+        name: 'NestJS-Template',
+        description: 'NestJS 应用模板',
+      },
+    },
+  })
+  @Public() // 公共接口，无需认证
+  @Get('version')
+  getVersion(): { version: string; name: string; description?: string } {
+    return this.appService.getVersion();
   }
 }

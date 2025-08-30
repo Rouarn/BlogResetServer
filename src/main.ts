@@ -105,7 +105,7 @@ async function bootstrap(): Promise<void> {
     // 美化的错误输出
     logger.error('');
     logger.error('╔' + '═'.repeat(50) + '╗');
-    logger.error('║' + ' '.repeat(13) + '❌ 应用程序启动失败 ❌' + ' '.repeat(12) + '║');
+    logger.error('║' + ' '.repeat(13) + '❌ 应用程序启动失败 ❌' + ' '.repeat(15) + '║');
     logger.error('╚' + '═'.repeat(50) + '╝');
     logger.error(
       '🔍 错误详情:',
