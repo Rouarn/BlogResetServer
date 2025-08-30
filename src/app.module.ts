@@ -53,7 +53,7 @@ import { FilesModule } from './modules/files/files.module';
     JwtModule.registerAsync({
       global: true, // 全局可用，无需在每个模块中重复导入
       inject: [ConfigService], // 注入配置服务
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('NEST_JWT_SECRET'), // JWT 签名密钥
         signOptions: {
           expiresIn: configService.get<string>( // JWT 过期时间

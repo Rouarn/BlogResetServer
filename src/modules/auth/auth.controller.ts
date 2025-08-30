@@ -64,7 +64,7 @@ export class AuthController {
   })
   @Public()
   @Get('captcha')
-  async getCaptcha(@Ip() clientIp: string, @Headers('user-agent') userAgent: string) {
+  async getCaptcha(@Ip() clientIp: string, @Headers('user-agent') userAgent: string): Promise<any> {
     const clientInfo = { ip: clientIp, userAgent };
     const result = await this.authService.generateCaptcha(clientInfo);
 

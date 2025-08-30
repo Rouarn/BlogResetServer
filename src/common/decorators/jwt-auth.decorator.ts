@@ -25,6 +25,6 @@ import { JwtAuthGuard } from '../guards';
  *
  * @returns 应用了 JwtAuthGuard 的装饰器组合
  */
-export function JwtAuth() {
+export function JwtAuth(): MethodDecorator & ClassDecorator {
   return applyDecorators(UseGuards(JwtAuthGuard));
 }

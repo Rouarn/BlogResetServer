@@ -14,6 +14,7 @@
  * import { JwtAuth, Roles, GetCurrentUser } from '@/common/decorators';
  */
 export * from './current-user.decorator';
+export * from './enum.decorator';
 export * from './jwt-auth.decorator';
 export * from './public.decorator';
 export * from './roles.decorator';

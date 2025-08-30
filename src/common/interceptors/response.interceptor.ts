@@ -48,17 +48,25 @@ export class ResponseInterceptor<T = any> implements NestInterceptor {
     return next.handle().pipe(
       map((rawData) => {
         const baseResponse = {
-          code: SUCCESS_RESPONSE.CODE,
-          message: SUCCESS_RESPONSE.MESSAGE,
+          code: SUCCESS_RESPONSE.code,
+          message: SUCCESS_RESPONSE.message,
+          timestamp: new Date().toISOString(),
         };
 
         const request = context.switchToHttp().getRequest();
         const params = this.getRequestParams(request);
 
         if (this.isPagingRequest(params)) {
+          const paginatedData = this.formatPaginatedData(rawData, params);
           return {
             ...baseResponse,
-            data: this.formatPaginatedData(rawData, params),
+            data: paginatedData.records,
+            pagination: {
+              page: paginatedData.current,
+              limit: paginatedData.size,
+              total: paginatedData.total,
+              totalPages: Math.ceil(paginatedData.total / paginatedData.size),
+            },
           } as PaginatedResponse<T>;
         }
 

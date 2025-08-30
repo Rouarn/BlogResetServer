@@ -61,7 +61,7 @@ export class FilesService {
       fileType,
       status: FileStatus.COMPLETED,
       description: uploadDto.description,
-      isPublic: uploadDto.isPublic || false,
+      isPublic: uploadDto.isPublic ?? false,
       uploadProtocol: uploadDto.protocol,
     });
 
@@ -145,7 +145,7 @@ export class FilesService {
     queryBuilder.orderBy(`file.${sortBy}`, sortOrder);
 
     // 分页
-    const offset = ((page || 1) - 1) * (limit || 10);
+    const offset = ((page ?? 1) - 1) * (limit ?? 10);
     queryBuilder.skip(offset).take(limit);
 
     const [files, total] = await queryBuilder.getManyAndCount();

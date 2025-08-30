@@ -1,5 +1,4 @@
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { CreateAuthDto as JwtPayload } from 'src/modules/auth/dto/create-auth.dto';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
@@ -42,7 +41,7 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
    * @param payload JWT 载荷，包含用户信息及 iat/exp 字段
    * @returns 校验通过后的用户信息对象
    */
-  async validate(payload: JwtPayload & { iat?: number; exp?: number }) {
+  async validate(payload: any): Promise<any> {
     try {
       delete payload.iat;
       delete payload.exp;

@@ -57,7 +57,7 @@ export class AuthService {
    * @param body 包含用户名和密码的登录数据
    * @returns 成功时返回token和refreshToken，失败时返回错误消息
    */
-  async login(body: CreateAuthDto) {
+  async login(body: any): Promise<any> {
     const findUser = await this.authRepository.findOne({
       where: { userName: body.userName },
     });
@@ -93,7 +93,7 @@ export class AuthService {
    * @param body 包含用户注册信息的数据传输对象
    * @returns 注册结果消息
    */
-  async register(body: CreateAuthDto) {
+  async register(body: any): Promise<any> {
     const findUser = await this.authRepository.findOne({
       where: { userName: body.userName },
     });
@@ -161,7 +161,7 @@ export class AuthService {
    * 生成客户端信息哈希（用于防爬验证）
    */
   private hashClientInfo(clientInfo: { ip?: string; userAgent?: string }): string {
-    const info = `${clientInfo.ip || 'unknown'}-${clientInfo.userAgent || 'unknown'}`;
+    const info = `${clientInfo.ip ?? 'unknown'}-${clientInfo.userAgent ?? 'unknown'}`;
     return createHash('sha256').update(info).digest('hex').substring(0, 16);
   }
 

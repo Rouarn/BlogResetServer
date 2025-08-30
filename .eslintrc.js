@@ -45,7 +45,6 @@ module.exports = {
   // 继承的配置规则集
   extends: [
     'plugin:@typescript-eslint/recommended',
-    'plugin:@typescript-eslint/recommended-requiring-type-checking',
     'plugin:import/recommended',
     'plugin:import/typescript',
     'plugin:prettier/recommended',

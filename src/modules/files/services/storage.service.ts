@@ -19,7 +19,7 @@ export class StorageService implements StorageAdapter {
       maxFileSize: staticConfig.upload.maxFileSize,
       allowedTypes: staticConfig.upload.allowedTypes,
     };
-    this.ensureUploadDirectory();
+    void this.ensureUploadDirectory();
   }
 
   private async ensureUploadDirectory(): Promise<void> {

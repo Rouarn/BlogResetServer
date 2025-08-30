@@ -34,12 +34,7 @@ import {
   FileQueryDto,
   FileUploadDto,
 } from './dto';
-import {
-  ApiErrorResponse,
-  BatchUploadSuccessResponse,
-  FileListResponse,
-  FileUploadSuccessResponse,
-} from './dto/swagger-responses.dto';
+import { FileListResponseDto, FileUploadResponseDto } from './dto/swagger-responses.dto';
 import { FileAccessGuard } from './guards/file-access.guard';
 import { ChunkService } from './services/chunk.service';
 import { FilesService } from './services/files.service';
@@ -76,22 +71,22 @@ export class FilesController {
   @ApiResponse({
     status: 201,
     description: '文件上传成功',
-    type: FileUploadSuccessResponse,
+    type: FileUploadResponseDto,
   })
   @ApiResponse({
     status: 400,
     description: '请求参数错误',
-    type: ApiErrorResponse,
+    type: 'object',
   })
   @ApiResponse({
     status: 413,
     description: '文件大小超出限制',
-    type: ApiErrorResponse,
+    type: 'object',
   })
   @ApiResponse({
     status: 415,
     description: '不支持的文件类型',
-    type: ApiErrorResponse,
+    type: 'object',
   })
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
@@ -133,12 +128,12 @@ export class FilesController {
   @ApiResponse({
     status: 201,
     description: '批量文件上传完成',
-    type: BatchUploadSuccessResponse,
+    type: 'object',
   })
   @ApiResponse({
     status: 400,
     description: '请求参数错误',
-    type: ApiErrorResponse,
+    type: 'object',
   })
   @UseInterceptors(FilesInterceptor('files', 10))
   async uploadFiles(
@@ -242,7 +237,7 @@ export class FilesController {
   @ApiResponse({
     status: 200,
     description: '获取文件列表成功',
-    type: FileListResponse,
+    type: FileListResponseDto,
   })
   async getFiles(@Query() queryDto: FileQueryDto, @GetCurrentUser() user?: CurrentUser) {
     const { files, total } = await this.filesService.findFiles(queryDto, user?.id);
@@ -254,7 +249,7 @@ export class FilesController {
           page: queryDto.page,
           limit: queryDto.limit,
           total,
-          totalPages: Math.ceil(total / (queryDto.limit || 10)),
+          totalPages: Math.ceil(total / (queryDto.limit ?? 10)),
         },
       },
     };
@@ -267,12 +262,12 @@ export class FilesController {
   @ApiResponse({
     status: 404,
     description: '文件不存在',
-    type: ApiErrorResponse,
+    type: 'object',
   })
   @ApiResponse({
     status: 403,
     description: '无权限访问',
-    type: ApiErrorResponse,
+    type: 'object',
   })
   @UseGuards(FileAccessGuard)
   async getFile(@Param('id', ParseUUIDPipe) id: string, @GetCurrentUser() user?: CurrentUser) {

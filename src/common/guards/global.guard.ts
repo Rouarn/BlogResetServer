@@ -46,8 +46,8 @@ export class GlobalGuard implements CanActivate {
    */
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
-    const path = request.path || request.url;
-    const ip = request.ip?.replace(/:/g, '-') || '127.0.0.1';
+    const path = request.path ?? request.url;
+    const ip = request.ip?.replace(/:/g, '-') ?? '127.0.0.1';
 
     // 白名单路由可以有更宽松的限流策略
     const isWhitelisted = WhitelistAuth.isWhitelistedPath(path);
@@ -86,7 +86,7 @@ export class GlobalGuard implements CanActivate {
     }
 
     // 记录请求信息
-    const current = stored?.count || 1;
+    const current = stored?.count ?? 1;
     this.logger.debug(`请求路径: ${request.path}`);
     this.logger.debug(`请求方法: ${request.method}`);
     this.logger.debug(`请求IP: ${request.ip}`);

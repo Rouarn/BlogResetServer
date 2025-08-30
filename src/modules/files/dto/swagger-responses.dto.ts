@@ -1,112 +1,120 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { BatchUploadResult, FileUploadResult } from '../interfaces';
 
-export class ApiSuccessResponse<T = any> {
-  @ApiProperty({ example: true })
-  success: boolean;
+/**
+ * 文件信息 DTO
+ */
+export class FileInfoDto {
+  @ApiProperty({ description: '文件ID' })
+  id: string;
 
-  @ApiProperty()
-  data: T;
+  @ApiProperty({ description: '文件名' })
+  filename: string;
 
-  @ApiProperty({ example: '操作成功' })
-  message?: string;
+  @ApiProperty({ description: '原始文件名' })
+  originalName: string;
 
-  @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
-  timestamp: string;
+  @ApiProperty({ description: '文件大小（字节）' })
+  size: number;
+
+  @ApiProperty({ description: 'MIME类型' })
+  mimetype: string;
+
+  @ApiProperty({ description: '文件路径' })
+  path: string;
+
+  @ApiProperty({ description: '文件URL' })
+  url: string;
+
+  @ApiProperty({ description: '是否公开' })
+  isPublic: boolean;
+
+  @ApiProperty({ description: '上传时间' })
+  createdAt: Date;
 }
 
-export class ApiErrorResponse {
-  @ApiProperty({ example: false })
-  success: boolean;
+/**
+ * 文件上传响应 DTO
+ */
+export class FileUploadResponseDto {
+  @ApiProperty({ description: '文件信息', type: FileInfoDto })
+  file: FileInfoDto;
 
-  @ApiProperty({ example: 413, description: '错误状态码' })
-  code: number;
+  @ApiProperty({ description: '上传消息' })
+  message: string;
+}
 
-  @ApiProperty({ example: '文件大小超出限制', description: '错误信息' })
+/**
+ * 分块上传初始化响应 DTO
+ */
+export class ChunkUploadInitResponseDto {
+  @ApiProperty({ description: '上传ID' })
+  uploadId: string;
+
+  @ApiProperty({ description: '分块大小' })
+  chunkSize: number;
+
+  @ApiProperty({ description: '总分块数' })
+  totalChunks: number;
+
+  @ApiProperty({ description: '初始化消息' })
+  message: string;
+}
+
+/**
+ * 分块上传响应 DTO
+ */
+export class ChunkUploadResponseDto {
+  @ApiProperty({ description: '分块索引' })
+  chunkIndex: number;
+
+  @ApiProperty({ description: '上传状态' })
+  uploaded: boolean;
+
+  @ApiProperty({ description: '响应消息' })
+  message: string;
+}
+
+/**
+ * 分块上传完成响应 DTO
+ */
+export class ChunkUploadCompleteResponseDto {
+  @ApiProperty({ description: '文件信息', type: FileInfoDto })
+  file: FileInfoDto;
+
+  @ApiProperty({ description: '完成消息' })
+  message: string;
+}
+
+/**
+ * 文件列表响应 DTO
+ */
+export class FileListResponseDto {
+  @ApiProperty({ description: '文件列表', type: [FileInfoDto] })
+  files: FileInfoDto[];
+
+  @ApiProperty({ description: '总数' })
+  total: number;
+
+  @ApiProperty({ description: '当前页' })
+  page: number;
+
+  @ApiProperty({ description: '每页数量' })
+  limit: number;
+}
+
+/**
+ * 通用文件响应 DTO
+ */
+export class FileResponseDto {
+  @ApiProperty({ description: '响应数据' })
+  data: unknown;
+
+  @ApiProperty({ description: '响应消息' })
   message: string;
 
-  @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
+  @ApiProperty({ description: '响应代码' })
+  code: number;
+
+  @ApiProperty({ description: '时间戳' })
   timestamp: string;
-
-  @ApiProperty({ example: '/api/files/upload' })
-  path: string;
-}
-
-export class FileUploadSuccessResponse extends ApiSuccessResponse<FileUploadResult> {
-  @ApiProperty({
-    example: {
-      fileId: 'uuid',
-      filename: 'example_123456.pdf',
-      originalName: 'example.pdf',
-      size: 1048576,
-      mimeType: 'application/pdf',
-      path: '2024-01/example_123456.pdf',
-      hash: 'sha256hash',
-      downloadUrl: 'http://localhost:3000/api/files/uuid/download',
-    },
-  })
-  data: FileUploadResult;
-}
-
-export class BatchUploadSuccessResponse extends ApiSuccessResponse<BatchUploadResult> {
-  @ApiProperty({
-    example: {
-      successful: [
-        {
-          fileId: 'uuid1',
-          filename: 'file1.pdf',
-          originalName: 'file1.pdf',
-          size: 1048576,
-          mimeType: 'application/pdf',
-          path: '2024-01/file1.pdf',
-          hash: 'hash1',
-          downloadUrl: 'http://localhost:3000/api/files/uuid1/download',
-        },
-      ],
-      failed: [
-        {
-          filename: 'file2.pdf',
-          error: '文件大小超出限制',
-        },
-      ],
-      totalFiles: 2,
-      successCount: 1,
-      failureCount: 1,
-    },
-  })
-  data: BatchUploadResult;
-}
-
-export class FileListResponse {
-  @ApiProperty({
-    example: [
-      {
-        id: 'uuid',
-        filename: 'example.pdf',
-        originalName: 'example.pdf',
-        size: 1048576,
-        mimeType: 'application/pdf',
-        fileType: 'DOCUMENT',
-        status: 'COMPLETED',
-        isPublic: false,
-        createdAt: '2024-01-01T00:00:00.000Z',
-      },
-    ],
-  })
-  files: any[];
-
-  @ApiProperty({
-    example: {
-      page: 1,
-      limit: 10,
-      total: 100,
-      totalPages: 10,
-    },
-  })
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
 }

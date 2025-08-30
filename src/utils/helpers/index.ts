@@ -27,10 +27,11 @@ export * from './random-string.helper';
 
 // 数据处理
 export * from './deep-clone.helper';
+export * from './enum.helper';
 
 // 时间处理
-export * from './format-date.helper';
 export * from './date.helper';
+export * from './format-date.helper';
 
 // 性能优化
 export * from './debounce.helper';

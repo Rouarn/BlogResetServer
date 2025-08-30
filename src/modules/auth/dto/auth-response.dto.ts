@@ -1,113 +1,103 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
- * 登录成功响应DTO
+ * 用户信息响应 DTO
  */
-export class LoginResponseDto {
-  @ApiProperty({
-    description: 'JWT访问令牌',
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-  })
-  token: string;
+export class UserInfoDto {
+  @ApiProperty({ description: '用户ID' })
+  id: string;
 
-  @ApiProperty({
-    description: 'JWT刷新令牌',
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-  })
-  refreshToken: string;
-}
+  @ApiProperty({ description: '用户名' })
+  userName: string;
 
-/**
- * 用户信息响应DTO
- */
-export class UserInfoResponseDto {
-  @ApiProperty({
-    description: '用户权限按钮',
-    example: ['B_CODE1', 'B_CODE2', 'B_CODE3'],
-    type: [String],
-  })
-  buttons: string[];
+  @ApiProperty({ description: '邮箱' })
+  email: string;
 
-  @ApiProperty({
-    description: '用户角色',
-    example: ['admin', 'user'],
-    type: [String],
-  })
+  @ApiProperty({ description: '角色' })
   roles: string[];
 
-  @ApiProperty({
-    description: '用户ID',
-    example: 1,
-  })
-  userId: number;
+  @ApiProperty({ description: '创建时间' })
+  createdAt: Date;
 
-  @ApiProperty({
-    description: '用户名',
-    example: 'john_doe',
-  })
-  userName: string;
+  @ApiProperty({ description: '更新时间' })
+  updatedAt: Date;
 }
 
 /**
- * 验证码响应DTO
+ * 登录响应 DTO
  */
-export class CaptchaResponseDto {
-  @ApiProperty({
-    description: '验证码图片的base64编码',
-    example: 'data:image/svg+xml;base64,PHN2Zy4uLg==',
-  })
-  image: string;
+export class LoginResponseDto {
+  @ApiProperty({ description: '访问令牌' })
+  accessToken: string;
 
-  @ApiProperty({
-    description: '验证码token，用于后续验证',
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-  })
-  token: string;
+  @ApiProperty({ description: '刷新令牌' })
+  refreshToken: string;
 
-  @ApiProperty({
-    description: '过期时间（秒）',
-    example: 300,
-  })
+  @ApiProperty({ description: '令牌类型', default: 'Bearer' })
+  tokenType: string;
+
+  @ApiProperty({ description: '过期时间（秒）' })
   expiresIn: number;
 
-  @ApiProperty({
-    description: '防重放攻击的随机数',
-    example: 'abc123def456',
-  })
-  nonce: string;
+  @ApiProperty({ description: '用户信息', type: UserInfoDto })
+  user: UserInfoDto;
 }
 
 /**
- * 通用操作响应DTO
+ * 注册响应 DTO
  */
-export class CommonResponseDto {
-  @ApiProperty({
-    description: '操作是否成功',
-    example: true,
-  })
-  success: boolean;
+export class RegisterResponseDto {
+  @ApiProperty({ description: '用户信息', type: UserInfoDto })
+  user: UserInfoDto;
 
-  @ApiProperty({
-    description: '响应消息',
-    example: '操作成功',
-  })
+  @ApiProperty({ description: '注册消息' })
+  message: string;
+}
+
+/**
+ * 刷新令牌响应 DTO
+ */
+export class RefreshTokenResponseDto {
+  @ApiProperty({ description: '新的访问令牌' })
+  accessToken: string;
+
+  @ApiProperty({ description: '新的刷新令牌' })
+  refreshToken: string;
+
+  @ApiProperty({ description: '令牌类型', default: 'Bearer' })
+  tokenType: string;
+
+  @ApiProperty({ description: '过期时间（秒）' })
+  expiresIn: number;
+}
+
+/**
+ * 验证响应 DTO
+ */
+export class ValidateResponseDto {
+  @ApiProperty({ description: '验证状态' })
+  valid: boolean;
+
+  @ApiProperty({ description: '用户信息', type: UserInfoDto, required: false })
+  user?: UserInfoDto;
+
+  @ApiProperty({ description: '验证消息' })
+  message: string;
+}
+
+/**
+ * 通用认证响应 DTO
+ */
+export class AuthResponseDto {
+  @ApiProperty({ description: '响应数据' })
+  data: unknown;
+
+  @ApiProperty({ description: '响应消息' })
   message: string;
 
-  @ApiProperty({
-    description: '时间戳',
-    example: '2023-12-01T10:00:00.000Z',
-  })
+  @ApiProperty({ description: '响应代码' })
+  code: number;
+
+  @ApiProperty({ description: '时间戳' })
   timestamp: string;
-
-  @ApiProperty({
-    description: '响应数据',
-    required: false,
-  })
-  data?: any;
-
-  @ApiProperty({
-    description: '错误信息',
-    required: false,
-  })
-  error?: string;
 }

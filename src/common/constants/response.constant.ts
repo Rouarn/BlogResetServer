@@ -1,24 +1,30 @@
 import type { DefaultPagination, SuccessResponse } from '../interfaces/response.interface';
 
 /**
- * 标准请求成功响应常量
+ * 成功响应常量
  */
 export const SUCCESS_RESPONSE: SuccessResponse = {
-  CODE: 200,
-  MESSAGE: 'success',
-} as const;
+  code: 200,
+  message: '操作成功',
+  data: null,
+  success: true,
+  timestamp: new Date().toISOString(),
+};
 
 /**
- * 分页默认参数常量
+ * 默认分页参数
  */
-export const DEFAULT_PAGINATION: DefaultPagination = {
+export const DEFAULT_PAGINATION: DefaultPagination & {
+  MIN_PAGE: number;
+  DEFAULT_PAGE_SIZE: number;
+} = {
+  page: 1,
+  limit: 10,
   MIN_PAGE: 1,
   DEFAULT_PAGE_SIZE: 10,
-} as const;
+};
 
 /**
  * 分页字段名常量
- * @type {readonly ['current', 'size']}
- * @description 包含分页相关的字段名，分别为当前页码和每页条数
  */
 export const PAGING_FIELDS: readonly ['current', 'size'] = ['current', 'size'] as const;

@@ -13,5 +13,4 @@
  * 用法示例：
  * import { IResponse, ErrorResponse } from '@/common/interfaces';
  */
-export * from './error-response.interface';
 export * from './response.interface';

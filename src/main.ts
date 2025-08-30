@@ -1,4 +1,4 @@
-import * as cors from 'cors';
+import cors from 'cors';
 import * as fs from 'fs';
 import * as path from 'path';
 import { join } from 'path';
@@ -9,7 +9,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { appConfig } from './config';
 
-async function bootstrap() {
+async function bootstrap(): Promise<void> {
   const logger = new Logger('Bootstrap');
 
   try {
@@ -107,11 +107,14 @@ async function bootstrap() {
     logger.error('╔' + '═'.repeat(50) + '╗');
     logger.error('║' + ' '.repeat(13) + '❌ 应用程序启动失败 ❌' + ' '.repeat(12) + '║');
     logger.error('╚' + '═'.repeat(50) + '╝');
-    logger.error('🔍 错误详情:', error.stack || error.message);
+    logger.error(
+      '🔍 错误详情:',
+      error instanceof Error ? (error.stack ?? error.message) : String(error),
+    );
     logger.error('💡 请检查配置文件和依赖项是否正确');
     logger.error('');
     process.exit(1);
   }
 }
 
-bootstrap();
+void bootstrap();

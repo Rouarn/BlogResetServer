@@ -28,4 +28,4 @@ export const IS_PUBLIC_KEY = AUTH_METADATA_KEYS.IS_PUBLIC;
  *
  * @returns 设置公共路由元数据的装饰器
  */
-export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
+export const Public = (): MethodDecorator & ClassDecorator => SetMetadata(IS_PUBLIC_KEY, true);

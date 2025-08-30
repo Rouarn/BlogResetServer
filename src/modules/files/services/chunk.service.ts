@@ -27,7 +27,7 @@ export class ChunkService {
     const uploadId = generateUUID();
     const filename = this.validationService.generateUniqueFilename(initDto.filename);
     const fileType =
-      initDto.fileType || this.validationService.getFileType('application/octet-stream');
+      initDto.fileType ?? this.validationService.getFileType('application/octet-stream');
 
     // 创建文件记录
     const fileEntity = this.fileRepository.create({
@@ -43,7 +43,7 @@ export class ChunkService {
       totalChunks: initDto.totalChunks,
       uploadedChunks: 0,
       description: initDto.description,
-      isPublic: initDto.isPublic || false,
+      isPublic: initDto.isPublic ?? false,
     });
 
     await this.fileRepository.save(fileEntity);
@@ -112,7 +112,7 @@ export class ChunkService {
     await this.chunkRepository.save(chunkEntity);
 
     // 更新文件的已上传分块数
-    file.uploadedChunks = (file.uploadedChunks || 0) + 1;
+    file.uploadedChunks = (file.uploadedChunks ?? 0) + 1;
     await this.fileRepository.save(file);
 
     this.logger.log(`Chunk uploaded: ${uploadId} - ${chunkNumber}`);

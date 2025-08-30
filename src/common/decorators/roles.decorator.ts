@@ -34,4 +34,5 @@ export const ROLES_KEY = 'roles';
  * @param roles 允许访问的角色列表
  * @returns 设置角色权限元数据的装饰器
  */
-export const Roles = (...roles: Role[]) => SetMetadata(ROLES_KEY, roles);
+export const Roles = (...roles: Role[]): MethodDecorator & ClassDecorator =>
+  SetMetadata(ROLES_KEY, roles);

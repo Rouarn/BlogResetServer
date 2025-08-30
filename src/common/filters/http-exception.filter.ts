@@ -66,10 +66,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
    */
   private extractContext(request: Request): Record<string, any> {
     return {
-      requestId: request.headers['x-request-id'] || generateUUID(),
-      userId: (request as any).user?.id || request.headers['x-user-id'] || 'anonymous',
-      userAgent: request.headers['user-agent'] || 'unknown',
-      ip: request.ip || (request.connection as any)?.remoteAddress || 'unknown',
+      requestId: request.headers['x-request-id'] ?? generateUUID(),
+      userId: (request as any).user?.id ?? request.headers['x-user-id'] ?? 'anonymous',
+      userAgent: request.headers['user-agent'] ?? 'unknown',
+      ip: request.ip ?? (request.connection as any)?.remoteAddress ?? 'unknown',
       method: request.method,
       url: request.url,
       query: request.query,
@@ -111,9 +111,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
       status,
       message,
       context,
-      stack: stack || null,
+      stack: stack ?? null,
       service: 'nestjs-template',
-      environment: process.env.NODE_ENV || 'development',
+      environment: process.env.NODE_ENV ?? 'development',
     };
 
     return JSON.stringify(logData, null, 2);
@@ -139,7 +139,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       DEBUG: '🔍',
     };
 
-    const icon = icons[level as keyof typeof icons] || '🔍';
+    const icon = icons[level as keyof typeof icons] ?? '🔍';
     const formattedMessage = `${icon} ${logMessage}`;
 
     // 根据级别选择日志方法
@@ -150,7 +150,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         WARNING: this.logger.warn.bind(this.logger),
         INFO: this.logger.log.bind(this.logger),
         DEBUG: this.logger.debug.bind(this.logger),
-      }[level] || this.logger.debug.bind(this.logger);
+      }[level] ?? this.logger.debug.bind(this.logger);
 
     // 记录基本日志
     logMethod(formattedMessage);
@@ -190,7 +190,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         message = exceptionResponse;
       } else if (typeof exceptionResponse === 'object') {
         const responseObj = exceptionResponse as any;
-        message = responseObj.message || responseObj.error || message;
+        message = responseObj.message ?? responseObj.error ?? message;
       }
     } else if (exception instanceof Error) {
       message = exception.message;
@@ -215,8 +215,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
       success: false,
       code: status,
       message,
+      data: null,
       timestamp: formatISOString(),
-      path: request.url,
+      url: request.url,
     };
 
     // 提取上下文信息
