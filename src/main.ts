@@ -48,7 +48,15 @@ async function bootstrap(): Promise<void> {
       SwaggerModule.setup(swaggerConfig.prefix, app, document);
 
       // 保存API文档为JSON文件，供第三方工具导入使用
-      const apiDocPath = path.join(__dirname, `..${staticConfig.options.prefix}/api-docs.json`);
+      const docsDir = path.join(__dirname, `..${staticConfig.options.prefix}`);
+      const apiDocPath = path.join(docsDir, 'api-docs.json');
+
+      // 确保目录存在
+      if (!fs.existsSync(docsDir)) {
+        fs.mkdirSync(docsDir, { recursive: true });
+      }
+
+      // 写入API文档文件
       fs.writeFileSync(apiDocPath, JSON.stringify(document, null, 2));
       logger.log(`📄 API文档已保存到: ${apiDocPath}`);
     }
