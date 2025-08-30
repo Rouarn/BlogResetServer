@@ -1,9 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { StorageAdapter, StorageConfig } from '../interfaces';
 import { appConfig } from 'src/config';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { StorageAdapter, StorageConfig } from '../interfaces';
 
 @Injectable()
 export class StorageService implements StorageAdapter {
@@ -79,9 +79,7 @@ export class StorageService implements StorageAdapter {
     return `${baseUrl}${staticConfig.options.prefix}/${relativePath}`;
   }
 
-  async getFileStats(
-    relativePath: string,
-  ): Promise<{ size: number; mtime: Date } | null> {
+  async getFileStats(relativePath: string): Promise<{ size: number; mtime: Date } | null> {
     try {
       const fullPath = path.join(this.config.basePath, relativePath);
       const stats = await fs.stat(fullPath);

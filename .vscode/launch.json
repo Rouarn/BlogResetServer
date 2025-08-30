@@ -1,0 +1,35 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug NestJS",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/@nestjs/cli/bin/nest.js",
+      "args": ["start", "--debug", "--watch"],
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "console": "integratedTerminal",
+      "restart": true,
+      "stopOnEntry": false,
+      "runtimeArgs": ["--nolazy"],
+      "sourceMaps": true,
+      "cwd": "${workspaceRoot}",
+      "outputCapture": "std"
+    },
+    {
+      "name": "Debug NestJS (Production Build)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/dist/main.js",
+      "env": {
+        "NODE_ENV": "production"
+      },
+      "console": "integratedTerminal",
+      "sourceMaps": true,
+      "cwd": "${workspaceRoot}",
+      "outputCapture": "std"
+    }
+  ]
+}

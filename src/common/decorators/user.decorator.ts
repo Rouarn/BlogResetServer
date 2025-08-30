@@ -25,9 +25,7 @@ import type { ExecutionContext } from '@nestjs/common';
  * @param ctx 执行上下文，用于获取请求对象
  * @returns 当前认证用户的信息对象
  */
-export const User = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest();
-    return request.user;
-  },
-);
+export const User = createParamDecorator((data: unknown, ctx: ExecutionContext) => {
+  const request = ctx.switchToHttp().getRequest();
+  return request.user;
+});

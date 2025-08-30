@@ -1,14 +1,14 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
-  IsString,
-  IsOptional,
-  IsNumber,
-  IsEnum,
-  IsBoolean,
   IsArray,
+  IsBoolean,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
   ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { FileType } from '../enums';
 
 export class FileUploadDto {

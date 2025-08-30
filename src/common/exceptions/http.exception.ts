@@ -15,12 +15,7 @@ import { HttpException } from '@nestjs/common';
  */
 export class BusinessException extends HttpException {
   public readonly context?: Record<string, any>;
-  public readonly logLevel?:
-    | 'DEBUG'
-    | 'INFO'
-    | 'WARNING'
-    | 'ERROR'
-    | 'CRITICAL';
+  public readonly logLevel?: 'DEBUG' | 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL';
 
   /**
    * 构造函数

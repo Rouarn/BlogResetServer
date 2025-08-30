@@ -1,14 +1,14 @@
+import { Observable } from 'rxjs';
+import { WhitelistAuth } from 'src/utils';
 import {
   ExecutionContext,
   Injectable,
-  UnauthorizedException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from '../decorators';
-import { Reflector } from '@nestjs/core';
-import { Observable } from 'rxjs';
-import { WhitelistAuth } from 'src/utils';
 
 /**
  * JwtAuthGuard（JWT 认证守卫）
@@ -46,9 +46,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
    * @param context 执行上下文，包含请求相关信息
    * @returns 是否允许访问（布尔值、Promise 或 Observable）
    */
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
+  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
     const request = context.switchToHttp().getRequest();
     const path = request.path || request.url;
 

@@ -1,18 +1,14 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import * as path from 'path';
+import { formatDatePath, generateUUID } from 'src/utils';
 import { Repository } from 'typeorm';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ChunkUploadCompleteDto, ChunkUploadDto, ChunkUploadInitDto } from '../dto';
 import { File, UploadChunk } from '../entities';
 import { FileStatus } from '../enums';
-import {
-  ChunkUploadInitDto,
-  ChunkUploadDto,
-  ChunkUploadCompleteDto,
-} from '../dto';
 import { ChunkUploadInfo, ChunkUploadResult } from '../interfaces';
 import { StorageService } from './storage.service';
 import { ValidationService } from './validation.service';
-import * as path from 'path';
-import { formatDatePath, generateUUID } from 'src/utils';
 
 @Injectable()
 export class ChunkService {
@@ -27,17 +23,11 @@ export class ChunkService {
     private validationService: ValidationService,
   ) {}
 
-  async initChunkUpload(
-    initDto: ChunkUploadInitDto,
-    userId?: string,
-  ): Promise<ChunkUploadInfo> {
+  async initChunkUpload(initDto: ChunkUploadInitDto, userId?: string): Promise<ChunkUploadInfo> {
     const uploadId = generateUUID();
-    const filename = this.validationService.generateUniqueFilename(
-      initDto.filename,
-    );
+    const filename = this.validationService.generateUniqueFilename(initDto.filename);
     const fileType =
-      initDto.fileType ||
-      this.validationService.getFileType('application/octet-stream');
+      initDto.fileType || this.validationService.getFileType('application/octet-stream');
 
     // 创建文件记录
     const fileEntity = this.fileRepository.create({
@@ -74,10 +64,7 @@ export class ChunkService {
     };
   }
 
-  async uploadChunk(
-    chunkFile: any,
-    chunkDto: ChunkUploadDto,
-  ): Promise<ChunkUploadResult> {
+  async uploadChunk(chunkFile: any, chunkDto: ChunkUploadDto): Promise<ChunkUploadResult> {
     const { uploadId, chunkNumber, chunkHash } = chunkDto;
 
     // 查找文件记录
@@ -104,9 +91,7 @@ export class ChunkService {
     }
 
     // 验证分块哈希
-    const calculatedHash = this.validationService.generateFileHash(
-      chunkFile.buffer,
-    );
+    const calculatedHash = this.validationService.generateFileHash(chunkFile.buffer);
     if (chunkHash && chunkHash !== calculatedHash) {
       throw new BadRequestException('分块哈希验证失败');
     }
@@ -140,9 +125,7 @@ export class ChunkService {
     };
   }
 
-  async completeChunkUpload(
-    completeDto: ChunkUploadCompleteDto,
-  ): Promise<File> {
+  async completeChunkUpload(completeDto: ChunkUploadCompleteDto): Promise<File> {
     const { uploadId, chunks } = completeDto;
 
     // 查找文件记录
@@ -156,9 +139,7 @@ export class ChunkService {
     }
 
     // 验证所有分块都已上传
-    const uploadedChunks = file.chunks
-      .map((chunk) => chunk.chunkNumber)
-      .sort((a, b) => a - b);
+    const uploadedChunks = file.chunks.map((chunk) => chunk.chunkNumber).sort((a, b) => a - b);
     const expectedChunks = chunks.sort((a, b) => a - b);
 
     if (
@@ -224,10 +205,7 @@ export class ChunkService {
       // 由于我们的存储服务目前只支持删除单个文件，这里先记录日志
       this.logger.log(`Should cleanup chunk directory: ${chunkDir}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to cleanup chunks for upload: ${uploadId}`,
-        error,
-      );
+      this.logger.error(`Failed to cleanup chunks for upload: ${uploadId}`, error);
     }
   }
 
@@ -247,9 +225,7 @@ export class ChunkService {
     }
 
     const progress =
-      file.totalChunks > 0
-        ? Math.round((file.uploadedChunks / file.totalChunks) * 100)
-        : 0;
+      file.totalChunks > 0 ? Math.round((file.uploadedChunks / file.totalChunks) * 100) : 0;
 
     return {
       uploadId,

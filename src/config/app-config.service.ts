@@ -96,10 +96,7 @@ export class AppConfigService {
   get jwtOptions() {
     return {
       secret: this.configService.get<string>('NEST_JWT_SECRET'),
-      expiresIn: this.configService.get<string>(
-        'NEST_JWT_ACCESS_TOKEN_TTL',
-        '1d',
-      ),
+      expiresIn: this.configService.get<string>('NEST_JWT_ACCESS_TOKEN_TTL', '1d'),
     };
   }
 
@@ -109,19 +106,10 @@ export class AppConfigService {
    */
   get staticAssetsOptions() {
     return {
-      root: this.configService.get<string>(
-        'NEST_STATIC_ASSETS_PATH',
-        './static',
-      ),
+      root: this.configService.get<string>('NEST_STATIC_ASSETS_PATH', './static'),
       options: {
-        prefix: this.configService.get<string>(
-          'NEST_STATIC_ASSETS_URL',
-          '/static',
-        ),
-        maxAge: this.configService.get<string>(
-          'NEST_STATIC_ASSETS_MAXAGE',
-          '86400',
-        ),
+        prefix: this.configService.get<string>('NEST_STATIC_ASSETS_URL', '/static'),
+        maxAge: this.configService.get<string>('NEST_STATIC_ASSETS_MAXAGE', '86400'),
       } as ServeStaticOptions,
     };
   }
@@ -173,10 +161,7 @@ export class AppConfigService {
       title: `我与夏季 Ra API${envSuffix}`,
       description: `我与夏季 Ra 系统API文档${this.isDevelopment ? ' - 开发环境' : ''}`,
       version: '1.0.0',
-      prefix: this.configService.get<string>(
-        'NEST_SWAGGER_PREFIX',
-        '/api-docs',
-      ),
+      prefix: this.configService.get<string>('NEST_SWAGGER_PREFIX', '/api-docs'),
       enabled: this.environment !== 'production', // 生产环境关闭
     };
   }
@@ -194,13 +179,10 @@ export class AppConfigService {
       password: this.configService.get<string>('NEST_DATABASE_PASSWORD'),
       database: this.configService.get<string>('NEST_DATABASE_NAME'),
       synchronize:
-        this.configService.get<string>('NEST_DATABASE_SYNCHRONIZE') ===
-          'true' || this.isDevelopment,
+        this.configService.get<string>('NEST_DATABASE_SYNCHRONIZE') === 'true' ||
+        this.isDevelopment,
       // 强制关闭查询日志，只保留错误日志
-      logging:
-        this.configService.get<string>('NEST_DATABASE_LOGGING') === 'true'
-          ? true
-          : false,
+      logging: this.configService.get<string>('NEST_DATABASE_LOGGING') === 'true' ? true : false,
       logger: 'simple-console' as const,
     };
   }
@@ -212,10 +194,7 @@ export class AppConfigService {
   get apiVersioning() {
     return {
       prefix: this.configService.get<string>('API_PREFIX', 'api'),
-      defaultVersion: this.configService.get<string>(
-        'API_DEFAULT_VERSION',
-        '1',
-      ),
+      defaultVersion: this.configService.get<string>('API_DEFAULT_VERSION', '1'),
     };
   }
 }

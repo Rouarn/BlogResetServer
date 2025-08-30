@@ -1,16 +1,16 @@
+import * as multer from 'multer';
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { MulterModule } from '@nestjs/platform-express';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MulterModule } from '@nestjs/platform-express';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { File, UploadChunk } from './entities';
 import { FilesController } from './files.controller';
-import { FilesService } from './services/files.service';
-import { StorageService } from './services/storage.service';
-import { ChunkService } from './services/chunk.service';
-import { ValidationService } from './services/validation.service';
 import { FileAccessGuard } from './guards/file-access.guard';
+import { ChunkService } from './services/chunk.service';
+import { FilesService } from './services/files.service';
 import { StorageFactoryService } from './services/storage-factory.service';
-import * as multer from 'multer';
+import { StorageService } from './services/storage.service';
+import { ValidationService } from './services/validation.service';
 
 @Module({
   imports: [
@@ -20,21 +20,12 @@ import * as multer from 'multer';
       useFactory: async (configService: ConfigService) => ({
         storage: multer.memoryStorage(),
         limits: {
-          fileSize: configService.get(
-            'app.static.upload.maxFileSize',
-            10 * 1024 * 1024,
-          ), // 10MB
+          fileSize: configService.get('app.static.upload.maxFileSize', 10 * 1024 * 1024), // 10MB
           files: configService.get('app.static.upload.maxBatchFiles', 10),
         },
         fileFilter: (req, file, cb) => {
-          const allowedTypes = configService.get<string[]>(
-            'app.static.upload.allowedTypes',
-            [],
-          );
-          if (
-            allowedTypes.length === 0 ||
-            allowedTypes.includes(file.mimetype)
-          ) {
+          const allowedTypes = configService.get<string[]>('app.static.upload.allowedTypes', []);
+          if (allowedTypes.length === 0 || allowedTypes.includes(file.mimetype)) {
             cb(null, true);
           } else {
             cb(new Error(`不支持的文件类型: ${file.mimetype}`), false);

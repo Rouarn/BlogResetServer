@@ -1,7 +1,4 @@
-import type {
-  SuccessResponse,
-  DefaultPagination,
-} from '../interfaces/response.interface';
+import type { DefaultPagination, SuccessResponse } from '../interfaces/response.interface';
 
 /**
  * 标准请求成功响应常量
@@ -24,7 +21,4 @@ export const DEFAULT_PAGINATION: DefaultPagination = {
  * @type {readonly ['current', 'size']}
  * @description 包含分页相关的字段名，分别为当前页码和每页条数
  */
-export const PAGING_FIELDS: readonly ['current', 'size'] = [
-  'current',
-  'size',
-] as const;
+export const PAGING_FIELDS: readonly ['current', 'size'] = ['current', 'size'] as const;

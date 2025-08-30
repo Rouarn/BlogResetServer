@@ -1,59 +1,59 @@
 /**
  * 日期验证工具模块
- * 
+ *
  * @description
  * 提供全面的日期和时间验证功能，包括格式验证、
  * 有效性检查、时间范围判断和年龄计算等功能。
- * 
+ *
  * 功能特性:
  * - 日期有效性验证
  * - 多种日期时间格式支持
  * - 相对时间判断 (过去/现在/未来)
  * - 年龄范围验证
  * - 高性能的日期处理
- * 
+ *
  * 支持格式:
  * - 标准日期: YYYY-MM-DD
  * - 标准时间: HH:mm:ss
  * - 日期时间: YYYY-MM-DD HH:mm:ss
  * - JavaScript Date 对象
  * - ISO 8601 格式
- * 
+ *
  * 验证类型:
  * 1. 格式验证: 检查字符串格式是否正确
  * 2. 有效性验证: 检查日期是否真实存在
  * 3. 范围验证: 检查日期是否在指定范围内
  * 4. 业务验证: 年龄、生日等业务逻辑验证
- * 
+ *
  * 适用场景:
  * - 用户生日验证
  * - 预约时间检查
  * - 数据有效期验证
  * - 年龄限制控制
  * - 时间范围查询
- * 
+ *
  * @example
  * ```typescript
- * import { 
- *   isValidDate, 
- *   isDateFormat, 
+ * import {
+ *   isValidDate,
+ *   isDateFormat,
  *   isPastDate,
- *   isAgeInRange 
+ *   isAgeInRange
  * } from '@/utils/validators/date.validator';
- * 
+ *
  * // 日期有效性验证
  * const valid = isValidDate('2023-12-25'); // true
- * 
+ *
  * // 格式验证
  * const formatValid = isDateFormat('2023-12-25'); // true
- * 
+ *
  * // 时间判断
  * const isPast = isPastDate('2020-01-01'); // true
- * 
+ *
  * // 年龄验证
  * const ageValid = isAgeInRange('1990-01-01', 18, 65); // true
  * ```
- * 
+ *
  * @author NestJS Template
  * @since 1.0.0
  */
@@ -93,9 +93,8 @@ export const isTimeFormat = (timeStr: string): boolean => {
  */
 export const isDateTimeFormat = (datetimeStr: string): boolean => {
   return (
-    /^\d{4}-\d{2}-\d{2} ([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/.test(
-      datetimeStr,
-    ) && isValidDate(datetimeStr)
+    /^\d{4}-\d{2}-\d{2} ([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/.test(datetimeStr) &&
+    isValidDate(datetimeStr)
   );
 };
 
@@ -148,11 +147,7 @@ export const isFutureDate = (date: string | Date): boolean => {
  * @param maxAge 最大年龄
  * @returns 是否在年龄范围内
  */
-export const isAgeInRange = (
-  birthDate: string | Date,
-  minAge: number,
-  maxAge: number,
-): boolean => {
+export const isAgeInRange = (birthDate: string | Date, minAge: number, maxAge: number): boolean => {
   if (!isValidDate(birthDate)) return false;
 
   const birth = new Date(birthDate);

@@ -1,4 +1,4 @@
-import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 /**
@@ -48,9 +48,7 @@ export class FileValidationPipe implements PipeTransform {
     const staticConfig = this.configService.get('app.static');
     const maxSize = staticConfig.upload.maxFileSize;
     if (file.size > maxSize) {
-      throw new BadRequestException(
-        `文件大小超出限制，最大允许 ${maxSize / 1024 / 1024}MB`,
-      );
+      throw new BadRequestException(`文件大小超出限制，最大允许 ${maxSize / 1024 / 1024}MB`);
     }
 
     // 验证文件类型
@@ -109,9 +107,7 @@ export class FilesValidationPipe implements PipeTransform {
     const staticConfig = this.configService.get('app.static');
     const maxFiles = staticConfig.upload.maxBatchFiles;
     if (files.length > maxFiles) {
-      throw new BadRequestException(
-        `批量上传文件数量超出限制，最大允许 ${maxFiles} 个文件`,
-      );
+      throw new BadRequestException(`批量上传文件数量超出限制，最大允许 ${maxFiles} 个文件`);
     }
 
     const fileValidationPipe = new FileValidationPipe(this.configService);

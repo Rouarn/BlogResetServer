@@ -16,12 +16,8 @@ export class EnumUtils {
    * @param enumObject - 枚举对象
    * @returns 键名数组
    */
-  static getKeys<T extends Record<string, string | number>>(
-    enumObject: T,
-  ): (keyof T)[] {
-    return Object.keys(enumObject).filter((key) =>
-      isNaN(Number(key)),
-    ) as (keyof T)[];
+  static getKeys<T extends Record<string, string | number>>(enumObject: T): (keyof T)[] {
+    return Object.keys(enumObject).filter((key) => isNaN(Number(key))) as (keyof T)[];
   }
 
   /**
@@ -29,9 +25,7 @@ export class EnumUtils {
    * @param enumObject - 枚举对象
    * @returns 值数组
    */
-  static getValues<T extends Record<string, string | number>>(
-    enumObject: T,
-  ): T[keyof T][] {
+  static getValues<T extends Record<string, string | number>>(enumObject: T): T[keyof T][] {
     return Object.values(enumObject).filter(
       (value) => typeof value === 'string' || typeof value === 'number',
     ) as T[keyof T][];
@@ -74,7 +68,7 @@ export class EnumUtils {
   static toOptions<T extends Record<string, string | number>>(
     enumObject: T,
     labelMap?: Partial<Record<T[keyof T], string>>,
-  ): Array<{ value: T[keyof T]; label: string; key: keyof T }> {
+  ): { value: T[keyof T]; label: string; key: keyof T }[] {
     return this.getKeys(enumObject).map((key) => ({
       value: enumObject[key],
       label: labelMap?.[enumObject[key]] || String(key),
@@ -89,16 +83,12 @@ export class EnumUtils {
  * @param message - 可选的错误消息
  * @returns 验证装饰器
  */
-export function IsEnum<T extends Record<string, string | number>>(
-  enumObject: T,
-  message?: string,
-) {
+export function IsEnum<T extends Record<string, string | number>>(enumObject: T, message?: string) {
   return function (target: any, propertyKey: string) {
     // 这里可以集成 class-validator 的装饰器逻辑
     // 或者提供自定义的验证逻辑
     const errorMessage =
-      message ||
-      `${propertyKey} must be a valid ${enumObject.constructor.name} value`;
+      message || `${propertyKey} must be a valid ${enumObject.constructor.name} value`;
 
     // 存储验证信息到元数据中
     Reflect.defineMetadata(

@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { StorageAdapter } from '../interfaces/storage.interface';
 import {
   StorageFactory,
   StorageFactoryConfig,
   StorageType,
 } from '../interfaces/storage-factory.interface';
+import { StorageAdapter } from '../interfaces/storage.interface';
 import { StorageService } from './storage.service';
 
 @Injectable()

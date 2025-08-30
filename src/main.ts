@@ -1,12 +1,12 @@
 import * as cors from 'cors';
-import { join } from 'path';
 import * as fs from 'fs';
 import * as path from 'path';
-import { AppModule } from './app.module';
+import { join } from 'path';
+import { Logger, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { VersioningType, Logger } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { AppModule } from './app.module';
 import { appConfig } from './config';
 
 async function bootstrap() {
@@ -48,10 +48,7 @@ async function bootstrap() {
       SwaggerModule.setup(swaggerConfig.prefix, app, document);
 
       // 保存API文档为JSON文件，供第三方工具导入使用
-      const apiDocPath = path.join(
-        __dirname,
-        `..${staticConfig.options.prefix}/api-docs.json`,
-      );
+      const apiDocPath = path.join(__dirname, `..${staticConfig.options.prefix}/api-docs.json`);
       fs.writeFileSync(apiDocPath, JSON.stringify(document, null, 2));
       logger.log(`📄 API文档已保存到: ${apiDocPath}`);
     }
@@ -67,13 +64,7 @@ async function bootstrap() {
 
     // 主标题横幅
     logger.log('╔' + '═'.repeat(68) + '╗');
-    logger.log(
-      '║' +
-        ' '.repeat(20) +
-        '🚀 NestJS 应用启动成功! 🚀' +
-        ' '.repeat(22) +
-        '║',
-    );
+    logger.log('║' + ' '.repeat(20) + '🚀 NestJS 应用启动成功! 🚀' + ' '.repeat(22) + '║');
     logger.log('╚' + '═'.repeat(68) + '╝');
 
     // 空行
@@ -84,9 +75,7 @@ async function bootstrap() {
     logger.log(`│ 🏷️  应用名称: ${appConfig.appTitle}`);
     logger.log(`│ 🌍 运行环境: ${appConfig.environment}`);
     logger.log(`│ 🚀 服务地址: ${appUrl}`);
-    logger.log(
-      `│ 🔗 API 访问: ${appUrl}/${versionConfig.prefix}/v${versionConfig.defaultVersion}`,
-    );
+    logger.log(`│ 🔗 API 访问: ${appUrl}/${versionConfig.prefix}/v${versionConfig.defaultVersion}`);
     logger.log(`│ ⚡ 端口号码: ${appConfig.port}`);
     logger.log('└' + '─'.repeat(65) + '┘');
 
@@ -96,12 +85,8 @@ async function bootstrap() {
 
       // API 文档区域
       logger.log('┌─ 📚 API 文档服务 ' + '─'.repeat(47) + '┐');
-      logger.log(
-        `│ 🔗 Swagger UI: ${appUrl}${appConfig.swaggerOptions.prefix}`,
-      );
-      logger.log(
-        `│ 📄 JSON 文档: ${appUrl}${staticConfig.options.prefix}/api-docs.json`,
-      );
+      logger.log(`│ 🔗 Swagger UI: ${appUrl}${appConfig.swaggerOptions.prefix}`);
+      logger.log(`│ 📄 JSON 文档: ${appUrl}${staticConfig.options.prefix}/api-docs.json`);
       logger.log('│ 💡 提示: 可导入到 Postman、Apifox 等工具');
       logger.log('└' + '─'.repeat(65) + '┘');
     }
@@ -111,13 +96,7 @@ async function bootstrap() {
 
     // 状态横幅
     logger.log('╔' + '═'.repeat(68) + '╗');
-    logger.log(
-      '║' +
-        ' '.repeat(22) +
-        '✨ 服务已就绪，等待请求... ✨' +
-        ' '.repeat(17) +
-        '║',
-    );
+    logger.log('║' + ' '.repeat(22) + '✨ 服务已就绪，等待请求... ✨' + ' '.repeat(17) + '║');
     logger.log('╚' + '═'.repeat(68) + '╝');
 
     // 空行
@@ -126,9 +105,7 @@ async function bootstrap() {
     // 美化的错误输出
     logger.error('');
     logger.error('╔' + '═'.repeat(50) + '╗');
-    logger.error(
-      '║' + ' '.repeat(13) + '❌ 应用程序启动失败 ❌' + ' '.repeat(12) + '║',
-    );
+    logger.error('║' + ' '.repeat(13) + '❌ 应用程序启动失败 ❌' + ' '.repeat(12) + '║');
     logger.error('╚' + '═'.repeat(50) + '╝');
     logger.error('🔍 错误详情:', error.stack || error.message);
     logger.error('💡 请检查配置文件和依赖项是否正确');

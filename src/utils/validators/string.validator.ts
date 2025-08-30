@@ -1,10 +1,10 @@
 /**
  * 字符串验证工具模块
- * 
+ *
  * @description
  * 提供全面的字符串验证功能，包括格式验证、长度检查、
  * 字符类型验证、用户名密码验证等常用功能。
- * 
+ *
  * 功能特性:
  * - 字符串空值和长度验证
  * - 字符类型验证 (字母、数字、中文)
@@ -12,58 +12,58 @@
  * - 特殊字符检测
  * - 国际化字符支持
  * - 高性能的正则表达式匹配
- * 
+ *
  * 验证类型:
  * 1. 基础验证: 空值、长度、字符类型
  * 2. 格式验证: 用户名、密码格式规则
  * 3. 内容验证: 字符组成、特殊字符
  * 4. 安全验证: 密码强度、输入过滤
- * 
+ *
  * 字符集支持:
  * - ASCII 字符 (a-z, A-Z, 0-9)
  * - 中文字符 (Unicode 4e00-9fa5)
  * - 特殊符号和标点
  * - 国际化字符集
- * 
+ *
  * 适用场景:
  * - 用户注册验证
  * - 表单输入校验
  * - 密码安全检查
  * - 内容过滤和审核
  * - 数据清洗和标准化
- * 
+ *
  * 安全特性:
  * - 防止注入攻击
  * - 输入内容过滤
  * - 密码强度要求
  * - 特殊字符控制
- * 
+ *
  * @example
  * ```typescript
- * import { 
- *   isEmpty, 
- *   isLengthInRange, 
+ * import {
+ *   isEmpty,
+ *   isLengthInRange,
  *   isAlphanumeric,
  *   isUsername,
- *   isStrongPassword 
+ *   isStrongPassword
  * } from '@/utils/validators/string.validator';
- * 
+ *
  * // 空值检查
  * const empty = isEmpty('   '); // true
- * 
+ *
  * // 长度验证
  * const lengthValid = isLengthInRange('hello', 3, 10); // true
- * 
+ *
  * // 字母数字验证
  * const alphanumeric = isAlphanumeric('abc123'); // true
- * 
+ *
  * // 用户名验证
  * const username = isUsername('user_123'); // true
- * 
+ *
  * // 密码强度验证
  * const strongPwd = isStrongPassword('MyPass123'); // true
  * ```
- * 
+ *
  * @author NestJS Template
  * @since 1.0.0
  */
@@ -84,11 +84,7 @@ export const isEmpty = (str: string): boolean => {
  * @param max 最大长度
  * @returns 是否在范围内
  */
-export const isLengthInRange = (
-  str: string,
-  min: number,
-  max: number,
-): boolean => {
+export const isLengthInRange = (str: string, min: number, max: number): boolean => {
   const length = str.length;
   return length >= min && length <= max;
 };

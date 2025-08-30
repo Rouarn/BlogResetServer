@@ -1,19 +1,14 @@
-import {
-  Injectable,
-  NotFoundException,
-  Logger,
-  ForbiddenException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { File } from '../entities';
-import { FileStatus } from '../enums';
-import { FileUploadDto, FileQueryDto } from '../dto';
-import { FileUploadResult, BatchUploadResult } from '../interfaces';
-import { StorageService } from './storage.service';
-import { ValidationService } from './validation.service';
 import * as path from 'path';
 import { formatDatePath } from 'src/utils';
+import { Repository } from 'typeorm';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { FileQueryDto, FileUploadDto } from '../dto';
+import { File } from '../entities';
+import { FileStatus } from '../enums';
+import { BatchUploadResult, FileUploadResult } from '../interfaces';
+import { StorageService } from './storage.service';
+import { ValidationService } from './validation.service';
 
 @Injectable()
 export class FilesService {
@@ -35,9 +30,7 @@ export class FilesService {
     await this.validationService.validateFile(file);
 
     // 生成文件信息
-    const filename = this.validationService.generateUniqueFilename(
-      file.originalname,
-    );
+    const filename = this.validationService.generateUniqueFilename(file.originalname);
     const fileHash = this.validationService.generateFileHash(file.buffer);
     const fileType = this.validationService.getFileType(file.mimetype);
 
@@ -118,8 +111,7 @@ export class FilesService {
     queryDto: FileQueryDto,
     userId?: string,
   ): Promise<{ files: File[]; total: number }> {
-    const { page, limit, type, status, search, publicOnly, sortBy, sortOrder } =
-      queryDto;
+    const { page, limit, type, status, search, publicOnly, sortBy, sortOrder } = queryDto;
 
     const queryBuilder = this.fileRepository.createQueryBuilder('file');
 
@@ -144,10 +136,9 @@ export class FilesService {
 
     // 搜索过滤
     if (search) {
-      queryBuilder.andWhere(
-        '(file.originalName ILIKE :search OR file.filename ILIKE :search)',
-        { search: `%${search}%` },
-      );
+      queryBuilder.andWhere('(file.originalName ILIKE :search OR file.filename ILIKE :search)', {
+        search: `%${search}%`,
+      });
     }
 
     // 排序
@@ -216,10 +207,7 @@ export class FilesService {
     return true;
   }
 
-  async getFileBuffer(
-    id: string,
-    userId?: string,
-  ): Promise<{ file: File; buffer: Buffer }> {
+  async getFileBuffer(id: string, userId?: string): Promise<{ file: File; buffer: Buffer }> {
     const file = await this.findFileById(id, userId);
     const buffer = await this.storageService.download(file.path);
     return { file, buffer };

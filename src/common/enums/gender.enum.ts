@@ -14,9 +14,7 @@ export enum Gender {
 /**
  * 性别枚举的所有可能值
  */
-export const GENDER_VALUES = Object.values(Gender).filter(
-  (v) => typeof v === 'number',
-) as number[];
+export const GENDER_VALUES = Object.values(Gender).filter((v) => typeof v === 'number') as number[];
 
 /**
  * 性别枚举类型
@@ -98,11 +96,11 @@ export function parseGender(genderStr: string): Gender {
  * 获取所有性别选项（用于表单选择）
  * @returns 包含值和标签的选项数组
  */
-export function getGenderOptions(): Array<{
+export function getGenderOptions(): {
   value: Gender;
   label: string;
   key: string;
-}> {
+}[] {
   return GENDER_VALUES.map((value) => ({
     value,
     label: getGenderLabel(value),

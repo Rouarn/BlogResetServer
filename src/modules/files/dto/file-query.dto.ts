@@ -1,15 +1,7 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsOptional,
-  IsString,
-  IsNumber,
-  IsEnum,
-  IsBoolean,
-  Min,
-  Max,
-} from 'class-validator';
 import { Type } from 'class-transformer';
-import { FileType, FileStatus } from '../enums';
+import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { FileStatus, FileType } from '../enums';
 
 export class FileQueryDto {
   @ApiPropertyOptional({ description: '页码', default: 1, minimum: 1 })

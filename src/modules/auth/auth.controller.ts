@@ -1,28 +1,22 @@
+import type { Request } from 'express';
+import { Public, User } from 'src/common/decorators';
+import { formatISOString } from 'src/utils';
 import {
-  Get,
-  Post,
   Body,
-  Req,
-  Controller,
-  UseInterceptors,
   ClassSerializerInterceptor,
+  Controller,
+  Get,
   Headers,
   Ip,
+  Post,
+  Req,
+  UseInterceptors,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiBody,
-} from '@nestjs/swagger';
-import type { Request } from 'express';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { formatISOString } from 'src/utils';
-import { CreateAuthDto } from './dto/create-auth.dto';
 import { CaptchaVerifyDto } from './dto/captcha-verify.dto';
+import { CreateAuthDto } from './dto/create-auth.dto';
 import { CreateUserDto } from './dto/create-user.dto';
-import { Public, User } from 'src/common/decorators';
 
 @ApiTags('认证管理')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -70,10 +64,7 @@ export class AuthController {
   })
   @Public()
   @Get('captcha')
-  async getCaptcha(
-    @Ip() clientIp: string,
-    @Headers('user-agent') userAgent: string,
-  ) {
+  async getCaptcha(@Ip() clientIp: string, @Headers('user-agent') userAgent: string) {
     const clientInfo = { ip: clientIp, userAgent };
     const result = await this.authService.generateCaptcha(clientInfo);
 
@@ -140,17 +131,11 @@ export class AuthController {
     }
 
     const clientInfo = { ip: clientIp, userAgent };
-    const result = await this.authService.verifyCaptcha(
-      token,
-      code,
-      clientInfo,
-    );
+    const result = await this.authService.verifyCaptcha(token, code, clientInfo);
 
     return {
       success: result.valid,
-      message: result.valid
-        ? '验证码验证成功'
-        : `验证码验证失败: ${result.reason}`,
+      message: result.valid ? '验证码验证成功' : `验证码验证失败: ${result.reason}`,
       timestamp: formatISOString(),
     };
   }

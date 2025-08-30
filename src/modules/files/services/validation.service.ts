@@ -1,34 +1,16 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { fileTypeFromBuffer } from 'file-type';
 import * as crypto from 'crypto';
+import { fileTypeFromBuffer } from 'file-type';
+import { getCurrentTimestamp, randomString } from 'src/utils';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { FileType } from '../enums';
-import { randomString, getCurrentTimestamp } from 'src/utils';
 
 @Injectable()
 export class ValidationService {
   private readonly allowedMimeTypes: Record<FileType, string[]> = {
-    [FileType.IMAGE]: [
-      'image/jpeg',
-      'image/png',
-      'image/gif',
-      'image/webp',
-      'image/svg+xml',
-    ],
-    [FileType.VIDEO]: [
-      'video/mp4',
-      'video/avi',
-      'video/mov',
-      'video/wmv',
-      'video/webm',
-    ],
-    [FileType.AUDIO]: [
-      'audio/mp3',
-      'audio/wav',
-      'audio/ogg',
-      'audio/aac',
-      'audio/flac',
-    ],
+    [FileType.IMAGE]: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
+    [FileType.VIDEO]: ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/webm'],
+    [FileType.AUDIO]: ['audio/mp3', 'audio/wav', 'audio/ogg', 'audio/aac', 'audio/flac'],
     [FileType.DOCUMENT]: [
       'application/pdf',
       'application/msword',
@@ -55,9 +37,7 @@ export class ValidationService {
     const staticConfig = this.configService.get('app.static');
     const maxSize = staticConfig.upload.maxFileSize;
     if (file.size > maxSize) {
-      throw new BadRequestException(
-        `文件大小超出限制，最大允许 ${maxSize / 1024 / 1024}MB`,
-      );
+      throw new BadRequestException(`文件大小超出限制，最大允许 ${maxSize / 1024 / 1024}MB`);
     }
 
     // 验证文件类型
@@ -77,9 +57,7 @@ export class ValidationService {
     const staticConfig = this.configService.get('app.static');
     const maxFiles = staticConfig.upload.maxBatchFiles;
     if (files.length > maxFiles) {
-      throw new BadRequestException(
-        `批量上传文件数量超出限制，最大允许 ${maxFiles} 个文件`,
-      );
+      throw new BadRequestException(`批量上传文件数量超出限制，最大允许 ${maxFiles} 个文件`);
     }
 
     for (const file of files) {

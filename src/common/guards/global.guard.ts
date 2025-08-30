@@ -1,12 +1,12 @@
+import { Request } from 'express';
+import { WhitelistAuth, getCurrentTimestamp } from 'src/utils';
 import {
   CanActivate,
   ExecutionContext,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Logger } from '@nestjs/common';
-import { Request } from 'express';
-import { WhitelistAuth, getCurrentTimestamp } from 'src/utils';
 
 /**
  * 全局限流守卫（GlobalGuard）
@@ -34,10 +34,7 @@ export class GlobalGuard implements CanActivate {
   /**
    * 内存限流存储
    */
-  private readonly rateLimitStore = new Map<
-    string,
-    { count: number; resetTime: number }
-  >();
+  private readonly rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
   constructor() {}
 

@@ -1,4 +1,5 @@
 import {
+  NIL as NIL_UUID,
   v1 as uuidv1,
   v3 as uuidv3,
   v4 as uuidv4,
@@ -7,7 +8,6 @@ import {
   v7 as uuidv7,
   validate,
   version,
-  NIL as NIL_UUID,
 } from 'uuid';
 
 /**
@@ -193,10 +193,7 @@ export function getNilUUID(): string {
  * @param uuid UUID 字符串
  * @returns 格式化后的 UUID 字符串
  */
-export function formatUUID(
-  uuid: string,
-  removeHyphens: boolean = false,
-): string {
+export function formatUUID(uuid: string, removeHyphens: boolean = false): string {
   if (!isValidUUID(uuid)) {
     throw new Error('Invalid UUID format');
   }
@@ -268,8 +265,7 @@ export class UUIDUtil {
    * @returns base62 字符串
    */
   private static toBase62(num: bigint): string {
-    const chars =
-      '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     let result = '';
 
     while (num > 0) {
@@ -286,10 +282,7 @@ export class UUIDUtil {
    * @param version UUID 版本
    * @returns UUID 数组
    */
-  static generateBatch(
-    count: number,
-    version: UUIDVersion = UUIDVersion.V4,
-  ): string[] {
+  static generateBatch(count: number, version: UUIDVersion = UUIDVersion.V4): string[] {
     const uuids: string[] = [];
     for (let i = 0; i < count; i++) {
       uuids.push(generateUUIDByVersion(version));

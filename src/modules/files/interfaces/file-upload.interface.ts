@@ -35,10 +35,10 @@ export interface FileUploadResult {
 
 export interface BatchUploadResult {
   successful: FileUploadResult[];
-  failed: Array<{
+  failed: {
     filename: string;
     error: string;
-  }>;
+  }[];
   totalFiles: number;
   successCount: number;
   failureCount: number;

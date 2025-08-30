@@ -69,9 +69,7 @@ export default registerAs('app', () => ({
       maxFileSize: process.env.MAX_FILE_SIZE
         ? parseInt(process.env.MAX_FILE_SIZE, 10)
         : 10 * 1024 * 1024, // 10MB
-      allowedTypes: process.env.ALLOWED_FILE_TYPES
-        ? process.env.ALLOWED_FILE_TYPES.split(',')
-        : [], // 空数组表示允许所有类型
+      allowedTypes: process.env.ALLOWED_FILE_TYPES ? process.env.ALLOWED_FILE_TYPES.split(',') : [], // 空数组表示允许所有类型
       maxBatchFiles: 10, // 批量上传最大文件数
     },
   },
@@ -95,9 +93,7 @@ export default registerAs('app', () => ({
   database: {
     type: 'mysql' as const,
     host: process.env.NEST_DATABASE_HOST || 'localhost',
-    port: process.env.NEST_DATABASE_PORT
-      ? parseInt(process.env.NEST_DATABASE_PORT, 10)
-      : 3306,
+    port: process.env.NEST_DATABASE_PORT ? parseInt(process.env.NEST_DATABASE_PORT, 10) : 3306,
     username: process.env.NEST_DATABASE_USER || 'root',
     password: process.env.NEST_DATABASE_PASSWORD || '',
     database: process.env.NEST_DATABASE_NAME || 'nestjs_app',

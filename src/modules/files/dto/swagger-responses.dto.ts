@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { FileUploadResult, BatchUploadResult } from '../interfaces';
+import { BatchUploadResult, FileUploadResult } from '../interfaces';
 
 export class ApiSuccessResponse<T = any> {
   @ApiProperty({ example: true })

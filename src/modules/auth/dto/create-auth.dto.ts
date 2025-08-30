@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString, Length } from 'class-validator';
+import { Gender, Role } from 'src/common/enums/index';
 import { ApiProperty } from '@nestjs/swagger';
-import { Role, Gender } from 'src/common/enums/index';
 
 /**
  * 认证数据传输对象

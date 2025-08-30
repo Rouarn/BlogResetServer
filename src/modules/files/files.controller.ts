@@ -1,48 +1,48 @@
+import { Response } from 'express';
+import { CurrentUser, GetCurrentUser } from 'src/common/decorators';
+import { FileValidationPipe, FilesValidationPipe } from 'src/common/pipes';
 import {
-  Controller,
-  Post,
-  Get,
-  Delete,
-  Param,
-  Query,
   Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  Res,
   UploadedFile,
   UploadedFiles,
-  UseInterceptors,
   UseGuards,
-  Res,
-  ParseUUIDPipe,
+  UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiConsumes,
-  ApiBody,
   ApiBearerAuth,
-  ApiQuery,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
   ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
-import { Response } from 'express';
-import { FilesService } from './services/files.service';
-import { ChunkService } from './services/chunk.service';
 import {
-  FileUploadDto,
-  FileQueryDto,
-  ChunkUploadInitDto,
-  ChunkUploadDto,
   ChunkUploadCompleteDto,
+  ChunkUploadDto,
+  ChunkUploadInitDto,
+  FileQueryDto,
+  FileUploadDto,
 } from './dto';
 import {
-  FileUploadSuccessResponse,
-  BatchUploadSuccessResponse,
   ApiErrorResponse,
+  BatchUploadSuccessResponse,
   FileListResponse,
+  FileUploadSuccessResponse,
 } from './dto/swagger-responses.dto';
-import { GetCurrentUser, CurrentUser } from 'src/common/decorators';
 import { FileAccessGuard } from './guards/file-access.guard';
-import { FileValidationPipe, FilesValidationPipe } from 'src/common/pipes';
+import { ChunkService } from './services/chunk.service';
+import { FilesService } from './services/files.service';
 
 @ApiTags('文件管理')
 @ApiBearerAuth()
@@ -99,11 +99,7 @@ export class FilesController {
     @Body() uploadDto: FileUploadDto,
     @GetCurrentUser() user?: CurrentUser,
   ) {
-    const result = await this.filesService.uploadSingleFile(
-      file,
-      uploadDto,
-      user?.id,
-    );
+    const result = await this.filesService.uploadSingleFile(file, uploadDto, user?.id);
     return {
       success: true,
       data: result,
@@ -150,11 +146,7 @@ export class FilesController {
     @Body() uploadDto: FileUploadDto,
     @GetCurrentUser() user?: CurrentUser,
   ) {
-    const result = await this.filesService.uploadMultipleFiles(
-      files,
-      uploadDto,
-      user?.id,
-    );
+    const result = await this.filesService.uploadMultipleFiles(files, uploadDto, user?.id);
     return {
       success: true,
       data: result,
@@ -165,10 +157,7 @@ export class FilesController {
   @Post('upload/chunk/init')
   @ApiOperation({ summary: '初始化分块上传' })
   @ApiResponse({ status: 201, description: '分块上传初始化成功' })
-  async initChunkUpload(
-    @Body() initDto: ChunkUploadInitDto,
-    @GetCurrentUser() user?: CurrentUser,
-  ) {
+  async initChunkUpload(@Body() initDto: ChunkUploadInitDto, @GetCurrentUser() user?: CurrentUser) {
     const result = await this.chunkService.initChunkUpload(initDto, user?.id);
     return {
       success: true,
@@ -202,10 +191,7 @@ export class FilesController {
   })
   @ApiResponse({ status: 201, description: '分块上传成功' })
   @UseInterceptors(FileInterceptor('chunk'))
-  async uploadChunk(
-    @UploadedFile() chunk: any,
-    @Body() chunkDto: ChunkUploadDto,
-  ) {
+  async uploadChunk(@UploadedFile() chunk: any, @Body() chunkDto: ChunkUploadDto) {
     const result = await this.chunkService.uploadChunk(chunk, chunkDto);
     return {
       success: true,
@@ -258,14 +244,8 @@ export class FilesController {
     description: '获取文件列表成功',
     type: FileListResponse,
   })
-  async getFiles(
-    @Query() queryDto: FileQueryDto,
-    @GetCurrentUser() user?: CurrentUser,
-  ) {
-    const { files, total } = await this.filesService.findFiles(
-      queryDto,
-      user?.id,
-    );
+  async getFiles(@Query() queryDto: FileQueryDto, @GetCurrentUser() user?: CurrentUser) {
+    const { files, total } = await this.filesService.findFiles(queryDto, user?.id);
     return {
       success: true,
       data: {
@@ -295,10 +275,7 @@ export class FilesController {
     type: ApiErrorResponse,
   })
   @UseGuards(FileAccessGuard)
-  async getFile(
-    @Param('id', ParseUUIDPipe) id: string,
-    @GetCurrentUser() user?: CurrentUser,
-  ) {
+  async getFile(@Param('id', ParseUUIDPipe) id: string, @GetCurrentUser() user?: CurrentUser) {
     const file = await this.filesService.findFileById(id, user?.id);
     return {
       success: true,
@@ -315,10 +292,7 @@ export class FilesController {
     @Res() res: Response,
     @GetCurrentUser() user?: CurrentUser,
   ) {
-    const { file, buffer } = await this.filesService.getFileBuffer(
-      id,
-      user?.id,
-    );
+    const { file, buffer } = await this.filesService.getFileBuffer(id, user?.id);
 
     res.set({
       'Content-Type': file.mimeType,
@@ -338,10 +312,7 @@ export class FilesController {
     @Res() res: Response,
     @GetCurrentUser() user?: CurrentUser,
   ) {
-    const { file, buffer } = await this.filesService.getFileBuffer(
-      id,
-      user?.id,
-    );
+    const { file, buffer } = await this.filesService.getFileBuffer(id, user?.id);
 
     res.set({
       'Content-Type': file.mimeType,
@@ -355,10 +326,7 @@ export class FilesController {
   @Delete(':id')
   @ApiOperation({ summary: '删除文件' })
   @ApiResponse({ status: 200, description: '文件删除成功' })
-  async deleteFile(
-    @Param('id', ParseUUIDPipe) id: string,
-    @GetCurrentUser() user?: CurrentUser,
-  ) {
+  async deleteFile(@Param('id', ParseUUIDPipe) id: string, @GetCurrentUser() user?: CurrentUser) {
     await this.filesService.deleteFile(id, user?.id);
     return {
       success: true,

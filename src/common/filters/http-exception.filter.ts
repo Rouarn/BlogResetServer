@@ -1,13 +1,13 @@
+import { Request, Response } from 'express';
+import { formatDate, formatISOString, generateUUID } from 'src/utils';
 import {
-  ExceptionFilter,
-  Catch,
   ArgumentsHost,
+  Catch,
+  ExceptionFilter,
   HttpException,
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
-import { generateUUID, formatDate, formatISOString } from 'src/utils';
 import { ErrorResponse } from '../interfaces';
 
 /**
@@ -41,14 +41,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
    */
   private getLogLevel(status: number, url: string): string {
     // 对于常见的浏览器自动请求，降低日志级别
-    const commonBrowserRequests = [
-      '/favicon.ico',
-      '/robots.txt',
-      '/sitemap.xml',
-    ];
-    const isCommonRequest = commonBrowserRequests.some((path) =>
-      url.includes(path),
-    );
+    const commonBrowserRequests = ['/favicon.ico', '/robots.txt', '/sitemap.xml'];
+    const isCommonRequest = commonBrowserRequests.some((path) => url.includes(path));
 
     if (status >= 500) return 'CRITICAL';
     if (status >= 400) {
@@ -73,10 +67,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
   private extractContext(request: Request): Record<string, any> {
     return {
       requestId: request.headers['x-request-id'] || generateUUID(),
-      userId:
-        (request as any).user?.id ||
-        request.headers['x-user-id'] ||
-        'anonymous',
+      userId: (request as any).user?.id || request.headers['x-user-id'] || 'anonymous',
       userAgent: request.headers['user-agent'] || 'unknown',
       ip: request.ip || (request.connection as any)?.remoteAddress || 'unknown',
       method: request.method,
@@ -92,13 +83,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
   private sanitizeBody(body: any): any {
     if (!body || typeof body !== 'object') return body;
 
-    const sensitiveFields = [
-      'password',
-      'token',
-      'secret',
-      'key',
-      'authorization',
-    ];
+    const sensitiveFields = ['password', 'token', 'secret', 'key', 'authorization'];
     const sanitized = { ...body };
 
     for (const field of sensitiveFields) {
@@ -240,13 +225,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const stack = exception instanceof Error ? exception.stack : undefined;
 
     // 创建结构化日志
-    const structuredLog = this.createStructuredLog(
-      logLevel,
-      status,
-      message,
-      context,
-      stack,
-    );
+    const structuredLog = this.createStructuredLog(logLevel, status, message, context, stack);
 
     // 记录日志
     this.logError(logLevel, context, status, message, structuredLog, stack);

@@ -137,12 +137,12 @@ export function parseRole(roleStr: string): Role {
  * 获取所有角色选项（用于表单选择）
  * @returns 包含值、标签和级别的选项数组
  */
-export function getRoleOptions(): Array<{
+export function getRoleOptions(): {
   value: Role;
   label: string;
   level: number;
   description: string;
-}> {
+}[] {
   return ROLE_VALUES.map((value) => ({
     value,
     label: getRoleLabel(value),

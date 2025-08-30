@@ -1,14 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Auth } from './entities/auth.entity';
-import { Repository } from 'typeorm';
-import { randomString, getCurrentTimestamp } from 'src/utils';
-import { JwtService } from '@nestjs/jwt';
-import { appConfig } from 'src/config';
-import * as svgCaptcha from 'svg-captcha';
 import * as bcryptjs from 'bcryptjs';
-import * as crypto from 'crypto';
+import { createHash } from 'crypto';
+import { appConfig } from 'src/config';
+import { getCurrentTimestamp, randomString } from 'src/utils';
+import * as svgCaptcha from 'svg-captcha';
+import { Repository } from 'typeorm';
+import { Injectable } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { CreateAuthDto } from './dto/create-auth.dto';
+import { Auth } from './entities/auth.entity';
 
 /**
  * 认证服务类
@@ -160,16 +160,9 @@ export class AuthService {
   /**
    * 生成客户端信息哈希（用于防爬验证）
    */
-  private hashClientInfo(clientInfo: {
-    ip?: string;
-    userAgent?: string;
-  }): string {
+  private hashClientInfo(clientInfo: { ip?: string; userAgent?: string }): string {
     const info = `${clientInfo.ip || 'unknown'}-${clientInfo.userAgent || 'unknown'}`;
-    return crypto
-      .createHash('sha256')
-      .update(info)
-      .digest('hex')
-      .substring(0, 16);
+    return createHash('sha256').update(info).digest('hex').substring(0, 16);
   }
 
   /**
