@@ -14,12 +14,24 @@ import { HttpException } from '@nestjs/common';
  * throw new BusinessException('操作失败', 422);
  */
 export class BusinessException extends HttpException {
+  public readonly context?: Record<string, any>;
+  public readonly logLevel?: 'DEBUG' | 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL';
+
   /**
    * 构造函数
    * @param message 错误信息
    * @param code HTTP 状态码，默认 400
+   * @param context 额外的上下文信息
+   * @param logLevel 指定日志级别
    */
-  constructor(message: string, code: number = 400) {
+  constructor(
+    message: string, 
+    code: number = 400,
+    context?: Record<string, any>,
+    logLevel?: 'DEBUG' | 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL'
+  ) {
     super({ code, message }, code);
+    this.context = context;
+    this.logLevel = logLevel;
   }
 }
