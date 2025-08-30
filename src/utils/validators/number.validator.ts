@@ -1,7 +1,65 @@
 /**
- * 数字验证工具
- *
- * 提供各种数字格式验证功能
+ * 数字验证工具模块
+ * 
+ * @description
+ * 提供全面的数字类型验证功能，包括整数、浮点数、
+ * 范围验证、特殊数值格式验证等。
+ * 
+ * 功能特性:
+ * - 整数类型验证 (正整数、非负整数)
+ * - 浮点数验证和精度控制
+ * - 数值范围验证
+ * - 特殊格式验证 (百分比、金额)
+ * - 类型安全的数值转换
+ * - 高性能的验证算法
+ * 
+ * 验证类型:
+ * 1. 基础类型: 整数、浮点数验证
+ * 2. 范围验证: 最小值、最大值限制
+ * 3. 格式验证: 百分比、金额格式
+ * 4. 业务验证: 特定业务场景的数值规则
+ * 
+ * 适用场景:
+ * - 表单数据验证
+ * - API参数校验
+ * - 金融数据处理
+ * - 统计数据验证
+ * - 配置参数检查
+ * 
+ * 安全考虑:
+ * - 防止数值溢出
+ * - 精度丢失处理
+ * - 非法输入过滤
+ * - 类型转换安全
+ * 
+ * @example
+ * ```typescript
+ * import { 
+ *   isInteger, 
+ *   isPositiveInteger, 
+ *   isInRange,
+ *   isPercentage,
+ *   isMoney 
+ * } from '@/utils/validators/number.validator';
+ * 
+ * // 整数验证
+ * const valid = isInteger('123'); // true
+ * 
+ * // 正整数验证
+ * const positive = isPositiveInteger(5); // true
+ * 
+ * // 范围验证
+ * const inRange = isInRange(50, 0, 100); // true
+ * 
+ * // 百分比验证
+ * const percentage = isPercentage(85.5); // true
+ * 
+ * // 金额验证
+ * const money = isMoney('99.99'); // true
+ * ```
+ * 
+ * @author NestJS Template
+ * @since 1.0.0
  */
 
 /**

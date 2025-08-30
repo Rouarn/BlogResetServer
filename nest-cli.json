@@ -1,8 +1,27 @@
 {
+  // NestJS CLI 配置文件
+  // 用于配置 NestJS 命令行工具的行为和选项
+  
+  // JSON Schema 定义，提供 IDE 智能提示和验证
   "$schema": "https://json.schemastore.org/nest-cli",
+  
+  // 使用的代码生成器集合 (NestJS 官方 schematics)
   "collection": "@nestjs/schematics",
+  
+  // 源代码根目录，CLI 生成的文件将放置在此目录下
   "sourceRoot": "src",
+  
+  // 编译器选项配置
   "compilerOptions": {
+    // 构建时删除输出目录，确保干净的构建环境
     "deleteOutDir": true
   }
+  
+  // 其他可用配置选项 (当前未使用，但可根据需要启用):
+  // "generateOptions": {
+  //   "spec": false          // 生成文件时不创建测试文件
+  // },
+  // "monorepo": false,       // 是否为 monorepo 项目
+  // "root": "apps/api",      // monorepo 中的应用根目录
+  // "projects": {}           // monorepo 项目配置
 }
