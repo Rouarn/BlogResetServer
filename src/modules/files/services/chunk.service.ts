@@ -12,8 +12,7 @@ import { ChunkUploadInfo, ChunkUploadResult } from '../interfaces';
 import { StorageService } from './storage.service';
 import { ValidationService } from './validation.service';
 import * as path from 'path';
-import { randomUUID } from 'crypto';
-import { formatDatePath } from 'src';
+import { formatDatePath, generateUUID } from 'src/utils';
 
 @Injectable()
 export class ChunkService {
@@ -32,7 +31,7 @@ export class ChunkService {
     initDto: ChunkUploadInitDto,
     userId?: string,
   ): Promise<ChunkUploadInfo> {
-    const uploadId = randomUUID();
+    const uploadId = generateUUID();
     const filename = this.validationService.generateUniqueFilename(
       initDto.filename,
     );

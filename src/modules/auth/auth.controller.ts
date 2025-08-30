@@ -18,7 +18,7 @@ import {
 } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { AuthService } from './auth.service';
-import { formatISOString } from 'src';
+import { formatISOString } from 'src/utils';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { CaptchaVerifyDto } from './dto/captcha-verify.dto';
 import { CreateUserDto } from './dto/create-user.dto';

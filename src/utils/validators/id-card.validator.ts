@@ -1,6 +1,6 @@
 /**
  * 身份证验证工具
- * 
+ *
  * 提供中国大陆身份证号码验证功能
  */
 
@@ -10,7 +10,9 @@
  * @returns 是否为合法身份证号码
  */
 export const isIdCard = (idCard: string): boolean => {
-  return /^[1-9]\d{5}(18|19|20)\d{2}((0[1-9])|(1[0-2]))(([0-2][1-9])|10|20|30|31)\d{3}[0-9Xx]$/.test(idCard);
+  return /^[1-9]\d{5}(18|19|20)\d{2}((0[1-9])|(1[0-2]))(([0-2][1-9])|10|20|30|31)\d{3}[0-9Xx]$/.test(
+    idCard,
+  );
 };
 
 /**
@@ -20,16 +22,16 @@ export const isIdCard = (idCard: string): boolean => {
  */
 export const isIdCardStrict = (idCard: string): boolean => {
   if (!isIdCard(idCard)) return false;
-  
+
   // 校验位验证
   const weights = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
   const checkCodes = ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'];
-  
+
   let sum = 0;
   for (let i = 0; i < 17; i++) {
     sum += parseInt(idCard[i]) * weights[i];
   }
-  
+
   const checkCode = checkCodes[sum % 11];
   return checkCode === idCard[17].toUpperCase();
 };
@@ -41,11 +43,11 @@ export const isIdCardStrict = (idCard: string): boolean => {
  */
 export const extractBirthFromIdCard = (idCard: string): string | null => {
   if (!isIdCard(idCard)) return null;
-  
+
   const year = idCard.substring(6, 10);
   const month = idCard.substring(10, 12);
   const day = idCard.substring(12, 14);
-  
+
   return `${year}-${month}-${day}`;
 };
 
@@ -54,9 +56,11 @@ export const extractBirthFromIdCard = (idCard: string): string | null => {
  * @param idCard 身份证号码
  * @returns 性别 ('male' | 'female') 或 null
  */
-export const extractGenderFromIdCard = (idCard: string): 'male' | 'female' | null => {
+export const extractGenderFromIdCard = (
+  idCard: string,
+): 'male' | 'female' | null => {
   if (!isIdCard(idCard)) return null;
-  
+
   const genderCode = parseInt(idCard[16]);
   return genderCode % 2 === 1 ? 'male' : 'female';
 };

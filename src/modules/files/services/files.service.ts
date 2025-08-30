@@ -13,7 +13,7 @@ import { FileUploadResult, BatchUploadResult } from '../interfaces';
 import { StorageService } from './storage.service';
 import { ValidationService } from './validation.service';
 import * as path from 'path';
-import { formatDatePath } from 'src';
+import { formatDatePath } from 'src/utils';
 
 @Injectable()
 export class FilesService {

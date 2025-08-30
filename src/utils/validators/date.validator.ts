@@ -1,6 +1,6 @@
 /**
  * 日期验证工具
- * 
+ *
  * 提供各种日期格式验证功能
  */
 
@@ -38,7 +38,11 @@ export const isTimeFormat = (timeStr: string): boolean => {
  * @returns 是否符合格式
  */
 export const isDateTimeFormat = (datetimeStr: string): boolean => {
-  return /^\d{4}-\d{2}-\d{2} ([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/.test(datetimeStr) && isValidDate(datetimeStr);
+  return (
+    /^\d{4}-\d{2}-\d{2} ([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/.test(
+      datetimeStr,
+    ) && isValidDate(datetimeStr)
+  );
 };
 
 /**
@@ -48,10 +52,10 @@ export const isDateTimeFormat = (datetimeStr: string): boolean => {
  */
 export const isToday = (date: string | Date): boolean => {
   if (!isValidDate(date)) return false;
-  
+
   const inputDate = new Date(date);
   const today = new Date();
-  
+
   return inputDate.toDateString() === today.toDateString();
 };
 
@@ -62,10 +66,10 @@ export const isToday = (date: string | Date): boolean => {
  */
 export const isPastDate = (date: string | Date): boolean => {
   if (!isValidDate(date)) return false;
-  
+
   const inputDate = new Date(date);
   const now = new Date();
-  
+
   return inputDate < now;
 };
 
@@ -76,10 +80,10 @@ export const isPastDate = (date: string | Date): boolean => {
  */
 export const isFutureDate = (date: string | Date): boolean => {
   if (!isValidDate(date)) return false;
-  
+
   const inputDate = new Date(date);
   const now = new Date();
-  
+
   return inputDate > now;
 };
 
@@ -90,12 +94,16 @@ export const isFutureDate = (date: string | Date): boolean => {
  * @param maxAge 最大年龄
  * @returns 是否在年龄范围内
  */
-export const isAgeInRange = (birthDate: string | Date, minAge: number, maxAge: number): boolean => {
+export const isAgeInRange = (
+  birthDate: string | Date,
+  minAge: number,
+  maxAge: number,
+): boolean => {
   if (!isValidDate(birthDate)) return false;
-  
+
   const birth = new Date(birthDate);
   const today = new Date();
   const age = today.getFullYear() - birth.getFullYear();
-  
+
   return age >= minAge && age <= maxAge;
 };

@@ -1,6 +1,6 @@
 /**
  * URL验证工具
- * 
+ *
  * 提供各种URL格式验证功能
  */
 
@@ -42,7 +42,9 @@ export const isHttpsUrl = (url: string): boolean => {
  * @returns 是否为合法域名
  */
 export const isDomain = (domain: string): boolean => {
-  return /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(domain);
+  return /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(
+    domain,
+  );
 };
 
 /**
@@ -51,7 +53,9 @@ export const isDomain = (domain: string): boolean => {
  * @returns 是否为合法IP地址
  */
 export const isIpAddress = (ip: string): boolean => {
-  return /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ip);
+  return /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
+    ip,
+  );
 };
 
 /**

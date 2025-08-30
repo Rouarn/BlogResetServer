@@ -1,6 +1,6 @@
 /**
  * 字符串验证工具
- * 
+ *
  * 提供各种字符串格式验证功能
  */
 
@@ -20,7 +20,11 @@ export const isEmpty = (str: string): boolean => {
  * @param max 最大长度
  * @returns 是否在范围内
  */
-export const isLengthInRange = (str: string, min: number, max: number): boolean => {
+export const isLengthInRange = (
+  str: string,
+  min: number,
+  max: number,
+): boolean => {
   const length = str.length;
   return length >= min && length <= max;
 };

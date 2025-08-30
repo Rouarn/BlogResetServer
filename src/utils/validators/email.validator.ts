@@ -1,6 +1,6 @@
 /**
  * 邮箱验证工具
- * 
+ *
  * 提供各种邮箱格式验证功能
  */
 
@@ -19,7 +19,8 @@ export const isEmail = (email: string): boolean => {
  * @returns 是否为合法邮箱
  */
 export const isEmailStrict = (email: string): boolean => {
-  const strictEmailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  const strictEmailRegex =
+    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
   return strictEmailRegex.test(email);
 };
 
@@ -30,12 +31,19 @@ export const isEmailStrict = (email: string): boolean => {
  */
 export const isCorporateEmail = (email: string): boolean => {
   if (!isEmail(email)) return false;
-  
+
   const personalDomains = [
-    'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com',
-    'qq.com', '163.com', '126.com', 'sina.com', 'sohu.com'
+    'gmail.com',
+    'yahoo.com',
+    'hotmail.com',
+    'outlook.com',
+    'qq.com',
+    '163.com',
+    '126.com',
+    'sina.com',
+    'sohu.com',
   ];
-  
+
   const domain = email.split('@')[1].toLowerCase();
   return !personalDomains.includes(domain);
 };
@@ -46,9 +54,12 @@ export const isCorporateEmail = (email: string): boolean => {
  * @param allowedDomains 允许的域名列表
  * @returns 是否在白名单中
  */
-export const isEmailDomainAllowed = (email: string, allowedDomains: string[]): boolean => {
+export const isEmailDomainAllowed = (
+  email: string,
+  allowedDomains: string[],
+): boolean => {
   if (!isEmail(email)) return false;
-  
+
   const domain = email.split('@')[1].toLowerCase();
-  return allowedDomains.map(d => d.toLowerCase()).includes(domain);
+  return allowedDomains.map((d) => d.toLowerCase()).includes(domain);
 };

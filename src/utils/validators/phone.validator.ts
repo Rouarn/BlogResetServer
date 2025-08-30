@@ -1,6 +1,6 @@
 /**
  * 手机号验证工具
- * 
+ *
  * 提供各种手机号格式验证功能
  */
 
@@ -20,7 +20,8 @@ export const isPhone = (phone: string): boolean => {
  */
 export const isPhoneStrict = (phone: string): boolean => {
   // 更严格的手机号验证，包含具体的号段
-  const strictPhoneRegex = /^1(3[0-9]|4[01456879]|5[0-35-9]|6[2567]|7[0-8]|8[0-9]|9[0-35-9])\d{8}$/;
+  const strictPhoneRegex =
+    /^1(3[0-9]|4[01456879]|5[0-35-9]|6[2567]|7[0-8]|8[0-9]|9[0-35-9])\d{8}$/;
   return strictPhoneRegex.test(phone);
 };
 
