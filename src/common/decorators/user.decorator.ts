@@ -1,3 +1,5 @@
+import type { Request } from 'express';
+import type { Auth as CurrentUser } from 'src/modules/auth/entities/auth.entity';
 import type { ExecutionContext } from '@nestjs/common';
 import { createParamDecorator } from '@nestjs/common';
 
@@ -26,6 +28,6 @@ import { createParamDecorator } from '@nestjs/common';
  * @returns 当前认证用户的信息对象
  */
 export const User = createParamDecorator((data: unknown, ctx: ExecutionContext): unknown => {
-  const request = ctx.switchToHttp().getRequest();
-  return request.user;
+  const request = ctx.switchToHttp().getRequest<Request>();
+  return request.user as CurrentUser;
 });

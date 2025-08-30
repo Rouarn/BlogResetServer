@@ -4,5 +4,5 @@
  * @returns 深拷贝后的新对象
  */
 export const deepClone = <T>(obj: T): T => {
-  return JSON.parse(JSON.stringify(obj));
+  return JSON.parse(JSON.stringify(obj)) as T;
 };

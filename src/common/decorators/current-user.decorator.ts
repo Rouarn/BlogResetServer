@@ -1,19 +1,7 @@
+import type { Request } from 'express';
+import type { Auth as CurrentUser } from 'src/modules/auth/entities/auth.entity';
 import type { ExecutionContext } from '@nestjs/common';
 import { createParamDecorator } from '@nestjs/common';
-
-/**
- * 当前用户信息接口
- *
- * 定义从 JWT Token 中解析出的用户基本信息结构
- */
-export interface CurrentUser {
-  /** 用户唯一标识 */
-  id: string;
-  /** 用户邮箱 */
-  email: string;
-  /** 用户角色列表（可选） */
-  roles?: string[];
-}
 
 /**
  * 获取当前用户装饰器（GetCurrentUser）
@@ -36,7 +24,7 @@ export interface CurrentUser {
  */
 export const GetCurrentUser = createParamDecorator(
   (data: unknown, ctx: ExecutionContext): CurrentUser => {
-    const request = ctx.switchToHttp().getRequest();
-    return request.user;
+    const request = ctx.switchToHttp().getRequest<Request>();
+    return request.user as CurrentUser;
   },
 );

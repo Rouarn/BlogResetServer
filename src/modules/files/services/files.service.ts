@@ -72,7 +72,7 @@ export class FilesService {
   }
 
   async uploadMultipleFiles(
-    files: any[],
+    files: Express.Multer.File[],
     uploadDto: FileUploadDto,
     userId?: string,
   ): Promise<BatchUploadResult> {
@@ -96,7 +96,7 @@ export class FilesService {
       } catch (error) {
         results.failed.push({
           filename: file.originalname,
-          error: error.message,
+          error: (error as Error).message,
         });
         results.failureCount++;
         this.logger.error(`Failed to upload file: ${file.originalname}`, error);

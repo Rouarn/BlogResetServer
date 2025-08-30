@@ -4,9 +4,12 @@
  * @param delay 延迟时间（毫秒）
  * @returns 防抖后的新函数
  */
-export const debounce = <T extends (...args: any[]) => void>(fn: T, delay = 300) => {
+export const debounce = <T extends (...args: unknown[]) => void>(
+  fn: T,
+  delay = 300,
+): ((...args: Parameters<T>) => void) => {
   let timer: NodeJS.Timeout | null = null;
-  return (...args: Parameters<T>) => {
+  return (...args: Parameters<T>): void => {
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => fn(...args), delay);
   };

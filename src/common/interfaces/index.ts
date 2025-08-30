@@ -14,3 +14,4 @@
  * import { IResponse, ErrorResponse } from '@/common/interfaces';
  */
 export * from './response.interface';
+export * from './files.interface';

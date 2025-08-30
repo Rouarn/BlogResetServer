@@ -67,7 +67,7 @@
  * @param value 值
  * @returns 是否为整数
  */
-export const isInteger = (value: any): boolean => {
+export const isInteger = (value: unknown): boolean => {
   return Number.isInteger(Number(value));
 };
 
@@ -76,7 +76,7 @@ export const isInteger = (value: any): boolean => {
  * @param value 值
  * @returns 是否为正整数
  */
-export const isPositiveInteger = (value: any): boolean => {
+export const isPositiveInteger = (value: unknown): boolean => {
   const num = Number(value);
   return Number.isInteger(num) && num > 0;
 };
@@ -86,7 +86,7 @@ export const isPositiveInteger = (value: any): boolean => {
  * @param value 值
  * @returns 是否为非负整数
  */
-export const isNonNegativeInteger = (value: any): boolean => {
+export const isNonNegativeInteger = (value: unknown): boolean => {
   const num = Number(value);
   return Number.isInteger(num) && num >= 0;
 };
@@ -96,8 +96,8 @@ export const isNonNegativeInteger = (value: any): boolean => {
  * @param value 值
  * @returns 是否为浮点数
  */
-export const isFloat = (value: any): boolean => {
-  return !isNaN(parseFloat(value)) && isFinite(value);
+export const isFloat = (value: unknown): boolean => {
+  return !isNaN(parseFloat(String(value))) && isFinite(Number(value));
 };
 
 /**
@@ -116,7 +116,7 @@ export const isInRange = (value: number, min: number, max: number): boolean => {
  * @param value 值
  * @returns 是否为有效百分比
  */
-export const isPercentage = (value: any): boolean => {
+export const isPercentage = (value: unknown): boolean => {
   const num = Number(value);
   return isFloat(num) && num >= 0 && num <= 100;
 };
@@ -126,6 +126,6 @@ export const isPercentage = (value: any): boolean => {
  * @param value 值
  * @returns 是否为有效金额
  */
-export const isMoney = (value: any): boolean => {
+export const isMoney = (value: unknown): boolean => {
   return /^\d+(\.\d{1,2})?$/.test(String(value));
 };

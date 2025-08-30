@@ -1,5 +1,6 @@
 import * as crypto from 'crypto';
 import { fileTypeFromBuffer } from 'file-type';
+import type { StaticConfig as StaticConfigType } from 'src/common/interfaces';
 import { getCurrentTimestamp, randomString } from 'src/utils';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -34,8 +35,9 @@ export class ValidationService {
 
   async validateFile(file: Express.Multer.File): Promise<void> {
     // 验证文件大小 - 使用静态资源配置中的限制
-    const staticConfig = this.configService.get('app.static');
+    const staticConfig = this.configService.get('app.static') as StaticConfigType;
     const maxSize = staticConfig.upload.maxFileSize;
+
     if (file.size > maxSize) {
       throw new BadRequestException(`文件大小超出限制，最大允许 ${maxSize / 1024 / 1024}MB`);
     }
@@ -54,7 +56,9 @@ export class ValidationService {
   }
 
   async validateFiles(files: Express.Multer.File[]): Promise<void> {
-    const staticConfig = this.configService.get('app.static');
+    const staticConfig = this.configService.get('app.static') as {
+      upload: { maxFileSize: number; allowedTypes: string[]; maxBatchFiles: number };
+    };
     const maxFiles = staticConfig.upload.maxBatchFiles;
     if (files.length > maxFiles) {
       throw new BadRequestException(`批量上传文件数量超出限制，最大允许 ${maxFiles} 个文件`);

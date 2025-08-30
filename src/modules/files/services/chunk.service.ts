@@ -1,5 +1,6 @@
 import * as path from 'path';
 import { formatDatePath, generateUUID } from 'src/utils';
+import { Readable } from 'stream';
 import { Repository } from 'typeorm';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -185,11 +186,17 @@ export class ChunkService {
     const finalBuffer = Buffer.concat(buffers);
 
     // 创建模拟的 Multer 文件对象
-    const mockFile: any = {
+    const mockFile: Express.Multer.File = {
       buffer: finalBuffer,
       originalname: file.originalName,
       mimetype: file.mimeType,
       size: finalBuffer.length,
+      fieldname: '',
+      encoding: '',
+      destination: '',
+      filename: '',
+      path: '',
+      stream: null as unknown as Readable,
     };
 
     await this.storageService.upload(mockFile, finalPath);

@@ -1,6 +1,7 @@
 import { Response } from 'express';
-import { CurrentUser, GetCurrentUser } from 'src/common/decorators';
+import { GetCurrentUser } from 'src/common/decorators';
 import { FileValidationPipe, FilesValidationPipe } from 'src/common/pipes';
+import type { Auth as CurrentUser } from 'src/modules/auth/entities/auth.entity';
 import {
   Body,
   Controller,
@@ -236,7 +237,10 @@ export class FilesController {
   @Get('upload/progress/:uploadId')
   @ApiOperation({ summary: '获取上传进度' })
   @ApiResponse({ status: 200, description: '获取上传进度成功' })
-  async getUploadProgress(@Param('uploadId') uploadId: string) {
+  async getUploadProgress(@Param('uploadId') uploadId: string): Promise<{
+    success: boolean;
+    data: unknown;
+  }> {
     const result = await this.chunkService.getUploadProgress(uploadId);
     return {
       success: true,
@@ -310,7 +314,13 @@ export class FilesController {
     type: 'object',
   })
   @UseGuards(FileAccessGuard)
-  async getFile(@Param('id', ParseUUIDPipe) id: string, @GetCurrentUser() user?: CurrentUser) {
+  async getFile(
+    @Param('id', ParseUUIDPipe) id: string,
+    @GetCurrentUser() user?: CurrentUser,
+  ): Promise<{
+    success: boolean;
+    data: unknown;
+  }> {
     const file = await this.filesService.findFileById(id, user?.id);
     return {
       success: true,
@@ -326,7 +336,7 @@ export class FilesController {
     @Param('id', ParseUUIDPipe) id: string,
     @Res() res: Response,
     @GetCurrentUser() user?: CurrentUser,
-  ) {
+  ): Promise<void> {
     const { file, buffer } = await this.filesService.getFileBuffer(id, user?.id);
 
     res.set({
@@ -346,7 +356,7 @@ export class FilesController {
     @Param('id', ParseUUIDPipe) id: string,
     @Res() res: Response,
     @GetCurrentUser() user?: CurrentUser,
-  ) {
+  ): Promise<void> {
     const { file, buffer } = await this.filesService.getFileBuffer(id, user?.id);
 
     res.set({
@@ -361,7 +371,13 @@ export class FilesController {
   @Delete(':id')
   @ApiOperation({ summary: '删除文件' })
   @ApiResponse({ status: 200, description: '文件删除成功' })
-  async deleteFile(@Param('id', ParseUUIDPipe) id: string, @GetCurrentUser() user?: CurrentUser) {
+  async deleteFile(
+    @Param('id', ParseUUIDPipe) id: string,
+    @GetCurrentUser() user?: CurrentUser,
+  ): Promise<{
+    success: boolean;
+    message: string;
+  }> {
     await this.filesService.deleteFile(id, user?.id);
     return {
       success: true,

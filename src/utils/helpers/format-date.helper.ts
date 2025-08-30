@@ -65,7 +65,7 @@ export const formatDate = (date: Date | number, format = 'YYYY-MM-DD HH:mm:ss'):
   const d = typeof date === 'number' ? new Date(date) : date;
 
   // 数字补零辅助函数，确保两位数格式
-  const pad = (n: number) => n.toString().padStart(2, '0');
+  const pad = (n: number): string => n.toString().padStart(2, '0');
 
   // 按顺序替换格式占位符，注意月份需要+1（JavaScript月份从0开始）
   return format

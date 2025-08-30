@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { StaticConfig } from '../interfaces';
 
 /**
  * 单文件验证管道（FileValidationPipe）
@@ -45,7 +46,7 @@ export class FileValidationPipe implements PipeTransform {
     }
 
     // 验证文件大小
-    const staticConfig = this.configService.get('app.static');
+    const staticConfig = this.configService.get<StaticConfig>('app.static');
 
     if (!staticConfig?.upload) {
       throw new BadRequestException('文件上传配置未找到');
@@ -109,7 +110,7 @@ export class FilesValidationPipe implements PipeTransform {
       throw new BadRequestException('文件列表不能为空');
     }
 
-    const staticConfig = this.configService.get('app.static');
+    const staticConfig = this.configService.get<StaticConfig>('app.static');
 
     if (!staticConfig?.upload) {
       throw new BadRequestException('文件上传配置未找到');

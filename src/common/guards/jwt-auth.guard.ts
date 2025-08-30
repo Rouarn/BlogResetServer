@@ -1,3 +1,4 @@
+import { Request } from 'express';
 import { Observable } from 'rxjs';
 import { WhitelistAuth } from 'src/utils';
 import {
@@ -47,7 +48,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
    * @returns 是否允许访问（布尔值、Promise 或 Observable）
    */
   canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<Request>();
     const path = request.path ?? request.url;
 
     // 检查是否在白名单中

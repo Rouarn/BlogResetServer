@@ -11,8 +11,8 @@ export class FileAccessGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const user = request.user;
-    const fileId = request.params.id;
+    const user = (request as { user: { id?: string } }).user;
+    const fileId = (request as { params: { id?: string } }).params.id;
 
     // 如果没有文件ID，允许访问（可能是列表接口）
     if (!fileId) {
