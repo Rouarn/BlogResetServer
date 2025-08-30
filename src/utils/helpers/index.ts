@@ -7,13 +7,13 @@
  * - 字符串处理：capitalize, randomString
  * - 数据处理：deepClone
  * - 时间处理：formatDate
- * - 验证工具：isEmail
  * - 性能优化：debounce, throttle
  * - 唯一标识：uuid
  *
  * 用法示例：
  * ```typescript
- * import { isEmail, formatDate, debounce } from '@/utils/helpers';
+ * import { formatDate, debounce } from '@/utils/helpers';
+ * import { isEmail } from '@/utils/validators';
  *
  * const valid = isEmail('test@example.com');
  * const formatted = formatDate(new Date());
@@ -31,9 +31,6 @@ export * from './deep-clone.helper';
 // 时间处理
 export * from './format-date.helper';
 export * from './date.helper';
-
-// 验证工具
-export * from './is-email.helper';
 
 // 性能优化
 export * from './debounce.helper';

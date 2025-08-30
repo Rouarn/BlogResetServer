@@ -15,7 +15,6 @@
 - ✅ **验证码系统**: SVG验证码，防爬虫机制
 - ✅ **环境配置**: 完善的环境变量管理
 - ✅ **代码质量**: ESLint + Prettier 代码规范
-- ✅ **测试支持**: Jest 单元测试和E2E测试
 
 ## 📋 技术栈
 
@@ -111,24 +110,7 @@ pnpm run build
 pnpm run start:prod
 ```
 
-### 🧪 测试相关
 
-```bash
-# 运行单元测试
-pnpm run test
-
-# 监听模式运行测试
-pnpm run test:watch
-
-# 生成测试覆盖率报告
-pnpm run test:cov
-
-# 运行E2E测试
-pnpm run test:e2e
-
-# 调试测试
-pnpm run test:debug
-```
 
 ### 📋 代码质量
 
@@ -248,45 +230,121 @@ pnpm run start:dev
 ```
 nestjs-template/
 ├── src/                          # 源代码目录
-│   ├── auth/                     # 认证模块
-│   │   ├── dto/                  # 数据传输对象
-│   │   ├── entities/             # 实体定义
-│   │   ├── auth.controller.ts    # 认证控制器
-│   │   ├── auth.service.ts       # 认证服务
-│   │   └── auth.module.ts        # 认证模块
-│   ├── files/                    # 文件管理模块（已集成静态资源配置）
-│   │   ├── adapters/             # 存储适配器
-
-
-│   │   ├── controllers/          # 控制器
-│   │   │   ├── files.controller.ts         # 文件管理控制器
-│   │   │   └── protocols.controller.ts     # 协议支持控制器
-│   │   ├── services/             # 服务类
-│   │   │   ├── files.service.ts            # 文件管理服务（已集成配置）
-│   │   │   ├── storage.service.ts          # 存储服务（已集成配置）
-│   │   │   ├── chunk.service.ts            # 分块上传服务
-│   │   │   └── validation.service.ts       # 文件验证服务
-│   │   ├── entities/             # 数据库实体
-│   │   │   ├── file.entity.ts              # 文件实体
-│   │   │   └── upload-chunk.entity.ts      # 上传分块实体
-│   │   ├── dto/                  # 数据传输对象
-│   │   ├── guards/               # 权限守卫
-│   │   ├── decorators/           # 装饰器
-│   │   ├── interfaces/           # 接口定义
-│   │   └── files.module.ts       # 文件模块
+│   ├── modules/                  # 业务模块
+│   │   ├── auth/                 # 认证模块
+│   │   │   ├── dto/              # 数据传输对象
+│   │   │   │   ├── auth-response.dto.ts
+│   │   │   │   ├── captcha-verify.dto.ts
+│   │   │   │   ├── create-auth.dto.ts
+│   │   │   │   ├── create-user.dto.ts
+│   │   │   │   └── update-auth.dto.ts
+│   │   │   ├── entities/         # 实体定义
+│   │   │   │   └── auth.entity.ts
+│   │   │   ├── auth.controller.ts # 认证控制器
+│   │   │   ├── auth.service.ts   # 认证服务
+│   │   │   └── auth.module.ts    # 认证模块
+│   │   └── files/                # 文件管理模块
+│   │       ├── dto/              # 数据传输对象
+│   │       │   ├── file-query.dto.ts
+│   │       │   ├── file-upload.dto.ts
+│   │       │   ├── index.ts
+│   │       │   └── swagger-responses.dto.ts
+│   │       ├── entities/         # 数据库实体
+│   │       │   ├── file.entity.ts
+│   │       │   ├── index.ts
+│   │       │   └── upload-chunk.entity.ts
+│   │       ├── services/         # 服务类
+│   │       │   ├── chunk.service.ts        # 分块上传服务
+│   │       │   ├── files.service.ts        # 文件管理服务
+│   │       │   ├── storage-factory.service.ts # 存储工厂服务
+│   │       │   ├── storage.service.ts      # 存储服务
+│   │       │   └── validation.service.ts   # 文件验证服务
+│   │       ├── decorators/       # 装饰器
+│   │       │   ├── file-permissions.decorator.ts
+│   │       │   └── index.ts
+│   │       ├── guards/           # 权限守卫
+│   │       │   └── file-access.guard.ts
+│   │       ├── interfaces/       # 接口定义
+│   │       │   ├── file-upload.interface.ts
+│   │       │   ├── index.ts
+│   │       │   ├── storage-factory.interface.ts
+│   │       │   └── storage.interface.ts
+│   │       ├── enums/            # 枚举定义
+│   │       │   ├── file-status.enum.ts
+│   │       │   ├── file-type.enum.ts
+│   │       │   └── index.ts
+│   │       ├── files.controller.ts # 文件管理控制器
+│   │       └── files.module.ts   # 文件模块
 │   ├── common/                   # 公共模块
+│   │   ├── constants/            # 常量定义
+│   │   │   ├── auth.constant.ts
+│   │   │   ├── index.ts
+│   │   │   └── response.constant.ts
+│   │   ├── decorators/           # 装饰器
+│   │   │   ├── current-user.decorator.ts
+│   │   │   ├── index.ts
+│   │   │   ├── jwt-auth.decorator.ts
+│   │   │   ├── public.decorator.ts
+│   │   │   ├── roles.decorator.ts
+│   │   │   └── user.decorator.ts
+│   │   ├── enums/                # 枚举定义
+│   │   │   ├── gender.enum.ts
+│   │   │   ├── index.ts
+│   │   │   └── role.enum.ts
+│   │   ├── exceptions/           # 异常处理
+│   │   │   ├── http.exception.ts
+│   │   │   └── index.ts
+│   │   ├── filters/              # 过滤器
+│   │   │   ├── http-exception.filter.ts
+│   │   │   └── index.ts
+│   │   ├── guards/               # 守卫
+│   │   │   ├── global.guard.ts
+│   │   │   ├── index.ts
+│   │   │   ├── jwt-auth.guard.ts
+│   │   │   └── roles.guard.ts
+│   │   ├── interceptors/         # 拦截器
+│   │   │   ├── index.ts
+│   │   │   └── response.interceptor.ts
+│   │   ├── interfaces/           # 接口定义
+│   │   │   ├── error-response.interface.ts
+│   │   │   ├── index.ts
+│   │   │   └── response.interface.ts
+│   │   ├── pipes/                # 管道
+│   │   │   ├── file-validation.pipe.ts
+│   │   │   └── index.ts
+│   │   └── strategies/           # 认证策略
+│   │       ├── index.ts
+│   │       └── jwt-auth.strategy.ts
 │   ├── config/                   # 配置管理
-│   │   └── index.ts              # 应用配置文件
-│   │   ├── configuration.ts     # 配置对象
 │   │   ├── app-config.service.ts # 配置服务
 │   │   ├── config.module.ts      # 配置模块
+│   │   ├── configuration.ts      # 配置对象
+│   │   ├── index.ts              # 配置导出
 │   │   └── validation.schema.ts  # 配置验证
-│   ├── utils/                    # 工具类
-│   │   ├── api/                  # API工具
-│   │   ├── decorators/           # 装饰器
-│   │   ├── enums/                # 枚举定义
-│   │   ├── guards/               # 守卫
-│   │   └── passport/             # Passport策略
+│   ├── utils/                    # 工具模块
+│   │   ├── auth/                 # 认证工具
+│   │   │   ├── index.ts
+│   │   │   └── whitelist.auth.ts
+│   │   ├── helpers/              # 辅助函数
+│   │   │   ├── capitalize.helper.ts
+│   │   │   ├── date.helper.ts
+│   │   │   ├── debounce.helper.ts
+│   │   │   ├── deep-clone.helper.ts
+│   │   │   ├── format-date.helper.ts
+│   │   │   ├── index.ts
+│   │   │   ├── random-string.helper.ts
+│   │   │   ├── throttle.helper.ts
+│   │   │   └── uuid.helper.ts
+│   │   ├── validators/           # 验证工具
+│   │   │   ├── date.validator.ts
+│   │   │   ├── email.validator.ts
+│   │   │   ├── id-card.validator.ts
+│   │   │   ├── index.ts
+│   │   │   ├── number.validator.ts
+│   │   │   ├── phone.validator.ts
+│   │   │   ├── string.validator.ts
+│   │   │   └── url.validator.ts
+│   │   └── index.ts              # 工具统一导出
 │   ├── app.controller.ts         # 应用控制器
 │   ├── app.service.ts            # 应用服务
 │   ├── app.module.ts             # 应用模块
@@ -294,13 +352,455 @@ nestjs-template/
 ├── scripts/                      # 脚本工具
 │   ├── check-env.js              # 环境检查工具
 │   └── setup-env.js              # 环境设置工具
-├── test/                         # 测试目录
-├── .env.example                  # 环境变量示例
+├── static/                       # 静态资源目录
+├── .env                          # 环境变量（公共配置）
 ├── .env.development              # 开发环境配置
 ├── .env.production               # 生产环境配置
+├── .eslintrc.js                  # ESLint配置
+├── .gitignore                    # Git忽略文件
+├── .prettierrc                   # Prettier配置
+├── nest-cli.json                 # NestJS CLI配置
 ├── package.json                  # 项目配置
+├── pnpm-lock.yaml                # PNPM锁定文件
 ├── tsconfig.json                 # TypeScript配置
 └── README.md                     # 项目说明
+```
+
+## 🛠️ 工具模块 (src/utils)
+
+### 概述
+
+`src/utils` 模块提供了项目中使用的各种工具函数和辅助类，采用模块化设计，统一导出，便于在整个项目中复用。
+
+### 模块结构
+
+```
+src/utils/
+├── index.ts                    # 统一导出入口
+├── auth/                       # 认证工具
+│   ├── index.ts               # 认证工具导出
+│   └── whitelist.auth.ts      # 白名单认证工具
+├── helpers/                    # 辅助函数
+│   ├── index.ts               # 辅助函数导出
+│   ├── capitalize.helper.ts   # 字符串首字母大写
+│   ├── date.helper.ts         # 日期处理工具
+│   ├── debounce.helper.ts     # 防抖函数
+│   ├── deep-clone.helper.ts   # 深拷贝工具
+│   ├── format-date.helper.ts  # 日期格式化
+│   ├── random-string.helper.ts # 随机字符串生成
+│   ├── throttle.helper.ts     # 节流函数
+│   └── uuid.helper.ts         # UUID工具
+└── validators/                 # 验证工具
+    ├── index.ts               # 验证工具导出
+    ├── email.validator.ts     # 邮箱验证
+    ├── phone.validator.ts     # 手机号验证
+    ├── id-card.validator.ts   # 身份证验证
+    ├── url.validator.ts       # URL验证
+    ├── number.validator.ts    # 数字验证
+    ├── string.validator.ts    # 字符串验证
+    └── date.validator.ts      # 日期验证
+```
+
+### 使用方式
+
+#### 统一导入（推荐）
+
+```typescript
+// 从主入口导入所有工具
+import { 
+  WhitelistAuth,           // 认证工具
+  formatDate, debounce,    // 辅助函数
+  isEmail, isPhone         // 验证工具
+} from 'src/utils';
+```
+
+#### 分模块导入
+
+```typescript
+// 从特定模块导入
+import { WhitelistAuth } from 'src/utils/auth';
+import { formatDate, debounce } from 'src/utils/helpers';
+import { isEmail, isPhone } from 'src/utils/validators';
+```
+
+### 认证工具 (auth)
+
+#### WhitelistAuth - 白名单认证
+
+提供基于白名单的认证机制，支持IP地址和用户ID的白名单验证。
+
+```typescript
+import { WhitelistAuth } from 'src/utils';
+
+// 创建白名单认证实例
+const whitelist = new WhitelistAuth({
+  ipWhitelist: ['127.0.0.1', '192.168.1.0/24'],
+  userWhitelist: ['admin', 'user1']
+});
+
+// 验证IP地址
+const isIpAllowed = whitelist.validateIp('127.0.0.1'); // true
+
+// 验证用户
+const isUserAllowed = whitelist.validateUser('admin'); // true
+```
+
+### 辅助函数 (helpers)
+
+#### 字符串处理
+
+```typescript
+import { capitalize, randomString } from 'src/utils';
+
+// 首字母大写
+const result = capitalize('hello world'); // "Hello world"
+
+// 生成随机字符串
+const random = randomString(10); // "aBc123XyZ9"
+```
+
+#### 时间处理
+
+```typescript
+import { formatDate, getCurrentTimestamp } from 'src/utils';
+
+// 格式化日期
+const formatted = formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss');
+
+// 获取当前时间戳
+const timestamp = getCurrentTimestamp(); // 1640995200000
+```
+
+#### 性能优化
+
+```typescript
+import { debounce, throttle } from 'src/utils';
+
+// 防抖函数 - 延迟执行，多次调用只执行最后一次
+const debouncedFn = debounce(() => {
+  console.log('搜索请求');
+}, 300);
+
+// 节流函数 - 限制执行频率
+const throttledFn = throttle(() => {
+  console.log('滚动事件');
+}, 100);
+```
+
+#### 数据处理
+
+```typescript
+import { deepClone } from 'src/utils';
+
+// 深拷贝对象
+const original = { a: 1, b: { c: 2 } };
+const cloned = deepClone(original);
+```
+
+#### UUID工具
+
+```typescript
+import { 
+  generateUUID, 
+  generateUUIDv4, 
+  generateUUIDv7, 
+  validateUUID 
+} from 'src/utils';
+
+// 生成UUID v4
+const uuid4 = generateUUIDv4(); // "550e8400-e29b-41d4-a716-446655440000"
+
+// 生成UUID v7 (时间排序)
+const uuid7 = generateUUIDv7(); // "01234567-89ab-7def-8000-123456789abc"
+
+// 验证UUID格式
+const isValid = validateUUID(uuid4); // true
+```
+
+### 验证工具 (validators)
+
+#### 邮箱验证
+
+```typescript
+import { 
+  isEmail, 
+  isEmailStrict, 
+  isCorporateEmail,
+  isEmailDomainAllowed 
+} from 'src/utils';
+
+// 基础邮箱验证
+const valid1 = isEmail('user@example.com'); // true
+
+// 严格邮箱验证
+const valid2 = isEmailStrict('user@example.com'); // true
+
+// 企业邮箱验证（排除个人邮箱域名）
+const valid3 = isCorporateEmail('user@company.com'); // true
+const valid4 = isCorporateEmail('user@gmail.com'); // false
+
+// 域名白名单验证
+const valid5 = isEmailDomainAllowed('user@company.com', ['company.com']); // true
+```
+
+#### 手机号验证
+
+```typescript
+import { 
+  isPhone, 
+  isPhoneStrict, 
+  isInternationalPhone,
+  formatPhoneDisplay 
+} from 'src/utils';
+
+// 中国大陆手机号验证
+const valid1 = isPhone('13800138000'); // true
+
+// 严格手机号验证（包含具体号段）
+const valid2 = isPhoneStrict('13800138000'); // true
+
+// 国际手机号验证
+const valid3 = isInternationalPhone('+8613800138000'); // true
+
+// 手机号脱敏显示
+const masked = formatPhoneDisplay('13800138000'); // "138****8000"
+```
+
+#### 身份证验证
+
+```typescript
+import { 
+  isIdCard, 
+  isIdCardStrict,
+  extractBirthFromIdCard,
+  extractGenderFromIdCard,
+  formatIdCardDisplay 
+} from 'src/utils';
+
+const idCard = '110101199001011234';
+
+// 基础身份证验证
+const valid1 = isIdCard(idCard); // true
+
+// 严格验证（包含校验位）
+const valid2 = isIdCardStrict(idCard); // true
+
+// 提取生日
+const birth = extractBirthFromIdCard(idCard); // "1990-01-01"
+
+// 提取性别
+const gender = extractGenderFromIdCard(idCard); // "male" | "female"
+
+// 身份证脱敏显示
+const masked = formatIdCardDisplay(idCard); // "110101********1234"
+```
+
+#### URL验证
+
+```typescript
+import { 
+  isUrl, 
+  isHttpUrl, 
+  isHttpsUrl,
+  isDomain,
+  isIpAddress 
+} from 'src/utils';
+
+// URL验证
+const valid1 = isUrl('https://example.com'); // true
+
+// HTTP URL验证
+const valid2 = isHttpUrl('http://example.com'); // true
+
+// HTTPS URL验证
+const valid3 = isHttpsUrl('https://example.com'); // true
+
+// 域名验证
+const valid4 = isDomain('example.com'); // true
+
+// IP地址验证
+const valid5 = isIpAddress('192.168.1.1'); // true
+```
+
+#### 数字验证
+
+```typescript
+import { 
+  isInteger, 
+  isPositiveInteger,
+  isFloat,
+  isInRange,
+  isPercentage,
+  isMoney 
+} from 'src/utils';
+
+// 整数验证
+const valid1 = isInteger(123); // true
+
+// 正整数验证
+const valid2 = isPositiveInteger(123); // true
+
+// 浮点数验证
+const valid3 = isFloat(123.45); // true
+
+// 范围验证
+const valid4 = isInRange(50, 0, 100); // true
+
+// 百分比验证
+const valid5 = isPercentage(85.5); // true
+
+// 金额验证（最多2位小数）
+const valid6 = isMoney(123.45); // true
+```
+
+#### 字符串验证
+
+```typescript
+import { 
+  isEmpty, 
+  isLengthInRange,
+  isAlpha,
+  isAlphanumeric,
+  isChinese,
+  isUsername,
+  isStrongPassword,
+  hasSpecialChars 
+} from 'src/utils';
+
+// 空字符串验证
+const valid1 = isEmpty('   '); // true
+
+// 长度范围验证
+const valid2 = isLengthInRange('hello', 3, 10); // true
+
+// 纯字母验证
+const valid3 = isAlpha('hello'); // true
+
+// 字母数字验证
+const valid4 = isAlphanumeric('hello123'); // true
+
+// 中文字符验证
+const valid5 = isChinese('你好'); // true
+
+// 用户名验证（字母数字下划线，3-20位）
+const valid6 = isUsername('user_123'); // true
+
+// 强密码验证（至少8位，包含大小写字母数字）
+const valid7 = isStrongPassword('Password123'); // true
+
+// 特殊字符检测
+const valid8 = hasSpecialChars('hello@world'); // true
+```
+
+#### 日期验证
+
+```typescript
+import { 
+  isValidDate, 
+  isDateFormat,
+  isTimeFormat,
+  isDateTimeFormat 
+} from 'src/utils';
+
+// 有效日期验证
+const valid1 = isValidDate('2024-01-01'); // true
+
+// 日期格式验证 (YYYY-MM-DD)
+const valid2 = isDateFormat('2024-01-01'); // true
+
+// 时间格式验证 (HH:mm:ss)
+const valid3 = isTimeFormat('12:30:45'); // true
+
+// 日期时间格式验证 (YYYY-MM-DD HH:mm:ss)
+const valid4 = isDateTimeFormat('2024-01-01 12:30:45'); // true
+```
+
+### 最佳实践
+
+#### 1. 统一导入
+
+推荐使用统一导入方式，从 `src/utils` 主入口导入所需工具：
+
+```typescript
+// ✅ 推荐
+import { isEmail, formatDate, WhitelistAuth } from 'src/utils';
+
+// ❌ 不推荐
+import { isEmail } from 'src/utils/validators/email.validator';
+import { formatDate } from 'src/utils/helpers/format-date.helper';
+```
+
+#### 2. 类型安全
+
+所有工具函数都提供了完整的 TypeScript 类型定义：
+
+```typescript
+import { isEmail, formatDate } from 'src/utils';
+
+// 类型推断
+const emailValid: boolean = isEmail('test@example.com');
+const formattedDate: string = formatDate(new Date());
+```
+
+#### 3. 错误处理
+
+验证函数返回布尔值，建议结合错误处理使用：
+
+```typescript
+import { isEmail, isPhone } from 'src/utils';
+
+function validateUserInput(email: string, phone: string) {
+  if (!isEmail(email)) {
+    throw new Error('邮箱格式不正确');
+  }
+  
+  if (!isPhone(phone)) {
+    throw new Error('手机号格式不正确');
+  }
+  
+  return true;
+}
+```
+
+#### 4. 性能优化
+
+对于频繁调用的场景，使用防抖和节流函数：
+
+```typescript
+import { debounce, throttle } from 'src/utils';
+
+// 搜索输入防抖
+const handleSearch = debounce((keyword: string) => {
+  // 执行搜索
+}, 300);
+
+// 滚动事件节流
+const handleScroll = throttle(() => {
+  // 处理滚动
+}, 100);
+```
+
+### 扩展工具模块
+
+如需添加新的工具函数：
+
+1. **创建工具文件**：在对应子目录下创建新的工具文件
+2. **导出工具**：在子目录的 `index.ts` 中导出
+3. **统一导出**：在 `src/utils/index.ts` 中添加导出
+4. **更新文档**：更新本文档说明
+
+```typescript
+// 示例：添加新的字符串工具
+// src/utils/helpers/slug.helper.ts
+export const createSlug = (text: string): string => {
+  return text.toLowerCase().replace(/\s+/g, '-');
+};
+
+// src/utils/helpers/index.ts
+export * from './slug.helper';
+
+// src/utils/index.ts
+export * from './helpers';
 ```
 
 ## ⚙️ 配置管理
@@ -1718,18 +2218,7 @@ try {
 - **开发环境**: http://localhost:8848/api-docs
 - **生产环境**: http://your-domain/api-docs
 
-## 🧪 测试
 
-```bash
-# 运行所有测试
-pnpm run test
-
-# 运行测试并生成覆盖率报告
-pnpm run test:cov
-
-# 运行E2E测试
-pnpm run test:e2e
-```
 
 ## 🚀 部署
 
@@ -1785,9 +2274,6 @@ pnpm run format
 
 # 代码检查
 pnpm run lint
-
-# 运行测试
-pnpm run test
 
 # 环境配置检查
 pnpm run env:check

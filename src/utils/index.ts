@@ -10,7 +10,7 @@
  * 用法示例：
  * ```typescript
  * import { WhitelistAuth } from '@/utils/auth';
- * import { isEmail } from '@/utils/helpers';
+ * import { isEmail } from '@/utils/validators';
  * ```
  */
 
@@ -19,3 +19,6 @@ export * from './auth';
 
 // 辅助函数
 export * from './helpers';
+
+// 验证工具
+export * from './validators';
