@@ -1,0 +1,56 @@
+# EditorConfig 配置文件
+# 用于统一不同编辑器和IDE的代码格式规范
+
+# 根目录标识，表示这是项目的顶层配置文件
+root = true
+
+# 默认所有文件的配置
+[*]
+# 缩进风格：使用空格
+indent_style = space
+# 缩进大小：2个空格
+indent_size = 2
+# 换行符：LF (Unix/Linux/macOS)
+end_of_line = lf
+# 文件编码：UTF-8
+charset = utf-8
+# 删除行尾空格
+trim_trailing_whitespace = true
+# 文件末尾插入新行
+insert_final_newline = true
+
+# TypeScript 文件特定配置
+[*.ts]
+# 缩进大小：2个空格
+indent_size = 2
+# 最大行长度：100字符
+max_line_length = 100
+
+# JavaScript 文件特定配置
+[*.js]
+# 缩进大小：2个空格
+indent_size = 2
+# 最大行长度：100字符
+max_line_length = 100
+
+# JSON 文件特定配置
+[*.json]
+# 缩进大小：2个空格
+indent_size = 2
+
+# YAML 文件特定配置
+[*.yml]
+# 缩进大小：2个空格
+indent_size = 2
+
+[*.yaml]
+# 缩进大小：2个空格
+indent_size = 2
+
+# Markdown 文件特定配置（用于文档）
+[*.md]
+# 不删除行尾空格（Markdown语法可能需要）
+trim_trailing_whitespace = false
+
+
+
