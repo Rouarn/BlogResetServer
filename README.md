@@ -1,4 +1,4 @@
-# 我与夏季 Ra 系统 - 服务端
+  # 我与夏季 Ra 系统 - 服务端
 
 基于 NestJS 构建的现代化后端API系统，使用 TypeScript 开发，支持JWT认证、数据库ORM、API文档等功能。
 
@@ -2218,7 +2218,26 @@ try {
 - **开发环境**: http://localhost:8848/api-docs
 - **生产环境**: http://your-domain/api-docs
 
+## 🤝 开发规范
 
+### 代码风格
+
+- 使用 ESLint + Prettier 进行代码格式化
+- 遵循 TypeScript 严格模式
+- 使用 Conventional Commits 规范
+
+### 提交前检查
+
+```bash
+# 代码格式化
+pnpm run format
+
+# 代码检查
+pnpm run lint
+
+# 环境配置检查
+pnpm run env:check
+```
 
 ## 🚀 部署
 
@@ -2258,26 +2277,53 @@ EXPOSE 3000
 CMD ["pnpm", "run", "start:prod"]
 ```
 
-## 🤝 开发规范
+## 📦 生产部署
 
-### 代码风格
+本项目提供了完整的生产部署方案，支持 Docker 和 PM2 两种部署方式。
 
-- 使用 ESLint + Prettier 进行代码格式化
-- 遵循 TypeScript 严格模式
-- 使用 Conventional Commits 规范
+### 🚀 快速部署
 
-### 提交前检查
+#### 环境要求
+- **Docker 部署**：需要预装 Docker + Docker Compose
+- **PM2 部署**：需要预装 Node.js + PM2 + MySQL
 
+#### 一键部署
 ```bash
-# 代码格式化
-pnpm run format
+# 1. 配置环境
+cp deployment/config/.env.production .env
+# 编辑 .env 文件，修改数据库密码和 JWT 密钥
 
-# 代码检查
-pnpm run lint
+# 2. 执行一键部署
+chmod +x deployment/scripts/quick-deploy.sh
+./deployment/scripts/quick-deploy.sh
+# 按提示选择部署方式
 
-# 环境配置检查
-pnpm run env:check
+# 3. 访问应用
+# http://your-server:3000
 ```
+
+### 📖 完整部署指南
+
+详细的部署文档请查看：**[deployment/README.md](deployment/README.md)**
+
+**包含内容：**
+- 🔧 **环境要求**：Docker/PM2 预装软件清单和安装命令
+- 🚀 **一键部署**：自动化部署脚本使用指南
+- 🐳 **Docker 部署**：容器化部署详细步骤
+- 📦 **PM2 部署**：进程管理部署方案
+- 🛡️ **安全配置**：防火墙、SSL证书、权限设置
+- 📊 **运维管理**：服务监控、日志查看、重启操作
+- 🔍 **故障排除**：常见问题解决方案
+- ⚡ **性能优化**：系统调优和应用优化建议
+
+## 📞 技术支持
+
+如有问题，请：
+
+1. 查看本README文档
+2. 查看 `deployment/README.md`  详细部署文档
+3. 运行 `pnpm run env:check` 检查配置
+4. 提交Issue或联系开发团队
 
 ## 📝 更新日志
 
@@ -2332,15 +2378,6 @@ pnpm run env:check
 - 检查JWT_SECRET是否正确设置
 - 确认访问令牌格式：`Authorization: Bearer <token>`
 - 验证令牌是否在7天有效期内
-
-## 📞 技术支持
-
-如有问题，请：
-
-1. 查看本README文档
-2. 查看 `docs/environment-setup.md` 环境配置指南
-3. 运行 `pnpm run env:check` 检查配置
-4. 提交Issue或联系开发团队
 
 ---
 
