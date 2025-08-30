@@ -41,7 +41,6 @@ const appConfig = new AppConfigService(configService);
 
 // 导出配置选项供其他模块使用
 export const jwtOptions = appConfig.jwtOptions;
-export const whiteList = appConfig.whiteList;
 export const corsOptions = appConfig.corsOptions;
 
 export const staticAssetsOptions = appConfig.staticAssetsOptions;

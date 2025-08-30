@@ -4,15 +4,15 @@ import type { ServeStaticOptions } from '@nestjs/platform-express/interfaces/ser
 
 /**
  * 应用配置服务（AppConfigService）
- * 
+ *
  * 提供应用程序所有配置项的统一访问接口，封装环境变量的读取和默认值处理。
- * 
+ *
  * 功能说明：
  * - 封装 ConfigService，提供类型安全的配置访问方法
  * - 支持多环境配置，自动根据环境变量调整配置
  * - 提供合理的默认值，确保应用在缺少配置时仍能正常运行
  * - 集中管理所有配置逻辑，便于维护和扩展
- * 
+ *
  * 配置分类：
  * - 应用基础配置：端口、环境、标题等
  * - JWT 认证配置：密钥、过期时间等
@@ -21,14 +21,14 @@ import type { ServeStaticOptions } from '@nestjs/platform-express/interfaces/ser
  * - 数据库配置：连接信息、同步设置等
  * - API 文档配置：Swagger 相关设置
  * - 调试配置：日志级别、调试开关等
- * 
+ *
  * 依赖项：
  * - ConfigService: NestJS 配置服务，用于读取环境变量
- * 
+ *
  * 用法示例：
  * ```typescript
  * constructor(private appConfig: AppConfigService) {}
- * 
+ *
  * const port = this.appConfig.port;
  * const jwtOptions = this.appConfig.jwtOptions;
  * ```
@@ -217,14 +217,5 @@ export class AppConfigService {
         '1',
       ),
     };
-  }
-
-  /**
-   * 获取白名单路由列表
-   * 这些路由无需身份认证即可访问
-   * @returns 白名单路由数组
-   */
-  get whiteList(): string[] {
-    return ['/login/code', '/login/create'];
   }
 }

@@ -8,6 +8,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from '../decorators';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
+import { AuthUtil } from 'src/utils';
 
 /**
  * JwtAuthGuard（JWT 认证守卫）
@@ -48,7 +49,15 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
-    // 是否是公共路由
+    const request = context.switchToHttp().getRequest();
+    const path = request.path || request.url;
+
+    // 检查是否在白名单中
+    if (AuthUtil.isWhitelistedPath(path)) {
+      return true;
+    }
+
+    // 是否是公共路由（通过装饰器标记）
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),

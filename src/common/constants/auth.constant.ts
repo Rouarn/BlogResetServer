@@ -1,0 +1,37 @@
+/**
+ * 认证相关常量
+ * 
+ * 定义身份认证和授权相关的常量配置。
+ */
+
+/**
+ * 白名单路由列表
+ * 这些路由无需身份认证即可访问
+ */
+export const WHITE_LIST_ROUTES = [
+  '/login/code',
+  '/login/create',
+  '/health',
+  '/api-docs',
+  '/api-docs/*',
+] as const;
+
+/**
+ * JWT 相关常量
+ */
+export const JWT_CONSTANTS = {
+  /** JWT Token 在请求头中的字段名 */
+  HEADER_KEY: 'Authorization',
+  /** JWT Token 的前缀 */
+  TOKEN_PREFIX: 'Bearer ',
+} as const;
+
+/**
+ * 认证相关的元数据键
+ */
+export const AUTH_METADATA_KEYS = {
+  /** 公共路由标识键 */
+  IS_PUBLIC: 'isPublic',
+  /** 角色权限标识键 */
+  ROLES: 'roles',
+} as const;

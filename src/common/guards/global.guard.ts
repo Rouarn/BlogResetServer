@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
 import { Request } from 'express';
+import { AuthUtil } from 'src/utils';
 
 /**
  * 全局限流守卫（GlobalGuard）
@@ -48,10 +49,15 @@ export class GlobalGuard implements CanActivate {
    */
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
+    const path = request.path || request.url;
     const ip = request.ip?.replace(/:/g, '-') || '127.0.0.1';
 
+    // 白名单路由可以有更宽松的限流策略
+    const isWhitelisted = AuthUtil.isWhitelistedPath(path);
+
     const key = `rate_limit:${ip}`;
-    const limit = 100; // 每分钟最大请求数
+    // 白名单路由使用更宽松的限制
+    const limit = isWhitelisted ? 200 : 100; // 每分钟最大请求数
     const window = 60; // 时间窗口(秒)
 
     // 基于内存的限流检查
