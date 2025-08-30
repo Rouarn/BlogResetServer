@@ -1,24 +1,57 @@
 #!/usr/bin/env node
 
+/**
+ * NestJS 环境配置检查工具
+ * 
+ * 功能说明：
+ * - 检查项目环境配置文件的存在性和完整性
+ * - 验证必需环境变量是否正确设置
+ * - 分析环境变量冲突和一致性问题
+ * - 提供彩色输出和详细的检查报告
+ * 
+ * 支持的环境文件：
+ * - .env (可选，通用环境变量)
+ * - .env.development (必需，开发环境配置)
+ * - .env.production (可选，生产环境配置)
+ * - .env.example (必需，配置模板文件)
+ * 
+ * 使用方法：
+ * - 直接运行：node scripts/check-env.js
+ * - npm 脚本：npm run check:env
+ * - 在其他脚本中引用：require('./scripts/check-env')
+ * 
+ * 检查项目：
+ * 1. 环境文件存在性检查
+ * 2. 必需环境变量完整性验证
+ * 3. 变量冲突检测
+ * 4. 端口配置分析
+ * 5. 安全性检查（密码/密钥脱敏显示）
+ */
+
 const fs = require('fs');
 const path = require('path');
 
 /**
- * 环境变量检查工具
- * 用于验证项目环境配置是否正确
+ * 终端颜色配置
+ * 使用 ANSI 转义序列为终端输出添加颜色
  */
-
 const colors = {
-  reset: '\x1b[0m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  magenta: '\x1b[35m',
-  cyan: '\x1b[36m',
-  white: '\x1b[37m'
+  reset: '\x1b[0m',      // 重置颜色
+  red: '\x1b[31m',       // 红色（错误）
+  green: '\x1b[32m',     // 绿色（成功）
+  yellow: '\x1b[33m',    // 黄色（警告）
+  blue: '\x1b[34m',      // 蓝色（信息）
+  magenta: '\x1b[35m',   // 洋红色
+  cyan: '\x1b[36m',      // 青色（标题）
+  white: '\x1b[37m'      // 白色（默认）
 };
 
+/**
+ * 彩色日志输出函数
+ * 
+ * @param {string} message - 要输出的消息
+ * @param {string} color - 颜色名称，默认为白色
+ */
 function log(message, color = 'white') {
   console.log(`${colors[color]}${message}${colors.reset}`);
 }
