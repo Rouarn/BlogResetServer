@@ -18,7 +18,7 @@ const colors = {
   blue: '\x1b[34m',
   magenta: '\x1b[35m',
   cyan: '\x1b[36m',
-  white: '\x1b[37m'
+  white: '\x1b[37m',
 };
 
 function log(message, color = 'white') {
@@ -27,7 +27,7 @@ function log(message, color = 'white') {
 
 const rl = readline.createInterface({
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
 });
 
 function question(prompt) {
@@ -45,7 +45,7 @@ const envTemplates = {
     NEST_DATABASE_PASSWORD: '',
     NEST_DATABASE_NAME: 'nestjs_dev',
     NEST_DATABASE_SYNCHRONIZE: 'true',
-    NEST_DATABASE_LOGGING: 'false'
+    NEST_DATABASE_LOGGING: 'false',
   },
   production: {
     NEST_PORT: '3000',
@@ -55,12 +55,12 @@ const envTemplates = {
     NEST_DATABASE_PASSWORD: '',
     NEST_DATABASE_NAME: 'nestjs_prod',
     NEST_DATABASE_SYNCHRONIZE: 'false',
-    NEST_DATABASE_LOGGING: 'false'
+    NEST_DATABASE_LOGGING: 'false',
   },
   common: {
     NEST_JWT_SECRET: '',
-    NEST_JWT_EXPIRES_IN: '7d'
-  }
+    NEST_JWT_EXPIRES_IN: '7d',
+  },
 };
 
 function generateRandomSecret(length = 32) {
@@ -76,7 +76,7 @@ function createEnvFile(filePath, config) {
   const content = Object.entries(config)
     .map(([key, value]) => `${key}=${value}`)
     .join('\n');
-  
+
   fs.writeFileSync(filePath, content + '\n');
   log(`✅ 已创建: ${path.basename(filePath)}`, 'green');
 }
@@ -84,20 +84,15 @@ function createEnvFile(filePath, config) {
 async function setupEnvironment() {
   log('🚀 NestJS 环境配置向导 (PNPM项目)', 'cyan');
   log('='.repeat(50), 'blue');
-  
+
   const rootDir = path.resolve(__dirname, '..');
-  
+
   // 检查现有文件
-  const envFiles = [
-    '.env',
-    '.env.development', 
-    '.env.production',
-    '.env.example'
-  ];
-  
+  const envFiles = ['.env', '.env.development', '.env.production', '.env.example'];
+
   log('\n📁 检查现有环境文件:', 'yellow');
   const existingFiles = [];
-  envFiles.forEach(file => {
+  envFiles.forEach((file) => {
     const filePath = path.join(rootDir, file);
     const exists = fs.existsSync(filePath);
     if (exists) {
@@ -107,7 +102,7 @@ async function setupEnvironment() {
       log(`  ✅ ${file} 不存在，可以创建`, 'green');
     }
   });
-  
+
   if (existingFiles.length > 0) {
     const overwrite = await question('\n是否覆盖现有文件? (y/N): ');
     if (overwrite.toLowerCase() !== 'y') {
@@ -116,33 +111,33 @@ async function setupEnvironment() {
       return;
     }
   }
-  
+
   log('\n🔧 配置环境变量:', 'yellow');
-  
+
   // 配置开发环境
   log('\n📝 开发环境配置:', 'cyan');
   const devConfig = { ...envTemplates.development };
-  
+
   const dbPassword = await question(`数据库密码 (默认: 空): `);
   if (dbPassword) devConfig.NEST_DATABASE_PASSWORD = dbPassword;
-  
+
   const dbName = await question(`数据库名称 (默认: ${devConfig.NEST_DATABASE_NAME}): `);
   if (dbName) devConfig.NEST_DATABASE_NAME = dbName;
-  
+
   // 配置生产环境
   log('\n📝 生产环境配置:', 'cyan');
   const prodConfig = { ...envTemplates.production };
-  
+
   const prodDbPassword = await question(`生产数据库密码: `);
   prodConfig.NEST_DATABASE_PASSWORD = prodDbPassword;
-  
+
   const prodDbName = await question(`生产数据库名称 (默认: ${prodConfig.NEST_DATABASE_NAME}): `);
   if (prodDbName) prodConfig.NEST_DATABASE_NAME = prodDbName;
-  
+
   // 配置公共变量
   log('\n📝 公共配置:', 'cyan');
   const commonConfig = { ...envTemplates.common };
-  
+
   const useRandomSecret = await question(`使用随机生成的JWT密钥? (Y/n): `);
   if (useRandomSecret.toLowerCase() !== 'n') {
     commonConfig.NEST_JWT_SECRET = generateRandomSecret();
@@ -151,28 +146,28 @@ async function setupEnvironment() {
     const jwtSecret = await question(`请输入JWT密钥: `);
     commonConfig.NEST_JWT_SECRET = jwtSecret;
   }
-  
+
   // 创建文件
   log('\n📄 创建环境文件:', 'yellow');
-  
+
   createEnvFile(path.join(rootDir, '.env'), commonConfig);
   createEnvFile(path.join(rootDir, '.env.development'), devConfig);
   createEnvFile(path.join(rootDir, '.env.production'), prodConfig);
-  
+
   // 创建示例文件
   const exampleConfig = {
-    ...Object.fromEntries(Object.keys(commonConfig).map(key => [key, ''])),
-    ...Object.fromEntries(Object.keys(devConfig).map(key => [key, '']))
+    ...Object.fromEntries(Object.keys(commonConfig).map((key) => [key, ''])),
+    ...Object.fromEntries(Object.keys(devConfig).map((key) => [key, ''])),
   };
   createEnvFile(path.join(rootDir, '.env.example'), exampleConfig);
-  
+
   log('\n🎉 环境配置完成！', 'green');
   log('\n📋 下一步操作 (PNPM):', 'cyan');
   log('  1. 运行 pnpm run env:check 检查配置', 'white');
   log('  2. 运行 pnpm run start:dev 启动开发服务器', 'white');
   log('  3. 确保数据库服务已启动', 'white');
   log('  4. 如需安装依赖: pnpm install', 'white');
-  
+
   rl.close();
 }
 

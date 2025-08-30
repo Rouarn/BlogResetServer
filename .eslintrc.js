@@ -61,7 +61,7 @@ module.exports = {
   },
 
   // 忽略检查的文件模式
-  ignorePatterns: ['.eslintrc.js', 'dist/', 'node_modules/'],
+  ignorePatterns: ['.eslintrc.js', 'dist/', 'node_modules/', 'scripts/'],
 
   // 自定义规则配置 - NestJS 优化
   rules: {
