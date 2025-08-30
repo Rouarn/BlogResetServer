@@ -1,5 +1,6 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import type { StaticConfig } from 'src/common/interfaces';
 import { appConfig } from 'src/config';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -12,9 +13,7 @@ export class StorageService implements StorageAdapter {
 
   constructor(private configService: ConfigService) {
     // 使用静态资源配置中的上传设置
-    const staticConfig = this.configService.get('app.static') as {
-      upload: { path: string; maxFileSize: number; allowedTypes: string[] };
-    };
+    const staticConfig = this.configService.get('app.static') as StaticConfig;
     this.config = {
       type: 'local',
       basePath: staticConfig.upload.path,

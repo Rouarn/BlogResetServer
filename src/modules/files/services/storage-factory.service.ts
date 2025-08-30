@@ -1,3 +1,4 @@
+import { StaticConfig } from 'src/common/interfaces';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -40,9 +41,7 @@ export class StorageFactoryService implements StorageFactory {
     switch (type) {
       case StorageType.LOCAL:
         // 使用静态资源配置中的上传设置
-        const staticConfig = this.configService.get('app.static') as {
-          upload: { path: string; maxFileSize: number; allowedTypes: string[] };
-        };
+        const staticConfig = this.configService.get('app.static') as StaticConfig;
         return {
           basePath: staticConfig.upload.path,
           maxFileSize: staticConfig.upload.maxFileSize,

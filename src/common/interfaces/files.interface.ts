@@ -14,6 +14,16 @@
 export interface StaticConfig {
   upload: {
     /**
+     * 文件存储路径
+     *
+     * 说明：
+     * - 配置文件存储路径，上传的文件将保存在该路径下。
+     *
+     * 示例：
+     * - 配置为 '/uploads' 表示文件将保存在 '/uploads' 目录下。
+     */
+    path: string;
+    /**
      * 最大批量上传文件数量
      *
      * 说明：
