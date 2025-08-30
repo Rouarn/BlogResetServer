@@ -8,7 +8,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from '../decorators';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
-import { WhitelistAuth } from 'src/utils/auth';
+import { WhitelistAuth } from 'src/utils';
 
 /**
  * JwtAuthGuard（JWT 认证守卫）

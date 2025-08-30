@@ -15,26 +15,26 @@ import {
 
 /**
  * 响应数据格式化拦截器（ResponseInterceptor）
- * 
+ *
  * 用于统一格式化所有 API 接口的响应数据结构。
- * 
+ *
  * 功能说明：
  * - 自动包装所有成功响应，添加统一的 code、message 字段
  * - 智能识别分页请求，自动格式化为分页响应结构
  * - 支持多种数据源格式的自动转换（records、list、items 等）
  * - 提供一致的前端数据接口，简化前端数据处理逻辑
- * 
+ *
  * 响应格式：
  * - 普通响应：{ code: 200, message: 'success', data: T }
  * - 分页响应：{ code: 200, message: 'success', data: { records: T[], total: number, current: number, size: number } }
- * 
+ *
  * 依赖项：
  * - IResponse: 标准响应接口
  * - PaginatedResponse: 分页响应接口
  * - SUCCESS_RESPONSE: 成功响应常量
  * - DEFAULT_PAGINATION: 分页默认参数
  * - PAGING_FIELDS: 分页字段名常量
- * 
+ *
  * 用法示例：
  * - 在主模块中通过 APP_INTERCEPTOR 全局注册该拦截器
  */

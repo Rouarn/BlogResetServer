@@ -13,6 +13,7 @@ import { StorageService } from './storage.service';
 import { ValidationService } from './validation.service';
 import * as path from 'path';
 import { randomUUID } from 'crypto';
+import { formatDatePath } from 'src';
 
 @Injectable()
 export class ChunkService {
@@ -186,7 +187,7 @@ export class ChunkService {
   }
 
   private async mergeChunks(file: File): Promise<string> {
-    const datePath = new Date().toISOString().slice(0, 7);
+    const datePath = formatDatePath();
     const finalPath = path.join(datePath, file.filename);
 
     // 按顺序读取所有分块并合并

@@ -3,6 +3,7 @@ import { CreateAuthDto } from './dto/create-auth.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Auth } from './entities/auth.entity';
 import { Repository } from 'typeorm';
+import { randomString, getCurrentTimestamp } from 'src/utils';
 import { JwtService } from '@nestjs/jwt';
 import { appConfig } from 'src/config';
 import * as svgCaptcha from 'svg-captcha';
@@ -127,13 +128,13 @@ export class AuthService {
     });
 
     // 生成唯一标识符（防重放攻击）
-    const nonce = Math.random().toString(36).substring(2, 15);
+    const nonce = randomString(13);
 
     // 生成验证码token，包含验证码答案和安全信息
     const captchaToken = await this.JwtService.signAsync(
       {
         code: captcha.text.toLowerCase(), // 统一转小写便于验证
-        timestamp: Date.now(),
+        timestamp: getCurrentTimestamp(),
         nonce, // 防重放攻击
         type: 'captcha',
         // 可选：记录客户端信息用于安全验证

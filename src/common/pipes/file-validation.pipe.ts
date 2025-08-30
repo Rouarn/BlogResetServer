@@ -3,20 +3,20 @@ import { ConfigService } from '@nestjs/config';
 
 /**
  * 单文件验证管道（FileValidationPipe）
- * 
+ *
  * 用于验证上传的单个文件是否符合系统配置的要求。
- * 
+ *
  * 功能说明：
  * - 验证文件是否存在（非空检查）
  * - 验证文件大小是否超出限制
  * - 验证文件类型是否在允许的范围内
  * - 验证失败时抛出 BadRequestException 异常
- * 
+ *
  * 依赖项：
  * - ConfigService: 用于读取文件上传相关配置
  * - app.static.upload.maxFileSize: 最大文件大小配置
  * - app.static.upload.allowedTypes: 允许的文件类型配置
- * 
+ *
  * 用法示例：
  * ```typescript
  * @Post('upload')
@@ -65,20 +65,20 @@ export class FileValidationPipe implements PipeTransform {
 
 /**
  * 多文件验证管道（FilesValidationPipe）
- * 
+ *
  * 用于验证批量上传的文件是否符合系统配置的要求。
- * 
+ *
  * 功能说明：
  * - 验证文件列表是否为空
  * - 验证文件数量是否超出批量上传限制
  * - 对每个文件执行单文件验证逻辑
  * - 验证失败时抛出 BadRequestException 异常
- * 
+ *
  * 依赖项：
  * - ConfigService: 用于读取文件上传相关配置
  * - FileValidationPipe: 单文件验证管道
  * - app.static.upload.maxBatchFiles: 批量上传最大文件数配置
- * 
+ *
  * 用法示例：
  * ```typescript
  * @Post('batch-upload')

@@ -13,6 +13,7 @@ import { FileUploadResult, BatchUploadResult } from '../interfaces';
 import { StorageService } from './storage.service';
 import { ValidationService } from './validation.service';
 import * as path from 'path';
+import { formatDatePath } from 'src';
 
 @Injectable()
 export class FilesService {
@@ -49,7 +50,7 @@ export class FilesService {
     }
 
     // 构建存储路径，使用配置中的静态资源路径
-    const datePath = new Date().toISOString().slice(0, 7); // YYYY-MM
+    const datePath = formatDatePath(); // YYYY-MM
     const relativePath = path.join(datePath, filename);
 
     // 存储文件（StorageService会自动使用配置的根路径）

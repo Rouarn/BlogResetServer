@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
 import { Request } from 'express';
-import { WhitelistAuth } from 'src/utils/auth';
+import { WhitelistAuth, getCurrentTimestamp } from 'src/utils';
 
 /**
  * 全局限流守卫（GlobalGuard）
@@ -61,7 +61,7 @@ export class GlobalGuard implements CanActivate {
     const window = 60; // 时间窗口(秒)
 
     // 基于内存的限流检查
-    const now = Date.now();
+    const now = getCurrentTimestamp();
     const stored = this.rateLimitStore.get(key);
 
     if (!stored || now > stored.resetTime) {

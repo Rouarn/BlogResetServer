@@ -18,6 +18,7 @@ import {
 } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { AuthService } from './auth.service';
+import { formatISOString } from 'src';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { CaptchaVerifyDto } from './dto/captcha-verify.dto';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -134,7 +135,7 @@ export class AuthController {
       return {
         success: false,
         message: '验证码token和code不能为空',
-        timestamp: new Date().toISOString(),
+        timestamp: formatISOString(),
       };
     }
 
@@ -150,7 +151,7 @@ export class AuthController {
       message: result.valid
         ? '验证码验证成功'
         : `验证码验证失败: ${result.reason}`,
-      timestamp: new Date().toISOString(),
+      timestamp: formatISOString(),
     };
   }
 
@@ -311,7 +312,7 @@ export class AuthController {
       return {
         success: false,
         message: '验证码token和验证码不能为空',
-        timestamp: new Date().toISOString(),
+        timestamp: formatISOString(),
       };
     }
 
@@ -327,7 +328,7 @@ export class AuthController {
       return {
         success: false,
         message: `验证码验证失败: ${captchaResult.reason}`,
-        timestamp: new Date().toISOString(),
+        timestamp: formatISOString(),
       };
     }
 
@@ -340,14 +341,14 @@ export class AuthController {
         success: true,
         message: '用户创建成功',
         data: userData,
-        timestamp: new Date().toISOString(),
+        timestamp: formatISOString(),
       };
     } catch (error) {
       return {
         success: false,
         message: '用户创建失败',
         error: error.message,
-        timestamp: new Date().toISOString(),
+        timestamp: formatISOString(),
       };
     }
   }

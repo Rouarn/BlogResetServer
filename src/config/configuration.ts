@@ -2,16 +2,16 @@ import { registerAs } from '@nestjs/config';
 
 /**
  * 应用配置工厂函数
- * 
+ *
  * 使用 NestJS 的 registerAs 函数注册名为 'app' 的配置命名空间。
  * 从环境变量中读取配置值，并提供合理的默认值。
- * 
+ *
  * 功能说明：
  * - 集中定义所有应用配置的结构和默认值
  * - 支持从环境变量动态读取配置
  * - 提供类型安全的配置访问方式
  * - 按功能模块组织配置，便于维护和扩展
- * 
+ *
  * 配置分组：
  * - 应用基础配置：标题、端口、环境等
  * - JWT 认证配置：密钥、令牌有效期等
@@ -19,7 +19,7 @@ import { registerAs } from '@nestjs/config';
  * - CORS 跨域配置：允许的源、凭据设置等
  * - Swagger 文档配置：标题、描述、版本等
  * - 数据库配置：连接信息、同步设置、连接池等
- * 
+ *
  * 环境变量映射：
  * - NEST_GLOB_APP_TITLE → app.title
  * - NEST_PORT → app.port
@@ -27,7 +27,7 @@ import { registerAs } from '@nestjs/config';
  * - NEST_JWT_SECRET → app.jwt.secret
  * - NEST_DATABASE_HOST → app.database.host
  * - 等等...
- * 
+ *
  * 用法示例：
  * ```typescript
  * // 在服务中注入配置
@@ -35,7 +35,7 @@ import { registerAs } from '@nestjs/config';
  *   @Inject('app') private appConfig: any,
  *   private configService: ConfigService
  * ) {}
- * 
+ *
  * // 访问配置
  * const port = this.configService.get<number>('app.port');
  * const jwtSecret = this.configService.get<string>('app.jwt.secret');

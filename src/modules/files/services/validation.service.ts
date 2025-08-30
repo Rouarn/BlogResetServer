@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { fileTypeFromBuffer } from 'file-type';
 import * as crypto from 'crypto';
 import { FileType } from '../enums';
+import { randomString, getCurrentTimestamp } from 'src/utils';
 
 @Injectable()
 export class ValidationService {
@@ -100,8 +101,8 @@ export class ValidationService {
   }
 
   generateUniqueFilename(originalName: string): string {
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2);
+    const timestamp = getCurrentTimestamp();
+    const random = randomString(8);
     const ext = originalName.split('.').pop();
     return `${timestamp}_${random}.${ext}`;
   }

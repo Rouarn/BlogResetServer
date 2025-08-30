@@ -15,7 +15,12 @@ import { HttpException } from '@nestjs/common';
  */
 export class BusinessException extends HttpException {
   public readonly context?: Record<string, any>;
-  public readonly logLevel?: 'DEBUG' | 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL';
+  public readonly logLevel?:
+    | 'DEBUG'
+    | 'INFO'
+    | 'WARNING'
+    | 'ERROR'
+    | 'CRITICAL';
 
   /**
    * 构造函数
@@ -25,10 +30,10 @@ export class BusinessException extends HttpException {
    * @param logLevel 指定日志级别
    */
   constructor(
-    message: string, 
+    message: string,
     code: number = 400,
     context?: Record<string, any>,
-    logLevel?: 'DEBUG' | 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL'
+    logLevel?: 'DEBUG' | 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL',
   ) {
     super({ code, message }, code);
     this.context = context;

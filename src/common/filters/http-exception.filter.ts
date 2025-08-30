@@ -7,7 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { generateUUID, formatDate } from 'src/utils/helpers';
+import { generateUUID, formatDate, formatISOString } from 'src/utils';
 import { ErrorResponse } from '../interfaces';
 
 /**
@@ -41,9 +41,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
    */
   private getLogLevel(status: number, url: string): string {
     // 对于常见的浏览器自动请求，降低日志级别
-    const commonBrowserRequests = ['/favicon.ico', '/robots.txt', '/sitemap.xml'];
-    const isCommonRequest = commonBrowserRequests.some(path => url.includes(path));
-    
+    const commonBrowserRequests = [
+      '/favicon.ico',
+      '/robots.txt',
+      '/sitemap.xml',
+    ];
+    const isCommonRequest = commonBrowserRequests.some((path) =>
+      url.includes(path),
+    );
+
     if (status >= 500) return 'CRITICAL';
     if (status >= 400) {
       // 对于常见的浏览器请求404，降级为DEBUG
@@ -67,7 +73,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
   private extractContext(request: Request): Record<string, any> {
     return {
       requestId: request.headers['x-request-id'] || generateUUID(),
-      userId: (request as any).user?.id || request.headers['x-user-id'] || 'anonymous',
+      userId:
+        (request as any).user?.id ||
+        request.headers['x-user-id'] ||
+        'anonymous',
       userAgent: request.headers['user-agent'] || 'unknown',
       ip: request.ip || (request.connection as any)?.remoteAddress || 'unknown',
       method: request.method,
@@ -82,16 +91,22 @@ export class HttpExceptionFilter implements ExceptionFilter {
    */
   private sanitizeBody(body: any): any {
     if (!body || typeof body !== 'object') return body;
-    
-    const sensitiveFields = ['password', 'token', 'secret', 'key', 'authorization'];
+
+    const sensitiveFields = [
+      'password',
+      'token',
+      'secret',
+      'key',
+      'authorization',
+    ];
     const sanitized = { ...body };
-    
+
     for (const field of sensitiveFields) {
       if (sanitized[field]) {
         sanitized[field] = '***REDACTED***';
       }
     }
-    
+
     return sanitized;
   }
 
@@ -143,13 +158,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const formattedMessage = `${icon} ${logMessage}`;
 
     // 根据级别选择日志方法
-    const logMethod = {
-      CRITICAL: this.logger.error.bind(this.logger),
-      ERROR: this.logger.error.bind(this.logger),
-      WARNING: this.logger.warn.bind(this.logger),
-      INFO: this.logger.log.bind(this.logger),
-      DEBUG: this.logger.debug.bind(this.logger),
-    }[level] || this.logger.debug.bind(this.logger);
+    const logMethod =
+      {
+        CRITICAL: this.logger.error.bind(this.logger),
+        ERROR: this.logger.error.bind(this.logger),
+        WARNING: this.logger.warn.bind(this.logger),
+        INFO: this.logger.log.bind(this.logger),
+        DEBUG: this.logger.debug.bind(this.logger),
+      }[level] || this.logger.debug.bind(this.logger);
 
     // 记录基本日志
     logMethod(formattedMessage);
@@ -214,7 +230,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       success: false,
       code: status,
       message,
-      timestamp: new Date().toISOString(),
+      timestamp: formatISOString(),
       path: request.url,
     };
 

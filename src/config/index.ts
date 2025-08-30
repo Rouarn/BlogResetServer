@@ -1,13 +1,13 @@
 /**
  * 配置模块统一导出
- * 
+ *
  * 提供应用程序所需的所有配置选项和服务的统一入口。
- * 
+ *
  * 功能说明：
  * - 创建并导出预配置的配置服务实例
  * - 提供常用配置选项的快捷访问方式
  * - 统一导出所有配置相关的模块和服务
- * 
+ *
  * 导出内容：
  * - jwtOptions: JWT 认证配置选项
  * - whiteList: 白名单路由列表
@@ -19,14 +19,14 @@
  * - ConfigModule: 配置模块
  * - configuration: 配置工厂函数
  * - validationSchema: 环境变量验证模式
- * 
+ *
  * 用法示例：
  * ```typescript
  * import { jwtOptions, corsOptions, appConfig } from '@/config';
- * 
+ *
  * // 使用预配置的选项
  * JwtModule.register(jwtOptions);
- * 
+ *
  * // 使用配置服务实例
  * const port = appConfig.port;
  * ```

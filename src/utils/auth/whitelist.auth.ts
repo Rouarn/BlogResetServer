@@ -10,7 +10,7 @@ export class WhitelistAuth {
    * @returns 如果在白名单中返回 true
    */
   static isWhitelistedPath(path: string): boolean {
-    return WHITE_LIST_ROUTES.some(route => {
+    return WHITE_LIST_ROUTES.some((route) => {
       // 支持通配符匹配
       if (route.endsWith('/*')) {
         const basePath = route.slice(0, -2);

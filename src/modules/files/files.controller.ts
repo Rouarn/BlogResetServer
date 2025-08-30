@@ -42,10 +42,7 @@ import {
 } from './dto/swagger-responses.dto';
 import { GetCurrentUser, CurrentUser } from 'src/common/decorators';
 import { FileAccessGuard } from './guards/file-access.guard';
-import {
-  FileValidationPipe,
-  FilesValidationPipe,
-} from 'src/common/pipes';
+import { FileValidationPipe, FilesValidationPipe } from 'src/common/pipes';
 
 @ApiTags('文件管理')
 @ApiBearerAuth()

@@ -3,7 +3,7 @@ import { createParamDecorator } from '@nestjs/common';
 
 /**
  * 当前用户信息接口
- * 
+ *
  * 定义从 JWT Token 中解析出的用户基本信息结构
  */
 export interface CurrentUser {
@@ -17,14 +17,14 @@ export interface CurrentUser {
 
 /**
  * 获取当前用户装饰器（GetCurrentUser）
- * 
+ *
  * 用于在控制器方法参数中直接获取当前登录用户的信息。
- * 
+ *
  * 功能说明：
  * - 从请求对象中提取经过 JWT 认证后的用户信息
  * - 返回包含用户 ID、邮箱和角色的 CurrentUser 对象
  * - 需要配合 JwtAuthGuard 使用，确保用户已通过认证
- * 
+ *
  * 用法示例：
  * ```typescript
  * @Get('profile')
