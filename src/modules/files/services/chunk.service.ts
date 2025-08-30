@@ -64,7 +64,10 @@ export class ChunkService {
     };
   }
 
-  async uploadChunk(chunkFile: any, chunkDto: ChunkUploadDto): Promise<ChunkUploadResult> {
+  async uploadChunk(
+    chunkFile: Express.Multer.File,
+    chunkDto: ChunkUploadDto,
+  ): Promise<ChunkUploadResult> {
     const { uploadId, chunkNumber, chunkHash } = chunkDto;
 
     // 查找文件记录

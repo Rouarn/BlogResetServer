@@ -14,7 +14,7 @@ import { HttpException } from '@nestjs/common';
  * throw new BusinessException('操作失败', 422);
  */
 export class BusinessException extends HttpException {
-  public readonly context?: Record<string, any>;
+  public readonly context?: Record<string, unknown>;
   public readonly logLevel?: 'DEBUG' | 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL';
 
   /**
@@ -27,7 +27,7 @@ export class BusinessException extends HttpException {
   constructor(
     message: string,
     code: number = 400,
-    context?: Record<string, any>,
+    context?: Record<string, unknown>,
     logLevel?: 'DEBUG' | 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL',
   ) {
     super({ code, message }, code);

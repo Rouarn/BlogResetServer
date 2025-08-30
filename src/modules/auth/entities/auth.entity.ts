@@ -60,7 +60,7 @@ export class Auth {
   updateTime: Date;
 
   @BeforeInsert()
-  async encryptPwd() {
+  async encryptPwd(): Promise<void> {
     try {
       const saltRounds = 10;
       // 同步地生成一个随机的盐

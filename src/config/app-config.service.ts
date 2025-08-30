@@ -93,7 +93,7 @@ export class AppConfigService {
    * 获取 JWT 认证配置
    * @returns JWT 配置对象，包含密钥和过期时间
    */
-  get jwtOptions() {
+  get jwtOptions(): { secret: string | undefined; expiresIn: string } {
     return {
       secret: this.configService.get<string>('NEST_JWT_SECRET'),
       expiresIn: this.configService.get<string>('NEST_JWT_ACCESS_TOKEN_TTL', '1d'),
@@ -104,7 +104,7 @@ export class AppConfigService {
    * 获取静态资源服务配置
    * @returns 静态资源配置对象，包含根目录、URL 前缀和缓存设置
    */
-  get staticAssetsOptions() {
+  get staticAssetsOptions(): { root: string; options: ServeStaticOptions } {
     return {
       root: this.configService.get<string>('NEST_STATIC_ASSETS_PATH', './static'),
       options: {
@@ -118,7 +118,7 @@ export class AppConfigService {
    * 获取 CORS 跨域配置
    * @returns CORS 配置对象，包含允许的源和凭据设置
    */
-  get corsOptions() {
+  get corsOptions(): { origin: string[]; credentials: boolean } {
     const origins = this.configService.get<string>(
       'NEST_CORS_ORIGINS',
       'http://localhost:3000,http://localhost:9527',
@@ -150,7 +150,13 @@ export class AppConfigService {
    * 根据环境自动调整标题和描述，生产环境默认禁用
    * @returns Swagger 配置对象
    */
-  get swaggerOptions() {
+  get swaggerOptions(): {
+    title: string;
+    description: string;
+    version: string;
+    prefix: string;
+    enabled: boolean;
+  } {
     const envSuffix = this.isDevelopment
       ? ' - 开发版'
       : this.environment === 'test'
@@ -170,7 +176,17 @@ export class AppConfigService {
    * 获取数据库连接配置
    * @returns 数据库配置对象，包含连接信息、同步设置和日志配置
    */
-  get databaseConfig() {
+  get databaseConfig(): {
+    type: 'mysql';
+    host: string;
+    port: number;
+    username: string | undefined;
+    password: string | undefined;
+    database: string | undefined;
+    synchronize: boolean;
+    logging: boolean;
+    logger: 'simple-console';
+  } {
     return {
       type: 'mysql' as const,
       host: this.configService.get<string>('NEST_DATABASE_HOST', 'localhost'),
@@ -182,7 +198,7 @@ export class AppConfigService {
         this.configService.get<string>('NEST_DATABASE_SYNCHRONIZE') === 'true' ||
         this.isDevelopment,
       // 强制关闭查询日志，只保留错误日志
-      logging: this.configService.get<string>('NEST_DATABASE_LOGGING') === 'true' ? true : false,
+      logging: this.configService.get<string>('NEST_DATABASE_LOGGING') === 'true',
       logger: 'simple-console' as const,
     };
   }
@@ -191,7 +207,7 @@ export class AppConfigService {
    * 获取 API 版本控制配置
    * @returns API 版本配置对象，包含前缀和默认版本
    */
-  get apiVersioning() {
+  get apiVersioning(): { prefix: string; defaultVersion: string } {
     return {
       prefix: this.configService.get<string>('API_PREFIX', 'api'),
       defaultVersion: this.configService.get<string>('API_DEFAULT_VERSION', '1'),

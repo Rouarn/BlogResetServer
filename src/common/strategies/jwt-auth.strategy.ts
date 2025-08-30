@@ -41,15 +41,15 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
    * @param payload JWT 载荷，包含用户信息及 iat/exp 字段
    * @returns 校验通过后的用户信息对象
    */
-  async validate(payload: any): Promise<any> {
+  async validate(payload: Record<string, unknown>): Promise<Record<string, unknown>> {
     try {
-      delete payload.iat;
-      delete payload.exp;
+      delete (payload as { iat?: number }).iat;
+      delete (payload as { exp?: number }).exp;
       return {
         ...payload,
       };
     } catch (e) {
-      return { ...e };
+      return { ...(e as Record<string, unknown>) };
     }
   }
 }

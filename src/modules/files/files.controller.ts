@@ -90,10 +90,14 @@ export class FilesController {
   })
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
-    @UploadedFile(FileValidationPipe) file: any,
+    @UploadedFile(FileValidationPipe) file: Express.Multer.File,
     @Body() uploadDto: FileUploadDto,
     @GetCurrentUser() user?: CurrentUser,
-  ) {
+  ): Promise<{
+    success: boolean;
+    data: unknown;
+    message: string;
+  }> {
     const result = await this.filesService.uploadSingleFile(file, uploadDto, user?.id);
     return {
       success: true,
@@ -137,10 +141,14 @@ export class FilesController {
   })
   @UseInterceptors(FilesInterceptor('files', 10))
   async uploadFiles(
-    @UploadedFiles(FilesValidationPipe) files: any[],
+    @UploadedFiles(FilesValidationPipe) files: Express.Multer.File[],
     @Body() uploadDto: FileUploadDto,
     @GetCurrentUser() user?: CurrentUser,
-  ) {
+  ): Promise<{
+    success: boolean;
+    data: unknown;
+    message: string;
+  }> {
     const result = await this.filesService.uploadMultipleFiles(files, uploadDto, user?.id);
     return {
       success: true,
@@ -152,7 +160,14 @@ export class FilesController {
   @Post('upload/chunk/init')
   @ApiOperation({ summary: '初始化分块上传' })
   @ApiResponse({ status: 201, description: '分块上传初始化成功' })
-  async initChunkUpload(@Body() initDto: ChunkUploadInitDto, @GetCurrentUser() user?: CurrentUser) {
+  async initChunkUpload(
+    @Body() initDto: ChunkUploadInitDto,
+    @GetCurrentUser() user?: CurrentUser,
+  ): Promise<{
+    success: boolean;
+    data: unknown;
+    message: string;
+  }> {
     const result = await this.chunkService.initChunkUpload(initDto, user?.id);
     return {
       success: true,
@@ -186,7 +201,14 @@ export class FilesController {
   })
   @ApiResponse({ status: 201, description: '分块上传成功' })
   @UseInterceptors(FileInterceptor('chunk'))
-  async uploadChunk(@UploadedFile() chunk: any, @Body() chunkDto: ChunkUploadDto) {
+  async uploadChunk(
+    @UploadedFile() chunk: Express.Multer.File,
+    @Body() chunkDto: ChunkUploadDto,
+  ): Promise<{
+    success: boolean;
+    data: unknown;
+    message: string;
+  }> {
     const result = await this.chunkService.uploadChunk(chunk, chunkDto);
     return {
       success: true,
@@ -198,7 +220,11 @@ export class FilesController {
   @Post('upload/chunk/complete')
   @ApiOperation({ summary: '完成分块上传' })
   @ApiResponse({ status: 201, description: '分块上传完成' })
-  async completeChunkUpload(@Body() completeDto: ChunkUploadCompleteDto) {
+  async completeChunkUpload(@Body() completeDto: ChunkUploadCompleteDto): Promise<{
+    success: boolean;
+    data: unknown;
+    message: string;
+  }> {
     const result = await this.chunkService.completeChunkUpload(completeDto);
     return {
       success: true,
@@ -239,15 +265,29 @@ export class FilesController {
     description: '获取文件列表成功',
     type: FileListResponseDto,
   })
-  async getFiles(@Query() queryDto: FileQueryDto, @GetCurrentUser() user?: CurrentUser) {
+  async getFiles(
+    @Query() queryDto: FileQueryDto,
+    @GetCurrentUser() user?: CurrentUser,
+  ): Promise<{
+    success: boolean;
+    data: {
+      files: unknown[];
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+      };
+    };
+  }> {
     const { files, total } = await this.filesService.findFiles(queryDto, user?.id);
     return {
       success: true,
       data: {
         files,
         pagination: {
-          page: queryDto.page,
-          limit: queryDto.limit,
+          page: queryDto.page ?? 1,
+          limit: queryDto.limit ?? 10,
           total,
           totalPages: Math.ceil(total / (queryDto.limit ?? 10)),
         },

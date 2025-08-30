@@ -34,7 +34,7 @@ import { IResponse, PaginatedResponse } from '../interfaces/response.interface';
  * - 在主模块中通过 APP_INTERCEPTOR 全局注册该拦截器
  */
 @Injectable()
-export class ResponseInterceptor<T = any> implements NestInterceptor {
+export class ResponseInterceptor<T = unknown> implements NestInterceptor {
   /**
    * 拦截并格式化响应数据
    * @param context 执行上下文，包含请求相关信息
@@ -62,10 +62,10 @@ export class ResponseInterceptor<T = any> implements NestInterceptor {
             ...baseResponse,
             data: paginatedData.records,
             pagination: {
-              page: paginatedData.current,
-              limit: paginatedData.size,
-              total: paginatedData.total,
-              totalPages: Math.ceil(paginatedData.total / paginatedData.size),
+              page: Number(paginatedData.current),
+              limit: Number(paginatedData.size),
+              total: Number(paginatedData.total),
+              totalPages: Math.ceil(Number(paginatedData.total) / Number(paginatedData.size)),
             },
           } as PaginatedResponse<T>;
         }
@@ -83,11 +83,28 @@ export class ResponseInterceptor<T = any> implements NestInterceptor {
    * @param request 请求对象
    * @returns 合并后的参数对象
    */
-  private getRequestParams(request: any): Record<string, any> {
+  private getRequestParams(request: {
+    query?: unknown;
+    body?: unknown;
+    params?: unknown;
+  }): Record<string, unknown> {
+    const query =
+      request.query && typeof request.query === 'object'
+        ? (request.query as Record<string, unknown>)
+        : {};
+    const body =
+      request.body && typeof request.body === 'object'
+        ? (request.body as Record<string, unknown>)
+        : {};
+    const params =
+      request.params && typeof request.params === 'object'
+        ? (request.params as Record<string, unknown>)
+        : {};
+
     return {
-      ...request.query,
-      ...request.body,
-      ...request.params,
+      ...query,
+      ...body,
+      ...params,
     };
   }
 
@@ -96,8 +113,8 @@ export class ResponseInterceptor<T = any> implements NestInterceptor {
    * @param params 请求参数
    * @returns 如果包含分页字段则返回 true
    */
-  private isPagingRequest(params: Record<string, any>): boolean {
-    return PAGING_FIELDS.every((field) => field in params);
+  private isPagingRequest(params: Record<string, unknown>): boolean {
+    return PAGING_FIELDS.every((field) => Object.prototype.hasOwnProperty.call(params, field));
   }
 
   /**
@@ -106,12 +123,23 @@ export class ResponseInterceptor<T = any> implements NestInterceptor {
    * @param params 请求参数
    * @returns 标准化的分页数据结构
    */
-  private formatPaginatedData(rawData: any, params: Record<string, any>) {
+  private formatPaginatedData(
+    rawData: Record<string, unknown>,
+    params: Record<string, unknown>,
+  ): Record<string, unknown> {
     return {
-      records: rawData.records || rawData.list || rawData.items || rawData,
-      total: rawData.total ?? rawData.count ?? 0,
-      current: Number(params.current) || DEFAULT_PAGINATION.MIN_PAGE,
-      size: Number(params.size) || DEFAULT_PAGINATION.DEFAULT_PAGE_SIZE,
+      records:
+        (rawData as { records?: unknown; list?: unknown; items?: unknown }).records ||
+        (rawData as { list?: unknown }).list ||
+        (rawData as { items?: unknown }).items ||
+        rawData,
+      total: Number(
+        (rawData as { total?: unknown; count?: unknown }).total ??
+          (rawData as { count?: unknown }).count ??
+          0,
+      ),
+      current: Number((params as { current?: unknown }).current) || DEFAULT_PAGINATION.MIN_PAGE,
+      size: Number((params as { size?: unknown }).size) || DEFAULT_PAGINATION.DEFAULT_PAGE_SIZE,
     };
   }
 }

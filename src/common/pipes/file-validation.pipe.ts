@@ -39,13 +39,18 @@ export class FileValidationPipe implements PipeTransform {
    * @returns 验证通过的文件对象
    * @throws BadRequestException 验证失败时抛出异常
    */
-  transform(file: any): any {
+  transform(file: Express.Multer.File): Express.Multer.File {
     if (!file) {
       throw new BadRequestException('文件不能为空');
     }
 
     // 验证文件大小
     const staticConfig = this.configService.get('app.static');
+
+    if (!staticConfig?.upload) {
+      throw new BadRequestException('文件上传配置未找到');
+    }
+
     const maxSize = staticConfig.upload.maxFileSize;
     if (file.size > maxSize) {
       throw new BadRequestException(`文件大小超出限制，最大允许 ${maxSize / 1024 / 1024}MB`);
@@ -99,12 +104,17 @@ export class FilesValidationPipe implements PipeTransform {
    * @returns 验证通过的文件数组
    * @throws BadRequestException 验证失败时抛出异常
    */
-  transform(files: any[]): any[] {
+  transform(files: Express.Multer.File[]): Express.Multer.File[] {
     if (!files || files.length === 0) {
       throw new BadRequestException('文件列表不能为空');
     }
 
     const staticConfig = this.configService.get('app.static');
+
+    if (!staticConfig?.upload) {
+      throw new BadRequestException('文件上传配置未找到');
+    }
+
     const maxFiles = staticConfig.upload.maxBatchFiles;
     if (files.length > maxFiles) {
       throw new BadRequestException(`批量上传文件数量超出限制，最大允许 ${maxFiles} 个文件`);

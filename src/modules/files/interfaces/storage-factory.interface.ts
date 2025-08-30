@@ -6,7 +6,7 @@ export enum StorageType {
 
 export interface StorageFactoryConfig {
   type: StorageType;
-  config: Record<string, any>;
+  config: Record<string, unknown>;
 }
 
 export interface StorageFactory {

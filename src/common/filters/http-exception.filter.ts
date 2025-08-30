@@ -64,12 +64,18 @@ export class HttpExceptionFilter implements ExceptionFilter {
   /**
    * 提取上下文信息
    */
-  private extractContext(request: Request): Record<string, any> {
+  private extractContext(request: Request): Record<string, unknown> {
     return {
       requestId: request.headers['x-request-id'] ?? generateUUID(),
-      userId: (request as any).user?.id ?? request.headers['x-user-id'] ?? 'anonymous',
+      userId:
+        (request as Request & { user?: { id?: string } }).user?.id ??
+        request.headers['x-user-id'] ??
+        'anonymous',
       userAgent: request.headers['user-agent'] ?? 'unknown',
-      ip: request.ip ?? (request.connection as any)?.remoteAddress ?? 'unknown',
+      ip:
+        request.ip ??
+        (request.connection as { remoteAddress?: string })?.remoteAddress ??
+        'unknown',
       method: request.method,
       url: request.url,
       query: request.query,
@@ -80,14 +86,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
   /**
    * 清理敏感信息
    */
-  private sanitizeBody(body: any): any {
-    if (!body || typeof body !== 'object') return body;
+  private sanitizeBody(body: unknown): unknown {
+    if (!body || typeof body !== 'object' || body === null) return body;
 
     const sensitiveFields = ['password', 'token', 'secret', 'key', 'authorization'];
-    const sanitized = { ...body };
+    const sanitized = { ...(body as Record<string, unknown>) };
 
     for (const field of sensitiveFields) {
-      if (sanitized[field]) {
+      if (field in sanitized && sanitized[field]) {
         sanitized[field] = '***REDACTED***';
       }
     }
@@ -102,7 +108,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     level: string,
     status: number,
     message: string,
-    context: Record<string, any>,
+    context: Record<string, unknown>,
     stack?: string,
   ): string {
     const logData = {
@@ -124,7 +130,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
    */
   private logError(
     level: string,
-    context: Record<string, any>,
+    context: Record<string, unknown>,
     status: number,
     message: string,
     structuredLog: string,
@@ -174,7 +180,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * @param exception 捕获到的异常实例
    * @param host 当前请求的参数和上下文
    */
-  catch(exception: unknown, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
@@ -189,8 +195,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
       } else if (typeof exceptionResponse === 'object') {
-        const responseObj = exceptionResponse as any;
-        message = responseObj.message ?? responseObj.error ?? message;
+        const responseObj = exceptionResponse as Record<string, unknown>;
+        message = String(responseObj.message ?? responseObj.error ?? message);
       }
     } else if (exception instanceof Error) {
       message = exception.message;

@@ -36,11 +36,13 @@ export class StorageFactoryService implements StorageFactory {
     return this.createAdapter(config);
   }
 
-  private getStorageConfig(type: StorageType): Record<string, any> {
+  private getStorageConfig(type: StorageType): Record<string, unknown> {
     switch (type) {
       case StorageType.LOCAL:
         // 使用静态资源配置中的上传设置
-        const staticConfig = this.configService.get('app.static');
+        const staticConfig = this.configService.get('app.static') as {
+          upload: { path: string; maxFileSize: number; allowedTypes: string[] };
+        };
         return {
           basePath: staticConfig.upload.path,
           maxFileSize: staticConfig.upload.maxFileSize,

@@ -1,5 +1,5 @@
-import { createParamDecorator } from '@nestjs/common';
 import type { ExecutionContext } from '@nestjs/common';
+import { createParamDecorator } from '@nestjs/common';
 
 /**
  * 用户信息参数装饰器（User）
@@ -25,7 +25,7 @@ import type { ExecutionContext } from '@nestjs/common';
  * @param ctx 执行上下文，用于获取请求对象
  * @returns 当前认证用户的信息对象
  */
-export const User = createParamDecorator<any, any, any>((data: unknown, ctx: ExecutionContext) => {
+export const User = createParamDecorator((data: unknown, ctx: ExecutionContext): unknown => {
   const request = ctx.switchToHttp().getRequest();
   return request.user;
 });

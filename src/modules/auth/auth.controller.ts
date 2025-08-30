@@ -64,7 +64,15 @@ export class AuthController {
   })
   @Public()
   @Get('captcha')
-  async getCaptcha(@Ip() clientIp: string, @Headers('user-agent') userAgent: string): Promise<any> {
+  async getCaptcha(
+    @Ip() clientIp: string,
+    @Headers('user-agent') userAgent: string,
+  ): Promise<{
+    image: string;
+    token: string;
+    expiresIn: number;
+    nonce: string;
+  }> {
     const clientInfo = { ip: clientIp, userAgent };
     const result = await this.authService.generateCaptcha(clientInfo);
 
@@ -119,7 +127,7 @@ export class AuthController {
     @Body() body: { token: string; code: string },
     @Ip() clientIp: string,
     @Headers('user-agent') userAgent: string,
-  ) {
+  ): Promise<{ success: boolean; message: string; timestamp?: string }> {
     const { token, code } = body;
 
     if (!token || !code) {
@@ -134,8 +142,10 @@ export class AuthController {
     const result = await this.authService.verifyCaptcha(token, code, clientInfo);
 
     return {
-      success: result.valid,
-      message: result.valid ? '验证码验证成功' : `验证码验证失败: ${result.reason}`,
+      success: result.valid ?? false,
+      message: result.valid
+        ? '验证码验证成功'
+        : `验证码验证失败: ${result.reason ?? result.message}`,
       timestamp: formatISOString(),
     };
   }
@@ -177,7 +187,12 @@ export class AuthController {
   })
   @ApiBearerAuth()
   @Get('getUserInfo')
-  getUserInfo(@User() user: CreateAuthDto) {
+  getUserInfo(@User() user: CreateAuthDto): {
+    buttons: string[];
+    roles: string[];
+    userId: string;
+    userName: string;
+  } {
     return this.authService.getUserInfo(user);
   }
 
@@ -219,8 +234,10 @@ export class AuthController {
   })
   @Public()
   @Post('login')
-  login(@Body() body: CreateAuthDto) {
-    return this.authService.login(body);
+  login(
+    @Body() body: CreateAuthDto,
+  ): Promise<{ accessToken: string; refreshToken: string; user: Record<string, unknown> }> {
+    return this.authService.login(body as unknown as Record<string, unknown>);
   }
 
   @ApiOperation({
@@ -242,8 +259,10 @@ export class AuthController {
   })
   @Public()
   @Post('register')
-  register(@Body() body: CreateAuthDto) {
-    return this.authService.register(body);
+  register(
+    @Body() body: CreateAuthDto,
+  ): Promise<{ message: string; user: Record<string, unknown> }> {
+    return this.authService.register(body as unknown as Record<string, unknown>);
   }
 
   /**
@@ -289,7 +308,17 @@ export class AuthController {
   })
   @Public()
   @Post('create')
-  async createUser(@Body() body: CreateUserDto, @Req() req: Request) {
+  async createUser(
+    @Body() body: CreateUserDto,
+    @Req() req: Request,
+  ): Promise<{
+    success: boolean;
+    message: string;
+    user?: Record<string, unknown>;
+    timestamp?: string;
+    data?: Record<string, unknown>;
+    error?: string;
+  }> {
     const { captchaToken, captchaCode, ...userData } = body;
 
     // 验证必要参数
@@ -312,7 +341,7 @@ export class AuthController {
     if (!captchaResult.valid) {
       return {
         success: false,
-        message: `验证码验证失败: ${captchaResult.reason}`,
+        message: `验证码验证失败: ${captchaResult.reason ?? captchaResult.message}`,
         timestamp: formatISOString(),
       };
     }
@@ -332,7 +361,7 @@ export class AuthController {
       return {
         success: false,
         message: '用户创建失败',
-        error: error.message,
+        error: (error as Error).message,
         timestamp: formatISOString(),
       };
     }

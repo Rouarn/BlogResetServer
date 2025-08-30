@@ -22,7 +22,7 @@ export class FilesService {
   ) {}
 
   async uploadSingleFile(
-    file: any,
+    file: Express.Multer.File,
     uploadDto: FileUploadDto,
     userId?: string,
   ): Promise<FileUploadResult> {

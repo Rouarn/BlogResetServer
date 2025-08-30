@@ -48,7 +48,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
    */
   canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
     const request = context.switchToHttp().getRequest();
-    const path = request.path || request.url;
+    const path = request.path ?? request.url;
 
     // 检查是否在白名单中
     if (WhitelistAuth.isWhitelistedPath(path)) {
@@ -76,10 +76,10 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
    * @throws UnauthorizedException token 校验失败
    * @throws NotFoundException 用户不存在
    */
-  handleRequest(error: any, user: any, info: any) {
+  handleRequest<TUser = unknown>(error: unknown, user: unknown, info: unknown): TUser {
     if (info || error) throw new UnauthorizedException('token校验失败');
     if (!user) throw new NotFoundException('用户不存在');
 
-    return user;
+    return user as TUser;
   }
 }

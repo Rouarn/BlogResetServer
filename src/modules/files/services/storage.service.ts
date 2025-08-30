@@ -12,7 +12,9 @@ export class StorageService implements StorageAdapter {
 
   constructor(private configService: ConfigService) {
     // 使用静态资源配置中的上传设置
-    const staticConfig = this.configService.get('app.static');
+    const staticConfig = this.configService.get('app.static') as {
+      upload: { path: string; maxFileSize: number; allowedTypes: string[] };
+    };
     this.config = {
       type: 'local',
       basePath: staticConfig.upload.path,
@@ -31,7 +33,7 @@ export class StorageService implements StorageAdapter {
     }
   }
 
-  async upload(file: any, relativePath: string): Promise<string> {
+  async upload(file: Express.Multer.File, relativePath: string): Promise<string> {
     const fullPath = path.join(this.config.basePath, relativePath);
     const directory = path.dirname(fullPath);
 

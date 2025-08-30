@@ -11,7 +11,7 @@ export function IsEnum<T extends Record<string, string | number>>(
   enumObject: T,
   message?: string,
 ): PropertyDecorator {
-  return function (target: any, propertyKey: string | symbol) {
+  return function (target: object, propertyKey: string | symbol) {
     // 这里可以集成 class-validator 的装饰器逻辑
     // 或者提供自定义的验证逻辑
     const errorMessage =
@@ -41,7 +41,7 @@ export function TransformEnum<T extends Record<string, string | number>>(
   enumObject: T,
   parser?: (value: unknown) => T[keyof T] | undefined,
 ): PropertyDecorator {
-  return function (target: any, propertyKey: string | symbol) {
+  return function (target: object, propertyKey: string | symbol) {
     // 存储转换信息到元数据中
     Reflect.defineMetadata(
       'enum:transform',
