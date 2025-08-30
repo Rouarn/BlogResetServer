@@ -5,7 +5,7 @@ import type { DefaultPagination, SuccessResponse } from '../interfaces/response.
  */
 export const SUCCESS_RESPONSE: SuccessResponse = {
   code: 200,
-  message: '操作成功',
+  message: '请求成功',
   data: null,
   success: true,
   timestamp: new Date().toISOString(),

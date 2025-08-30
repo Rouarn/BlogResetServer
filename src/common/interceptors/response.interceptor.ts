@@ -1,5 +1,6 @@
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { formatTimestamp } from 'src/utils';
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import {
   DEFAULT_PAGINATION,
@@ -50,7 +51,7 @@ export class ResponseInterceptor<T = unknown> implements NestInterceptor {
         const baseResponse = {
           code: SUCCESS_RESPONSE.code,
           message: SUCCESS_RESPONSE.message,
-          timestamp: new Date().toISOString(),
+          timestamp: formatTimestamp(),
         };
 
         const request = context.switchToHttp().getRequest();

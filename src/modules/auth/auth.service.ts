@@ -1,3 +1,4 @@
+import * as svgCaptcha from 'svg-captcha';
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -71,11 +72,9 @@ export class AuthService {
    * @param body 包含用户名和密码的登录数据
    * @returns 成功时返回token和refreshToken，失败时返回错误消息
    */
-  async login(
-    body: Record<string, unknown>,
-  ): Promise<{ accessToken: string; refreshToken: string; user: Record<string, unknown> }> {
+  async login(body: CreateAuthDto): Promise<{ accessToken: string; refreshToken: string }> {
     const findUser = await this.authRepository.findOne({
-      where: { userName: (body as { userName: string }).userName },
+      where: { userName: body.userName },
     });
 
     if (!findUser) {
@@ -84,7 +83,7 @@ export class AuthService {
 
     // 验证密码
     const isPasswordValid = await this.validatePassword(
-      (body as { password: string }).password,
+      body.password,
       findUser.salt,
       findUser.password,
     );
@@ -105,12 +104,6 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      user: {
-        id: findUser.id,
-        userName: findUser.userName,
-        nickname: findUser.nickname,
-        roles: findUser.roles,
-      },
     };
   }
 
@@ -122,11 +115,9 @@ export class AuthService {
    * @param body 包含用户注册信息的数据传输对象
    * @returns 注册结果消息
    */
-  async register(
-    body: Record<string, unknown>,
-  ): Promise<{ message: string; user: Record<string, unknown> }> {
+  async register(body: CreateAuthDto): Promise<{ message: string; user: Partial<Auth> }> {
     const findUser = await this.authRepository.findOne({
-      where: { userName: (body as { userName: string }).userName },
+      where: { userName: body.userName },
     });
 
     if (findUser) {
@@ -139,11 +130,7 @@ export class AuthService {
 
     return {
       message: '注册成功',
-      user: {
-        id: savedUser.id,
-        userName: savedUser.userName,
-        nickname: savedUser.nickname,
-      },
+      user: savedUser,
     };
   }
 
@@ -158,9 +145,19 @@ export class AuthService {
   generateCaptcha(
     clientInfo: Record<string, unknown>,
   ): Promise<{ captchaImage: string; captchaToken: string; expiresIn: number; nonce: string }> {
-    // 这里应该实现实际的验证码生成逻辑
-    // 为了示例，返回模拟数据
-    const captchaCode = Math.random().toString(36).substring(2, 8);
+    // 创建验证码，设置选项使其更安全
+    const captcha = svgCaptcha.create({
+      size: 4, // 验证码长度
+      ignoreChars: '0o1il', // 排除容易混淆的字符
+      noise: 3, // 干扰线条数量
+      color: true, // 文字颜色
+      background: '#f0f0f0', // 背景色
+      width: 120,
+      height: 40,
+      fontSize: 36,
+    });
+
+    const captchaCode = captcha.text; // 验证码文本
     const nonce = Math.random().toString(36).substring(2, 15);
 
     // 生成验证码令牌（实际应该包含加密的验证码信息）
@@ -174,14 +171,8 @@ export class AuthService {
       { expiresIn: '5m' },
     );
 
-    // 这里应该生成实际的验证码图片
-    const captchaImage = `data:image/svg+xml;base64,${Buffer.from(
-      `
-      <svg width="120" height="40" xmlns="http://www.w3.org/2000/svg">
-        <text x="10" y="25" font-family="Arial" font-size="20" fill="black">${captchaCode}</text>
-      </svg>
-    `,
-    ).toString('base64')}`;
+    // 将SVG验证码转换为base64格式的图片
+    const captchaImage = `data:image/svg+xml;base64,${Buffer.from(captcha.data).toString('base64')}`;
 
     return Promise.resolve({
       captchaImage,

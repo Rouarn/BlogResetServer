@@ -17,6 +17,7 @@ import { AuthService } from './auth.service';
 import { CaptchaVerifyDto } from './dto/captcha-verify.dto';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { CreateUserDto } from './dto/create-user.dto';
+import { Auth } from './entities/auth.entity';
 
 @ApiTags('认证管理')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -205,14 +206,14 @@ export class AuthController {
     type: CreateAuthDto,
   })
   @ApiResponse({
-    status: 200,
+    status: 201,
     description: '登录成功',
     schema: {
       oneOf: [
         {
           type: 'object',
           properties: {
-            token: {
+            accessToken: {
               type: 'string',
               description: 'JWT访问令牌',
               example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
@@ -234,10 +235,8 @@ export class AuthController {
   })
   @Public()
   @Post('login')
-  login(
-    @Body() body: CreateAuthDto,
-  ): Promise<{ accessToken: string; refreshToken: string; user: Record<string, unknown> }> {
-    return this.authService.login(body as unknown as Record<string, unknown>);
+  login(@Body() body: CreateAuthDto): Promise<{ accessToken: string; refreshToken: string }> {
+    return this.authService.login(body);
   }
 
   @ApiOperation({
@@ -259,10 +258,8 @@ export class AuthController {
   })
   @Public()
   @Post('register')
-  register(
-    @Body() body: CreateAuthDto,
-  ): Promise<{ message: string; user: Record<string, unknown> }> {
-    return this.authService.register(body as unknown as Record<string, unknown>);
+  register(@Body() body: CreateAuthDto): Promise<{ message: string; user: Partial<Auth> }> {
+    return this.authService.register(body);
   }
 
   /**
@@ -314,7 +311,7 @@ export class AuthController {
   ): Promise<{
     success: boolean;
     message: string;
-    user?: Record<string, unknown>;
+    user?: Partial<Auth>;
     timestamp?: string;
     data?: Record<string, unknown>;
     error?: string;

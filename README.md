@@ -1,4 +1,4 @@
-  # 我与夏季 Ra 系统 - 服务端
+# 我与夏季 Ra 系统 - 服务端
 
 基于 NestJS 构建的现代化后端API系统，使用 TypeScript 开发，支持JWT认证、数据库ORM、API文档等功能。
 
@@ -109,8 +109,6 @@ pnpm run build
 # 生产环境启动
 pnpm run start:prod
 ```
-
-
 
 ### 📋 代码质量
 
@@ -407,10 +405,14 @@ src/utils/
 
 ```typescript
 // 从主入口导入所有工具
-import { 
-  WhitelistAuth,           // 认证工具
-  formatDate, debounce,    // 辅助函数
-  isEmail, isPhone         // 验证工具
+import {
+  WhitelistAuth,
+  debounce,
+  // 认证工具
+  formatDate,
+  // 辅助函数
+  isEmail,
+  isPhone, // 验证工具
 } from 'src/utils';
 ```
 
@@ -419,7 +421,7 @@ import {
 ```typescript
 // 从特定模块导入
 import { WhitelistAuth } from 'src/utils/auth';
-import { formatDate, debounce } from 'src/utils/helpers';
+import { debounce, formatDate } from 'src/utils/helpers';
 import { isEmail, isPhone } from 'src/utils/validators';
 ```
 
@@ -435,7 +437,7 @@ import { WhitelistAuth } from 'src/utils';
 // 创建白名单认证实例
 const whitelist = new WhitelistAuth({
   ipWhitelist: ['127.0.0.1', '192.168.1.0/24'],
-  userWhitelist: ['admin', 'user1']
+  userWhitelist: ['admin', 'user1'],
 });
 
 // 验证IP地址
@@ -500,12 +502,7 @@ const cloned = deepClone(original);
 #### UUID工具
 
 ```typescript
-import { 
-  generateUUID, 
-  generateUUIDv4, 
-  generateUUIDv7, 
-  validateUUID 
-} from 'src/utils';
+import { generateUUID, generateUUIDv4, generateUUIDv7, validateUUID } from 'src/utils';
 
 // 生成UUID v4
 const uuid4 = generateUUIDv4(); // "550e8400-e29b-41d4-a716-446655440000"
@@ -522,12 +519,7 @@ const isValid = validateUUID(uuid4); // true
 #### 邮箱验证
 
 ```typescript
-import { 
-  isEmail, 
-  isEmailStrict, 
-  isCorporateEmail,
-  isEmailDomainAllowed 
-} from 'src/utils';
+import { isCorporateEmail, isEmail, isEmailDomainAllowed, isEmailStrict } from 'src/utils';
 
 // 基础邮箱验证
 const valid1 = isEmail('user@example.com'); // true
@@ -546,12 +538,7 @@ const valid5 = isEmailDomainAllowed('user@company.com', ['company.com']); // tru
 #### 手机号验证
 
 ```typescript
-import { 
-  isPhone, 
-  isPhoneStrict, 
-  isInternationalPhone,
-  formatPhoneDisplay 
-} from 'src/utils';
+import { formatPhoneDisplay, isInternationalPhone, isPhone, isPhoneStrict } from 'src/utils';
 
 // 中国大陆手机号验证
 const valid1 = isPhone('13800138000'); // true
@@ -569,12 +556,12 @@ const masked = formatPhoneDisplay('13800138000'); // "138****8000"
 #### 身份证验证
 
 ```typescript
-import { 
-  isIdCard, 
-  isIdCardStrict,
+import {
   extractBirthFromIdCard,
   extractGenderFromIdCard,
-  formatIdCardDisplay 
+  formatIdCardDisplay,
+  isIdCard,
+  isIdCardStrict,
 } from 'src/utils';
 
 const idCard = '110101199001011234';
@@ -598,13 +585,7 @@ const masked = formatIdCardDisplay(idCard); // "110101********1234"
 #### URL验证
 
 ```typescript
-import { 
-  isUrl, 
-  isHttpUrl, 
-  isHttpsUrl,
-  isDomain,
-  isIpAddress 
-} from 'src/utils';
+import { isDomain, isHttpUrl, isHttpsUrl, isIpAddress, isUrl } from 'src/utils';
 
 // URL验证
 const valid1 = isUrl('https://example.com'); // true
@@ -625,14 +606,7 @@ const valid5 = isIpAddress('192.168.1.1'); // true
 #### 数字验证
 
 ```typescript
-import { 
-  isInteger, 
-  isPositiveInteger,
-  isFloat,
-  isInRange,
-  isPercentage,
-  isMoney 
-} from 'src/utils';
+import { isFloat, isInRange, isInteger, isMoney, isPercentage, isPositiveInteger } from 'src/utils';
 
 // 整数验证
 const valid1 = isInteger(123); // true
@@ -656,15 +630,15 @@ const valid6 = isMoney(123.45); // true
 #### 字符串验证
 
 ```typescript
-import { 
-  isEmpty, 
-  isLengthInRange,
+import {
+  hasSpecialChars,
   isAlpha,
   isAlphanumeric,
   isChinese,
-  isUsername,
+  isEmpty,
+  isLengthInRange,
   isStrongPassword,
-  hasSpecialChars 
+  isUsername,
 } from 'src/utils';
 
 // 空字符串验证
@@ -695,12 +669,7 @@ const valid8 = hasSpecialChars('hello@world'); // true
 #### 日期验证
 
 ```typescript
-import { 
-  isValidDate, 
-  isDateFormat,
-  isTimeFormat,
-  isDateTimeFormat 
-} from 'src/utils';
+import { isDateFormat, isDateTimeFormat, isTimeFormat, isValidDate } from 'src/utils';
 
 // 有效日期验证
 const valid1 = isValidDate('2024-01-01'); // true
@@ -735,7 +704,7 @@ import { formatDate } from 'src/utils/helpers/format-date.helper';
 所有工具函数都提供了完整的 TypeScript 类型定义：
 
 ```typescript
-import { isEmail, formatDate } from 'src/utils';
+import { formatDate, isEmail } from 'src/utils';
 
 // 类型推断
 const emailValid: boolean = isEmail('test@example.com');
@@ -753,11 +722,11 @@ function validateUserInput(email: string, phone: string) {
   if (!isEmail(email)) {
     throw new Error('邮箱格式不正确');
   }
-  
+
   if (!isPhone(phone)) {
     throw new Error('手机号格式不正确');
   }
-  
+
   return true;
 }
 ```
@@ -1018,8 +987,8 @@ NEST_LOG_LEVEL=error
 #### 1. 注入配置服务
 
 ```typescript
-import { Injectable } from '@nestjs/common';
 import { AppConfigService } from 'src/config';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class YourService {
@@ -1046,9 +1015,9 @@ const jwtOptions = appConfig.jwtOptions;
 #### 3. 在模块中配置服务
 
 ```typescript
+import { appConfig } from 'src/config';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { appConfig } from 'src/config';
 
 @Module({
   imports: [
@@ -1312,7 +1281,7 @@ Authorization: Bearer <your-jwt-token>
   "data": {
     // 具体数据
   },
-  "message": "操作成功"
+  "message": "请求成功"
 }
 ```
 
@@ -1850,8 +1819,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         "description": "标准HTTP文件传输",
         "maxFileSize": 10485760,
         "supportedFeatures": ["单文件上传", "批量上传", "分块上传", "断点续传"]
-      },
-
+      }
     }
   },
   "message": "获取支持的协议列表成功"
@@ -1928,9 +1896,7 @@ const ALLOWED_MIME_TYPES = {
   'application/pdf': ['.pdf'],
   'text/plain': ['.txt'],
   'application/msword': ['.doc'],
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': [
-    '.docx',
-  ],
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
 
   // 音频
   'audio/mpeg': ['.mp3'],
@@ -1994,31 +1960,25 @@ class FileUploadClient {
   }
 
   // 分块上传大文件
-  async uploadLargeFile(
-    file: File,
-    onProgress?: (progress: number) => void,
-  ): Promise<any> {
+  async uploadLargeFile(file: File, onProgress?: (progress: number) => void): Promise<any> {
     const chunkSize = 1024 * 1024; // 1MB
     const totalChunks = Math.ceil(file.size / chunkSize);
 
     // 1. 初始化分块上传
-    const initResponse = await fetch(
-      `${this.baseUrl}/files/upload/chunk/init`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          filename: file.name,
-          fileSize: file.size,
-          chunkSize,
-          totalChunks,
-          mimeType: file.type,
-        }),
+    const initResponse = await fetch(`${this.baseUrl}/files/upload/chunk/init`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        'Content-Type': 'application/json',
       },
-    );
+      body: JSON.stringify({
+        filename: file.name,
+        fileSize: file.size,
+        chunkSize,
+        totalChunks,
+        mimeType: file.type,
+      }),
+    });
 
     const {
       data: { uploadId },
@@ -2053,20 +2013,17 @@ class FileUploadClient {
     }
 
     // 3. 完成上传
-    const completeResponse = await fetch(
-      `${this.baseUrl}/files/upload/chunk/complete`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          uploadId,
-          chunks: uploadedChunks,
-        }),
+    const completeResponse = await fetch(`${this.baseUrl}/files/upload/chunk/complete`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        'Content-Type': 'application/json',
       },
-    );
+      body: JSON.stringify({
+        uploadId,
+        chunks: uploadedChunks,
+      }),
+    });
 
     return completeResponse.json();
   }
@@ -2284,10 +2241,12 @@ CMD ["pnpm", "run", "start:prod"]
 ### 🚀 快速部署
 
 #### 环境要求
+
 - **Docker 部署**：需要预装 Docker + Docker Compose
 - **PM2 部署**：需要预装 Node.js + PM2 + MySQL
 
 #### 一键部署
+
 ```bash
 # 1. 配置环境
 cp deployment/config/.env.production .env
@@ -2307,6 +2266,7 @@ chmod +x deployment/scripts/quick-deploy.sh
 详细的部署文档请查看：**[deployment/README.md](deployment/README.md)**
 
 **包含内容：**
+
 - 🔧 **环境要求**：Docker/PM2 预装软件清单和安装命令
 - 🚀 **一键部署**：自动化部署脚本使用指南
 - 🐳 **Docker 部署**：容器化部署详细步骤
@@ -2321,7 +2281,7 @@ chmod +x deployment/scripts/quick-deploy.sh
 如有问题，请：
 
 1. 查看本README文档
-2. 查看 `deployment/README.md`  详细部署文档
+2. 查看 `deployment/README.md` 详细部署文档
 3. 运行 `pnpm run env:check` 检查配置
 4. 提交Issue或联系开发团队
 

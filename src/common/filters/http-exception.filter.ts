@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { formatDate, formatISOString, generateUUID } from 'src/utils';
+import { formatISOString, formatTimestamp, generateUUID } from 'src/utils';
 import {
   ArgumentsHost,
   Catch,
@@ -55,13 +55,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
   }
 
   /**
-   * 格式化时间戳 (YYYY-MM-DD HH:MM:SS)
-   */
-  private formatTimestamp(): string {
-    return formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss');
-  }
-
-  /**
    * 提取上下文信息
    */
   private extractContext(request: Request): Record<string, unknown> {
@@ -112,7 +105,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     stack?: string,
   ): string {
     const logData = {
-      timestamp: this.formatTimestamp(),
+      timestamp: formatTimestamp(),
       level,
       status,
       message,
