@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { generateUUID, formatDate } from 'src/utils/helpers';
-import { ErrorResponse } from '../interfaces/error-response.interface';
+import { ErrorResponse } from '../interfaces';
 
 /**
  * 全局 HTTP 异常过滤器（HttpExceptionFilter）
