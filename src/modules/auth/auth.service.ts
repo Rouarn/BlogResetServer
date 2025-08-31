@@ -241,10 +241,29 @@ export class AuthService {
   }
 
   /**
-   * 获取全部用户
-   * @returns 全部用户列表
+   * 获取全部用户（支持分页）
+   * @param current 当前页码
+   * @param size 每页大小
+   * @returns 用户列表
    */
-  async getAllUsers(): Promise<Auth[]> {
-    return this.authRepository.find();
+  async getAllUsers(current?: number, size?: number): Promise<Auth[]> {
+    // 如果没有分页参数，返回所有用户
+    if (!current && !size) {
+      return this.authRepository.find();
+    }
+
+    // 设置默认值
+    const pageSize = size ?? 10;
+    const currentPage = current ?? 1;
+    const skip = (currentPage - 1) * pageSize;
+
+    // 分页查询
+    return this.authRepository.find({
+      skip,
+      take: pageSize,
+      order: {
+        id: 'DESC', // 按ID降序排列
+      },
+    });
   }
 }

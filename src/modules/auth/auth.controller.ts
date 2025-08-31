@@ -9,6 +9,7 @@ import {
   Headers,
   Ip,
   Post,
+  Query,
   Req,
   UseInterceptors,
 } from '@nestjs/common';
@@ -365,12 +366,42 @@ export class AuthController {
   }
 
   /**
-   * 获取全部用户
+   * 获取全部用户（支持分页）
    */
-  @ApiOperation({ summary: '获取全部用户' })
-  @ApiResponse({ status: 200, description: '获取全部用户成功' })
+  @ApiOperation({
+    summary: '获取全部用户',
+    description: '获取用户列表，支持分页查询',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '获取全部用户成功',
+    schema: {
+      type: 'object',
+      properties: {
+        code: { type: 'number', example: 200 },
+        message: { type: 'string', example: '请求成功' },
+        timestamp: { type: 'string', example: '2025-08-31 13:29:49' },
+        data: {
+          type: 'object',
+          properties: {
+            records: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/Auth' },
+            },
+            total: { type: 'number', example: 1 },
+            totalPages: { type: 'number', example: 1 },
+            current: { type: 'number', example: 1 },
+            size: { type: 'number', example: 10 },
+          },
+        },
+      },
+    },
+  })
   @Get('all')
-  async getAllUsers(): Promise<Auth[]> {
-    return this.authService.getAllUsers();
+  async getAllUsers(
+    @Query('current') current?: number,
+    @Query('size') size?: number,
+  ): Promise<Auth[]> {
+    return this.authService.getAllUsers(current, size);
   }
 }

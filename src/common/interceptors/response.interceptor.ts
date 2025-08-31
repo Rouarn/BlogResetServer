@@ -162,7 +162,8 @@ export class ResponseInterceptor<T = unknown> implements NestInterceptor {
     }
 
     // 兼容直接返回数组的情况
-    const records = Array.isArray(rawData) ? rawData : [];
-    return this.buildPaginatedData(records, records.length, pageSize, current);
+    const records = Array.isArray(rawData) ? (rawData as T[]) : [];
+    const total = records.length;
+    return this.buildPaginatedData(records, total, pageSize, current);
   }
 }
