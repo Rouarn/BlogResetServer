@@ -5,6 +5,8 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateAuthDto } from './dto/create-auth.dto';
+import { LoginDto } from './dto/login.dto';
+import { BatchDeleteUserDto, UpdateUserDto } from './dto/update-user.dto';
 import { Auth } from './entities/auth.entity';
 
 /**
@@ -75,7 +77,7 @@ export class AuthService extends TimestampedService<Auth> {
    * @param body 包含用户名和密码的登录数据
    * @returns 成功时返回token和refreshToken，失败时返回错误消息
    */
-  async login(body: CreateAuthDto): Promise<{ accessToken: string; refreshToken: string }> {
+  async login(body: LoginDto): Promise<{ accessToken: string; refreshToken: string }> {
     const findUser = await this.repository.findOne({
       where: { userName: body.userName },
     });
@@ -244,29 +246,106 @@ export class AuthService extends TimestampedService<Auth> {
   }
 
   /**
-   * 获取全部用户（支持分页）
-   * @param current 当前页码
-   * @param size 每页大小
-   * @returns 用户列表
+   * 根据ID获取单个用户详情
+   * @param id 用户ID
+   * @returns 用户详情
    */
-  async getAllUsers(current?: number, size?: number): Promise<Auth[]> {
-    // 如果没有分页参数，返回所有用户
-    if (!current && !size) {
-      return this.repository.find();
+  async getUserById(id: string): Promise<Auth> {
+    const user = await this.repository.findOne({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new Error('用户不存在');
     }
 
-    // 设置默认值
-    const pageSize = size ?? 10;
-    const currentPage = current ?? 1;
-    const skip = (currentPage - 1) * pageSize;
+    return user;
+  }
 
-    // 分页查询
-    return this.repository.find({
-      skip,
-      take: pageSize,
-      order: {
-        id: 'DESC', // 按ID降序排列
-      },
+  /**
+   * 获取全部用户列表
+   * @param current 当前页码
+   * @param size 每页数量
+   * @returns 用户列表
+   */
+  async getAllUsers(
+    current: number = 1,
+    size: number = 10,
+  ): Promise<{ data: Auth[]; total: number }> {
+    const [data, total] = await this.repository.findAndCount({
+      skip: (current - 1) * size,
+      take: size,
     });
+
+    return { data, total };
+  }
+
+  /**
+   * 更新用户信息
+   * @param id 用户ID
+   * @param updateUserDto 更新数据
+   * @returns 更新后的用户信息
+   */
+  async updateUser(id: string, updateUserDto: UpdateUserDto): Promise<Auth> {
+    const user = await this.getUserById(id);
+
+    // 合并更新数据
+    Object.assign(user, updateUserDto);
+
+    return this.repository.save(user);
+  }
+
+  /**
+   * 删除用户
+   * @param id 用户ID
+   * @returns 删除结果
+   */
+  async deleteUser(id: string): Promise<{ message: string }> {
+    const user = await this.getUserById(id);
+
+    await this.repository.remove(user);
+
+    return { message: '用户删除成功' };
+  }
+
+  /**
+   * 批量删除用户
+   * @param batchDeleteDto 批量删除数据
+   * @returns 删除结果
+   */
+  async batchDeleteUsers(
+    batchDeleteDto: BatchDeleteUserDto,
+  ): Promise<{ message: string; deletedCount: number }> {
+    const { ids } = batchDeleteDto;
+
+    // 查找要删除的用户
+    const users = await this.repository.findByIds(ids);
+
+    if (users.length === 0) {
+      throw new Error('未找到要删除的用户');
+    }
+
+    // 执行批量删除
+    await this.repository.remove(users);
+
+    return {
+      message: `成功删除 ${users.length} 个用户`,
+      deletedCount: users.length,
+    };
+  }
+
+  /**
+   * 切换用户状态
+   * @param id 用户ID
+   * @param status 新状态
+   * @returns 更新后的用户信息
+   */
+  async toggleUserStatus(id: string, status: boolean): Promise<Auth> {
+    const user = await this.getUserById(id);
+
+    // 假设Auth实体有status字段，如果没有需要添加
+    (user as any).status = status;
+
+    return this.repository.save(user);
   }
 }

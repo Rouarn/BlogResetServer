@@ -8,7 +8,6 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import * as packageJson from '../../../package.json';
 import { ErrorResponse } from '../interfaces';
 
 /**
@@ -98,7 +97,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
   /**
    * 创建结构化日志
    */
-  private createStructuredLog(
+  private _createStructuredLog(
     level: string,
     status: number,
     message: string,
@@ -112,7 +111,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       message,
       context,
       stack: stack ?? null,
-      service: packageJson.name,
+      service: 'NestJS-Template',
       environment: process.env.NODE_ENV ?? 'development',
     };
 
