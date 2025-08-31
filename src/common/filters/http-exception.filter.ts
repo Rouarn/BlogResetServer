@@ -8,6 +8,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import * as packageJson from '../../../package.json';
 import { ErrorResponse } from '../interfaces';
 
 /**
@@ -111,7 +112,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       message,
       context,
       stack: stack ?? null,
-      service: 'nestjs-template',
+      service: packageJson.name,
       environment: process.env.NODE_ENV ?? 'development',
     };
 

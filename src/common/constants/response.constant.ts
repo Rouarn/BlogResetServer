@@ -1,3 +1,4 @@
+import { formatTimestamp } from 'src/utils/helpers';
 import type { DefaultPagination, SuccessResponse } from '../interfaces/response.interface';
 
 /**
@@ -8,7 +9,7 @@ export const SUCCESS_RESPONSE: SuccessResponse = {
   message: '请求成功',
   data: null,
   success: true,
-  timestamp: new Date().toISOString(),
+  timestamp: formatTimestamp(),
 };
 
 /**
@@ -18,8 +19,8 @@ export const DEFAULT_PAGINATION: DefaultPagination & {
   MIN_PAGE: number;
   DEFAULT_PAGE_SIZE: number;
 } = {
-  page: 1,
-  limit: 10,
+  current: 1,
+  size: 10,
   MIN_PAGE: 1,
   DEFAULT_PAGE_SIZE: 10,
 };

@@ -62,12 +62,7 @@ export class ResponseInterceptor<T = unknown> implements NestInterceptor {
           return {
             ...baseResponse,
             data: paginatedData.records,
-            pagination: {
-              page: Number(paginatedData.current),
-              limit: Number(paginatedData.size),
-              total: Number(paginatedData.total),
-              totalPages: Math.ceil(Number(paginatedData.total) / Number(paginatedData.size)),
-            },
+            ...paginatedData,
           } as PaginatedResponse<T>;
         }
 
@@ -138,6 +133,13 @@ export class ResponseInterceptor<T = unknown> implements NestInterceptor {
         (rawData as { total?: unknown; count?: unknown }).total ??
           (rawData as { count?: unknown }).count ??
           0,
+      ),
+      totalPages: Math.ceil(
+        Number(
+          (rawData as { totalPages?: unknown; total_pages?: unknown }).totalPages ??
+            (rawData as { total_pages?: unknown }).total_pages ??
+            0,
+        ),
       ),
       current: Number((params as { current?: unknown }).current) || DEFAULT_PAGINATION.MIN_PAGE,
       size: Number((params as { size?: unknown }).size) || DEFAULT_PAGINATION.DEFAULT_PAGE_SIZE,

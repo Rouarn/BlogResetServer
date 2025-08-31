@@ -273,28 +273,22 @@ export class FilesController {
     @Query() queryDto: FileQueryDto,
     @GetCurrentUser() user?: CurrentUser,
   ): Promise<{
-    success: boolean;
-    data: {
-      files: unknown[];
-      pagination: {
-        page: number;
-        limit: number;
-        total: number;
-        totalPages: number;
-      };
+    files: unknown[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
     };
   }> {
     const { files, total } = await this.filesService.findFiles(queryDto, user?.id);
     return {
-      success: true,
-      data: {
-        files,
-        pagination: {
-          page: queryDto.page ?? 1,
-          limit: queryDto.limit ?? 10,
-          total,
-          totalPages: Math.ceil(total / (queryDto.limit ?? 10)),
-        },
+      files,
+      pagination: {
+        page: queryDto.page ?? 1,
+        limit: queryDto.limit ?? 10,
+        total,
+        totalPages: Math.ceil(total / (queryDto.limit ?? 10)),
       },
     };
   }
