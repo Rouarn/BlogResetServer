@@ -1,15 +1,10 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Timestamped, TimestampedEntity } from 'src/audit';
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { File } from './file.entity';
 
 @Entity('ra_upload_chunks')
-export class UploadChunk {
+@Timestamped()
+export class UploadChunk extends TimestampedEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -31,7 +26,4 @@ export class UploadChunk {
   @ManyToOne(() => File, (file) => file.chunks, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'file_id' })
   file: File;
-
-  @CreateDateColumn({ name: 'uploaded_at' })
-  uploadedAt: Date;
 }

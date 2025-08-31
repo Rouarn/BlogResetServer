@@ -47,11 +47,11 @@ export class FileQueryDto {
 
   @ApiPropertyOptional({
     description: '排序字段',
-    enum: ['createdAt', 'size', 'filename'],
+    enum: ['createTime', 'size', 'filename'],
   })
   @IsOptional()
   @IsString()
-  sortBy?: 'createdAt' | 'size' | 'filename' = 'createdAt';
+  sortBy?: 'createTime' | 'size' | 'filename' = 'createTime';
 
   @ApiPropertyOptional({ description: '排序方向', enum: ['ASC', 'DESC'] })
   @IsOptional()

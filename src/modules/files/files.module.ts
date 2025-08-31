@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MulterModule } from '@nestjs/platform-express';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuditModule } from '../../audit/audit.module';
 import { File, UploadChunk } from './entities';
 import { FilesController } from './files.controller';
 import { FileAccessGuard } from './guards/file-access.guard';
@@ -14,6 +15,7 @@ import { ValidationService } from './services/validation.service';
 
 @Module({
   imports: [
+    AuditModule,
     TypeOrmModule.forFeature([File, UploadChunk]),
     MulterModule.registerAsync({
       imports: [ConfigModule],

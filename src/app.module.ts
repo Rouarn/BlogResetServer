@@ -83,7 +83,9 @@ import { FilesModule } from './modules/files/files.module';
     // 时间戳管理模块 - 自动时间戳和软删除功能
     // =============================================================================
     AuditModule.forRoot({
+      enableTimestamps: true, // 启用时间戳功能
       enableSoftDelete: true, // 启用软删除功能
+      autoFilterDeleted: true, // 自动过滤已删除数据
       timestampFields: {
         createTime: 'createTime',
         updateTime: 'updateTime',

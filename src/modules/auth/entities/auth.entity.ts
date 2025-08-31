@@ -1,10 +1,11 @@
 import * as bcrypt from 'bcryptjs';
 import { Exclude } from 'class-transformer';
-import { TimestampedEntity } from 'src/audit';
+import { Timestamped, TimestampedEntity } from 'src/audit';
 import { Gender, Role } from 'src/common/enums';
 import { BeforeInsert, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('ra_users')
+@Timestamped()
 export class Auth extends TimestampedEntity {
   @PrimaryGeneratedColumn('uuid', { comment: '用户id' })
   id: string; // 用户id

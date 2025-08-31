@@ -28,8 +28,14 @@ export class FileInfoDto {
   @ApiProperty({ description: '是否公开' })
   isPublic: boolean;
 
-  @ApiProperty({ description: '上传时间' })
-  createdAt: Date;
+  @ApiProperty({ description: '创建时间' })
+  createTime: Date;
+
+  @ApiProperty({ description: '更新时间' })
+  updateTime: Date;
+
+  @ApiProperty({ description: '删除时间', required: false })
+  deleteTime?: Date;
 }
 
 /**

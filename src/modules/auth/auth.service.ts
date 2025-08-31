@@ -1,3 +1,4 @@
+import { TimestampedService } from 'src/audit';
 import * as svgCaptcha from 'svg-captcha';
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
@@ -30,7 +31,7 @@ import { Auth } from './entities/auth.entity';
  * - 用户会话管理
  */
 @Injectable()
-export class AuthService {
+export class AuthService extends TimestampedService<Auth> {
   /**
    * 构造函数
    * @param authRepository 用户数据仓库
@@ -38,9 +39,11 @@ export class AuthService {
    */
   constructor(
     @InjectRepository(Auth)
-    private readonly authRepository: Repository<Auth>,
+    authRepository: Repository<Auth>,
     private readonly jwtService: JwtService,
-  ) {}
+  ) {
+    super(authRepository);
+  }
 
   /**
    * 获取用户信息
@@ -73,7 +76,7 @@ export class AuthService {
    * @returns 成功时返回token和refreshToken，失败时返回错误消息
    */
   async login(body: CreateAuthDto): Promise<{ accessToken: string; refreshToken: string }> {
-    const findUser = await this.authRepository.findOne({
+    const findUser = await this.repository.findOne({
       where: { userName: body.userName },
     });
 
@@ -116,7 +119,7 @@ export class AuthService {
    * @returns 注册结果消息
    */
   async register(body: CreateAuthDto): Promise<{ message: string; user: Partial<Auth> }> {
-    const findUser = await this.authRepository.findOne({
+    const findUser = await this.repository.findOne({
       where: { userName: body.userName },
     });
 
@@ -125,8 +128,8 @@ export class AuthService {
     }
 
     // 创建用户
-    const createUser = await this.authRepository.create(body as Partial<Auth>);
-    const savedUser = await this.authRepository.save(createUser);
+    const createUser = await this.repository.create(body as Partial<Auth>);
+    const savedUser = await this.repository.save(createUser);
 
     return {
       message: '注册成功',
@@ -249,7 +252,7 @@ export class AuthService {
   async getAllUsers(current?: number, size?: number): Promise<Auth[]> {
     // 如果没有分页参数，返回所有用户
     if (!current && !size) {
-      return this.authRepository.find();
+      return this.repository.find();
     }
 
     // 设置默认值
@@ -258,7 +261,7 @@ export class AuthService {
     const skip = (currentPage - 1) * pageSize;
 
     // 分页查询
-    return this.authRepository.find({
+    return this.repository.find({
       skip,
       take: pageSize,
       order: {

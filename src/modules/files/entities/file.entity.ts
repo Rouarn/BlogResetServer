@@ -1,16 +1,11 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Timestamped, TimestampedEntity } from 'src/audit';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { FileStatus, FileType } from '../enums';
 import { UploadChunk } from './upload-chunk.entity';
 
 @Entity('ra_files')
-export class File {
+@Timestamped()
+export class File extends TimestampedEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -74,10 +69,4 @@ export class File {
 
   @OneToMany(() => UploadChunk, (chunk) => chunk.file, { cascade: true })
   chunks: UploadChunk[];
-
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
-
-  @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
 }
