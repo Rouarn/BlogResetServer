@@ -15,13 +15,8 @@ async function bootstrap(): Promise<void> {
   try {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-    // 应用中间件 - 根据配置条件性启用 CORS
-    if (appConfig.isCorsEnabled) {
-      app.use(cors(appConfig.corsOptions));
-      logger.log('🌐 CORS 已启用');
-    } else {
-      logger.log('🚫 CORS 已禁用');
-    }
+    // 应用中间件
+    app.use(cors(appConfig.corsOptions));
 
     // 版本控制 - 使用配置服务
     const versionConfig = appConfig.apiVersioning;
@@ -34,32 +29,17 @@ async function bootstrap(): Promise<void> {
 
     // 静态资源配置
     const staticConfig = appConfig.staticAssetsOptions;
+    // 使用配置中的静态资源路径，处理相对路径
+    // 由于__dirname是dist/src，需要回到项目根目录再解析路径
+    const staticPath = staticConfig.root.startsWith('./')
+      ? join(__dirname, '..', '..', staticConfig.root.substring(2))
+      : join(__dirname, staticConfig.root);
 
-    // 简化路径处理：根据配置自动解析路径
-    let staticPath: string;
-    if (staticConfig.root.startsWith('./')) {
-      // 相对路径：从项目根目录开始
-      staticPath = join(process.cwd(), staticConfig.root.substring(2));
-    } else {
-      // 绝对路径直接使用
-      staticPath = staticConfig.root;
-    }
-
-    // 确保静态资源目录存在
-    if (!fs.existsSync(staticPath)) {
-      fs.mkdirSync(staticPath, { recursive: true });
-      logger.log(`📁 创建静态资源目录: ${staticPath}`);
-    }
-
-    // 确保 uploads 子目录存在
-    const uploadsPath = join(staticPath, 'uploads');
-    if (!fs.existsSync(uploadsPath)) {
-      fs.mkdirSync(uploadsPath, { recursive: true });
-      logger.log(`📁 创建上传目录: ${uploadsPath}`);
-    }
-
-    logger.log(`📂 静态资源目录: ${staticPath}`);
-    logger.log(`📤 文件上传目录: ${uploadsPath}`);
+    // 调试日志
+    logger.log(`🔧 Static config root: ${staticConfig.root}`);
+    logger.log(`🔧 Static config options: ${JSON.stringify(staticConfig.options)}`);
+    logger.log(`🔧 __dirname: ${__dirname}`);
+    logger.log(`🔧 Resolved static path: ${staticPath}`);
 
     app.useStaticAssets(staticPath, staticConfig.options);
 
@@ -75,8 +55,14 @@ async function bootstrap(): Promise<void> {
       const document = SwaggerModule.createDocument(app, options);
       SwaggerModule.setup(swaggerConfig.prefix, app, document);
 
-      // 保存API文档为JSON文件到静态资源根目录
-      const apiDocPath = path.join(staticPath, 'api-docs.json');
+      // 保存API文档为JSON文件，供第三方工具导入使用
+      const docsDir = path.join(__dirname, `..${staticConfig.options.prefix}`);
+      const apiDocPath = path.join(docsDir, 'api-docs.json');
+
+      // 确保目录存在
+      if (!fs.existsSync(docsDir)) {
+        fs.mkdirSync(docsDir, { recursive: true });
+      }
 
       // 检查apiDocPath是否是目录，如果是则删除它
       if (fs.existsSync(apiDocPath) && fs.statSync(apiDocPath).isDirectory()) {

@@ -49,6 +49,16 @@ export interface StaticConfig {
   maxAge: number;
   upload: {
     /**
+     * 上传文件保存路径
+     *
+     * 说明：
+     * - 配置上传文件的保存路径，相对于静态资源根目录。
+     *
+     * 示例：
+     * - 配置为 'uploads' 表示上传文件将保存到 static/uploads 目录。
+     */
+    path: string;
+    /**
      * 最大批量上传文件数量
      *
      * 说明：

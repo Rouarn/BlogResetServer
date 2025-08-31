@@ -228,29 +228,6 @@ pnpm run start:dev
 ```
 nestjs-template/
 ├── src/                          # 源代码目录
-│   ├── audit/                    # 审计模块
-│   │   ├── decorators/           # 装饰器
-│   │   │   └── index.ts          # 时间戳和软删除装饰器
-│   │   ├── entities/             # 实体定义
-│   │   │   └── timestamped.entity.ts # 时间戳基础实体
-│   │   ├── interceptors/         # 拦截器
-│   │   │   ├── index.ts
-│   │   │   ├── query-filter.interceptor.ts # 查询过滤拦截器
-│   │   │   ├── soft-delete.interceptor.ts  # 软删除拦截器
-│   │   │   └── timestamp.interceptor.ts    # 时间戳拦截器
-│   │   ├── interfaces/           # 接口定义
-│   │   │   └── index.ts          # 时间戳和软删除接口
-│   │   ├── services/             # 服务类
-│   │   │   ├── index.ts
-│   │   │   └── timestamped.service.ts # 时间戳管理服务
-│   │   ├── subscribers/          # 订阅者
-│   │   │   ├── index.ts
-│   │   │   ├── soft-delete.subscriber.ts # 软删除订阅者
-│   │   │   └── timestamp.subscriber.ts   # 时间戳订阅者
-│   │   ├── types/                # 类型定义
-│   │   │   └── index.ts          # 配置和上下文类型
-│   │   ├── audit.module.ts       # 审计模块
-│   │   └── index.ts              # 模块导出
 │   ├── modules/                  # 业务模块
 │   │   ├── auth/                 # 认证模块
 │   │   │   ├── dto/              # 数据传输对象
@@ -445,9 +422,9 @@ import { AuditModule } from './audit';
   imports: [
     // 全局配置审计模块
     AuditModule.forRoot({
-      enableTimestamps: true,    // 启用时间戳管理
-      enableSoftDelete: true,    // 启用软删除
-      autoFilterDeleted: true,   // 自动过滤已删除数据
+      enableTimestamps: true, // 启用时间戳管理
+      enableSoftDelete: true, // 启用软删除
+      autoFilterDeleted: true, // 自动过滤已删除数据
       fieldNames: {
         createTime: 'createTime',
         updateTime: 'updateTime',
@@ -464,8 +441,8 @@ export class AppModule {}
 让你的实体继承 `TimestampedEntity` 基类：
 
 ```typescript
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 import { TimestampedEntity } from 'src/audit';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('users')
 export class User extends TimestampedEntity {
@@ -492,10 +469,10 @@ export class User extends TimestampedEntity {
 继承 `TimestampedService` 获得完整的 CRUD 和软删除功能：
 
 ```typescript
+import { TimestampedService } from 'src/audit';
+import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { TimestampedService } from 'src/audit';
 import { User } from './entities/user.entity';
 
 @Injectable()
@@ -516,18 +493,18 @@ export class UserService extends TimestampedService<User> {
   // - findById(id, options?): 根据ID查找
   // - findOne(options?): 查找单个实体
   // - count(options?): 统计数量
-  // 
+  //
   // 软删除操作
   // - softDelete(id): 软删除（设置删除时间）
   // - softDeleteMany(ids[]): 批量软删除
   // - restore(id): 恢复软删除
   // - restoreMany(ids[]): 批量恢复
-  // 
+  //
   // 包含已删除数据的查询
   // - findWithDeleted(options?): 查找包含已删除的数据
   // - findOneWithDeleted(options?): 查找单个包含已删除的数据
   // - findDeleted(options?): 只查找已删除的数据
-  // 
+  //
   // 物理删除操作
   // - forceDelete(id): 物理删除
   // - forceDeleteMany(ids[]): 批量物理删除
@@ -544,9 +521,9 @@ export class UserService extends TimestampedService<User> {
 import { Timestamped } from 'src/audit';
 
 @Timestamped({
-  enableSoftDelete: true,  // 启用软删除
+  enableSoftDelete: true, // 启用软删除
   fieldNames: {
-    createTime: 'createdAt',  // 自定义字段名
+    createTime: 'createdAt', // 自定义字段名
     updateTime: 'updatedAt',
     deleteTime: 'deletedAt',
   },
@@ -562,13 +539,13 @@ export class CustomEntity {
 在控制器方法中包含已删除的数据：
 
 ```typescript
-import { Controller, Get } from '@nestjs/common';
 import { IncludeDeleted } from 'src/audit';
+import { Controller, Get } from '@nestjs/common';
 
 @Controller('users')
 export class UserController {
   @Get('all')
-  @IncludeDeleted()  // 此方法将返回包含已删除的用户
+  @IncludeDeleted() // 此方法将返回包含已删除的用户
   async getAllUsers() {
     return this.userService.findAll();
   }
@@ -645,7 +622,7 @@ export class UserService extends TimestampedService<User> {
   async findActiveUsers(): Promise<User[]> {
     return this.repository
       .createQueryBuilder('user')
-      .where('user.deleteTime IS NULL')  // 手动过滤软删除
+      .where('user.deleteTime IS NULL') // 手动过滤软删除
       .andWhere('user.isActive = :active', { active: true })
       .getMany();
   }
@@ -678,8 +655,8 @@ export interface ITimestampedEntity {
 
 ```typescript
 export interface SoftDeleteOptions {
-  includeDeleted?: boolean;  // 是否包含已删除的数据
-  forceDelete?: boolean;     // 是否强制物理删除
+  includeDeleted?: boolean; // 是否包含已删除的数据
+  forceDelete?: boolean; // 是否强制物理删除
 }
 ```
 
@@ -687,9 +664,9 @@ export interface SoftDeleteOptions {
 
 ```typescript
 export interface QueryContext {
-  includeDeleted?: boolean;    // 包含已删除数据
+  includeDeleted?: boolean; // 包含已删除数据
   disableTimestamps?: boolean; // 禁用时间戳更新
-  forceDelete?: boolean;       // 强制物理删除
+  forceDelete?: boolean; // 强制物理删除
 }
 ```
 
@@ -701,24 +678,24 @@ export interface ITimestampedService<T extends ITimestampedEntity> {
   create(entityData: DeepPartial<T>): Promise<T>;
   update(id: string | number, entityData: DeepPartial<T>): Promise<T>;
   createMany(entitiesData: DeepPartial<T>[]): Promise<T[]>;
-  
+
   // 查询操作
   findAll(options?: FindManyOptions<T> & SoftDeleteOptions): Promise<T[]>;
   findById(id: string | number, options?: FindOneOptions<T> & SoftDeleteOptions): Promise<T | null>;
   findOne(options?: FindOneOptions<T> & SoftDeleteOptions): Promise<T | null>;
   count(options?: FindManyOptions<T> & SoftDeleteOptions): Promise<number>;
-  
+
   // 软删除操作
   softDelete(id: string | number): Promise<void>;
   softDeleteMany(ids: (string | number)[]): Promise<void>;
   restore(id: string | number): Promise<void>;
   restoreMany(ids: (string | number)[]): Promise<void>;
-  
+
   // 包含已删除数据的查询
   findWithDeleted(options?: FindManyOptions<T>): Promise<T[]>;
   findOneWithDeleted(options?: FindOneOptions<T>): Promise<T | null>;
   findDeleted(options?: FindManyOptions<T>): Promise<T[]>;
-  
+
   // 物理删除操作
   forceDelete(id: string | number): Promise<void>;
   forceDeleteMany(ids: (string | number)[]): Promise<void>;
@@ -729,20 +706,20 @@ export interface ITimestampedService<T extends ITimestampedEntity> {
 
 ```typescript
 export interface TimestampManagerConfig {
-  enableTimestamps?: boolean;     // 启用时间戳管理
-  enableSoftDelete?: boolean;     // 启用软删除
+  enableTimestamps?: boolean; // 启用时间戳管理
+  enableSoftDelete?: boolean; // 启用软删除
   fieldNames?: {
-    createTime?: string;          // 创建时间字段名
-    updateTime?: string;          // 更新时间字段名
-    deleteTime?: string;          // 删除时间字段名
+    createTime?: string; // 创建时间字段名
+    updateTime?: string; // 更新时间字段名
+    deleteTime?: string; // 删除时间字段名
   };
   timestampFields?: {
-    createTime?: string;          // 时间戳字段配置（备用）
+    createTime?: string; // 时间戳字段配置（备用）
     updateTime?: string;
     deleteTime?: string;
   };
-  autoFilterDeleted?: boolean;    // 自动过滤已删除数据
-  excludeEntities?: string[];     // 排除的实体类名
+  autoFilterDeleted?: boolean; // 自动过滤已删除数据
+  excludeEntities?: string[]; // 排除的实体类名
 }
 ```
 
@@ -804,7 +781,7 @@ export class ProductService {
 export class ProductController {
   // ✅ 推荐：使用装饰器控制行为
   @Get('all')
-  @IncludeDeleted()  // 明确表达意图
+  @IncludeDeleted() // 明确表达意图
   async getAllProducts() {
     return this.productService.findAll();
   }
@@ -816,7 +793,7 @@ export class ProductController {
   }
 
   @Delete(':id/permanent')
-  @ForceDelete()  // 明确标记为物理删除
+  @ForceDelete() // 明确标记为物理删除
   async permanentDelete(@Param('id') id: string) {
     return this.productService.forceDelete(id);
   }
