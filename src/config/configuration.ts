@@ -54,23 +54,23 @@ export default registerAs('app', () => ({
     accessTokenTtl: process.env.NEST_JWT_ACCESS_TOKEN_TTL ?? '1d',
   },
 
-  // 静态资源配置（整合文件上传和静态资源服务）
+  // 静态资源和文件上传统一配置
   static: {
-    root: process.env.NEST_STATIC_ASSETS_PATH ?? './static',
-    prefix: process.env.NEST_STATIC_ASSETS_URL ?? '/static',
-    maxAge: process.env.NEST_STATIC_ASSETS_MAXAGE
-      ? parseInt(process.env.NEST_STATIC_ASSETS_MAXAGE, 10)
-      : 86400,
-    // 文件上传配置 - 统一使用静态资源目录
+    // 根据环境自动设置静态资源根目录
+    // 开发环境: ./dist/static (便于开发调试)
+    // 生产环境: ./static (项目根目录)
+    root: process.env.NEST_USER_NODE_ENV === 'development' ? './dist/static' : './static',
+    prefix: '/static',
+    maxAge: 86400, // 24小时缓存
+
+    // 文件上传配置
     upload: {
-      // 上传文件保存在静态资源目录下的 uploads 子目录
-      path: process.env.NEST_STATIC_ASSETS_PATH
-        ? `${process.env.NEST_STATIC_ASSETS_PATH}/uploads`
-        : './static/uploads',
-      maxFileSize: process.env.MAX_FILE_SIZE
-        ? parseInt(process.env.MAX_FILE_SIZE, 10)
+      maxFileSize: process.env.NEST_UPLOAD_MAX_SIZE
+        ? parseInt(process.env.NEST_UPLOAD_MAX_SIZE, 10)
         : 10 * 1024 * 1024, // 10MB
-      allowedTypes: process.env.ALLOWED_FILE_TYPES ? process.env.ALLOWED_FILE_TYPES.split(',') : [], // 空数组表示允许所有类型
+      allowedTypes: process.env.NEST_UPLOAD_ALLOWED_TYPES
+        ? process.env.NEST_UPLOAD_ALLOWED_TYPES.split(',').map((type) => type.trim())
+        : [], // 空数组表示允许所有类型
       maxBatchFiles: 10, // 批量上传最大文件数
     },
   },

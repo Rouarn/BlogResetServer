@@ -74,6 +74,14 @@ export class AppConfigService {
   }
 
   /**
+   * 获取应用基础URL
+   * @returns 基础URL，默认 http://localhost:3000
+   */
+  get baseurl(): string {
+    return this.configService.get<string>('NEST_BASE_URL', `http://localhost:${this.port}`);
+  }
+
+  /**
    * 判断是否为开发环境
    * @returns 如果是开发环境返回 true
    */

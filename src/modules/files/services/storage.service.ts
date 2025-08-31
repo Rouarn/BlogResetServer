@@ -15,16 +15,14 @@ export class StorageService implements StorageAdapter {
     // 使用静态资源配置中的上传设置
     const staticConfig = this.configService.get('app.static') as StaticConfig;
 
-    // 解析上传路径，确保与静态文件服务路径一致
+    // 上传文件保存在静态资源目录下的 uploads 子目录
     let uploadPath: string;
-    if (staticConfig.upload.path.startsWith('./dist/')) {
-      uploadPath = path.join(process.cwd(), staticConfig.upload.path.substring(2));
-    } else if (staticConfig.upload.path.startsWith('./')) {
-      // 对于开发环境，文件应该存储在 dist 目录下
-      uploadPath = path.join(process.cwd(), 'dist', staticConfig.upload.path.substring(2));
+    if (staticConfig.root.startsWith('./')) {
+      // 相对路径：从项目根目录开始，添加 uploads 子目录
+      uploadPath = path.join(process.cwd(), staticConfig.root.substring(2), 'uploads');
     } else {
-      // 绝对路径直接使用
-      uploadPath = staticConfig.upload.path;
+      // 绝对路径直接使用，添加 uploads 子目录
+      uploadPath = path.join(staticConfig.root, 'uploads');
     }
 
     this.config = {
@@ -34,8 +32,8 @@ export class StorageService implements StorageAdapter {
       allowedTypes: staticConfig.upload.allowedTypes,
     };
 
-    this.logger.log(`🔧 Upload config - original path: ${staticConfig.upload.path}`);
-    this.logger.log(`🔧 Upload config - resolved path: ${uploadPath}`);
+    this.logger.log(`📂 静态资源根目录: ${staticConfig.root}`);
+    this.logger.log(`📤 文件上传目录: ${uploadPath}`);
 
     void this.ensureUploadDirectory();
   }

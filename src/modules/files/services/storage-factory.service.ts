@@ -1,3 +1,4 @@
+import * as path from 'path';
 import { StaticConfig } from 'src/common/interfaces';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -42,8 +43,19 @@ export class StorageFactoryService implements StorageFactory {
       case StorageType.LOCAL:
         // 使用静态资源配置中的上传设置
         const staticConfig = this.configService.get('app.static') as StaticConfig;
+
+        // 上传文件保存在静态资源目录下的 uploads 子目录
+        let uploadPath: string;
+        if (staticConfig.root.startsWith('./')) {
+          // 相对路径：从项目根目录开始，添加 uploads 子目录
+          uploadPath = path.join(process.cwd(), staticConfig.root.substring(2), 'uploads');
+        } else {
+          // 绝对路径直接使用，添加 uploads 子目录
+          uploadPath = path.join(staticConfig.root, 'uploads');
+        }
+
         return {
-          basePath: staticConfig.upload.path,
+          basePath: uploadPath,
           maxFileSize: staticConfig.upload.maxFileSize,
           allowedTypes: staticConfig.upload.allowedTypes,
         };

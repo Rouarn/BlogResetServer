@@ -57,14 +57,9 @@ export const validationSchema = Joi.object({
   NEST_JWT_SECRET: Joi.string().required(),
   NEST_JWT_ACCESS_TOKEN_TTL: Joi.string().default('1d'),
 
-  // 静态资源配置
-  NEST_STATIC_ASSETS_PATH: Joi.string().default('./static'),
-  NEST_STATIC_ASSETS_URL: Joi.string().default('/static'),
-  NEST_STATIC_ASSETS_MAXAGE: Joi.number().default(86400),
-
-  // 文件上传配置（整合在静态资源配置中）
-  MAX_FILE_SIZE: Joi.number().default(10485760), // 10MB
-  ALLOWED_FILE_TYPES: Joi.string().default(''), // 空字符串表示允许所有类型
+  // 文件上传配置
+  NEST_UPLOAD_MAX_SIZE: Joi.number().default(10485760), // 10MB
+  NEST_UPLOAD_ALLOWED_TYPES: Joi.string().default(''), // 空字符串表示允许所有类型
 
   // Swagger API 文档配置
   NEST_SWAGGER_TITLE: Joi.string().default('API Documentation'),
