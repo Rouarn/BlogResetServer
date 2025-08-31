@@ -116,7 +116,7 @@ export class AppConfigService {
     return {
       root: this.configService.get<string>('NEST_STATIC_ASSETS_PATH', './static'),
       options: {
-        prefix: this.configService.get<string>('NEST_STATIC_ASSETS_URL', '/static'),
+        prefix: this.configService.get<string>('NEST_STATIC_ASSETS_PREFIX', '/static'),
         maxAge: this.configService.get<string>('NEST_STATIC_ASSETS_MAXAGE', '86400'),
       } as ServeStaticOptions,
     };

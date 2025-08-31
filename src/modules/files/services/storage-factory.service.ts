@@ -45,14 +45,11 @@ export class StorageFactoryService implements StorageFactory {
         const staticConfig = this.configService.get('app.static') as StaticConfig;
 
         // 上传文件保存在静态资源目录下的 uploads 子目录
-        let uploadPath: string;
-        if (staticConfig.root.startsWith('./')) {
-          // 相对路径：从项目根目录开始，添加 uploads 子目录
-          uploadPath = path.join(process.cwd(), staticConfig.root.substring(2), 'uploads');
-        } else {
-          // 绝对路径直接使用，添加 uploads 子目录
-          uploadPath = path.join(staticConfig.root, 'uploads');
-        }
+        const uploadPath: string = path.join(
+          process.cwd(),
+          staticConfig.root,
+          staticConfig.upload.path,
+        );
 
         return {
           basePath: uploadPath,

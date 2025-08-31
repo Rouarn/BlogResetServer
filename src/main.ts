@@ -32,7 +32,7 @@ async function bootstrap(): Promise<void> {
     // 使用配置中的静态资源路径，处理相对路径
     // 由于__dirname是dist/src，需要回到项目根目录再解析路径
     const staticPath = staticConfig.root.startsWith('./')
-      ? join(__dirname, '..', '..', staticConfig.root.substring(2))
+      ? join(__dirname, '..', staticConfig.root.substring(2))
       : join(__dirname, staticConfig.root);
 
     // 调试日志
@@ -56,7 +56,7 @@ async function bootstrap(): Promise<void> {
       SwaggerModule.setup(swaggerConfig.prefix, app, document);
 
       // 保存API文档为JSON文件，供第三方工具导入使用
-      const docsDir = path.join(__dirname, `..${staticConfig.options.prefix}`);
+      const docsDir = path.join(__dirname, `${staticConfig.options.prefix}`);
       const apiDocPath = path.join(docsDir, 'api-docs.json');
 
       // 确保目录存在

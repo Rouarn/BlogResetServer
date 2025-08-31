@@ -60,11 +60,12 @@ export default registerAs('app', () => ({
     // 开发环境: ./dist/static (便于开发调试)
     // 生产环境: ./static (项目根目录)
     root: process.env.NEST_USER_NODE_ENV === 'development' ? './dist/static' : './static',
-    prefix: '/static',
-    maxAge: 86400, // 24小时缓存
+    prefix: process.env.NEST_STATIC_ASSETS_PREFIX ?? './static',
+    maxAge: process.env.NEST_STATIC_ASSETS_MAXAGE ?? 86400, // 24小时缓存
 
     // 文件上传配置
     upload: {
+      path: process.env.NEST_UPLOAD_PATH ?? './uploads', // 上传文件存储路径
       maxFileSize: process.env.NEST_UPLOAD_MAX_SIZE
         ? parseInt(process.env.NEST_UPLOAD_MAX_SIZE, 10)
         : 10 * 1024 * 1024, // 10MB
@@ -77,7 +78,9 @@ export default registerAs('app', () => ({
 
   // CORS 跨域配置
   cors: {
-    origin: ['http://localhost:9527', 'http://192.168.31.32:8848'],
+    origin: process.env.NEST_CORS_ORIGINS
+      ? process.env.NEST_CORS_ORIGINS.split(',').map((origin) => origin.trim())
+      : ['http://localhost:9527', 'http://192.168.31.32:8848'],
     credentials: true,
   },
 

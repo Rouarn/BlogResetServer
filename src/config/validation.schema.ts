@@ -53,13 +53,19 @@ export const validationSchema = Joi.object({
     .valid('development', 'production', 'test')
     .default('development'),
 
-  // JWT 认证配置
-  NEST_JWT_SECRET: Joi.string().required(),
-  NEST_JWT_ACCESS_TOKEN_TTL: Joi.string().default('1d'),
+  // 静态资源和文件上传统一配置
+  NEST_STATIC_ASSETS_PATH: Joi.string().default('./static'), // 静态资源存储路径
+  NEST_STATIC_ASSETS_MAX_AGE: Joi.number().default(86400), // 24小时缓存
+  NEST_STATIC_ASSETS_PREFIX: Joi.string().default('/static'), // 静态资源访问前缀
+  NEST_UPLOAD_PATH: Joi.string().default('./uploads'), // 文件上传存储路径
 
   // 文件上传配置
   NEST_UPLOAD_MAX_SIZE: Joi.number().default(10485760), // 10MB
   NEST_UPLOAD_ALLOWED_TYPES: Joi.string().default(''), // 空字符串表示允许所有类型
+
+  // JWT 认证配置
+  NEST_JWT_SECRET: Joi.string().required(),
+  NEST_JWT_ACCESS_TOKEN_TTL: Joi.string().default('1d'),
 
   // Swagger API 文档配置
   NEST_SWAGGER_TITLE: Joi.string().default('API Documentation'),

@@ -14,7 +14,6 @@
  * @version 1.0.0
  */
 import { Injectable } from '@nestjs/common';
-import * as packageJson from '../package.json';
 
 /**
  * 应用根服务类
@@ -41,7 +40,7 @@ export class AppService {
    */
   getHello(): { message: string } {
     return {
-      message: `Hello ${packageJson.name}`,
+      message: `Hello NestJS-Template`,
     };
   }
 
@@ -57,9 +56,9 @@ export class AppService {
    */
   getVersion(): { version: string; name: string; description?: string } {
     return {
-      version: packageJson.version,
-      name: packageJson.name,
-      description: packageJson.description,
+      version: '1.0.0',
+      name: 'NestJS-Template',
+      description: 'NestJS Template',
     };
   }
 }
