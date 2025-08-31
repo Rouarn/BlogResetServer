@@ -1,10 +1,10 @@
 # =============================================================================
 # NestJS 应用 Docker 镜像构建文件
-# 
+#
 # 采用多阶段构建策略，优化镜像大小和安全性：
 # 1. 构建阶段：编译 TypeScript 代码
 # 2. 生产阶段：运行编译后的应用
-# 
+#
 # 安全特性：
 # - 使用非 root 用户运行应用
 # - 最小化镜像体积（Alpine Linux）
@@ -66,8 +66,8 @@ RUN npm ci --only=production && npm cache clean --force
 COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 
 # 复制健康检查脚本到容器根目录
-COPY --from=builder --chown=nestjs:nodejs /app/deployment/config/health-check.js ./
-COPY --from=builder --chown=nestjs:nodejs /app/deployment/config/standalone-health.js ./
+COPY --from=builder --chown=nestjs:nodejs /app/deploy/config/health-check.js ./
+COPY --from=builder --chown=nestjs:nodejs /app/deploy/config/standalone-health.js ./
 
 # 创建文件上传目录并设置权限
 # 确保应用有权限写入上传的文件

@@ -114,7 +114,7 @@ export class FilesService extends TimestampedService<File> {
   async findFiles(
     queryDto: FileQueryDto,
     userId?: string,
-  ): Promise<{ files: File[]; total: number }> {
+  ): Promise<{ data: File[]; total: number }> {
     const { size, current, type, status, search, publicOnly, sortBy, sortOrder } = queryDto;
 
     const queryBuilder = this.repository.createQueryBuilder('file');
@@ -159,7 +159,7 @@ export class FilesService extends TimestampedService<File> {
 
     const [files, total] = await queryBuilder.getManyAndCount();
 
-    return { files, total };
+    return { data: files, total };
   }
 
   async findFileById(id: string, userId?: string): Promise<File> {

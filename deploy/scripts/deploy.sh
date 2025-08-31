@@ -2,18 +2,18 @@
 
 # =============================================================================
 # 生产环境部署脚本
-# 
+#
 # 功能说明：
 # - 自动化部署 NestJS 应用到生产环境
 # - 使用 Docker Compose 编排多个服务
 # - 执行环境检查和健康检查
 # - 提供部署状态反馈
-# 
+#
 # 使用方法：
-# 1. 确保在 deployment 目录下执行
+# 1. 确保在 deploy 目录下执行
 # 2. 确保已配置 .env 文件
 # 3. 运行：./scripts/deploy.sh
-# 
+#
 # 部署流程：
 # 1. 环境检查（Docker、文件等）
 # 2. 创建必要目录和权限设置
@@ -35,8 +35,8 @@ echo "🚀 开始部署到生产环境..."
 # 检查是否在正确的目录执行脚本
 # 通过检查 docker-compose.yml 文件确认目录位置
 if [ ! -f "docker/docker-compose.yml" ]; then
-    echo "❌ 请在 deployment 目录执行此脚本"
-    echo "   正确路径：cd deployment && ./scripts/deploy.sh"
+    echo "❌ 请在 deploy 目录执行此脚本"
+    echo "   正确路径：cd deploy && ./scripts/deploy.sh"
     exit 1
 fi
 
@@ -75,7 +75,7 @@ echo "📁 创建必要目录..."
 
 # 创建目录：
 # - uploads: 文件上传存储目录
-# - logs: 应用日志存储目录  
+# - logs: 应用日志存储目录
 # - ssl: SSL 证书存储目录（用于 HTTPS）
 mkdir -p ../../uploads ../../logs ../nginx/ssl
 

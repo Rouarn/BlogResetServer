@@ -2,22 +2,22 @@
 
 # =============================================================================
 # 生产环境构建脚本
-# 
+#
 # 功能说明：
 # - 清理旧的构建文件和依赖
 # - 安装生产环境依赖
 # - 编译 TypeScript 代码
 # - 创建运行时必要目录
-# 
+#
 # 使用场景：
 # - 本地构建后手动部署
 # - CI/CD 流水线中的构建步骤
 # - 开发环境验证构建结果
-# 
+#
 # 使用方法：
 # 1. 在项目根目录执行
-# 2. 运行：./deployment/scripts/build.sh
-# 
+# 2. 运行：./deploy/scripts/build.sh
+#
 # 构建流程：
 # 1. 环境检查
 # 2. 清理旧文件
@@ -37,7 +37,7 @@ echo "🔨 开始构建生产环境..."
 # 通过检查 package.json 文件确认目录位置
 if [ ! -f "package.json" ]; then
     echo "❌ 请在项目根目录执行此脚本"
-    echo "   正确路径：./deployment/scripts/build.sh"
+    echo "   正确路径：./deploy/scripts/build.sh"
     exit 1
 fi
 
@@ -114,5 +114,5 @@ echo "   📁 静态资源: ./static/"
 echo ""
 echo "🚀 下一步："
 echo "   - 本地运行: npm run start:prod"
-echo "   - Docker 部署: cd deployment && ./scripts/deploy.sh"
-echo "   - PM2 部署: pm2 start deployment/config/ecosystem.config.js --env production"
+echo "   - Docker 部署: cd deploy && ./scripts/deploy.sh"
+echo "   - PM2 部署: pm2 start deploy/config/ecosystem.config.js --env production"

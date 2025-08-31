@@ -2696,12 +2696,12 @@ CMD ["pnpm", "run", "start:prod"]
 
 ```bash
 # 1. 配置环境
-cp deployment/config/.env.production .env
+cp deploy/config/.env.production .env
 # 编辑 .env 文件，修改数据库密码和 JWT 密钥
 
 # 2. 执行一键部署
-chmod +x deployment/scripts/quick-deploy.sh
-./deployment/scripts/quick-deploy.sh
+chmod +x deploy/scripts/quick-deploy.sh
+./deploy/scripts/quick-deploy.sh
 # 按提示选择部署方式
 
 # 3. 访问应用
@@ -2710,7 +2710,7 @@ chmod +x deployment/scripts/quick-deploy.sh
 
 ### 📖 完整部署指南
 
-详细的部署文档请查看：**[deployment/README.md](deployment/README.md)**
+详细的部署文档请查看：**[deploy/README.md](deploy/README.md)**
 
 **包含内容：**
 
@@ -2728,7 +2728,7 @@ chmod +x deployment/scripts/quick-deploy.sh
 如有问题，请：
 
 1. 查看本README文档
-2. 查看 `deployment/README.md` 详细部署文档
+2. 查看 `deploy/README.md` 详细部署文档
 3. 运行 `pnpm run env:check` 检查配置
 4. 提交Issue或联系开发团队
 

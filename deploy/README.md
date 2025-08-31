@@ -5,11 +5,14 @@
 ## 📋 环境要求
 
 ### 🐳 Docker 部署（推荐）
+
 **服务器需要预装：**
+
 - Docker (20.10+)
 - Docker Compose (2.0+)
 
 **安装命令：**
+
 ```bash
 # 安装 Docker
 curl -fsSL https://get.docker.com -o get-docker.sh
@@ -25,13 +28,16 @@ sudo usermod -aG docker $USER
 ```
 
 ### 📦 PM2 部署
+
 **服务器需要预装：**
+
 - Node.js (18.x 或 20.x)
 - npm (9.x+)
 - PM2 (全局安装)
 - MySQL (8.0+) 或 PostgreSQL (13+)
 
 **安装命令：**
+
 ```bash
 # 安装 Node.js (使用 NodeSource 仓库)
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
@@ -49,7 +55,7 @@ sudo mysql_secure_installation
 ## 📁 目录结构
 
 ```
-deployment/
+deploy/
 ├── README.md              # 部署指南（本文件）
 ├── docker/                # Docker 相关文件
 │   ├── Dockerfile         # Docker 镜像构建
@@ -72,15 +78,17 @@ deployment/
 ## 🚀 一键部署（推荐）
 
 ### 第1步：配置环境
+
 ```bash
 # 复制配置文件到项目根目录
-cp deployment/config/.env.production .env
+cp deploy/config/.env.production .env
 
 # 编辑配置文件（重要！必须修改）
 nano .env
 ```
 
 **必须修改的配置：**
+
 ```bash
 # 数据库密码（必须修改）
 DATABASE_PASSWORD=your_strong_password_here
@@ -90,12 +98,13 @@ NEST_JWT_SECRET=your_very_strong_jwt_secret_at_least_32_characters
 ```
 
 ### 第2步：执行部署
+
 ```bash
 # 给脚本执行权限
-chmod +x deployment/scripts/quick-deploy.sh
+chmod +x deploy/scripts/quick-deploy.sh
 
 # 执行一键部署
-./deployment/scripts/quick-deploy.sh
+./deploy/scripts/quick-deploy.sh
 
 # 按提示选择：
 # 1) Docker 部署（推荐，自动安装依赖）
@@ -103,6 +112,7 @@ chmod +x deployment/scripts/quick-deploy.sh
 ```
 
 ### 第3步：验证部署
+
 ```bash
 # 访问应用
 curl http://localhost:3000
@@ -119,25 +129,29 @@ curl http://localhost:3001/health
 ### 🐳 Docker 部署详细步骤
 
 1. **检查环境**：
+
 ```bash
 docker --version
 docker-compose --version
 ```
 
 2. **配置环境**：
+
 ```bash
-cp deployment/config/.env.production .env
+cp deploy/config/.env.production .env
 # 编辑 .env 文件修改密码
 ```
 
 3. **执行部署**：
+
 ```bash
-cd deployment
+cd deploy
 chmod +x scripts/deploy.sh
 ./scripts/deploy.sh
 ```
 
 4. **验证服务**：
+
 ```bash
 docker-compose ps
 docker-compose logs -f app
@@ -146,6 +160,7 @@ docker-compose logs -f app
 ### 📦 PM2 部署详细步骤
 
 1. **检查环境**：
+
 ```bash
 node --version    # 需要 18.x 或 20.x
 npm --version
@@ -154,20 +169,23 @@ mysql --version   # 或 postgresql
 ```
 
 2. **构建项目**：
+
 ```bash
 npm ci
 npm run build
 ```
 
 3. **配置数据库**：
+
 ```bash
 # 创建数据库和用户
-mysql -u root -p < deployment/scripts/init.sql
+mysql -u root -p < deploy/scripts/init.sql
 ```
 
 4. **启动应用**：
+
 ```bash
-cp deployment/config/ecosystem.config.js .
+cp deploy/config/ecosystem.config.js .
 pm2 start ecosystem.config.js --env production
 pm2 save
 pm2 startup
@@ -176,6 +194,7 @@ pm2 startup
 ## 📊 运维管理
 
 ### 查看服务状态
+
 ```bash
 # Docker 方式
 docker-compose ps
@@ -188,6 +207,7 @@ pm2 monit
 ```
 
 ### 重启服务
+
 ```bash
 # Docker 方式
 docker-compose restart app
@@ -197,6 +217,7 @@ pm2 restart nestjs-app
 ```
 
 ### 停止服务
+
 ```bash
 # Docker 方式
 docker-compose down
@@ -210,6 +231,7 @@ pm2 stop nestjs-app
 ### 常见问题
 
 1. **Docker 未安装**：
+
 ```bash
 # 检查安装
 docker --version
@@ -217,6 +239,7 @@ docker --version
 ```
 
 2. **端口被占用**：
+
 ```bash
 # 查看端口占用
 netstat -tlnp | grep :3000
@@ -225,6 +248,7 @@ sudo kill -9 <PID>
 ```
 
 3. **数据库连接失败**：
+
 ```bash
 # 检查数据库服务
 sudo systemctl status mysql
@@ -233,6 +257,7 @@ cat .env | grep DATABASE
 ```
 
 4. **权限问题**：
+
 ```bash
 # 修复权限
 sudo chown -R $USER:$USER .
@@ -240,6 +265,7 @@ chmod -R 755 .
 ```
 
 5. **内存不足**：
+
 ```bash
 # 检查内存
 free -h
@@ -250,6 +276,7 @@ docker system prune -a
 ## 🛡️ 安全配置
 
 ### 防火墙设置
+
 ```bash
 # 只开放必要端口
 sudo ufw allow 22    # SSH
@@ -259,6 +286,7 @@ sudo ufw enable
 ```
 
 ### SSL 证书配置
+
 ```bash
 # 使用 Let's Encrypt
 sudo apt install certbot
@@ -266,6 +294,7 @@ sudo certbot --nginx -d your-domain.com
 ```
 
 ### 定期维护
+
 ```bash
 # 更新系统
 sudo apt update && sudo apt upgrade
@@ -280,6 +309,7 @@ sudo logrotate -f /etc/logrotate.conf
 ## 🎯 性能优化
 
 ### 系统优化
+
 ```bash
 # 调整文件描述符限制
 echo "* soft nofile 65535" >> /etc/security/limits.conf
@@ -291,6 +321,7 @@ sysctl -p
 ```
 
 ### 应用优化
+
 - 启用 Redis 缓存
 - 配置数据库连接池
 - 使用 CDN 加速静态资源
@@ -299,6 +330,7 @@ sysctl -p
 ## 📞 获取帮助
 
 如果遇到问题：
+
 1. 检查相关日志文件
 2. 确认环境要求是否满足
 3. 验证配置文件是否正确
@@ -308,6 +340,7 @@ sysctl -p
 ---
 
 **快速链接：**
+
 - 🚀 [一键部署脚本](scripts/quick-deploy.sh)
 - 🐳 [Docker 配置](docker/)
 - ⚙️ [环境配置](config/)

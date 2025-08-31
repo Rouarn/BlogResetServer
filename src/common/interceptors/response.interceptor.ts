@@ -149,21 +149,20 @@ export class ResponseInterceptor<T = unknown> implements NestInterceptor {
    * @returns 标准化的分页数据结构
    */
   private formatPaginatedData<T>(
-    rawData: { files: T[]; total: number } | T[] | unknown,
+    rawData: { data: T[]; total: number } | unknown,
     params: DefaultPagination,
   ): PaginatedData<T> {
     const { pageSize, current } = this.getPaginationParams(params);
 
-    // 如果rawData是包含files和total的对象，则使用其中的数据
-    if (rawData && typeof rawData === 'object' && 'files' in rawData && 'total' in rawData) {
-      const { files, total } = rawData as { files: T[]; total: number };
-      const records = Array.isArray(files) ? files : [];
+    // 统一要求所有分页接口返回 { data, total } 格式
+    if (rawData && typeof rawData === 'object' && 'data' in rawData && 'total' in rawData) {
+      const { data, total } = rawData as { data: T[]; total: number };
+      const records = Array.isArray(data) ? data : [];
       return this.buildPaginatedData(records, total, pageSize, current);
     }
 
-    // 兼容直接返回数组的情况
-    const records = Array.isArray(rawData) ? (rawData as T[]) : [];
-    const total = records.length;
-    return this.buildPaginatedData(records, total, pageSize, current);
+    // 如果不符合规定格式，返回空数据并记录警告
+    console.warn('分页接口必须返回 { data: T[], total: number } 格式的数据');
+    return this.buildPaginatedData([], 0, pageSize, current);
   }
 }
