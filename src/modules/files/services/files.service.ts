@@ -66,6 +66,7 @@ export class FilesService {
     });
 
     const savedFile = await this.fileRepository.save(fileEntity);
+    console.log('savedFile: ', savedFile);
     this.logger.log(`File uploaded successfully: ${savedFile.id}`);
 
     return this.mapToUploadResult(savedFile);

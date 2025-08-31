@@ -87,7 +87,7 @@ export class StorageService implements StorageAdapter {
 
     const staticConfig = appConfig.staticAssetsOptions;
     // 使用静态资源URL前缀构建访问地址，添加uploads子目录
-    return `${baseUrl}:${port}${staticConfig.options.prefix}/uploads/${relativePath}`;
+    return `${baseUrl}:${port}${staticConfig.uploads.prefix}/${relativePath}`;
   }
 
   async getFileStats(relativePath: string): Promise<{ size: number; mtime: Date } | null> {

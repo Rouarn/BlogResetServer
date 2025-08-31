@@ -1,6 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { ServeStaticOptions } from '@nestjs/platform-express/interfaces/serve-static-options.interface';
+import { FileUploadOptions } from '../modules/files/interfaces';
+
+export interface UploadsConfig {
+  path: string;
+  maxSize: number;
+  allowedTypes: string[];
+}
 
 /**
  * 应用配置服务（AppConfigService）
@@ -112,13 +119,24 @@ export class AppConfigService {
    * 获取静态资源服务配置
    * @returns 静态资源配置对象，包含根目录、URL 前缀和缓存设置
    */
-  get staticAssetsOptions(): { root: string; options: ServeStaticOptions } {
+  get staticAssetsOptions(): {
+    root: string;
+    options: ServeStaticOptions;
+    uploads: FileUploadOptions;
+  } {
     return {
       root: this.configService.get<string>('NEST_STATIC_ASSETS_PATH', './static'),
       options: {
         prefix: this.configService.get<string>('NEST_STATIC_ASSETS_PREFIX', '/static'),
         maxAge: this.configService.get<string>('NEST_STATIC_ASSETS_MAXAGE', '86400'),
       } as ServeStaticOptions,
+      uploads: {
+        path: this.configService.get<string>('NEST_UPLOAD_PATH', './static/uploads'),
+        prefix: this.configService.get<string>('NEST_UPLOAD_PREFIX', '/uploads'),
+        maxSize: this.configService.get<number>('NEST_UPLOAD_MAX_SIZE', 10485760),
+        allowedTypes: this.configService.get<string[]>('NEST_UPLOAD_ALLOWED_TYPES', []),
+        maxFiles: this.configService.get<number>('NEST_UPLOAD_MAX_FILES', 10),
+      },
     };
   }
 
