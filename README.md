@@ -479,6 +479,11 @@ export class User extends TimestampedEntity {
   email: string;
 
   // createTime, updateTime, deleteTime 字段自动继承
+  // 同时继承以下实例方法：
+  // - softDelete(): void - 软删除当前实体
+  // - restore(): void - 恢复软删除的实体
+  // - get isDeleted(): boolean - 检查是否已被软删除
+  // - get isActive(): boolean - 检查是否为活跃状态
 }
 ```
 
@@ -503,13 +508,29 @@ export class UserService extends TimestampedService<User> {
   }
 
   // 继承的方法包括：
+  // 基础 CRUD 操作
   // - create(data): 创建实体（自动设置创建时间）
+  // - createMany(data[]): 批量创建实体
   // - update(id, data): 更新实体（自动设置更新时间）
+  // - findAll(options?): 查找所有（自动过滤已删除）
+  // - findById(id, options?): 根据ID查找
+  // - findOne(options?): 查找单个实体
+  // - count(options?): 统计数量
+  // 
+  // 软删除操作
   // - softDelete(id): 软删除（设置删除时间）
+  // - softDeleteMany(ids[]): 批量软删除
   // - restore(id): 恢复软删除
-  // - findAll(): 查找所有（自动过滤已删除）
-  // - findWithDeleted(): 查找包含已删除的数据
-  // - findDeleted(): 只查找已删除的数据
+  // - restoreMany(ids[]): 批量恢复
+  // 
+  // 包含已删除数据的查询
+  // - findWithDeleted(options?): 查找包含已删除的数据
+  // - findOneWithDeleted(options?): 查找单个包含已删除的数据
+  // - findDeleted(options?): 只查找已删除的数据
+  // 
+  // 物理删除操作
+  // - forceDelete(id): 物理删除
+  // - forceDeleteMany(ids[]): 批量物理删除
 }
 ```
 
@@ -653,6 +674,57 @@ export interface ITimestampedEntity {
 }
 ```
 
+#### SoftDeleteOptions 接口
+
+```typescript
+export interface SoftDeleteOptions {
+  includeDeleted?: boolean;  // 是否包含已删除的数据
+  forceDelete?: boolean;     // 是否强制物理删除
+}
+```
+
+#### QueryContext 接口
+
+```typescript
+export interface QueryContext {
+  includeDeleted?: boolean;    // 包含已删除数据
+  disableTimestamps?: boolean; // 禁用时间戳更新
+  forceDelete?: boolean;       // 强制物理删除
+}
+```
+
+#### ITimestampedService 接口
+
+```typescript
+export interface ITimestampedService<T extends ITimestampedEntity> {
+  // 基础 CRUD 操作
+  create(entityData: DeepPartial<T>): Promise<T>;
+  update(id: string | number, entityData: DeepPartial<T>): Promise<T>;
+  createMany(entitiesData: DeepPartial<T>[]): Promise<T[]>;
+  
+  // 查询操作
+  findAll(options?: FindManyOptions<T> & SoftDeleteOptions): Promise<T[]>;
+  findById(id: string | number, options?: FindOneOptions<T> & SoftDeleteOptions): Promise<T | null>;
+  findOne(options?: FindOneOptions<T> & SoftDeleteOptions): Promise<T | null>;
+  count(options?: FindManyOptions<T> & SoftDeleteOptions): Promise<number>;
+  
+  // 软删除操作
+  softDelete(id: string | number): Promise<void>;
+  softDeleteMany(ids: (string | number)[]): Promise<void>;
+  restore(id: string | number): Promise<void>;
+  restoreMany(ids: (string | number)[]): Promise<void>;
+  
+  // 包含已删除数据的查询
+  findWithDeleted(options?: FindManyOptions<T>): Promise<T[]>;
+  findOneWithDeleted(options?: FindOneOptions<T>): Promise<T | null>;
+  findDeleted(options?: FindManyOptions<T>): Promise<T[]>;
+  
+  // 物理删除操作
+  forceDelete(id: string | number): Promise<void>;
+  forceDeleteMany(ids: (string | number)[]): Promise<void>;
+}
+```
+
 #### TimestampManagerConfig 配置
 
 ```typescript
@@ -663,6 +735,11 @@ export interface TimestampManagerConfig {
     createTime?: string;          // 创建时间字段名
     updateTime?: string;          // 更新时间字段名
     deleteTime?: string;          // 删除时间字段名
+  };
+  timestampFields?: {
+    createTime?: string;          // 时间戳字段配置（备用）
+    updateTime?: string;
+    deleteTime?: string;
   };
   autoFilterDeleted?: boolean;    // 自动过滤已删除数据
   excludeEntities?: string[];     // 排除的实体类名
@@ -748,11 +825,14 @@ export class ProductController {
 
 ### 注意事项
 
-1. **数据库字段**: 确保数据库表包含 `create_time`、`update_time`、`delete_time` 字段
-2. **时区处理**: 时间戳使用数据库服务器时区，建议统一使用 UTC
-3. **性能考虑**: 软删除会增加查询复杂度，对于大数据量表需要合理建立索引
-4. **数据清理**: 定期清理长期软删除的数据，避免数据表过大
-5. **权限控制**: 物理删除操作需要严格的权限控制
+1. **数据库字段**: 确保数据库表包含 `create_time`、`update_time`、`delete_time` 字段（对应实体的 createTime、updateTime、deleteTime 属性）
+2. **字段类型**: 时间戳字段使用 `timestamp` 类型，`delete_time` 字段需要设置为可空
+3. **时区处理**: 时间戳使用数据库服务器时区，建议统一使用 UTC
+4. **性能考虑**: 软删除会增加查询复杂度，对于大数据量表需要在 `delete_time` 字段上建立索引
+5. **数据清理**: 定期清理长期软删除的数据，避免数据表过大
+6. **权限控制**: 物理删除操作需要严格的权限控制
+7. **实体继承**: 继承 `TimestampedEntity` 的实体会自动获得时间戳字段和相关方法
+8. **装饰器使用**: 合理使用 `@IncludeDeleted()`、`@ForceDelete()` 等装饰器控制查询和删除行为
 
 ## 🛠️ 工具模块 (src/utils)
 
