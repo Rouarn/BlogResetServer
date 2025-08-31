@@ -228,6 +228,29 @@ pnpm run start:dev
 ```
 nestjs-template/
 ├── src/                          # 源代码目录
+│   ├── audit/                    # 审计模块
+│   │   ├── decorators/           # 装饰器
+│   │   │   └── index.ts          # 时间戳和软删除装饰器
+│   │   ├── entities/             # 实体定义
+│   │   │   └── timestamped.entity.ts # 时间戳基础实体
+│   │   ├── interceptors/         # 拦截器
+│   │   │   ├── index.ts
+│   │   │   ├── query-filter.interceptor.ts # 查询过滤拦截器
+│   │   │   ├── soft-delete.interceptor.ts  # 软删除拦截器
+│   │   │   └── timestamp.interceptor.ts    # 时间戳拦截器
+│   │   ├── interfaces/           # 接口定义
+│   │   │   └── index.ts          # 时间戳和软删除接口
+│   │   ├── services/             # 服务类
+│   │   │   ├── index.ts
+│   │   │   └── timestamped.service.ts # 时间戳管理服务
+│   │   ├── subscribers/          # 订阅者
+│   │   │   ├── index.ts
+│   │   │   ├── soft-delete.subscriber.ts # 软删除订阅者
+│   │   │   └── timestamp.subscriber.ts   # 时间戳订阅者
+│   │   ├── types/                # 类型定义
+│   │   │   └── index.ts          # 配置和上下文类型
+│   │   ├── audit.module.ts       # 审计模块
+│   │   └── index.ts              # 模块导出
 │   ├── modules/                  # 业务模块
 │   │   ├── auth/                 # 认证模块
 │   │   │   ├── dto/              # 数据传输对象
@@ -363,6 +386,373 @@ nestjs-template/
 ├── tsconfig.json                 # TypeScript配置
 └── README.md                     # 项目说明
 ```
+
+## 🔍 审计模块 (src/audit)
+
+### 概述
+
+`src/audit` 模块提供了完整的数据审计功能，包括自动时间戳管理和软删除功能。该模块采用装饰器、拦截器、订阅者等多种设计模式，为应用提供透明、高效的数据审计能力。
+
+### 核心特性
+
+- ✅ **自动时间戳管理**: 自动处理实体的创建时间和更新时间
+- ✅ **软删除功能**: 支持逻辑删除，保留数据完整性
+- ✅ **查询过滤**: 自动过滤已删除数据，支持手动包含
+- ✅ **装饰器支持**: 提供丰富的装饰器控制审计行为
+- ✅ **类型安全**: 完整的 TypeScript 类型定义
+- ✅ **灵活配置**: 支持全局和局部配置
+- ✅ **透明集成**: 对业务代码无侵入性
+
+### 模块结构
+
+```
+src/audit/
+├── audit.module.ts               # 审计模块主文件
+├── index.ts                      # 模块统一导出
+├── decorators/                   # 装饰器
+│   └── index.ts                  # 时间戳和软删除装饰器
+├── entities/                     # 实体定义
+│   └── timestamped.entity.ts     # 时间戳基础实体类
+├── interceptors/                 # 拦截器
+│   ├── index.ts                  # 拦截器导出
+│   ├── query-filter.interceptor.ts # 查询结果过滤拦截器
+│   ├── soft-delete.interceptor.ts  # 软删除操作拦截器
+│   └── timestamp.interceptor.ts    # 时间戳上下文拦截器
+├── interfaces/                   # 接口定义
+│   └── index.ts                  # 审计相关接口
+├── services/                     # 服务类
+│   ├── index.ts                  # 服务导出
+│   └── timestamped.service.ts    # 时间戳管理基础服务
+├── subscribers/                  # TypeORM 订阅者
+│   ├── index.ts                  # 订阅者导出
+│   ├── soft-delete.subscriber.ts # 软删除数据库订阅者
+│   └── timestamp.subscriber.ts   # 时间戳数据库订阅者
+└── types/                        # 类型定义
+    └── index.ts                  # 配置和上下文类型
+```
+
+### 快速开始
+
+#### 1. 模块配置
+
+在 `app.module.ts` 中导入审计模块：
+
+```typescript
+import { Module } from '@nestjs/common';
+import { AuditModule } from './audit';
+
+@Module({
+  imports: [
+    // 全局配置审计模块
+    AuditModule.forRoot({
+      enableTimestamps: true,    // 启用时间戳管理
+      enableSoftDelete: true,    // 启用软删除
+      autoFilterDeleted: true,   // 自动过滤已删除数据
+      fieldNames: {
+        createTime: 'createTime',
+        updateTime: 'updateTime',
+        deleteTime: 'deleteTime',
+      },
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+#### 2. 实体继承
+
+让你的实体继承 `TimestampedEntity` 基类：
+
+```typescript
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { TimestampedEntity } from 'src/audit';
+
+@Entity('users')
+export class User extends TimestampedEntity {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column()
+  username: string;
+
+  @Column()
+  email: string;
+
+  // createTime, updateTime, deleteTime 字段自动继承
+}
+```
+
+#### 3. 服务类使用
+
+继承 `TimestampedService` 获得完整的 CRUD 和软删除功能：
+
+```typescript
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { TimestampedService } from 'src/audit';
+import { User } from './entities/user.entity';
+
+@Injectable()
+export class UserService extends TimestampedService<User> {
+  constructor(
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+  ) {
+    super(userRepository);
+  }
+
+  // 继承的方法包括：
+  // - create(data): 创建实体（自动设置创建时间）
+  // - update(id, data): 更新实体（自动设置更新时间）
+  // - softDelete(id): 软删除（设置删除时间）
+  // - restore(id): 恢复软删除
+  // - findAll(): 查找所有（自动过滤已删除）
+  // - findWithDeleted(): 查找包含已删除的数据
+  // - findDeleted(): 只查找已删除的数据
+}
+```
+
+### 装饰器使用
+
+#### @Timestamped() - 实体装饰器
+
+标记实体为可时间戳管理的实体：
+
+```typescript
+import { Timestamped } from 'src/audit';
+
+@Timestamped({
+  enableSoftDelete: true,  // 启用软删除
+  fieldNames: {
+    createTime: 'createdAt',  // 自定义字段名
+    updateTime: 'updatedAt',
+    deleteTime: 'deletedAt',
+  },
+})
+@Entity()
+export class CustomEntity {
+  // 实体定义
+}
+```
+
+#### @IncludeDeleted() - 方法装饰器
+
+在控制器方法中包含已删除的数据：
+
+```typescript
+import { Controller, Get } from '@nestjs/common';
+import { IncludeDeleted } from 'src/audit';
+
+@Controller('users')
+export class UserController {
+  @Get('all')
+  @IncludeDeleted()  // 此方法将返回包含已删除的用户
+  async getAllUsers() {
+    return this.userService.findAll();
+  }
+}
+```
+
+#### @ForceDelete() - 方法装饰器
+
+强制物理删除而不是软删除：
+
+```typescript
+@Delete(':id/force')
+@ForceDelete()  // 此方法将执行物理删除
+async forceDeleteUser(@Param('id') id: string) {
+  return this.userService.remove(id);
+}
+```
+
+#### @DisableTimestamps() - 方法装饰器
+
+禁用特定操作的时间戳自动更新：
+
+```typescript
+@Put(':id/system-update')
+@DisableTimestamps()  // 系统更新不修改 updateTime
+async systemUpdate(@Param('id') id: string, @Body() data: any) {
+  return this.userService.update(id, data);
+}
+```
+
+### 高级功能
+
+#### 1. 异步配置
+
+支持从配置服务动态加载审计配置：
+
+```typescript
+@Module({
+  imports: [
+    AuditModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        enableTimestamps: configService.get('AUDIT_ENABLE_TIMESTAMPS', true),
+        enableSoftDelete: configService.get('AUDIT_ENABLE_SOFT_DELETE', true),
+        autoFilterDeleted: configService.get('AUDIT_AUTO_FILTER_DELETED', true),
+      }),
+      inject: [ConfigService],
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+#### 2. 特性模块使用
+
+在特定模块中使用审计功能：
+
+```typescript
+@Module({
+  imports: [AuditModule.forFeature()],
+  providers: [UserService],
+})
+export class UserModule {}
+```
+
+#### 3. 自定义查询
+
+在服务中进行自定义查询时的最佳实践：
+
+```typescript
+@Injectable()
+export class UserService extends TimestampedService<User> {
+  // 查找活跃用户（排除软删除）
+  async findActiveUsers(): Promise<User[]> {
+    return this.repository
+      .createQueryBuilder('user')
+      .where('user.deleteTime IS NULL')  // 手动过滤软删除
+      .andWhere('user.isActive = :active', { active: true })
+      .getMany();
+  }
+
+  // 查找包含已删除的用户
+  async findAllUsersIncludingDeleted(): Promise<User[]> {
+    return this.findWithDeleted();
+  }
+
+  // 只查找已删除的用户
+  async findDeletedUsers(): Promise<User[]> {
+    return this.findDeleted();
+  }
+}
+```
+
+### 类型定义
+
+#### ITimestampedEntity 接口
+
+```typescript
+export interface ITimestampedEntity {
+  createTime: Date;
+  updateTime: Date;
+  deleteTime?: Date | null;
+}
+```
+
+#### TimestampManagerConfig 配置
+
+```typescript
+export interface TimestampManagerConfig {
+  enableTimestamps?: boolean;     // 启用时间戳管理
+  enableSoftDelete?: boolean;     // 启用软删除
+  fieldNames?: {
+    createTime?: string;          // 创建时间字段名
+    updateTime?: string;          // 更新时间字段名
+    deleteTime?: string;          // 删除时间字段名
+  };
+  autoFilterDeleted?: boolean;    // 自动过滤已删除数据
+  excludeEntities?: string[];     // 排除的实体类名
+}
+```
+
+### 最佳实践
+
+#### 1. 实体设计
+
+```typescript
+// ✅ 推荐：继承 TimestampedEntity
+@Entity('products')
+export class Product extends TimestampedEntity {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column()
+  name: string;
+
+  // 时间戳字段自动继承，无需手动定义
+}
+
+// ❌ 不推荐：手动定义时间戳字段
+@Entity('products')
+export class Product {
+  @Column({ type: 'timestamp' })
+  createTime: Date;  // 容易出错，不一致
+}
+```
+
+#### 2. 服务层使用
+
+```typescript
+// ✅ 推荐：继承 TimestampedService
+@Injectable()
+export class ProductService extends TimestampedService<Product> {
+  constructor(
+    @InjectRepository(Product)
+    productRepository: Repository<Product>,
+  ) {
+    super(productRepository);
+  }
+
+  // 获得完整的审计功能
+}
+
+// ❌ 不推荐：手动实现软删除逻辑
+@Injectable()
+export class ProductService {
+  async softDelete(id: number) {
+    // 手动实现容易出错
+    await this.repository.update(id, { deleteTime: new Date() });
+  }
+}
+```
+
+#### 3. 控制器使用
+
+```typescript
+@Controller('products')
+export class ProductController {
+  // ✅ 推荐：使用装饰器控制行为
+  @Get('all')
+  @IncludeDeleted()  // 明确表达意图
+  async getAllProducts() {
+    return this.productService.findAll();
+  }
+
+  @Delete(':id')
+  async deleteProduct(@Param('id') id: string) {
+    // 默认执行软删除
+    return this.productService.softDelete(id);
+  }
+
+  @Delete(':id/permanent')
+  @ForceDelete()  // 明确标记为物理删除
+  async permanentDelete(@Param('id') id: string) {
+    return this.productService.forceDelete(id);
+  }
+}
+```
+
+### 注意事项
+
+1. **数据库字段**: 确保数据库表包含 `create_time`、`update_time`、`delete_time` 字段
+2. **时区处理**: 时间戳使用数据库服务器时区，建议统一使用 UTC
+3. **性能考虑**: 软删除会增加查询复杂度，对于大数据量表需要合理建立索引
+4. **数据清理**: 定期清理长期软删除的数据，避免数据表过大
+5. **权限控制**: 物理删除操作需要严格的权限控制
 
 ## 🛠️ 工具模块 (src/utils)
 

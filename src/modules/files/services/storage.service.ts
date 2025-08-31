@@ -14,12 +14,29 @@ export class StorageService implements StorageAdapter {
   constructor(private configService: ConfigService) {
     // 使用静态资源配置中的上传设置
     const staticConfig = this.configService.get('app.static') as StaticConfig;
+
+    // 解析上传路径，确保与静态文件服务路径一致
+    let uploadPath: string;
+    if (staticConfig.upload.path.startsWith('./dist/')) {
+      uploadPath = path.join(process.cwd(), staticConfig.upload.path.substring(2));
+    } else if (staticConfig.upload.path.startsWith('./')) {
+      // 对于开发环境，文件应该存储在 dist 目录下
+      uploadPath = path.join(process.cwd(), 'dist', staticConfig.upload.path.substring(2));
+    } else {
+      // 绝对路径直接使用
+      uploadPath = staticConfig.upload.path;
+    }
+
     this.config = {
       type: 'local',
-      basePath: staticConfig.upload.path,
+      basePath: uploadPath,
       maxFileSize: staticConfig.upload.maxFileSize,
       allowedTypes: staticConfig.upload.allowedTypes,
     };
+
+    this.logger.log(`🔧 Upload config - original path: ${staticConfig.upload.path}`);
+    this.logger.log(`🔧 Upload config - resolved path: ${uploadPath}`);
+
     void this.ensureUploadDirectory();
   }
 

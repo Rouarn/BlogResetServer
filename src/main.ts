@@ -15,8 +15,13 @@ async function bootstrap(): Promise<void> {
   try {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-    // 应用中间件
-    app.use(cors(appConfig.corsOptions));
+    // 应用中间件 - 根据配置条件性启用 CORS
+    if (appConfig.isCorsEnabled) {
+      app.use(cors(appConfig.corsOptions));
+      logger.log('🌐 CORS 已启用');
+    } else {
+      logger.log('🚫 CORS 已禁用');
+    }
 
     // 版本控制 - 使用配置服务
     const versionConfig = appConfig.apiVersioning;
@@ -30,10 +35,15 @@ async function bootstrap(): Promise<void> {
     // 静态资源配置
     const staticConfig = appConfig.staticAssetsOptions;
     // 使用配置中的静态资源路径，处理相对路径
-    // 由于__dirname是dist/src，需要回到项目根目录再解析路径
-    const staticPath = staticConfig.root.startsWith('./')
-      ? join(__dirname, '..', '..', staticConfig.root.substring(2))
-      : join(__dirname, staticConfig.root);
+    let staticPath: string;
+    if (staticConfig.root.startsWith('./dist/')) {
+      staticPath = join(__dirname, staticConfig.root.substring(7));
+    } else if (staticConfig.root.startsWith('./')) {
+      staticPath = join(__dirname, '..', staticConfig.root.substring(2));
+    } else {
+      // 绝对路径直接使用
+      staticPath = join(__dirname, staticConfig.root);
+    }
 
     // 调试日志
     logger.log(`🔧 Static config root: ${staticConfig.root}`);
@@ -56,7 +66,7 @@ async function bootstrap(): Promise<void> {
       SwaggerModule.setup(swaggerConfig.prefix, app, document);
 
       // 保存API文档为JSON文件，供第三方工具导入使用
-      const docsDir = path.join(__dirname, `..${staticConfig.options.prefix}`);
+      const docsDir = path.join(staticPath);
       const apiDocPath = path.join(docsDir, 'api-docs.json');
 
       // 确保目录存在
