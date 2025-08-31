@@ -24,6 +24,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 // 应用核心组件
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+// 时间戳管理模块
+import { AuditModule } from './audit';
 import { HttpExceptionFilter } from './common/filters';
 import { GlobalGuard, JwtAuthGuard, RolesGuard } from './common/guards';
 // 公共组件导入
@@ -78,7 +80,19 @@ import { FilesModule } from './modules/files/files.module';
     }),
 
     // =============================================================================
-    // 业务功能模块
+    // 时间戳管理模块 - 自动时间戳和软删除功能
+    // =============================================================================
+    AuditModule.forRoot({
+      enableSoftDelete: true, // 启用软删除功能
+      timestampFields: {
+        createTime: 'createTime',
+        updateTime: 'updateTime',
+        deleteTime: 'deleteTime',
+      },
+    }),
+
+    // =============================================================================
+    // 业务模块 - 应用功能模块
     // =============================================================================
     AuthModule, // 用户认证模块 (登录、注册、验证码)
     FilesModule, // 文件管理模块 (上传、下载、存储)

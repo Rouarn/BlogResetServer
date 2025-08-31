@@ -1,10 +1,11 @@
 import * as bcrypt from 'bcryptjs';
 import { Exclude } from 'class-transformer';
+import { TimestampedEntity } from 'src/audit';
 import { Gender, Role } from 'src/common/enums';
 import { BeforeInsert, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('ra_users')
-export class Auth {
+export class Auth extends TimestampedEntity {
   @PrimaryGeneratedColumn('uuid', { comment: '用户id' })
   id: string; // 用户id
 
@@ -43,21 +44,7 @@ export class Auth {
   })
   roles: Role; // 用户角色
 
-  @Column({
-    name: 'create_time',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    comment: '创建时间',
-  })
-  createTime: Date;
-
-  @Column({
-    name: 'update_time',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    comment: '更新时间',
-  })
-  updateTime: Date;
+  // 时间戳字段已由 TimestampedEntity 基类提供
 
   @BeforeInsert()
   async encryptPwd(): Promise<void> {

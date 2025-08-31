@@ -1,0 +1,54 @@
+import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { DISABLE_TIMESTAMPS_KEY, FORCE_DELETE_KEY, INCLUDE_DELETED_KEY } from '../decorators';
+import { QUERY_CONTEXT, QueryContext } from '../types';
+
+/**
+ * 时间戳拦截器
+ * 处理请求上下文中的时间戳相关配置
+ */
+@Injectable()
+export class TimestampInterceptor implements NestInterceptor {
+  constructor(private readonly reflector: Reflector) {}
+
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    const request = context.switchToHttp().getRequest();
+    const handler = context.getHandler();
+    const controller = context.getClass();
+
+    // 获取装饰器元数据
+    const includeDeleted = this.reflector.getAllAndOverride<boolean>(INCLUDE_DELETED_KEY, [
+      handler,
+      controller,
+    ]);
+
+    const forceDelete = this.reflector.getAllAndOverride<boolean>(FORCE_DELETE_KEY, [
+      handler,
+      controller,
+    ]);
+
+    const disableTimestamps = this.reflector.getAllAndOverride<boolean>(DISABLE_TIMESTAMPS_KEY, [
+      handler,
+      controller,
+    ]);
+
+    // 创建查询上下文
+    const queryContext: QueryContext = {
+      includeDeleted: includeDeleted || false,
+      forceDelete: forceDelete || false,
+      disableTimestamps: disableTimestamps || false,
+    };
+
+    // 将上下文附加到请求对象
+    (request as Record<string | symbol, unknown>)[QUERY_CONTEXT] = queryContext;
+
+    return next.handle().pipe(
+      tap(() => {
+        // 清理上下文（可选）
+        delete (request as Record<string | symbol, unknown>)[QUERY_CONTEXT];
+      }),
+    );
+  }
+}
