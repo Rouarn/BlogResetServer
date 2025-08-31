@@ -412,8 +412,7 @@ export class AuthController {
     description: '获取全部用户列表成功',
     type: Auth,
   })
-  @ApiBearerAuth()
-  @Get('all')
+  @Get('allUsers')
   async getAllUsers(
     @Query('current') current?: number,
     @Query('size') size?: number,

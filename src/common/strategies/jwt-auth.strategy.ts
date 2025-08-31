@@ -1,4 +1,5 @@
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { Auth } from 'src/modules/auth/entities/auth.entity';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
@@ -41,10 +42,10 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
    * @param payload JWT 载荷，包含用户信息及 iat/exp 字段
    * @returns 校验通过后的用户信息对象
    */
-  async validate(payload: Record<string, unknown>): Promise<Record<string, unknown>> {
+  async validate(payload: Partial<Auth>): Promise<Partial<Auth>> {
     try {
-      delete (payload as { iat?: number }).iat;
-      delete (payload as { exp?: number }).exp;
+      // delete (payload as { iat?: number }).iat;
+      // delete (payload as { exp?: number }).exp;
       return {
         ...payload,
       };

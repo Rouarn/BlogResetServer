@@ -1,5 +1,6 @@
 import { Request } from 'express';
 import { Observable } from 'rxjs';
+import { Auth } from 'src/modules/auth/entities/auth.entity';
 import { WhitelistAuth } from 'src/utils';
 import {
   ExecutionContext,
@@ -77,9 +78,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
    * @throws UnauthorizedException token 校验失败
    * @throws NotFoundException 用户不存在
    */
-  handleRequest<TUser = unknown>(error: unknown, user: unknown, info: unknown): TUser {
+  handleRequest<TUser = Auth>(error: Error, user: Auth, info: unknown): TUser {
     if (info || error) throw new UnauthorizedException('token校验失败');
-    if (!user) throw new NotFoundException('用户不存在');
+    if (typeof user !== 'object') throw new NotFoundException('用户不存在');
 
     return user as TUser;
   }

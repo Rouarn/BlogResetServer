@@ -100,7 +100,6 @@ export class AuthService extends TimestampedService<Auth> {
     const payload = {
       id: findUser.id,
       userName: findUser.userName,
-      roles: findUser.roles,
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -276,7 +275,7 @@ export class AuthService extends TimestampedService<Auth> {
       skip: (current - 1) * size,
       take: size,
     });
-
+    console.log('data', data);
     return { data, total };
   }
 
