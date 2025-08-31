@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { formatISOString, formatTimestamp, generateUUID } from 'src/utils';
+import { formatTimestamp, generateUUID } from 'src/utils';
 import {
   ArgumentsHost,
   Catch,
@@ -126,8 +126,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
     context: Record<string, unknown>,
     status: number,
     message: string,
-    structuredLog: string,
-    stack?: string,
+    // structuredLog: string,
+    // stack?: string,
   ): void {
     const logMessage = `[${level}] ${context.method} ${context.url} - ${status} - ${message}`;
     const icons = {
@@ -160,12 +160,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
 
     // 记录结构化日志
-    logMethod(`📊 结构化日志: ${structuredLog}`);
+    // logMethod(`📊 结构化日志: ${structuredLog}`);
 
     // 记录错误堆栈（仅对CRITICAL和ERROR级别）
-    if (stack && (level === 'CRITICAL' || level === 'ERROR')) {
-      this.logger.error(`📚 错误堆栈:\n${stack}`);
-    }
+    // if (stack && (level === 'CRITICAL' || level === 'ERROR')) {
+    //   this.logger.error(`📚 错误堆栈:\n${stack}`);
+    // }
   }
 
   /**
@@ -215,20 +215,20 @@ export class HttpExceptionFilter implements ExceptionFilter {
       code: status,
       message,
       data: null,
-      timestamp: formatISOString(),
+      timestamp: formatTimestamp(),
       url: request.url,
     };
 
     // 提取上下文信息
     const context = this.extractContext(request);
     const logLevel = this.getLogLevel(status, request.url);
-    const stack = exception instanceof Error ? exception.stack : undefined;
+    // const stack = exception instanceof Error ? exception.stack : undefined;
 
     // 创建结构化日志
-    const structuredLog = this.createStructuredLog(logLevel, status, message, context, stack);
+    // const structuredLog = this.createStructuredLog(logLevel, status, message, context, stack);
 
     // 记录日志
-    this.logError(logLevel, context, status, message, structuredLog, stack);
+    this.logError(logLevel, context, status, message /**structuredLog, stack*/);
 
     response.status(status).json(errorResponse);
   }
