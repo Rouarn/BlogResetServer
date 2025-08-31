@@ -107,23 +107,62 @@ export class ResponseInterceptor<T = unknown> implements NestInterceptor {
   }
 
   /**
+   * 获取分页参数
+   * @param params 请求参数
+   * @returns 分页参数对象
+   */
+  private getPaginationParams(params: DefaultPagination): { pageSize: number; current: number } {
+    const pageSize =
+      Number((params as { size?: unknown }).size) || DEFAULT_PAGINATION.DEFAULT_PAGE_SIZE;
+    const current =
+      Number((params as { current?: unknown }).current) || DEFAULT_PAGINATION.MIN_PAGE;
+    return { pageSize, current };
+  }
+
+  /**
+   * 构建分页数据结构
+   * @param records 记录数组
+   * @param total 总数
+   * @param pageSize 页大小
+   * @param current 当前页
+   * @returns 分页数据结构
+   */
+  private buildPaginatedData<T>(
+    records: T[],
+    total: number | undefined,
+    pageSize: number,
+    current: number,
+  ): PaginatedData<T> {
+    return {
+      records,
+      total: Number(total ?? 0),
+      totalPages: Math.ceil(Number(total ?? 0) / pageSize),
+      current,
+      size: pageSize,
+    };
+  }
+
+  /**
    * 格式化分页数据
    * @param rawData 原始响应数据
    * @param params 请求参数
    * @returns 标准化的分页数据结构
    */
-  private formatPaginatedData<T = unknown>(
-    rawData: T[],
+  private formatPaginatedData<T>(
+    rawData: { files: T[]; total: number } | T[] | unknown,
     params: DefaultPagination,
   ): PaginatedData<T> {
-    return {
-      records: rawData,
-      total: Number(rawData.length ?? 0),
-      totalPages: Math.ceil(
-        Number(rawData.length / (params.size ?? DEFAULT_PAGINATION.DEFAULT_PAGE_SIZE)),
-      ),
-      current: Number((params as { current?: unknown }).current) || DEFAULT_PAGINATION.MIN_PAGE,
-      size: Number((params as { size?: unknown }).size) || DEFAULT_PAGINATION.DEFAULT_PAGE_SIZE,
-    };
+    const { pageSize, current } = this.getPaginationParams(params);
+
+    // 如果rawData是包含files和total的对象，则使用其中的数据
+    if (rawData && typeof rawData === 'object' && 'files' in rawData && 'total' in rawData) {
+      const { files, total } = rawData as { files: T[]; total: number };
+      const records = Array.isArray(files) ? files : [];
+      return this.buildPaginatedData(records, total, pageSize, current);
+    }
+
+    // 兼容直接返回数组的情况
+    const records = Array.isArray(rawData) ? rawData : [];
+    return this.buildPaginatedData(records, records.length, pageSize, current);
   }
 }

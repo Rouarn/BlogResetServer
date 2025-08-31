@@ -239,4 +239,12 @@ export class AuthService {
     const hashedInputPassword = bcrypt.hashSync(inputPassword, storedSalt);
     return hashedInputPassword === storedPassword;
   }
+
+  /**
+   * 获取全部用户
+   * @returns 全部用户列表
+   */
+  async getAllUsers(): Promise<Auth[]> {
+    return this.authRepository.find();
+  }
 }

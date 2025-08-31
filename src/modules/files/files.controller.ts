@@ -249,8 +249,8 @@ export class FilesController {
     @Query() queryDto: FileQueryDto,
     @GetCurrentUser() user?: CurrentUser,
   ): Promise<unknown> {
-    const { files } = await this.filesService.findFiles(queryDto, user?.id);
-    return files;
+    const result = await this.filesService.findFiles(queryDto, user?.id);
+    return result;
   }
 
   @Get(':id')

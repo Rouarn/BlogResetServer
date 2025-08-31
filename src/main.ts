@@ -30,9 +30,17 @@ async function bootstrap(): Promise<void> {
     // 静态资源配置
     const staticConfig = appConfig.staticAssetsOptions;
     // 使用配置中的静态资源路径，处理相对路径
+    // 由于__dirname是dist/src，需要回到项目根目录再解析路径
     const staticPath = staticConfig.root.startsWith('./')
-      ? join(__dirname, '..', staticConfig.root.substring(2))
+      ? join(__dirname, '..', '..', staticConfig.root.substring(2))
       : join(__dirname, staticConfig.root);
+
+    // 调试日志
+    logger.log(`🔧 Static config root: ${staticConfig.root}`);
+    logger.log(`🔧 Static config options: ${JSON.stringify(staticConfig.options)}`);
+    logger.log(`🔧 __dirname: ${__dirname}`);
+    logger.log(`🔧 Resolved static path: ${staticPath}`);
+
     app.useStaticAssets(staticPath, staticConfig.options);
 
     // Swagger文档配置（仅在开发环境启用）

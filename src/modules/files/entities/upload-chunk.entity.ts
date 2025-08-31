@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { File } from './file.entity';
 
-@Entity('upload_chunks')
+@Entity('ra_upload_chunks')
 export class UploadChunk {
   @PrimaryGeneratedColumn('uuid')
   id: string;

@@ -26,6 +26,7 @@ export class StorageService implements StorageAdapter {
   private async ensureUploadDirectory(): Promise<void> {
     try {
       await fs.access(this.config.basePath);
+      this.logger.log(`Upload directory exists: ${this.config.basePath}`);
     } catch {
       await fs.mkdir(this.config.basePath, { recursive: true });
       this.logger.log(`Created upload directory: ${this.config.basePath}`);
@@ -34,16 +35,22 @@ export class StorageService implements StorageAdapter {
 
   async upload(file: Express.Multer.File, relativePath: string): Promise<string> {
     const fullPath = path.join(this.config.basePath, relativePath);
-    console.log('this.config.basePath: ', this.config.basePath);
     const directory = path.dirname(fullPath);
+
+    this.logger.log(`Upload config - basePath: ${this.config.basePath}`);
+    this.logger.log(`Upload config - relativePath: ${relativePath}`);
+    this.logger.log(`Upload config - fullPath: ${fullPath}`);
+    this.logger.log(`Upload config - directory: ${directory}`);
 
     // 确保目录存在
     await fs.mkdir(directory, { recursive: true });
+    this.logger.log(`Directory created/verified: ${directory}`);
 
     // 写入文件
     await fs.writeFile(fullPath, file.buffer);
+    this.logger.log(`File written to: ${fullPath}`);
 
-    this.logger.log(`File uploaded: ${relativePath}`);
+    this.logger.log(`File uploaded successfully: ${relativePath}`);
     return relativePath;
   }
 
@@ -77,10 +84,10 @@ export class StorageService implements StorageAdapter {
   getUrl(relativePath: string): string {
     const baseUrl = this.configService.get('NEST_BASE_URL', 'http://localhost:3000');
     const port = this.configService.get('NEST_PORT', 3000);
-    console.log('baseUrl: ', baseUrl);
+
     const staticConfig = appConfig.staticAssetsOptions;
-    // 使用静态资源URL前缀构建访问地址
-    return `${baseUrl}:${port}${staticConfig.options.prefix}${relativePath}`;
+    // 使用静态资源URL前缀构建访问地址，添加uploads子目录
+    return `${baseUrl}:${port}${staticConfig.options.prefix}/uploads/${relativePath}`;
   }
 
   async getFileStats(relativePath: string): Promise<{ size: number; mtime: Date } | null> {

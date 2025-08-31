@@ -9,7 +9,7 @@ import {
 import { FileStatus, FileType } from '../enums';
 import { UploadChunk } from './upload-chunk.entity';
 
-@Entity('files')
+@Entity('ra_files')
 export class File {
   @PrimaryGeneratedColumn('uuid')
   id: string;

@@ -128,7 +128,15 @@ import { FilesModule } from './modules/files/files.module';
     // =============================================================================
     {
       provide: APP_PIPE,
-      useClass: ValidationPipe, // 数据验证管道 (DTO 验证和转换)
+      useFactory: () =>
+        new ValidationPipe({
+          transform: true, // 启用自动类型转换
+          transformOptions: {
+            enableImplicitConversion: true, // 启用隐式类型转换
+          },
+          whitelist: true, // 只保留DTO中定义的属性
+          forbidNonWhitelisted: true, // 禁止未定义的属性
+        }),
     },
 
     // =============================================================================

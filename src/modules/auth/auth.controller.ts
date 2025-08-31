@@ -363,4 +363,14 @@ export class AuthController {
       };
     }
   }
+
+  /**
+   * 获取全部用户
+   */
+  @ApiOperation({ summary: '获取全部用户' })
+  @ApiResponse({ status: 200, description: '获取全部用户成功' })
+  @Get('all')
+  async getAllUsers(): Promise<Auth[]> {
+    return this.authService.getAllUsers();
+  }
 }
