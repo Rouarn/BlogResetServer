@@ -48,6 +48,7 @@ export const validationSchema = Joi.object({
   // 应用基础配置
   NEST_GLOB_APP_TITLE: Joi.string().default('NestJS Application'),
   NEST_PORT: Joi.number().default(3000),
+  NEST_BASE_URL: Joi.string().default('http://localhost:3000'),
   NEST_USER_NODE_ENV: Joi.string()
     .valid('development', 'production', 'test')
     .default('development'),

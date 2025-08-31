@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ChunkUploadCompleteDto, ChunkUploadDto, ChunkUploadInitDto } from '../dto';
 import { File, UploadChunk } from '../entities';
 import { FileStatus } from '../enums';
-import { ChunkUploadInfo, ChunkUploadResult } from '../interfaces';
+import { ChunkUploadInfo, ChunkUploadResult, UploadProgress } from '../interfaces';
 import { StorageService } from './storage.service';
 import { ValidationService } from './validation.service';
 
@@ -219,13 +219,7 @@ export class ChunkService {
     }
   }
 
-  async getUploadProgress(uploadId: string): Promise<{
-    uploadId: string;
-    totalChunks: number;
-    uploadedChunks: number;
-    progress: number;
-    status: FileStatus;
-  }> {
+  async getUploadProgress(uploadId: string): Promise<UploadProgress> {
     const file = await this.fileRepository.findOne({
       where: { uploadId },
     });

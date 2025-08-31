@@ -111,7 +111,7 @@ export class FilesService {
     queryDto: FileQueryDto,
     userId?: string,
   ): Promise<{ files: File[]; total: number }> {
-    const { page, limit, type, status, search, publicOnly, sortBy, sortOrder } = queryDto;
+    const { size, current, type, status, search, publicOnly, sortBy, sortOrder } = queryDto;
 
     const queryBuilder = this.fileRepository.createQueryBuilder('file');
 
@@ -142,11 +142,16 @@ export class FilesService {
     }
 
     // 排序
-    queryBuilder.orderBy(`file.${sortBy}`, sortOrder);
+    const allowedSortFields = ['createdAt', 'size', 'filename'];
+    const sortField = sortBy && allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const order = sortOrder === 'ASC' ? 'ASC' : 'DESC';
+    queryBuilder.orderBy(`file.${sortField}`, order);
 
     // 分页
-    const offset = ((page ?? 1) - 1) * (limit ?? 10);
-    queryBuilder.skip(offset).take(limit);
+    const pageSize = size ?? 10;
+    const pageNumber = current ?? 1;
+    const offset = (pageNumber - 1) * pageSize;
+    queryBuilder.skip(offset).take(pageSize);
 
     const [files, total] = await queryBuilder.getManyAndCount();
 

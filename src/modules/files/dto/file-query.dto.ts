@@ -9,7 +9,7 @@ export class FileQueryDto {
   @Type(() => Number)
   @IsNumber()
   @Min(1)
-  page?: number = 1;
+  current?: number = 1;
 
   @ApiPropertyOptional({
     description: '每页数量',
@@ -22,7 +22,7 @@ export class FileQueryDto {
   @IsNumber()
   @Min(1)
   @Max(100)
-  limit?: number = 10;
+  size?: number = 10;
 
   @ApiPropertyOptional({ enum: FileType, description: '文件类型筛选' })
   @IsOptional()

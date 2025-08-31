@@ -56,6 +56,11 @@ async function bootstrap(): Promise<void> {
         fs.mkdirSync(docsDir, { recursive: true });
       }
 
+      // 检查apiDocPath是否是目录，如果是则删除它
+      if (fs.existsSync(apiDocPath) && fs.statSync(apiDocPath).isDirectory()) {
+        fs.rmSync(apiDocPath, { recursive: true });
+      }
+
       // 写入API文档文件
       fs.writeFileSync(apiDocPath, JSON.stringify(document, null, 2));
       logger.log(`📄 API文档已保存到: ${apiDocPath}`);

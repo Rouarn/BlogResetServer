@@ -37,6 +37,12 @@ import {
 } from './dto';
 import { FileListResponseDto, FileUploadResponseDto } from './dto/swagger-responses.dto';
 import { FileAccessGuard } from './guards/file-access.guard';
+import {
+  BatchUploadResult,
+  ChunkUploadResult,
+  FileUploadResult,
+  UploadProgress,
+} from './interfaces';
 import { ChunkService } from './services/chunk.service';
 import { FilesService } from './services/files.service';
 
@@ -94,17 +100,9 @@ export class FilesController {
     @UploadedFile(FileValidationPipe) file: Express.Multer.File,
     @Body() uploadDto: FileUploadDto,
     @GetCurrentUser() user?: CurrentUser,
-  ): Promise<{
-    success: boolean;
-    data: unknown;
-    message: string;
-  }> {
+  ): Promise<FileUploadResult> {
     const result = await this.filesService.uploadSingleFile(file, uploadDto, user?.id);
-    return {
-      success: true,
-      data: result,
-      message: '文件上传成功',
-    };
+    return result;
   }
 
   @Post('upload/batch')
@@ -145,17 +143,9 @@ export class FilesController {
     @UploadedFiles(FilesValidationPipe) files: Express.Multer.File[],
     @Body() uploadDto: FileUploadDto,
     @GetCurrentUser() user?: CurrentUser,
-  ): Promise<{
-    success: boolean;
-    data: unknown;
-    message: string;
-  }> {
+  ): Promise<BatchUploadResult> {
     const result = await this.filesService.uploadMultipleFiles(files, uploadDto, user?.id);
-    return {
-      success: true,
-      data: result,
-      message: '批量文件上传完成',
-    };
+    return result;
   }
 
   @Post('upload/chunk/init')
@@ -205,17 +195,9 @@ export class FilesController {
   async uploadChunk(
     @UploadedFile() chunk: Express.Multer.File,
     @Body() chunkDto: ChunkUploadDto,
-  ): Promise<{
-    success: boolean;
-    data: unknown;
-    message: string;
-  }> {
+  ): Promise<ChunkUploadResult> {
     const result = await this.chunkService.uploadChunk(chunk, chunkDto);
-    return {
-      success: true,
-      data: result,
-      message: '分块上传成功',
-    };
+    return result;
   }
 
   @Post('upload/chunk/complete')
@@ -237,22 +219,16 @@ export class FilesController {
   @Get('upload/progress/:uploadId')
   @ApiOperation({ summary: '获取上传进度' })
   @ApiResponse({ status: 200, description: '获取上传进度成功' })
-  async getUploadProgress(@Param('uploadId') uploadId: string): Promise<{
-    success: boolean;
-    data: unknown;
-  }> {
+  async getUploadProgress(@Param('uploadId') uploadId: string): Promise<UploadProgress> {
     const result = await this.chunkService.getUploadProgress(uploadId);
-    return {
-      success: true,
-      data: result,
-    };
+    return result;
   }
 
   @Get()
   @ApiOperation({ summary: '获取文件列表' })
-  @ApiQuery({ name: 'page', required: false, description: '页码', example: 1 })
+  @ApiQuery({ name: 'size', required: false, description: '页码', example: 1 })
   @ApiQuery({
-    name: 'limit',
+    name: 'current',
     required: false,
     description: '每页数量',
     example: 10,
@@ -272,25 +248,9 @@ export class FilesController {
   async getFiles(
     @Query() queryDto: FileQueryDto,
     @GetCurrentUser() user?: CurrentUser,
-  ): Promise<{
-    files: unknown[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-    };
-  }> {
-    const { files, total } = await this.filesService.findFiles(queryDto, user?.id);
-    return {
-      files,
-      pagination: {
-        page: queryDto.page ?? 1,
-        limit: queryDto.limit ?? 10,
-        total,
-        totalPages: Math.ceil(total / (queryDto.limit ?? 10)),
-      },
-    };
+  ): Promise<unknown> {
+    const { files } = await this.filesService.findFiles(queryDto, user?.id);
+    return files;
   }
 
   @Get(':id')
@@ -311,15 +271,9 @@ export class FilesController {
   async getFile(
     @Param('id', ParseUUIDPipe) id: string,
     @GetCurrentUser() user?: CurrentUser,
-  ): Promise<{
-    success: boolean;
-    data: unknown;
-  }> {
+  ): Promise<unknown> {
     const file = await this.filesService.findFileById(id, user?.id);
-    return {
-      success: true,
-      data: file,
-    };
+    return file;
   }
 
   @Get(':id/download')

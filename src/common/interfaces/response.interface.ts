@@ -55,6 +55,8 @@ export type PaginatedResponse<T = unknown> = IResponse<PaginatedData<T>>;
 
 /**
  * 默认分页参数
+ * @param current 当前页码
+ * @param size 每页数量
  */
 export interface DefaultPagination {
   current: number;

@@ -96,10 +96,10 @@ export class FileListResponseDto {
   total: number;
 
   @ApiProperty({ description: '当前页' })
-  page: number;
+  current: number;
 
   @ApiProperty({ description: '每页数量' })
-  limit: number;
+  size: number;
 }
 
 /**

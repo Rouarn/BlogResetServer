@@ -34,6 +34,7 @@ export class StorageService implements StorageAdapter {
 
   async upload(file: Express.Multer.File, relativePath: string): Promise<string> {
     const fullPath = path.join(this.config.basePath, relativePath);
+    console.log('this.config.basePath: ', this.config.basePath);
     const directory = path.dirname(fullPath);
 
     // 确保目录存在
@@ -74,10 +75,12 @@ export class StorageService implements StorageAdapter {
   }
 
   getUrl(relativePath: string): string {
-    const baseUrl = this.configService.get('BASE_URL', 'http://localhost:3000');
+    const baseUrl = this.configService.get('NEST_BASE_URL', 'http://localhost:3000');
+    const port = this.configService.get('NEST_PORT', 3000);
+    console.log('baseUrl: ', baseUrl);
     const staticConfig = appConfig.staticAssetsOptions;
     // 使用静态资源URL前缀构建访问地址
-    return `${baseUrl}${staticConfig.options.prefix}/${relativePath}`;
+    return `${baseUrl}:${port}${staticConfig.options.prefix}${relativePath}`;
   }
 
   async getFileStats(relativePath: string): Promise<{ size: number; mtime: Date } | null> {

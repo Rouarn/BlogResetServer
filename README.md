@@ -1643,8 +1643,8 @@ Content-Length: 1048576
 **请求参数**:
 | 参数名 | 类型 | 必填 | 描述 |
 |--------|------|------|------|
-| page | number | 否 | 页码（默认: 1） |
-| limit | number | 否 | 每页数量（默认: 10，最大: 100） |
+| size | number | 否 | 页码（默认: 1） |
+| current | number | 否 | 每页数量（默认: 10，最大: 100） |
 | type | string | 否 | 文件类型过滤（image/video/document/audio） |
 | search | string | 否 | 文件名搜索关键词 |
 | sortBy | string | 否 | 排序字段（createdAt/size/filename） |
@@ -1653,7 +1653,7 @@ Content-Length: 1048576
 **请求示例**:
 
 ```http
-GET /files?page=1&limit=10&type=image&search=avatar&sortBy=createdAt&sortOrder=desc
+GET /files?size=1&current=10&type=image&search=avatar&sortBy=createdAt&sortOrder=desc
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
@@ -1678,8 +1678,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
       }
     ],
     "pagination": {
-      "page": 1,
-      "limit": 10,
+      "size": 1,
+      "current": 10,
       "total": 25,
       "totalPages": 3,
       "hasNext": true,
@@ -2031,8 +2031,8 @@ class FileUploadClient {
   // 获取文件列表
   async getFiles(
     params: {
-      page?: number;
-      limit?: number;
+      size?: number;
+      current?: number;
       type?: string;
       search?: string;
     } = {},
@@ -2108,7 +2108,7 @@ curl -X POST \
 
 # 获取文件列表
 curl -X GET \
-  "http://localhost:8848/files?page=1&limit=10&type=image" \
+  "http://localhost:8848/files?size=1&current=10&type=image" \
   -H "Authorization: Bearer your-jwt-token"
 
 # 下载文件

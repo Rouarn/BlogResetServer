@@ -1,4 +1,4 @@
-import type { FileType } from '../enums';
+import type { FileStatus, FileType } from '../enums';
 
 export interface FileUploadOptions {
   maxSize?: number;
@@ -42,4 +42,12 @@ export interface BatchUploadResult {
   totalFiles: number;
   successCount: number;
   failureCount: number;
+}
+
+export interface UploadProgress {
+  uploadId: string;
+  totalChunks: number;
+  uploadedChunks: number;
+  progress: number;
+  status: FileStatus;
 }
