@@ -179,20 +179,31 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = 'Internal server error';
+    let messages: string[] = ['Internal server error'];
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
       if (typeof exceptionResponse === 'string') {
-        message = exceptionResponse;
+        messages = [exceptionResponse];
       } else if (typeof exceptionResponse === 'object') {
         const responseObj = exceptionResponse as Record<string, unknown>;
-        message = String(responseObj.message ?? responseObj.error ?? message);
+        const messageValue = responseObj.message ?? responseObj.error ?? 'Internal server error';
+
+        if (Array.isArray(messageValue)) {
+          messages = messageValue.map((msg) => String(msg));
+        } else if (typeof messageValue === 'string') {
+          // 处理逗号分隔的错误消息
+          messages = messageValue.includes(',')
+            ? messageValue.split(',').map((msg) => msg.trim())
+            : [messageValue];
+        } else {
+          messages = [String(messageValue)];
+        }
       }
     } else if (exception instanceof Error) {
-      message = exception.message;
+      messages = [exception.message];
 
       // 文件相关错误的特殊处理
       if (exception.message.includes('文件大小超出限制')) {
@@ -210,10 +221,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }
     }
 
+    // 智能判断返回格式：单个错误返回字符串，多个错误返回数组
+    const finalMessage = messages.length === 1 ? messages[0] : messages;
+
     const errorResponse: ErrorResponse = {
       success: false,
       code: status,
-      message,
+      message: finalMessage,
       data: null,
       timestamp: formatTimestamp(),
       url: request.url,
@@ -225,10 +239,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
     // const stack = exception instanceof Error ? exception.stack : undefined;
 
     // 创建结构化日志
-    // const structuredLog = this.createStructuredLog(logLevel, status, message, context, stack);
+    // const structuredLog = this.createStructuredLog(logLevel, status, messages.join(', '), context, stack);
 
     // 记录日志
-    this.logError(logLevel, context, status, message /**structuredLog, stack*/);
+    this.logError(logLevel, context, status, messages.join(', ') /**structuredLog, stack*/);
 
     response.status(status).json(errorResponse);
   }

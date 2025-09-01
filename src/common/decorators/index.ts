@@ -8,7 +8,7 @@
  * - JwtAuth: JWT 认证装饰器
  * - Public: 公共路由标记装饰器
  * - Roles: 角色权限装饰器
- * - User: 用户信息参数装饰器
+
  *
  * 用法示例：
  * import { JwtAuth, Roles, GetCurrentUser } from '@/common/decorators';
@@ -18,4 +18,3 @@ export * from './enum.decorator';
 export * from './jwt-auth.decorator';
 export * from './public.decorator';
 export * from './roles.decorator';
-export * from './user.decorator';

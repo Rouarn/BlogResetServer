@@ -14,6 +14,7 @@
  * @version 1.0.0
  */
 import { Injectable } from '@nestjs/common';
+import * as packageJson from '../package.json';
 
 /**
  * 应用根服务类
@@ -28,19 +29,25 @@ export class AppService {
    * 功能:
    * - 返回应用的基本欢迎信息
    * - 用于健康检查和服务状态验证
-   * - 可扩展为更复杂的应用信息获取
+   * - 动态获取应用名称和版本信息
    *
-   * @returns 欢迎信息字符串
+   * @returns 欢迎信息对象
    *
    * @example
    * ```typescript
-   * const message = appService.getHello();
-   * console.log(message); // "Hello NestJS-Template"
+   * const response = appService.getHello();
+   * console.log(response.message); // "Hello nestjs-template v0.0.1"
    * ```
    */
-  getHello(): { message: string } {
+  getHello(): {
+    message: string;
+    timestamp: string;
+    version: string;
+  } {
     return {
-      message: `Hello NestJS-Template`,
+      message: `Hello ${packageJson.name} v${packageJson.version}`,
+      timestamp: new Date().toISOString(),
+      version: packageJson.version,
     };
   }
 
@@ -48,17 +55,70 @@ export class AppService {
    * 获取应用版本信息
    *
    * 功能:
-   * - 返回应用版本号
-   * - 提供构建信息
+   * - 从 package.json 动态获取应用版本号
+   * - 提供构建信息和应用描述
    * - 支持版本管理和监控
    *
    * @returns 版本信息对象
+   *
+   * @example
+   * ```typescript
+   * const info = appService.getVersion();
+   * console.log(info.version); // "0.0.1"
+   * console.log(info.name); // "nestjs-template"
+   * ```
    */
-  getVersion(): { version: string; name: string; description?: string } {
+  getVersion(): {
+    version: string;
+    name: string;
+    description?: string;
+    author?: string;
+    license?: string;
+  } {
     return {
-      version: '1.0.0',
-      name: 'NestJS-Template',
-      description: 'NestJS Template',
+      version: packageJson.version,
+      name: packageJson.name,
+      description: packageJson.description,
+      author: packageJson.author,
+      license: packageJson.license,
+    };
+  }
+
+  /**
+   * 获取应用完整信息
+   *
+   * 功能:
+   * - 返回应用的完整信息
+   * - 包含版本、描述、作者等详细信息
+   * - 用于系统信息展示和调试
+   *
+   * @returns 应用完整信息对象
+   *
+   * @example
+   * ```typescript
+   * const info = appService.getAppInfo();
+   * console.log(info);
+   * ```
+   */
+  getAppInfo(): {
+    name: string;
+    version: string;
+    description?: string;
+    author?: string;
+    license?: string;
+    environment: string;
+    nodeVersion: string;
+    uptime: number;
+  } {
+    return {
+      name: packageJson.name,
+      version: packageJson.version,
+      description: packageJson.description,
+      author: packageJson.author,
+      license: packageJson.license,
+      environment: process.env.NODE_ENV ?? 'development',
+      nodeVersion: process.version,
+      uptime: process.uptime(),
     };
   }
 }

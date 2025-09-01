@@ -87,4 +87,44 @@ export class AppController {
   getVersion(): { version: string; name: string; description?: string } {
     return this.appService.getVersion();
   }
+
+  /**
+   * 获取应用完整信息
+   *
+   * 用途:
+   * - 返回应用的完整信息
+   * - 包含版本、描述、作者等详细信息
+   * - 用于系统信息展示和调试
+   *
+   * @returns 应用完整信息对象
+   */
+  @ApiOperation({
+    summary: '获取应用完整信息',
+    description: '返回应用的完整信息，包含版本、描述、作者等详细信息',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '成功返回应用完整信息',
+    schema: {
+      type: 'object',
+      example: {
+        version: '1.0.0',
+        name: 'NestJS-Template',
+        description: 'NestJS 应用模板',
+        author: 'NestJS Template',
+        license: 'MIT',
+      },
+    },
+  })
+  @Public() // 公共接口，无需认证
+  @Get('info')
+  getAppInfo(): {
+    version: string;
+    name: string;
+    description?: string;
+    author?: string;
+    license?: string;
+  } {
+    return this.appService.getAppInfo();
+  }
 }

@@ -6,16 +6,26 @@
  * 字段说明：
  * - success: 请求是否成功，错误响应中固定为 false
  * - code: HTTP 状态码，如 400、401、404、500 等
- * - message: 错误信息，可以是单个字符串或字符串数组（用于表单验证错误）
+ * - message: 错误信息，单个错误时为字符串，多个错误时为字符串数组
  * - timestamp: 错误发生的时间戳，ISO 格式字符串
  * - path: 发生错误的请求路径
  *
  * 用法示例：
  * ```typescript
- * const errorResponse: ErrorResponse = {
+ * // 单个错误
+ * const singleError: ErrorResponse = {
  *   success: false,
  *   code: 400,
  *   message: '参数验证失败',
+ *   timestamp: '2024-01-01T00:00:00.000Z',
+ *   path: '/api/users'
+ * };
+ *
+ * // 多个错误
+ * const multipleErrors: ErrorResponse = {
+ *   success: false,
+ *   code: 400,
+ *   message: ['参数验证失败', '字段格式不正确'],
  *   timestamp: '2024-01-01T00:00:00.000Z',
  *   path: '/api/users'
  * };
@@ -26,7 +36,7 @@ export interface ErrorResponse {
   success: boolean;
   /** HTTP 状态码 */
   code: number;
-  /** 错误信息，支持单个或多个错误消息 */
+  /** 错误信息，单个错误时为字符串，多个错误时为字符串数组 */
   message: string | string[];
   /** 错误发生时间戳 */
   timestamp: string;

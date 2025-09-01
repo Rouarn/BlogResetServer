@@ -1,5 +1,5 @@
 import type { Request } from 'express';
-import { Public, User } from 'src/common/decorators';
+import { GetCurrentUser, Public } from 'src/common/decorators';
 import { formatISOString } from 'src/utils';
 import {
   Body,
@@ -195,7 +195,7 @@ export class AuthController {
   })
   @ApiBearerAuth()
   @Get('getUserInfo')
-  getUserInfo(@User() user: CreateAuthDto): {
+  getUserInfo(@GetCurrentUser() user: CreateAuthDto): {
     buttons: string[];
     roles: string[];
     userId: string;

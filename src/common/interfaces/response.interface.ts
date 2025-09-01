@@ -3,7 +3,7 @@
  */
 export interface IResponse<T = unknown> {
   data: T;
-  message: string;
+  message: string | string[];
   code: number;
   timestamp: string;
 }
