@@ -1,4 +1,5 @@
 import { TimestampedService } from 'src/audit';
+import { Status, isEnabled, toggleStatus } from 'src/common/enums';
 import * as svgCaptcha from 'svg-captcha';
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
@@ -84,6 +85,11 @@ export class AuthService extends TimestampedService<Auth> {
 
     if (!findUser) {
       throw new Error('用户不存在');
+    }
+
+    // 检查用户状态
+    if (!isEnabled(findUser.status)) {
+      throw new Error('用户已被禁用');
     }
 
     // 验证密码
@@ -336,15 +342,43 @@ export class AuthService extends TimestampedService<Auth> {
   /**
    * 切换用户状态
    * @param id 用户ID
-   * @param status 新状态
+   * @param status 新状态（可选，如果不提供则自动切换）
    * @returns 更新后的用户信息
    */
-  async toggleUserStatus(id: string, status: boolean): Promise<Auth> {
+  async toggleUserStatus(id: string, status?: Status): Promise<Auth> {
     const user = await this.getUserById(id);
 
-    // 假设Auth实体有status字段，如果没有需要添加
-    (user as any).status = status;
+    // 如果没有提供状态，则自动切换
+    user.status = status ?? toggleStatus(user.status);
 
     return this.repository.save(user);
+  }
+
+  /**
+   * 启用用户
+   * @param id 用户ID
+   * @returns 更新后的用户信息
+   */
+  async enableUser(id: string): Promise<Auth> {
+    return this.toggleUserStatus(id, Status.ENABLED);
+  }
+
+  /**
+   * 禁用用户
+   * @param id 用户ID
+   * @returns 更新后的用户信息
+   */
+  async disableUser(id: string): Promise<Auth> {
+    return this.toggleUserStatus(id, Status.DISABLED);
+  }
+
+  /**
+   * 检查用户是否启用
+   * @param id 用户ID
+   * @returns 用户是否启用
+   */
+  async isUserEnabled(id: string): Promise<boolean> {
+    const user = await this.getUserById(id);
+    return isEnabled(user.status);
   }
 }

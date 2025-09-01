@@ -1,5 +1,5 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { Gender, Role } from 'src/common/enums/index';
+import { Gender, Role, Status } from 'src/common/enums/index';
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
@@ -74,7 +74,9 @@ export class BatchDeleteUserDto {
 export class ToggleUserStatusDto {
   @ApiProperty({
     description: '用户状态',
-    example: true,
+    enum: Status,
+    example: Status.ENABLED,
   })
-  status: boolean;
+  @IsEnum(Status, { message: '状态必须是有效的枚举值' })
+  status: Status;
 }

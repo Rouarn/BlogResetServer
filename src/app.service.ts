@@ -13,8 +13,23 @@
  * @author NestJS Template
  * @version 1.0.0
  */
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { Injectable } from '@nestjs/common';
-import * as packageJson from '../package.json';
+
+// Package.json 类型定义
+interface PackageJson {
+  name: string;
+  version: string;
+  description?: string;
+  author?: string;
+  license?: string;
+}
+
+// 动态读取 package.json 文件
+const packageJson: PackageJson = JSON.parse(
+  readFileSync(join(process.cwd(), 'package.json'), 'utf8'),
+) as PackageJson;
 
 /**
  * 应用根服务类

@@ -1,7 +1,7 @@
 import * as bcrypt from 'bcryptjs';
 import { Exclude } from 'class-transformer';
 import { Timestamped, TimestampedEntity } from 'src/audit';
-import { Gender, Role } from 'src/common/enums';
+import { Gender, Role, Status } from 'src/common/enums';
 import { BeforeInsert, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('ra_users')
@@ -21,7 +21,7 @@ export class Auth extends TimestampedEntity {
   password: string; // 密码
 
   @Column({ length: 100, nullable: true, comment: '盐' })
-  salt: string;
+  salt: string; // 盐
 
   @Column({ nullable: true, comment: '头像' })
   avatar: string; //头像
@@ -45,7 +45,12 @@ export class Auth extends TimestampedEntity {
   })
   roles: Role; // 用户角色
 
-  // 时间戳字段已由 TimestampedEntity 基类提供
+  @Column('simple-enum', {
+    enum: Status,
+    default: Status.ENABLED,
+    comment: '用户状态',
+  })
+  status: Status; // 用户状态
 
   @BeforeInsert()
   async encryptPwd(): Promise<void> {
