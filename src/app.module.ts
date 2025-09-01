@@ -16,7 +16,7 @@
  * @author NestJS Template
  * @version 1.0.0
  */
-import { Module, ValidationPipe } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core/constants';
 import { JwtModule } from '@nestjs/jwt';
@@ -30,6 +30,7 @@ import { HttpExceptionFilter } from './common/filters';
 import { GlobalGuard, JwtAuthGuard, RolesGuard } from './common/guards';
 // 公共组件导入
 import { ResponseInterceptor } from './common/interceptors';
+import { CustomValidationPipe } from './common/pipes';
 import { JwtAuthStrategy } from './common/strategies';
 // 配置模块导入
 import { ConfigModule as AppConfigModule, AppConfigService } from './config';
@@ -144,15 +145,7 @@ import { FilesModule } from './modules/files/files.module';
     // =============================================================================
     {
       provide: APP_PIPE,
-      useFactory: () =>
-        new ValidationPipe({
-          transform: true, // 启用自动类型转换
-          transformOptions: {
-            enableImplicitConversion: true, // 启用隐式类型转换
-          },
-          whitelist: true, // 只保留DTO中定义的属性
-          forbidNonWhitelisted: true, // 禁止未定义的属性
-        }),
+      useClass: CustomValidationPipe,
     },
 
     // =============================================================================

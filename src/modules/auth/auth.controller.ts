@@ -43,7 +43,7 @@ export class AuthController {
    * @returns 用户列表数组
    */
   @ApiOperation({
-    summary: '获取全部用户列表',
+    summary: '获取全部用户',
     description: '获取全部用户列表，支持分页查询',
   })
   @ApiResponse({
@@ -222,7 +222,7 @@ export class AuthController {
   })
   @ApiBearerAuth()
   @Get('getUserInfo')
-  getUserInfo(@GetCurrentUser() user: CreateAuthDto): {
+  getUserInfo(@GetCurrentUser() user: Auth): {
     buttons: string[];
     roles: string[];
     userId: string;

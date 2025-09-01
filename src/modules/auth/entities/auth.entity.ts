@@ -20,6 +20,7 @@ export class Auth extends TimestampedEntity {
   @Column({ comment: '密码' })
   password: string; // 密码
 
+  @Exclude()
   @Column({ length: 100, nullable: true, comment: '盐' })
   salt: string; // 盐
 

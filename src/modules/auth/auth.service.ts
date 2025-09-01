@@ -56,7 +56,7 @@ export class AuthService extends TimestampedService<Auth> {
    * @param user 用户数据传输对象
    * @returns 包含用户权限、角色、ID和用户名的信息对象
    */
-  getUserInfo(user: CreateAuthDto): {
+  getUserInfo(user: Auth): {
     buttons: string[];
     roles: string[];
     userId: string;
@@ -64,7 +64,7 @@ export class AuthService extends TimestampedService<Auth> {
   } {
     return {
       buttons: ['B_CODE1', 'B_CODE2', 'B_CODE3'],
-      roles: new Array<string>(user.roles),
+      roles: [user.roles], // roles是单个Role枚举，转换为数组
       userId: user.id,
       userName: user.nickname,
     };

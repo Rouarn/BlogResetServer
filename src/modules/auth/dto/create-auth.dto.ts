@@ -1,19 +1,12 @@
-import { IsNotEmpty, IsString, Length } from 'class-validator';
-import { Gender, Role } from 'src/common/enums/index';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
+import { Gender } from 'src/common/enums';
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
  * 认证数据传输对象
- * 用于用户登录、注册等认证相关操作
+ * 用于用户注册等认证相关操作
  */
 export class CreateAuthDto {
-  @ApiProperty({
-    description: '用户ID',
-    example: '1',
-    required: false,
-  })
-  id: string;
-
   @ApiProperty({
     description: '用户名',
     example: 'john_doe',
@@ -37,6 +30,8 @@ export class CreateAuthDto {
     example: 'John Doe',
     required: false,
   })
+  @IsOptional()
+  @IsString({ message: '昵称必须是字符串' })
   nickname: string;
 
   @ApiProperty({
@@ -44,6 +39,8 @@ export class CreateAuthDto {
     example: 'https://example.com/avatar.jpg',
     required: false,
   })
+  @IsOptional()
+  @IsString({ message: '头像URL必须是字符串' })
   avatar: string;
 
   @ApiProperty({
@@ -52,6 +49,8 @@ export class CreateAuthDto {
     example: Gender.MALE,
     required: false,
   })
+  @IsOptional()
+  @IsEnum(Gender, { message: '性别必须是有效的枚举值' })
   gender: Gender;
 
   @ApiProperty({
@@ -59,27 +58,7 @@ export class CreateAuthDto {
     example: '13800138000',
     required: false,
   })
+  @IsOptional()
+  @IsString({ message: '手机号码必须是字符串' })
   phone: string;
-
-  @ApiProperty({
-    description: '用户角色',
-    enum: Role,
-    example: Role.USER,
-    required: false,
-  })
-  roles: Role;
-
-  @ApiProperty({
-    description: '创建时间',
-    example: '2023-12-01T10:00:00.000Z',
-    required: false,
-  })
-  createTime: Date;
-
-  @ApiProperty({
-    description: '更新时间',
-    example: '2023-12-01T10:00:00.000Z',
-    required: false,
-  })
-  updateTime: Date;
 }
