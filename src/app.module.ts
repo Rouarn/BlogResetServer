@@ -24,8 +24,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 // 应用核心组件
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-// 时间戳管理模块
-import { AuditModule } from './audit';
 import { HttpExceptionFilter } from './common/filters';
 import { GlobalGuard, JwtAuthGuard, RolesGuard } from './common/guards';
 // 公共组件导入
@@ -34,6 +32,8 @@ import { CustomValidationPipe } from './common/pipes';
 import { JwtAuthStrategy } from './common/strategies';
 // 配置模块导入
 import { ConfigModule as AppConfigModule, AppConfigService } from './config';
+// 时间戳管理模块
+import { DatabaseModule } from './database';
 // 业务模块导入
 import { AuthModule } from './modules/auth/auth.module';
 import { FilesModule } from './modules/files/files.module';
@@ -83,11 +83,11 @@ import { FilesModule } from './modules/files/files.module';
     // =============================================================================
     // 时间戳管理模块 - 自动时间戳和软删除功能
     // =============================================================================
-    AuditModule.forRoot({
+    DatabaseModule.forRoot({
       enableTimestamps: true, // 启用时间戳功能
       enableSoftDelete: true, // 启用软删除功能
       autoFilterDeleted: true, // 自动过滤已删除数据
-      timestampFields: {
+      fieldNames: {
         createTime: 'createTime',
         updateTime: 'updateTime',
         deleteTime: 'deleteTime',

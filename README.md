@@ -364,11 +364,11 @@ nestjs-template/
 └── README.md                     # 项目说明
 ```
 
-## 🔍 审计模块 (src/audit)
+## 🔍 数据库模块 (src/database)
 
 ### 概述
 
-`src/audit` 模块提供了完整的数据审计功能，包括自动时间戳管理和软删除功能。该模块采用装饰器、拦截器、订阅者等多种设计模式，为应用提供透明、高效的数据审计能力。
+`src/database` 模块提供了完整的数据审计功能，包括自动时间戳管理和软删除功能。该模块采用装饰器、拦截器、订阅者等多种设计模式，为应用提供透明、高效的数据审计能力。
 
 ### 核心特性
 
@@ -383,27 +383,27 @@ nestjs-template/
 ### 模块结构
 
 ```
-src/audit/
-├── audit.module.ts               # 审计模块主文件
+src/database/
+├── database.module.ts            # 数据库模块主文件
 ├── index.ts                      # 模块统一导出
 ├── decorators/                   # 装饰器
 │   └── index.ts                  # 时间戳和软删除装饰器
 ├── entities/                     # 实体定义
-│   └── timestamped.entity.ts     # 时间戳基础实体类
+│   └── base.entity.ts            # 基础实体类
 ├── interceptors/                 # 拦截器
 │   ├── index.ts                  # 拦截器导出
 │   ├── query-filter.interceptor.ts # 查询结果过滤拦截器
 │   ├── soft-delete.interceptor.ts  # 软删除操作拦截器
-│   └── timestamp.interceptor.ts    # 时间戳上下文拦截器
+│   └── base.interceptor.ts         # 基础上下文拦截器
 ├── interfaces/                   # 接口定义
 │   └── index.ts                  # 审计相关接口
 ├── services/                     # 服务类
 │   ├── index.ts                  # 服务导出
-│   └── timestamped.service.ts    # 时间戳管理基础服务
+│   └── base.service.ts           # 基础管理服务
 ├── subscribers/                  # TypeORM 订阅者
 │   ├── index.ts                  # 订阅者导出
-│   ├── soft-delete.subscriber.ts # 软删除数据库订阅者
-│   └── timestamp.subscriber.ts   # 时间戳数据库订阅者
+│   ├── audit.subscriber.ts       # 审计数据库订阅者
+│   └── soft-delete.subscriber.ts # 软删除数据库订阅者
 └── types/                        # 类型定义
     └── index.ts                  # 配置和上下文类型
 ```
@@ -412,16 +412,16 @@ src/audit/
 
 #### 1. 模块配置
 
-在 `app.module.ts` 中导入审计模块：
+在 `app.module.ts` 中导入数据库模块：
 
 ```typescript
 import { Module } from '@nestjs/common';
-import { AuditModule } from './audit';
+import { DatabaseModule } from './database';
 
 @Module({
   imports: [
-    // 全局配置审计模块
-    AuditModule.forRoot({
+    // 全局配置数据库模块
+    DatabaseModule.forRoot({
       enableTimestamps: true, // 启用时间戳管理
       enableSoftDelete: true, // 启用软删除
       autoFilterDeleted: true, // 自动过滤已删除数据
@@ -438,14 +438,14 @@ export class AppModule {}
 
 #### 2. 实体继承
 
-让你的实体继承 `TimestampedEntity` 基类：
+让你的实体继承 `BaseEntity` 基类：
 
 ```typescript
-import { TimestampedEntity } from 'src/audit';
+import { BaseEntity } from 'src/database';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('users')
-export class User extends TimestampedEntity {
+export class User extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -466,17 +466,17 @@ export class User extends TimestampedEntity {
 
 #### 3. 服务类使用
 
-继承 `TimestampedService` 获得完整的 CRUD 和软删除功能：
+继承 `BaseService` 获得完整的 CRUD 和软删除功能：
 
 ```typescript
-import { TimestampedService } from 'src/audit';
+import { BaseService } from 'src/database';
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 
 @Injectable()
-export class UserService extends TimestampedService<User> {
+export class UserService extends BaseService<User> {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
@@ -513,14 +513,14 @@ export class UserService extends TimestampedService<User> {
 
 ### 装饰器使用
 
-#### @Timestamped() - 实体装饰器
+#### @BaseEntity() - 实体装饰器
 
 标记实体为可时间戳管理的实体：
 
 ```typescript
-import { Timestamped } from 'src/audit';
+import { BaseEntity } from 'src/database';
 
-@Timestamped({
+@BaseEntity({
   enableSoftDelete: true, // 启用软删除
   fieldNames: {
     createTime: 'createdAt', // 自定义字段名
@@ -539,7 +539,7 @@ export class CustomEntity {
 在控制器方法中包含已删除的数据：
 
 ```typescript
-import { IncludeDeleted } from 'src/audit';
+import { IncludeDeleted } from 'src/database';
 import { Controller, Get } from '@nestjs/common';
 
 @Controller('users')
@@ -585,7 +585,7 @@ async systemUpdate(@Param('id') id: string, @Body() data: any) {
 ```typescript
 @Module({
   imports: [
-    AuditModule.forRootAsync({
+    DatabaseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         enableTimestamps: configService.get('AUDIT_ENABLE_TIMESTAMPS', true),
@@ -605,7 +605,7 @@ export class AppModule {}
 
 ```typescript
 @Module({
-  imports: [AuditModule.forFeature()],
+  imports: [DatabaseModule.forFeature()],
   providers: [UserService],
 })
 export class UserModule {}
@@ -617,7 +617,7 @@ export class UserModule {}
 
 ```typescript
 @Injectable()
-export class UserService extends TimestampedService<User> {
+export class UserService extends BaseService<User> {
   // 查找活跃用户（排除软删除）
   async findActiveUsers(): Promise<User[]> {
     return this.repository
@@ -641,10 +641,10 @@ export class UserService extends TimestampedService<User> {
 
 ### 类型定义
 
-#### ITimestampedEntity 接口
+#### IBaseEntity 接口
 
 ```typescript
-export interface ITimestampedEntity {
+export interface IBaseEntity {
   createTime: Date;
   updateTime: Date;
   deleteTime?: Date | null;
@@ -670,10 +670,10 @@ export interface QueryContext {
 }
 ```
 
-#### ITimestampedService 接口
+#### IBaseService 接口
 
 ```typescript
-export interface ITimestampedService<T extends ITimestampedEntity> {
+export interface IBaseService<T extends IBaseEntity> {
   // 基础 CRUD 操作
   create(entityData: DeepPartial<T>): Promise<T>;
   update(id: string | number, entityData: DeepPartial<T>): Promise<T>;
@@ -702,10 +702,10 @@ export interface ITimestampedService<T extends ITimestampedEntity> {
 }
 ```
 
-#### TimestampManagerConfig 配置
+#### DatabaseConfig 配置
 
 ```typescript
-export interface TimestampManagerConfig {
+export interface DatabaseConfig {
   enableTimestamps?: boolean; // 启用时间戳管理
   enableSoftDelete?: boolean; // 启用软删除
   fieldNames?: {
@@ -728,9 +728,9 @@ export interface TimestampManagerConfig {
 #### 1. 实体设计
 
 ```typescript
-// ✅ 推荐：继承 TimestampedEntity
+// ✅ 推荐：继承 BaseEntity
 @Entity('products')
-export class Product extends TimestampedEntity {
+export class Product extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -751,9 +751,9 @@ export class Product {
 #### 2. 服务层使用
 
 ```typescript
-// ✅ 推荐：继承 TimestampedService
+// ✅ 推荐：继承 BaseService
 @Injectable()
-export class ProductService extends TimestampedService<Product> {
+export class ProductService extends BaseService<Product> {
   constructor(
     @InjectRepository(Product)
     productRepository: Repository<Product>,
@@ -808,7 +808,7 @@ export class ProductController {
 4. **性能考虑**: 软删除会增加查询复杂度，对于大数据量表需要在 `delete_time` 字段上建立索引
 5. **数据清理**: 定期清理长期软删除的数据，避免数据表过大
 6. **权限控制**: 物理删除操作需要严格的权限控制
-7. **实体继承**: 继承 `TimestampedEntity` 的实体会自动获得时间戳字段和相关方法
+7. **实体继承**: 继承 `BaseEntity` 的实体会自动获得时间戳字段和相关方法
 8. **装饰器使用**: 合理使用 `@IncludeDeleted()`、`@ForceDelete()` 等装饰器控制查询和删除行为
 
 ## 🛠️ 工具模块 (src/utils)

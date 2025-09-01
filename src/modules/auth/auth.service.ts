@@ -1,5 +1,5 @@
-import { TimestampedService } from 'src/audit';
 import { Status, isEnabled, toggleStatus } from 'src/common/enums';
+import { BaseService } from 'src/database';
 import * as svgCaptcha from 'svg-captcha';
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
@@ -34,7 +34,7 @@ import { Auth } from './entities/auth.entity';
  * - 用户会话管理
  */
 @Injectable()
-export class AuthService extends TimestampedService<Auth> {
+export class AuthService extends BaseService<Auth> {
   /**
    * 构造函数
    * @param authRepository 用户数据仓库
@@ -306,9 +306,7 @@ export class AuthService extends TimestampedService<Auth> {
    * @returns 删除结果
    */
   async deleteUser(id: string): Promise<{ message: string }> {
-    const user = await this.getUserById(id);
-
-    await this.repository.remove(user);
+    await this.softDelete(id);
 
     return { message: '用户删除成功' };
   }
@@ -323,19 +321,12 @@ export class AuthService extends TimestampedService<Auth> {
   ): Promise<{ message: string; deletedCount: number }> {
     const { ids } = batchDeleteDto;
 
-    // 查找要删除的用户
-    const users = await this.repository.findByIds(ids);
-
-    if (users.length === 0) {
-      throw new Error('未找到要删除的用户');
-    }
-
-    // 执行批量删除
-    await this.repository.remove(users);
+    // 执行批量软删除
+    await this.softDeleteMany(ids);
 
     return {
-      message: `成功删除 ${users.length} 个用户`,
-      deletedCount: users.length,
+      message: `成功删除 ${ids.length} 个用户`,
+      deletedCount: ids.length,
     };
   }
 

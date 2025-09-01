@@ -2,9 +2,9 @@ import type { DeepPartial, FindManyOptions, FindOneOptions } from 'typeorm';
 import type { SoftDeleteOptions } from '../types';
 
 /**
- * 可时间戳管理的实体接口
+ * 基础实体接口
  */
-export interface ITimestampedEntity {
+export interface IBaseEntity {
   createTime: Date;
   updateTime: Date;
   deleteTime?: Date | null;
@@ -13,7 +13,7 @@ export interface ITimestampedEntity {
 /**
  * 软删除服务接口
  */
-export interface ISoftDeletableService<T extends ITimestampedEntity> {
+export interface ISoftDeletableService<T extends IBaseEntity> {
   /**
    * 软删除实体
    */
@@ -63,8 +63,7 @@ export interface ISoftDeletableService<T extends ITimestampedEntity> {
 /**
  * 时间戳管理服务接口
  */
-export interface ITimestampedService<T extends ITimestampedEntity>
-  extends ISoftDeletableService<T> {
+export interface IBaseService<T extends IBaseEntity> extends ISoftDeletableService<T> {
   /**
    * 创建实体（自动设置时间戳）
    */

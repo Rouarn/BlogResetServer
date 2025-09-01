@@ -1,4 +1,4 @@
-import { AuditModule } from 'src/audit/audit.module';
+import { DatabaseModule } from 'src/database';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthController } from './auth.controller';
@@ -6,7 +6,7 @@ import { AuthService } from './auth.service';
 import { Auth } from './entities/auth.entity';
 
 @Module({
-  imports: [AuditModule, TypeOrmModule.forFeature([Auth])],
+  imports: [DatabaseModule, TypeOrmModule.forFeature([Auth])],
   controllers: [AuthController],
   providers: [AuthService],
 })

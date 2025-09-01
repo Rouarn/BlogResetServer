@@ -1,4 +1,4 @@
-export interface TimestampManagerConfig {
+export interface DatabaseConfig {
   /** 是否启用自动时间戳管理 */
   enableTimestamps?: boolean;
   /** 是否启用软删除功能 */
@@ -21,7 +21,7 @@ export interface TimestampManagerConfig {
   excludeEntities?: string[];
 }
 
-export interface TimestampFields {
+export interface BaseEntityFields {
   createTime: Date;
   updateTime: Date;
   deleteTime?: Date | null;
@@ -40,5 +40,5 @@ export interface QueryContext {
   forceDelete?: boolean;
 }
 
-export const TIMESTAMP_MANAGER_CONFIG = Symbol('TIMESTAMP_MANAGER_CONFIG');
+export const DATABASE_CONFIG = Symbol('DATABASE_CONFIG');
 export const QUERY_CONTEXT = Symbol('QUERY_CONTEXT');

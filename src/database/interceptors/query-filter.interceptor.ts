@@ -3,7 +3,7 @@ import { map } from 'rxjs/operators';
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { INCLUDE_DELETED_KEY } from '../decorators';
-import { ITimestampedEntity } from '../interfaces';
+import { IBaseEntity } from '../interfaces';
 import { QUERY_CONTEXT, QueryContext } from '../types';
 
 // 定义响应数据类型
@@ -143,8 +143,8 @@ export class QueryFilterInterceptor implements NestInterceptor {
       return obj.delete_time !== null && obj.delete_time !== undefined;
     }
 
-    // 检查是否实现了 ITimestampedEntity 接口
-    if (this.isTimestampedEntity(obj)) {
+    // 检查是否实现了 IBaseEntity 接口
+    if (this.isBaseEntity(obj)) {
       return obj.deleteTime !== null && obj.deleteTime !== undefined;
     }
 
@@ -154,7 +154,7 @@ export class QueryFilterInterceptor implements NestInterceptor {
   /**
    * 检查对象是否为时间戳管理实体
    */
-  private isTimestampedEntity(obj: unknown): obj is ITimestampedEntity {
+  private isBaseEntity(obj: unknown): obj is IBaseEntity {
     return (
       obj !== null &&
       obj !== undefined &&

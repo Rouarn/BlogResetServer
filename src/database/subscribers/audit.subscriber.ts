@@ -9,8 +9,8 @@ import {
 import { Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { DISABLE_TIMESTAMPS_KEY } from '../decorators';
-import { TimestampedEntity } from '../entities/timestamped.entity';
-import { ITimestampedEntity } from '../interfaces';
+import { BaseEntity } from '../entities/base.entity';
+import { IBaseEntity } from '../interfaces';
 
 // 类型定义
 interface EntityWithTimestamps {
@@ -20,12 +20,12 @@ interface EntityWithTimestamps {
   constructor: new (...args: unknown[]) => unknown;
 }
 
-// 扩展类型以兼容 ITimestampedEntity
-type TimestampedEntityLike = Omit<EntityWithTimestamps, 'constructor'> & {
+// 扩展类型以兼容 IBaseEntity
+type BaseEntityLike = Omit<EntityWithTimestamps, 'constructor'> & {
   constructor?: new (...args: unknown[]) => unknown;
-} & Partial<ITimestampedEntity>;
+} & Partial<IBaseEntity>;
 
-type TimestampEvent = InsertEvent<ITimestampedEntity> | UpdateEvent<ITimestampedEntity>;
+type AuditEvent = InsertEvent<IBaseEntity> | UpdateEvent<IBaseEntity>;
 
 /**
  * 时间戳订阅者
@@ -33,24 +33,21 @@ type TimestampEvent = InsertEvent<ITimestampedEntity> | UpdateEvent<ITimestamped
  */
 @Injectable()
 @EventSubscriber()
-export class TimestampSubscriber implements EntitySubscriberInterface<ITimestampedEntity> {
+export class AuditSubscriber implements EntitySubscriberInterface<IBaseEntity> {
   constructor(private readonly reflector: Reflector) {}
 
   /**
    * 监听所有实体
    */
-  listenTo(): typeof TimestampedEntity {
-    return TimestampedEntity;
+  listenTo(): typeof BaseEntity {
+    return BaseEntity;
   }
 
   /**
    * 插入前处理
    */
-  beforeInsert(event: InsertEvent<ITimestampedEntity>): void {
-    if (
-      !this.isTimestampedEntity(event.entity as TimestampedEntityLike) ||
-      this.isTimestampsDisabled(event)
-    ) {
+  beforeInsert(event: InsertEvent<IBaseEntity>): void {
+    if (!this.isBaseEntity(event.entity as BaseEntityLike) || this.isTimestampsDisabled(event)) {
       return;
     }
 
@@ -73,11 +70,8 @@ export class TimestampSubscriber implements EntitySubscriberInterface<ITimestamp
   /**
    * 更新前处理
    */
-  beforeUpdate(event: UpdateEvent<ITimestampedEntity>): void {
-    if (
-      !this.isTimestampedEntity(event.entity as TimestampedEntityLike) ||
-      this.isTimestampsDisabled(event)
-    ) {
+  beforeUpdate(event: UpdateEvent<IBaseEntity>): void {
+    if (!this.isBaseEntity(event.entity as BaseEntityLike) || this.isTimestampsDisabled(event)) {
       return;
     }
 
@@ -91,11 +85,8 @@ export class TimestampSubscriber implements EntitySubscriberInterface<ITimestamp
   /**
    * 删除前处理 - 转换为软删除
    */
-  beforeRemove(event: RemoveEvent<ITimestampedEntity>): void {
-    if (
-      !this.isTimestampedEntity(event.entity as TimestampedEntityLike) ||
-      this.isForceDelete(event)
-    ) {
+  beforeRemove(event: RemoveEvent<IBaseEntity>): void {
+    if (!this.isBaseEntity(event.entity as BaseEntityLike) || this.isForceDelete(event)) {
       return;
     }
 
@@ -117,7 +108,7 @@ export class TimestampSubscriber implements EntitySubscriberInterface<ITimestamp
   /**
    * 加载后处理 - 可以在这里添加额外的逻辑
    */
-  afterLoad(_entity: ITimestampedEntity, _event?: LoadEvent<ITimestampedEntity>): void {
+  afterLoad(_entity: IBaseEntity, _event?: LoadEvent<IBaseEntity>): void {
     // 可以在这里添加加载后的处理逻辑
     // 例如：格式化时间戳、添加虚拟字段等
   }
@@ -125,11 +116,11 @@ export class TimestampSubscriber implements EntitySubscriberInterface<ITimestamp
   /**
    * 检查实体是否为时间戳管理实体
    */
-  private isTimestampedEntity(entity: TimestampedEntityLike | null | undefined): boolean {
+  private isBaseEntity(entity: BaseEntityLike | null | undefined): boolean {
     if (!entity) return false;
 
-    // 检查是否继承自 TimestampedEntity
-    if (entity instanceof TimestampedEntity) {
+    // 检查是否继承自 BaseEntity
+    if (entity instanceof BaseEntity) {
       return true;
     }
 
@@ -140,7 +131,7 @@ export class TimestampSubscriber implements EntitySubscriberInterface<ITimestamp
   /**
    * 检查是否禁用时间戳
    */
-  private isTimestampsDisabled(event: TimestampEvent): boolean {
+  private isTimestampsDisabled(event: AuditEvent): boolean {
     // 检查实体类上的元数据
     if (!event.entity) return false;
 
@@ -152,7 +143,7 @@ export class TimestampSubscriber implements EntitySubscriberInterface<ITimestamp
   /**
    * 检查是否为强制删除
    */
-  private isForceDelete(_event: RemoveEvent<ITimestampedEntity>): boolean {
+  private isForceDelete(_event: RemoveEvent<IBaseEntity>): boolean {
     // 这里可以通过上下文或其他方式检查是否为强制删除
     // 暂时返回 false，具体实现可能需要结合拦截器
     return false;

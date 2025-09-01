@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { TimestampedService } from 'src/audit';
+import { BaseService } from 'src/database';
 import { formatDatePath } from 'src/utils';
 import { Repository } from 'typeorm';
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
@@ -12,7 +12,7 @@ import { StorageService } from './storage.service';
 import { ValidationService } from './validation.service';
 
 @Injectable()
-export class FilesService extends TimestampedService<File> {
+export class FilesService extends BaseService<File> {
   private readonly logger = new Logger(FilesService.name);
 
   constructor(

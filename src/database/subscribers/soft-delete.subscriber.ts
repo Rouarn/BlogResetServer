@@ -1,9 +1,9 @@
 import { EntitySubscriberInterface, EventSubscriber, SelectQueryBuilder } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { TIMESTAMPED_ENTITY_KEY } from '../decorators';
-import { TimestampedEntity } from '../entities/timestamped.entity';
-import { ITimestampedEntity } from '../interfaces';
+import { BASE_ENTITY_KEY } from '../decorators';
+import { BaseEntity } from '../entities/base.entity';
+import { IBaseEntity } from '../interfaces';
 
 // 类型定义
 interface EntityClass {
@@ -17,14 +17,14 @@ interface EntityClass {
  */
 @Injectable()
 @EventSubscriber()
-export class SoftDeleteSubscriber implements EntitySubscriberInterface<ITimestampedEntity> {
+export class SoftDeleteSubscriber implements EntitySubscriberInterface<IBaseEntity> {
   constructor(private readonly reflector: Reflector) {}
 
   /**
    * 监听所有实体
    */
-  listenTo(): typeof TimestampedEntity {
-    return TimestampedEntity;
+  listenTo(): typeof BaseEntity {
+    return BaseEntity;
   }
 
   // 注意：TypeORM 的 EntitySubscriberInterface 不包含 beforeQuery 方法
@@ -33,9 +33,7 @@ export class SoftDeleteSubscriber implements EntitySubscriberInterface<ITimestam
   /**
    * 检查是否应该应用软删除过滤
    */
-  private shouldApplySoftDeleteFilter(
-    queryBuilder: SelectQueryBuilder<ITimestampedEntity>,
-  ): boolean {
+  private shouldApplySoftDeleteFilter(queryBuilder: SelectQueryBuilder<IBaseEntity>): boolean {
     // 检查查询的实体是否为时间戳管理实体
     const entity = queryBuilder.expressionMap.mainAlias?.metadata?.target;
 
@@ -44,10 +42,10 @@ export class SoftDeleteSubscriber implements EntitySubscriberInterface<ITimestam
     }
 
     // 检查是否为时间戳管理实体
-    const isTimestampedEntity = this.isTimestampedEntity(
+    const isBaseEntity = this.isBaseEntity(
       entity as string | (new (...args: unknown[]) => unknown) | EntityClass,
     );
-    if (!isTimestampedEntity) {
+    if (!isBaseEntity) {
       return false;
     }
 
@@ -70,25 +68,25 @@ export class SoftDeleteSubscriber implements EntitySubscriberInterface<ITimestam
   }
 
   /**
-   * 检查实体是否为时间戳管理实体
+   * 检查实体是否为基础实体
    */
-  private isTimestampedEntity(
+  private isBaseEntity(
     entityClass: string | (new (...args: unknown[]) => unknown) | EntityClass,
   ): boolean {
     if (!entityClass || typeof entityClass === 'string') return false;
 
     const entityConstructor = entityClass as EntityClass;
 
-    // 检查是否有时间戳装饰器元数据
-    const metadata = this.reflector.get(TIMESTAMPED_ENTITY_KEY, entityConstructor);
+    // 检查是否有基础实体装饰器元数据
+    const metadata = this.reflector.get(BASE_ENTITY_KEY, entityConstructor);
     if (metadata) {
       return true;
     }
 
-    // 检查是否继承自 TimestampedEntity
+    // 检查是否继承自 BaseEntity
     let currentClass = entityConstructor;
     while (currentClass) {
-      if (currentClass === TimestampedEntity) {
+      if (currentClass === BaseEntity) {
         return true;
       }
       currentClass = Object.getPrototypeOf(currentClass);

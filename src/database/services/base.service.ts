@@ -8,26 +8,24 @@ import {
   Repository,
 } from 'typeorm';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ITimestampedEntity, ITimestampedService } from '../interfaces';
+import { IBaseEntity, IBaseService } from '../interfaces';
 import { SoftDeleteOptions } from '../types';
 
 // 扩展查找选项类型以支持时间戳实体
-type TimestampedFindManyOptions<T extends ITimestampedEntity> = FindManyOptions<T> & {
+type BaseFindManyOptions<T extends IBaseEntity> = FindManyOptions<T> & {
   where?: FindOptionsWhere<T> | FindOptionsWhere<T>[];
 };
 
-type TimestampedFindOneOptions<T extends ITimestampedEntity> = FindOneOptions<T> & {
+type BaseFindOneOptions<T extends IBaseEntity> = FindOneOptions<T> & {
   where?: FindOptionsWhere<T> | FindOptionsWhere<T>[];
 };
 
 /**
- * 时间戳管理基础服务类
+ * 基础服务类
  * 提供完整的 CRUD 操作和软删除功能
  */
 @Injectable()
-export abstract class TimestampedService<T extends ITimestampedEntity>
-  implements ITimestampedService<T>
-{
+export abstract class BaseService<T extends IBaseEntity> implements IBaseService<T> {
   constructor(protected readonly repository: Repository<T>) {}
 
   /**
@@ -80,7 +78,7 @@ export abstract class TimestampedService<T extends ITimestampedEntity>
   /**
    * 查找所有（自动过滤已删除）
    */
-  async findAll(options: TimestampedFindManyOptions<T> & SoftDeleteOptions = {}): Promise<T[]> {
+  async findAll(options: BaseFindManyOptions<T> & SoftDeleteOptions = {}): Promise<T[]> {
     const { includeDeleted, ...findOptions } = options;
 
     if (!includeDeleted) {
@@ -98,7 +96,7 @@ export abstract class TimestampedService<T extends ITimestampedEntity>
    */
   async findById(
     id: string | number,
-    options: TimestampedFindOneOptions<T> & SoftDeleteOptions = {},
+    options: BaseFindOneOptions<T> & SoftDeleteOptions = {},
   ): Promise<T | null> {
     const { includeDeleted, ...findOptions } = options;
 
@@ -121,7 +119,7 @@ export abstract class TimestampedService<T extends ITimestampedEntity>
   /**
    * 查找一个（自动过滤已删除）
    */
-  async findOne(options: TimestampedFindOneOptions<T> & SoftDeleteOptions = {}): Promise<T | null> {
+  async findOne(options: BaseFindOneOptions<T> & SoftDeleteOptions = {}): Promise<T | null> {
     const { includeDeleted, ...findOptions } = options;
 
     if (!includeDeleted) {
@@ -137,7 +135,7 @@ export abstract class TimestampedService<T extends ITimestampedEntity>
   /**
    * 统计数量（自动过滤已删除）
    */
-  async count(options: TimestampedFindManyOptions<T> & SoftDeleteOptions = {}): Promise<number> {
+  async count(options: BaseFindManyOptions<T> & SoftDeleteOptions = {}): Promise<number> {
     const { includeDeleted, ...findOptions } = options;
 
     if (!includeDeleted) {
@@ -242,21 +240,21 @@ export abstract class TimestampedService<T extends ITimestampedEntity>
   /**
    * 查找包含已删除的数据
    */
-  async findWithDeleted(options: TimestampedFindManyOptions<T> = {}): Promise<T[]> {
+  async findWithDeleted(options: BaseFindManyOptions<T> = {}): Promise<T[]> {
     return await this.repository.find(options);
   }
 
   /**
    * 查找单个包含已删除的数据
    */
-  async findOneWithDeleted(options: TimestampedFindOneOptions<T> = {}): Promise<T | null> {
+  async findOneWithDeleted(options: BaseFindOneOptions<T> = {}): Promise<T | null> {
     return await this.repository.findOne(options);
   }
 
   /**
    * 只查找已删除的数据
    */
-  async findDeleted(options: TimestampedFindManyOptions<T> = {}): Promise<T[]> {
+  async findDeleted(options: BaseFindManyOptions<T> = {}): Promise<T[]> {
     const findOptions = {
       ...options,
       where: {

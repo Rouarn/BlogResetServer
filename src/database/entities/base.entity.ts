@@ -1,16 +1,18 @@
+import { Transform } from 'class-transformer';
 import { BeforeInsert, BeforeUpdate, Column } from 'typeorm';
-import { Timestamped } from '../decorators';
-import { ITimestampedEntity } from '../interfaces';
+import { IBaseEntity } from '../interfaces';
 
 /**
  * 时间戳管理基础实体类
  * 提供自动的创建时间、更新时间和软删除功能
  */
-@Timestamped()
-export abstract class TimestampedEntity implements ITimestampedEntity {
+export abstract class BaseEntity implements IBaseEntity {
   /**
    * 创建时间
    */
+  @Transform(({ value }: { value: Date | string | null }) =>
+    value instanceof Date ? value.toISOString() : value,
+  )
   @Column({
     name: 'create_time',
     type: 'timestamp',
@@ -22,6 +24,9 @@ export abstract class TimestampedEntity implements ITimestampedEntity {
   /**
    * 更新时间
    */
+  @Transform(({ value }: { value: Date | string | null }) =>
+    value instanceof Date ? value.toISOString() : value,
+  )
   @Column({
     name: 'update_time',
     type: 'timestamp',
@@ -34,6 +39,9 @@ export abstract class TimestampedEntity implements ITimestampedEntity {
   /**
    * 删除时间（软删除）
    */
+  @Transform(({ value }: { value: Date | string | null }) =>
+    value instanceof Date ? value.toISOString() : value,
+  )
   @Column({
     name: 'delete_time',
     type: 'timestamp',

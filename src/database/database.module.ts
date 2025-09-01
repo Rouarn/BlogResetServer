@@ -1,16 +1,12 @@
 import { DynamicModule, Global, Module, Provider, Type } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import {
-  QueryFilterInterceptor,
-  SoftDeleteInterceptor,
-  TimestampInterceptor,
-} from './interceptors';
-import { SoftDeleteSubscriber, TimestampSubscriber } from './subscribers';
-import { TIMESTAMP_MANAGER_CONFIG, TimestampManagerConfig } from './types';
+import { AuditInterceptor, QueryFilterInterceptor, SoftDeleteInterceptor } from './interceptors';
+import { AuditSubscriber, SoftDeleteSubscriber } from './subscribers';
+import { DATABASE_CONFIG, DatabaseConfig } from './types';
 
 // 类型定义
 interface AsyncModuleOptions {
-  useFactory?: (...args: unknown[]) => Promise<TimestampManagerConfig> | TimestampManagerConfig;
+  useFactory?: (...args: unknown[]) => Promise<DatabaseConfig> | DatabaseConfig;
   inject?: (string | symbol | Type<unknown>)[];
   imports?: Type<unknown>[];
 }
@@ -21,13 +17,13 @@ interface AsyncModuleOptions {
  */
 @Global()
 @Module({})
-export class AuditModule {
+export class DatabaseModule {
   /**
-   * 全局配置时间戳管理模块
+   * 全局配置数据库模块
    * @param config 配置选项
    */
-  static forRoot(config: TimestampManagerConfig = {}): DynamicModule {
-    const defaultConfig: TimestampManagerConfig = {
+  static forRoot(config: DatabaseConfig = {}): DynamicModule {
+    const defaultConfig: DatabaseConfig = {
       /**
        * 是否启用时间戳管理
        */
@@ -60,14 +56,14 @@ export class AuditModule {
 
     const providers: Provider[] = [
       {
-        provide: TIMESTAMP_MANAGER_CONFIG,
+        provide: DATABASE_CONFIG,
         useValue: defaultConfig,
       },
     ];
 
     // 添加订阅者
     if (defaultConfig.enableTimestamps) {
-      providers.push(TimestampSubscriber);
+      providers.push(AuditSubscriber);
     }
 
     if (defaultConfig.enableSoftDelete) {
@@ -83,7 +79,7 @@ export class AuditModule {
     if (defaultConfig.enableTimestamps) {
       interceptors.push({
         provide: APP_INTERCEPTOR,
-        useClass: TimestampInterceptor,
+        useClass: AuditInterceptor,
       });
     }
 
@@ -103,9 +99,9 @@ export class AuditModule {
     providers.push(...interceptors);
 
     return {
-      module: AuditModule,
+      module: DatabaseModule,
       providers,
-      exports: [TIMESTAMP_MANAGER_CONFIG],
+      exports: [DATABASE_CONFIG],
     };
   }
 
@@ -116,15 +112,15 @@ export class AuditModule {
   static forRootAsync(options: AsyncModuleOptions): DynamicModule {
     const providers: Provider[] = [
       {
-        provide: TIMESTAMP_MANAGER_CONFIG,
+        provide: DATABASE_CONFIG,
         useFactory: options.useFactory!,
         inject: options.inject ?? [],
       },
-      TimestampSubscriber,
+      AuditSubscriber,
       SoftDeleteSubscriber,
       {
         provide: APP_INTERCEPTOR,
-        useClass: TimestampInterceptor,
+        useClass: AuditInterceptor,
       },
       {
         provide: APP_INTERCEPTOR,
@@ -137,10 +133,10 @@ export class AuditModule {
     ];
 
     return {
-      module: AuditModule,
+      module: DatabaseModule,
       imports: options.imports ?? [],
       providers,
-      exports: [TIMESTAMP_MANAGER_CONFIG],
+      exports: [DATABASE_CONFIG],
     };
   }
 
@@ -150,9 +146,9 @@ export class AuditModule {
    */
   static forFeature(): DynamicModule {
     return {
-      module: AuditModule,
-      providers: [TimestampSubscriber, SoftDeleteSubscriber],
-      exports: [TimestampSubscriber, SoftDeleteSubscriber],
+      module: DatabaseModule,
+      providers: [AuditSubscriber, SoftDeleteSubscriber],
+      exports: [AuditSubscriber, SoftDeleteSubscriber],
     };
   }
 }

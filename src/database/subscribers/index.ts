@@ -1,2 +1,2 @@
 export * from './soft-delete.subscriber';
-export * from './timestamp.subscriber';
+export * from './audit.subscriber';

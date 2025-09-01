@@ -1,10 +1,9 @@
-import { Timestamped, TimestampedEntity } from 'src/audit';
+import { BaseEntity } from 'src/database';
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { File } from './file.entity';
 
 @Entity('ra_upload_chunks')
-@Timestamped()
-export class UploadChunk extends TimestampedEntity {
+export class UploadChunk extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 

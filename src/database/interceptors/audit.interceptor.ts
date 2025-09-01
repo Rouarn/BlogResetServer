@@ -6,11 +6,11 @@ import { DISABLE_TIMESTAMPS_KEY, FORCE_DELETE_KEY, INCLUDE_DELETED_KEY } from '.
 import { QUERY_CONTEXT, QueryContext } from '../types';
 
 /**
- * 时间戳拦截器
- * 处理请求上下文中的时间戳相关配置
+ * 审计拦截器
+ * 处理请求上下文中的审计相关配置
  */
 @Injectable()
-export class TimestampInterceptor implements NestInterceptor {
+export class AuditInterceptor implements NestInterceptor {
   constructor(private readonly reflector: Reflector) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
