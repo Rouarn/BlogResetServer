@@ -1,6 +1,6 @@
 import { Transform } from 'class-transformer';
 import { BeforeInsert, BeforeUpdate, Column } from 'typeorm';
-import { IBaseEntity } from '../interfaces';
+import type { IBaseEntity } from '../interfaces';
 
 /**
  * 时间戳管理基础实体类

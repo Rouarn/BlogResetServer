@@ -1,16 +1,16 @@
-import {
+import { Injectable } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import type {
   EntitySubscriberInterface,
-  EventSubscriber,
   InsertEvent,
   LoadEvent,
   RemoveEvent,
   UpdateEvent,
 } from 'typeorm';
-import { Injectable } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+import { EventSubscriber } from 'typeorm';
 import { DISABLE_TIMESTAMPS_KEY } from '../decorators';
 import { BaseEntity } from '../entities/base.entity';
-import { IBaseEntity } from '../interfaces';
+import type { IBaseEntity } from '../interfaces';
 
 // 类型定义
 interface EntityWithTimestamps {

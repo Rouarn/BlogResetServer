@@ -1,9 +1,8 @@
-import * as multer from 'multer';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MulterModule } from '@nestjs/platform-express';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { DatabaseModule } from '../../database/database.module';
+import * as multer from 'multer';
 import { File, UploadChunk } from './entities';
 import { FilesController } from './files.controller';
 import { FileAccessGuard } from './guards/file-access.guard';
@@ -12,6 +11,7 @@ import { FilesService } from './services/files.service';
 import { StorageFactoryService } from './services/storage-factory.service';
 import { StorageService } from './services/storage.service';
 import { ValidationService } from './services/validation.service';
+import { DatabaseModule } from '../../database/database.module';
 
 @Module({
   imports: [

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { ServeStaticOptions } from '@nestjs/platform-express/interfaces/serve-static-options.interface';
-import { FileUploadOptions } from '../modules/files/interfaces';
+import type { FileUploadOptions } from '../modules/files/interfaces';
 
 export interface UploadsConfig {
   path: string;

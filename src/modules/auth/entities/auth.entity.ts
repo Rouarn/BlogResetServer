@@ -1,8 +1,8 @@
 import * as bcrypt from 'bcryptjs';
 import { Exclude } from 'class-transformer';
+import { BeforeInsert, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { Gender, Role, Status } from 'src/common/enums';
 import { BaseEntity } from 'src/database';
-import { BeforeInsert, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('ra_users')
 export class Auth extends BaseEntity {

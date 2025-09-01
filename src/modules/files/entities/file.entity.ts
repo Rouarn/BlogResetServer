@@ -1,6 +1,6 @@
-import { BaseEntity } from 'src/database';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { FileStatus, FileType, UploadProtocol } from '../enums';
+import { BaseEntity } from 'src/database';
+import { FileStatus, FileType } from '../enums';
 import { UploadChunk } from './upload-chunk.entity';
 
 @Entity('ra_files')

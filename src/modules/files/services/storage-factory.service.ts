@@ -1,14 +1,14 @@
 import * as path from 'path';
-import { StaticConfig } from 'src/common/interfaces';
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
+import type { StaticConfig } from 'src/common/interfaces';
+import { StorageService } from './storage.service';
+import type {
+  StorageAdapter,
   StorageFactory,
   StorageFactoryConfig,
-  StorageType,
 } from '../interfaces/storage-factory.interface';
-import { StorageAdapter } from '../interfaces/storage.interface';
-import { StorageService } from './storage.service';
+import { StorageType } from '../interfaces/storage-factory.interface';
 
 @Injectable()
 export class StorageFactoryService implements StorageFactory {
@@ -22,7 +22,7 @@ export class StorageFactoryService implements StorageFactory {
         return new StorageService(this.configService);
 
       default:
-        throw new Error(`Unsupported storage type: ${config.type}`);
+        throw new BadRequestException(`Unsupported storage type: ${config.type}`);
     }
   }
 

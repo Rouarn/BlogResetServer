@@ -1,5 +1,7 @@
 import type { StorageAdapter } from './storage.interface';
 
+export type { StorageAdapter };
+
 export enum StorageType {
   LOCAL = 'local',
 }

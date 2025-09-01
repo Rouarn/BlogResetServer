@@ -1,9 +1,10 @@
-import { EntitySubscriberInterface, EventSubscriber, SelectQueryBuilder } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import type { EntitySubscriberInterface, SelectQueryBuilder } from 'typeorm';
+import { EventSubscriber } from 'typeorm';
 import { BASE_ENTITY_KEY } from '../decorators';
 import { BaseEntity } from '../entities/base.entity';
-import { IBaseEntity } from '../interfaces';
+import type { IBaseEntity } from '../interfaces';
 
 // 类型定义
 interface EntityClass {

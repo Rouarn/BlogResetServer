@@ -1,7 +1,8 @@
-import { Observable } from 'rxjs';
+import type { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import type { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { formatTimestamp } from 'src/utils';
-import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import {
   DEFAULT_PAGINATION,
   PAGING_FIELDS,

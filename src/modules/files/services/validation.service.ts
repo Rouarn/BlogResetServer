@@ -1,9 +1,9 @@
 import * as crypto from 'crypto';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { fileTypeFromBuffer } from 'file-type';
 import type { StaticConfig as StaticConfigType } from 'src/common/interfaces';
 import { getCurrentTimestamp, randomString } from 'src/utils';
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { FileType } from '../enums';
 
 @Injectable()

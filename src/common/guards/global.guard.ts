@@ -1,5 +1,3 @@
-import { Request } from 'express';
-import { WhitelistAuth, getCurrentTimestamp } from 'src/utils';
 import {
   CanActivate,
   ExecutionContext,
@@ -7,6 +5,8 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
+import type { Request } from 'express';
+import { WhitelistAuth, getCurrentTimestamp } from 'src/utils';
 
 /**
  * 全局限流守卫（GlobalGuard）

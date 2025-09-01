@@ -1,7 +1,7 @@
-import type { Request } from 'express';
-import type { Auth as CurrentUser } from 'src/modules/auth/entities/auth.entity';
 import type { ExecutionContext } from '@nestjs/common';
 import { createParamDecorator } from '@nestjs/common';
+import type { Request } from 'express';
+import type { Auth as CurrentUser } from 'src/modules/auth/entities/auth.entity';
 
 /**
  * 获取当前用户装饰器（GetCurrentUser）

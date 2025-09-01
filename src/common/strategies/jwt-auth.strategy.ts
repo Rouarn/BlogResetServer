@@ -1,8 +1,8 @@
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { Auth } from 'src/modules/auth/entities/auth.entity';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import type { Auth } from 'src/modules/auth/entities/auth.entity';
 
 /**
  * JWT 认证策略（JwtAuthStrategy）

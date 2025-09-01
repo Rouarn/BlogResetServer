@@ -1,13 +1,18 @@
-import { Status, isEnabled, toggleStatus } from 'src/common/enums';
-import { BaseService } from 'src/database';
-import * as svgCaptcha from 'svg-captcha';
-import { Repository } from 'typeorm';
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { LoginDto } from './dto/login.dto';
-import { BatchDeleteUserDto, UpdateUserDto } from './dto/update-user.dto';
+import * as svgCaptcha from 'svg-captcha';
+import { Repository } from 'typeorm';
+import { Status, isEnabled, toggleStatus } from 'src/common/enums';
+import { BaseService } from 'src/database';
+import type { CreateAuthDto } from './dto/create-auth.dto';
+import type { LoginDto } from './dto/login.dto';
+import type { BatchDeleteUserDto, UpdateUserDto } from './dto/update-user.dto';
 import { Auth } from './entities/auth.entity';
 
 /**
@@ -84,12 +89,12 @@ export class AuthService extends BaseService<Auth> {
     });
 
     if (!findUser) {
-      throw new Error('用户不存在');
+      throw new UnauthorizedException('用户不存在');
     }
 
     // 检查用户状态
     if (!isEnabled(findUser.status)) {
-      throw new Error('用户已被禁用');
+      throw new UnauthorizedException('用户已被禁用');
     }
 
     // 验证密码
@@ -99,7 +104,7 @@ export class AuthService extends BaseService<Auth> {
       findUser.password,
     );
     if (!isPasswordValid) {
-      throw new Error('密码错误');
+      throw new UnauthorizedException('密码错误');
     }
 
     // 生成JWT令牌
@@ -131,7 +136,7 @@ export class AuthService extends BaseService<Auth> {
     });
 
     if (findUser) {
-      throw new Error('用户已存在');
+      throw new ConflictException('用户已存在');
     }
 
     // 创建用户
@@ -261,7 +266,7 @@ export class AuthService extends BaseService<Auth> {
     });
 
     if (!user) {
-      throw new Error('用户不存在');
+      throw new NotFoundException('用户不存在');
     }
 
     return user;

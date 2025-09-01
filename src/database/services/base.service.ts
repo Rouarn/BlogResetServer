@@ -1,15 +1,14 @@
-import {
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import type {
   DeepPartial,
   FindManyOptions,
   FindOneOptions,
   FindOptionsWhere,
-  IsNull,
-  Not,
   Repository,
 } from 'typeorm';
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { IBaseEntity, IBaseService } from '../interfaces';
-import { SoftDeleteOptions } from '../types';
+import { IsNull, Not } from 'typeorm';
+import type { IBaseEntity, IBaseService } from '../interfaces';
+import type { SoftDeleteOptions } from '../types';
 
 // 扩展查找选项类型以支持时间戳实体
 type BaseFindManyOptions<T extends IBaseEntity> = FindManyOptions<T> & {
@@ -158,7 +157,7 @@ export abstract class BaseService<T extends IBaseEntity> implements IBaseService
     }
 
     if (entity.deleteTime) {
-      throw new Error(`Entity with id ${id} is already deleted`);
+      throw new BadRequestException(`Entity with id ${id} is already deleted`);
     }
 
     const now = new Date();

@@ -10,10 +10,5 @@
   "arrowParens": "always",
   "endOfLine": "lf",
   "quoteProps": "as-needed",
-  "proseWrap": "preserve",
-  "plugins": ["@trivago/prettier-plugin-sort-imports"],
-  "importOrder": ["^@nestjs/(.*)$", "^@/(.*)$", "^[./]"],
-  "importOrderSeparation": false,
-  "importOrderSortSpecifiers": true,
-  "importOrderParserPlugins": ["typescript", "decorators-legacy"]
+  "proseWrap": "preserve"
 }

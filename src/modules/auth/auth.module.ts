@@ -1,6 +1,6 @@
-import { DatabaseModule } from 'src/database';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { DatabaseModule } from 'src/database';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { Auth } from './entities/auth.entity';

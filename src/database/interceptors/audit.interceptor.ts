@@ -1,9 +1,11 @@
-import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
-import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
+import type { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import type { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { DISABLE_TIMESTAMPS_KEY, FORCE_DELETE_KEY, INCLUDE_DELETED_KEY } from '../decorators';
-import { QUERY_CONTEXT, QueryContext } from '../types';
+import { QUERY_CONTEXT } from '../types';
+import type { QueryContext } from '../types';
 
 /**
  * 审计拦截器

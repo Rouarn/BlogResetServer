@@ -1,6 +1,6 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
 import { Gender } from 'src/common/enums';
-import { ApiProperty } from '@nestjs/swagger';
 
 /**
  * 认证数据传输对象

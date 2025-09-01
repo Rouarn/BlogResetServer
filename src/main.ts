@@ -1,4 +1,3 @@
-import cors from 'cors';
 import * as fs from 'fs';
 import * as path from 'path';
 import { join } from 'path';
@@ -6,6 +5,7 @@ import { Logger, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cors from 'cors';
 import { AppModule } from './app.module';
 import { appConfig } from './config';
 

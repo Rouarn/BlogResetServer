@@ -1,5 +1,5 @@
-import { ValidationError } from 'class-validator';
 import { BadRequestException, Injectable, ValidationPipe } from '@nestjs/common';
+import type { ValidationError } from 'class-validator';
 
 /**
  * 自定义验证管道，提供中文错误消息

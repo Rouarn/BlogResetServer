@@ -1,7 +1,3 @@
-import { Request } from 'express';
-import { Observable } from 'rxjs';
-import { Auth } from 'src/modules/auth/entities/auth.entity';
-import { WhitelistAuth } from 'src/utils';
 import {
   ExecutionContext,
   Injectable,
@@ -10,6 +6,10 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
+import type { Request } from 'express';
+import type { Observable } from 'rxjs';
+import type { Auth } from 'src/modules/auth/entities/auth.entity';
+import { WhitelistAuth } from 'src/utils';
 import { IS_PUBLIC_KEY } from '../decorators';
 
 /**

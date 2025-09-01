@@ -14,9 +14,10 @@
  * @author NestJS Template
  * @version 1.0.0
  */
-import { Public } from 'src/common/decorators';
+
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Public } from 'src/common/decorators';
 import { AppService } from './app.service';
 
 /**

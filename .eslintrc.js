@@ -86,14 +86,18 @@ module.exports = {
     // 限制 any 类型使用 (提高类型安全)
     '@typescript-eslint/no-explicit-any': 'warn',
 
-    // 强制使用一致的类型导入语法
+    // 强制使用一致的类型导入语法 (排除装饰器和运行时需要的导入)
     '@typescript-eslint/consistent-type-imports': [
       'error',
       {
         prefer: 'type-imports',
         disallowTypeAnnotations: true,
+        fixStyle: 'separate-type-imports',
       },
     ],
+
+    // 强制类型导入，但排除装饰器和运行时需要的导入
+    '@typescript-eslint/no-import-type-side-effects': 'error',
 
     // 禁止未使用的变量 (排除以 _ 开头的变量)
     '@typescript-eslint/no-unused-vars': [
@@ -115,8 +119,35 @@ module.exports = {
 
     // ========== 导入规则 ==========
 
-    // 导入顺序由 Prettier 插件处理 (@trivago/prettier-plugin-sort-imports)
-    // 'import/order': 'off', // 避免与 Prettier 插件冲突
+    // 导入顺序规则 (替代 Prettier 插件)
+    'import/order': [
+      'error',
+      {
+        groups: [
+          'builtin',
+          'external',
+          ['internal', 'parent', 'sibling', 'index'],
+        ],
+        pathGroups: [
+          {
+            pattern: '@/**',
+            group: 'internal',
+            position: 'before',
+          },
+          {
+            pattern: 'src/**',
+            group: 'internal',
+            position: 'before',
+          },
+        ],
+        pathGroupsExcludedImportTypes: ['builtin'],
+        'newlines-between': 'never',
+        alphabetize: {
+          order: 'asc',
+          caseInsensitive: true,
+        },
+      },
+    ],
 
     // 禁止重复导入
     'import/no-duplicates': 'error',

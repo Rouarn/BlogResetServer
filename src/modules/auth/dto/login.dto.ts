@@ -1,5 +1,5 @@
-import { IsNotEmpty, IsString, Length } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString, Length } from 'class-validator';
 
 /**
  * 用户登录数据传输对象

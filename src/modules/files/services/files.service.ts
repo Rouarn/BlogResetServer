@@ -1,13 +1,13 @@
 import * as path from 'path';
-import { BaseService } from 'src/database';
-import { formatDatePath } from 'src/utils';
-import { Repository } from 'typeorm';
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FileQueryDto, FileUploadDto } from '../dto';
+import type { Repository } from 'typeorm';
+import { BaseService } from 'src/database';
+import { formatDatePath } from 'src/utils';
+import type { FileQueryDto, FileUploadDto } from '../dto';
 import { File } from '../entities';
 import { FileStatus } from '../enums';
-import { BatchUploadResult, FileUploadResult } from '../interfaces';
+import type { BatchUploadResult, FileUploadResult } from '../interfaces';
 import { StorageService } from './storage.service';
 import { ValidationService } from './validation.service';
 

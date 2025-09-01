@@ -1,13 +1,14 @@
-import { Request, Response } from 'express';
-import { formatTimestamp, generateUUID } from 'src/utils';
 import {
   ArgumentsHost,
   Catch,
   ExceptionFilter,
   HttpException,
   HttpStatus,
+  Injectable,
   Logger,
 } from '@nestjs/common';
+import type { Request, Response } from 'express';
+import { formatTimestamp, generateUUID } from 'src/utils';
 import { ErrorResponse } from '../interfaces';
 
 /**
@@ -32,6 +33,7 @@ import { ErrorResponse } from '../interfaces';
  * 用法示例：
  * - 在主模块中通过 APP_FILTER 全局注册该过滤器，实现全局异常处理
  */
+@Injectable()
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name);
