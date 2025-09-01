@@ -261,9 +261,7 @@ export class AuthService extends BaseService<Auth> {
    * @returns 用户详情
    */
   async getUserById(id: string): Promise<Auth> {
-    const user = await this.repository.findOne({
-      where: { id },
-    });
+    const user = await this.findById(id);
 
     if (!user) {
       throw new NotFoundException('用户不存在');
@@ -282,10 +280,12 @@ export class AuthService extends BaseService<Auth> {
     current: number = 1,
     size: number = 10,
   ): Promise<{ data: Auth[]; total: number }> {
-    const [data, total] = await this.repository.findAndCount({
+    // 使用 BaseService 的 findAll 和 count 方法，自动过滤软删除的记录
+    const data = await this.findAll({
       skip: (current - 1) * size,
       take: size,
     });
+    const total = await this.count();
     return { data, total };
   }
 
@@ -316,8 +316,17 @@ export class AuthService extends BaseService<Auth> {
       throw new NotFoundException('用户不存在');
     }
 
-    // 使用 repository.remove() 来触发软删除拦截器
-    await this.repository.remove(user);
+    try {
+      // 使用 repository.remove() 来触发软删除拦截器
+      await this.repository.remove(user);
+    } catch (error) {
+      // 如果是软删除拦截异常，说明软删除成功
+      if (error instanceof Error && error.message === 'SOFT_DELETE_INTERCEPTED') {
+        return { message: '用户删除成功' };
+      }
+      // 其他异常继续抛出
+      throw error;
+    }
 
     return { message: '用户删除成功' };
   }

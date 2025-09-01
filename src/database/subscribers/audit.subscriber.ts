@@ -85,23 +85,28 @@ export class AuditSubscriber implements EntitySubscriberInterface<IBaseEntity> {
   /**
    * 删除前处理 - 转换为软删除
    */
-  beforeRemove(event: RemoveEvent<IBaseEntity>): void {
+  async beforeRemove(event: RemoveEvent<IBaseEntity>): Promise<void> {
     if (!this.isBaseEntity(event.entity as BaseEntityLike) || this.isForceDelete(event)) {
       return;
     }
 
     const entity = event.entity;
     if (entity && !entity.deleteTime) {
-      // 阻止物理删除，转换为软删除
-      void event.queryRunner?.rollbackTransaction();
-
       // 执行软删除
       const now = new Date();
       entity.deleteTime = now;
       entity.updateTime = now;
 
-      // 保存软删除状态
-      void event.manager.save(entity);
+      // 使用 queryRunner 保存软删除状态，然后阻止物理删除
+      if (event.queryRunner) {
+        await event.queryRunner.manager.save(entity);
+        // 通过抛出异常来阻止物理删除
+        throw new Error('SOFT_DELETE_INTERCEPTED');
+      } else {
+        // 如果没有 queryRunner，使用 manager 保存
+        await event.manager.save(entity);
+        throw new Error('SOFT_DELETE_INTERCEPTED');
+      }
     }
   }
 
