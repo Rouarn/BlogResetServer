@@ -286,7 +286,6 @@ export class AuthService extends BaseService<Auth> {
       skip: (current - 1) * size,
       take: size,
     });
-    console.log('data', data);
     return { data, total };
   }
 
@@ -311,7 +310,14 @@ export class AuthService extends BaseService<Auth> {
    * @returns 删除结果
    */
   async deleteUser(id: string): Promise<{ message: string }> {
-    await this.softDelete(id);
+    // 先查找用户实体
+    const user = await this.repository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException('用户不存在');
+    }
+
+    // 使用 repository.remove() 来触发软删除拦截器
+    await this.repository.remove(user);
 
     return { message: '用户删除成功' };
   }
