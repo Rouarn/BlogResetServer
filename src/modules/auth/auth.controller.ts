@@ -33,6 +33,33 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   /**
+   * 获取全部用户列表
+   *
+   * 支持分页查询，可通过 current 和 size 参数控制分页
+   * 需要 JWT 认证，确保只有授权用户可以访问
+   *
+   * @param current 当前页码，从1开始，默认为1
+   * @param size 每页数量，默认为10
+   * @returns 用户列表数组
+   */
+  @ApiOperation({
+    summary: '获取全部用户列表',
+    description: '获取全部用户列表，支持分页查询',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '获取全部用户列表成功',
+    type: Auth,
+  })
+  @Get()
+  async getAllUsers(
+    @Query('current') current?: number,
+    @Query('size') size?: number,
+  ): Promise<{ data: Auth[]; total: number }> {
+    return this.authService.getAllUsers(current, size);
+  }
+
+  /**
    * 获取验证码
    * 返回验证码图片和对应的token
    * 支持防爬机制
@@ -391,33 +418,6 @@ export class AuthController {
   @Get(':id')
   async getUserById(@Param('id') id: string): Promise<Auth> {
     return this.authService.getUserById(id);
-  }
-
-  /**
-   * 获取全部用户列表
-   *
-   * 支持分页查询，可通过 current 和 size 参数控制分页
-   * 需要 JWT 认证，确保只有授权用户可以访问
-   *
-   * @param current 当前页码，从1开始，默认为1
-   * @param size 每页数量，默认为10
-   * @returns 用户列表数组
-   */
-  @ApiOperation({
-    summary: '获取全部用户列表',
-    description: '获取全部用户列表，支持分页查询',
-  })
-  @ApiResponse({
-    status: 200,
-    description: '获取全部用户列表成功',
-    type: Auth,
-  })
-  @Get('allUsers')
-  async getAllUsers(
-    @Query('current') current?: number,
-    @Query('size') size?: number,
-  ): Promise<{ data: Auth[]; total: number }> {
-    return this.authService.getAllUsers(current, size);
   }
 
   /**
