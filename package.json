@@ -20,9 +20,7 @@
     "code:check": "pnpm run format:check && pnpm run lint:check && pnpm run type:check",
     "env:check": "node scripts/check-env.js",
     "env:setup": "node scripts/setup-env.js",
-    "clean:tests": "node scripts/remove-spec-files.js",
-    "clean:tests:win": "scripts/remove-spec-files.bat",
-    "clean:tests:ps": "powershell -ExecutionPolicy Bypass -File scripts/remove-spec-files.ps1"
+    "clean:tests": "node scripts/remove-spec-files.js"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",
