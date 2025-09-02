@@ -121,7 +121,7 @@ export class EnvironmentService {
 
     // 美化的环境配置输出
     this.logger.log('');
-    this.logger.log('┌─ 🔧 调试模块环境配置 ' + '─'.repeat(35) + '┐');
+    this.logger.log('┌─ 🔧 调试模块环境配置 ' + '─'.repeat(36) + '┐');
     this.logger.log(`│ 🌍 运行环境: ${config.environment}`);
     this.logger.log(`│ 🐛 调试模式: ${config.debugEnabled ? '✅ 已启用' : '❌ 已禁用'}`);
     this.logger.log(`│ ⚡ 性能监控: ${config.performanceMonitoring ? '✅ 已启用' : '❌ 已禁用'}`);

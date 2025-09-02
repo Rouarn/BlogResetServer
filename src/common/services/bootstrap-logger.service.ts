@@ -16,7 +16,7 @@ export class BootstrapLoggerService {
     staticPath: string,
   ): void {
     this.logger.log('');
-    this.logger.log('┌─ 📁 静态资源配置 ' + '─'.repeat(40) + '┐');
+    this.logger.log('┌─ 📁 静态资源配置 ' + '─'.repeat(52) + '┐');
     this.logger.log(`│ 📂 配置根目录: ${staticConfig.root}`);
     this.logger.log(`│ ⚙️  配置选项: ${JSON.stringify(staticConfig.options)}`);
     this.logger.log(`│ 📍 当前目录: ${__dirname}`);
@@ -29,7 +29,7 @@ export class BootstrapLoggerService {
    * 输出调试面板配置信息
    */
   logDebugPanelConfig(debugPanelPath: string, port: number): void {
-    this.logger.log('┌─ 🛠️  调试面板配置 ' + '─'.repeat(40) + '┐');
+    this.logger.log('┌─ 🛠️  调试面板配置 ' + '─'.repeat(52) + '┐');
     this.logger.log(`│ 📁 面板路径: ${debugPanelPath}`);
     this.logger.log(`│ 🌐 访问前缀: /debug/`);
     this.logger.log(`│ 📄 默认页面: debug-panel.html`);

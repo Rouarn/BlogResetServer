@@ -35,7 +35,7 @@ export class DebugService {
   ) {
     this.isDebugEnabled = this.configService.get<string>('app.environment') === 'development';
     if (this.isDebugEnabled) {
-      this.logger.log(`       调试模块已启用`);
+      this.logger.log(' '.repeat(7) + '🌸 调试模块已启用');
     }
   }
 
