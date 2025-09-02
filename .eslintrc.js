@@ -119,35 +119,7 @@ module.exports = {
 
     // ========== 导入规则 ==========
 
-    // 导入顺序规则 (替代 Prettier 插件)
-    'import/order': [
-      'error',
-      {
-        groups: [
-          'builtin',
-          'external',
-          ['internal', 'parent', 'sibling', 'index'],
-        ],
-        pathGroups: [
-          {
-            pattern: '@/**',
-            group: 'internal',
-            position: 'before',
-          },
-          {
-            pattern: 'src/**',
-            group: 'internal',
-            position: 'before',
-          },
-        ],
-        pathGroupsExcludedImportTypes: ['builtin'],
-        'newlines-between': 'never',
-        alphabetize: {
-          order: 'asc',
-          caseInsensitive: true,
-        },
-      },
-    ],
+    // 导入排序由 Prettier 处理
 
     // 禁止重复导入
     'import/no-duplicates': 'error',

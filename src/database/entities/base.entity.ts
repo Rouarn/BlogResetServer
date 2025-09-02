@@ -4,7 +4,7 @@ import type { IBaseEntity } from '../interfaces';
 
 /**
  * 时间戳管理基础实体类
- * 提供自动的创建时间、更新时间和软删除功能
+ * 提供自动的创建时间和更新时间管理功能
  */
 export abstract class BaseEntity implements IBaseEntity {
   /**
@@ -37,21 +37,6 @@ export abstract class BaseEntity implements IBaseEntity {
   updateTime: Date;
 
   /**
-   * 删除时间（软删除）
-   */
-  @Transform(({ value }: { value: Date | string | null }) =>
-    value instanceof Date ? value.toISOString() : value,
-  )
-  @Column({
-    name: 'delete_time',
-    type: 'timestamp',
-    nullable: true,
-    default: null,
-    comment: '删除时间，用于逻辑删除',
-  })
-  deleteTime?: Date | null;
-
-  /**
    * 插入前钩子 - 设置创建时间和更新时间
    */
   @BeforeInsert()
@@ -59,7 +44,6 @@ export abstract class BaseEntity implements IBaseEntity {
     const now = new Date();
     this.createTime = now;
     this.updateTime = now;
-    this.deleteTime = null;
   }
 
   /**
@@ -68,35 +52,5 @@ export abstract class BaseEntity implements IBaseEntity {
   @BeforeUpdate()
   setUpdateTimestamp(): void {
     this.updateTime = new Date();
-  }
-
-  /**
-   * 软删除方法
-   */
-  softDelete(): void {
-    this.deleteTime = new Date();
-    this.updateTime = new Date();
-  }
-
-  /**
-   * 恢复软删除
-   */
-  restore(): void {
-    this.deleteTime = null;
-    this.updateTime = new Date();
-  }
-
-  /**
-   * 检查是否已被软删除
-   */
-  get isDeleted(): boolean {
-    return this.deleteTime !== null && this.deleteTime !== undefined;
-  }
-
-  /**
-   * 检查是否为活跃状态（未删除）
-   */
-  get isActive(): boolean {
-    return !this.isDeleted;
   }
 }

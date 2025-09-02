@@ -1,7 +1,7 @@
 import { DynamicModule, Global, Module, Provider, Type } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { AuditInterceptor, QueryFilterInterceptor, SoftDeleteInterceptor } from './interceptors';
-import { AuditSubscriber, SoftDeleteSubscriber } from './subscribers';
+import { AuditInterceptor } from './interceptors';
+import { AuditSubscriber } from './subscribers';
 import { DATABASE_CONFIG, DatabaseConfig } from './types';
 
 // 类型定义
@@ -13,7 +13,7 @@ interface AsyncModuleOptions {
 
 /**
  * 时间戳管理模块
- * 提供自动时间戳管理和软删除功能
+ * 提供自动时间戳管理功能
  */
 @Global()
 @Module({})
@@ -29,10 +29,6 @@ export class DatabaseModule {
        */
       enableTimestamps: true,
       /**
-       * 是否启用软删除
-       */
-      enableSoftDelete: true,
-      /**
        * 字段名配置
        */
       fieldNames: {
@@ -41,12 +37,7 @@ export class DatabaseModule {
          */
         createTime: 'createTime',
         updateTime: 'updateTime',
-        deleteTime: 'deleteTime',
       },
-      /**
-       * 是否自动过滤已删除实体
-       */
-      autoFilterDeleted: true,
       /**
        * 排除的实体类
        */
@@ -66,10 +57,6 @@ export class DatabaseModule {
       providers.push(AuditSubscriber);
     }
 
-    if (defaultConfig.enableSoftDelete) {
-      providers.push(SoftDeleteSubscriber);
-    }
-
     // 添加拦截器
     const interceptors: Provider[] = [];
 
@@ -81,19 +68,6 @@ export class DatabaseModule {
         provide: APP_INTERCEPTOR,
         useClass: AuditInterceptor,
       });
-    }
-
-    if (defaultConfig.enableSoftDelete) {
-      interceptors.push(
-        {
-          provide: APP_INTERCEPTOR,
-          useClass: SoftDeleteInterceptor,
-        },
-        {
-          provide: APP_INTERCEPTOR,
-          useClass: QueryFilterInterceptor,
-        },
-      );
     }
 
     providers.push(...interceptors);
@@ -117,18 +91,9 @@ export class DatabaseModule {
         inject: options.inject ?? [],
       },
       AuditSubscriber,
-      SoftDeleteSubscriber,
       {
         provide: APP_INTERCEPTOR,
         useClass: AuditInterceptor,
-      },
-      {
-        provide: APP_INTERCEPTOR,
-        useClass: SoftDeleteInterceptor,
-      },
-      {
-        provide: APP_INTERCEPTOR,
-        useClass: QueryFilterInterceptor,
       },
     ];
 
@@ -147,8 +112,8 @@ export class DatabaseModule {
   static forFeature(): DynamicModule {
     return {
       module: DatabaseModule,
-      providers: [AuditSubscriber, SoftDeleteSubscriber],
-      exports: [AuditSubscriber, SoftDeleteSubscriber],
+      providers: [AuditSubscriber],
+      exports: [AuditSubscriber],
     };
   }
 }

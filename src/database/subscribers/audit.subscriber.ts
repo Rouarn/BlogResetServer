@@ -16,7 +16,6 @@ import type { IBaseEntity } from '../interfaces';
 interface EntityWithTimestamps {
   createTime?: Date | null;
   updateTime?: Date | null;
-  deleteTime?: Date | null;
   constructor: new (...args: unknown[]) => unknown;
 }
 
@@ -61,10 +60,6 @@ export class AuditSubscriber implements EntitySubscriberInterface<IBaseEntity> {
     if (!entity.updateTime) {
       entity.updateTime = now;
     }
-    // 确保删除时间为 null
-    if (entity.deleteTime === undefined) {
-      entity.deleteTime = null;
-    }
   }
 
   /**
@@ -83,8 +78,7 @@ export class AuditSubscriber implements EntitySubscriberInterface<IBaseEntity> {
   }
 
   /**
-   * 删除前处理 - 仅用于记录和验证
-   * 注意：实际的软删除逻辑现在由 SoftDeleteRepository 处理
+   * 删除前处理 - 用于记录和验证
    */
   async beforeRemove(event: RemoveEvent<IBaseEntity>): Promise<void> {
     if (!this.isBaseEntity(event.entity as BaseEntityLike)) {
@@ -94,11 +88,8 @@ export class AuditSubscriber implements EntitySubscriberInterface<IBaseEntity> {
     const entity = event.entity;
     if (entity) {
       // 这里可以添加删除前的日志记录或其他业务逻辑
-      // 但不再阻止物理删除，因为软删除逻辑已经在 Repository 层处理
       console.log(`Entity ${entity.constructor.name} is being removed`, {
         id: (entity as unknown as Record<string, unknown>).id,
-        deleteTime: entity.deleteTime,
-        isAlreadyDeleted: !!entity.deleteTime,
       });
     }
   }

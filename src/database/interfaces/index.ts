@@ -1,5 +1,4 @@
 import type { DeepPartial, FindManyOptions, FindOneOptions } from 'typeorm';
-import type { SoftDeleteOptions } from '../types';
 
 /**
  * 基础实体接口
@@ -7,70 +6,19 @@ import type { SoftDeleteOptions } from '../types';
 export interface IBaseEntity {
   createTime: Date;
   updateTime: Date;
-  deleteTime?: Date | null;
 }
 
 /**
- * 软删除服务接口
+ * 基础服务接口
  */
-export interface ISoftDeletableService<T extends IBaseEntity> {
+export interface IBaseService<T extends IBaseEntity> {
   /**
-   * 软删除实体
-   */
-  softDelete(id: string | number): Promise<void>;
-
-  /**
-   * 批量软删除
-   */
-  softDeleteMany(ids: (string | number)[]): Promise<void>;
-
-  /**
-   * 恢复软删除的实体
-   */
-  restore(id: string | number): Promise<void>;
-
-  /**
-   * 批量恢复
-   */
-  restoreMany(ids: (string | number)[]): Promise<void>;
-
-  /**
-   * 查找包含已删除的数据
-   */
-  findWithDeleted(options?: FindManyOptions<T>): Promise<T[]>;
-
-  /**
-   * 查找单个包含已删除的数据
-   */
-  findOneWithDeleted(options?: FindOneOptions<T>): Promise<T | null>;
-
-  /**
-   * 只查找已删除的数据
-   */
-  findDeleted(options?: FindManyOptions<T>): Promise<T[]>;
-
-  /**
-   * 强制物理删除
-   */
-  forceDelete(id: string | number): Promise<void>;
-
-  /**
-   * 批量强制物理删除
-   */
-  forceDeleteMany(ids: (string | number)[]): Promise<void>;
-}
-
-/**
- * 时间戳管理服务接口
- */
-export interface IBaseService<T extends IBaseEntity> extends ISoftDeletableService<T> {
-  /**
-   * 创建实体（自动设置时间戳）
+   * 创建实体
    */
   create(entityData: DeepPartial<T>): Promise<T>;
 
   /**
-   * 更新实体（自动更新时间戳）
+   * 更新实体
    */
   update(id: string | number, entityData: DeepPartial<T>): Promise<T>;
 
@@ -80,22 +28,32 @@ export interface IBaseService<T extends IBaseEntity> extends ISoftDeletableServi
   createMany(entitiesData: DeepPartial<T>[]): Promise<T[]>;
 
   /**
-   * 查找所有（自动过滤已删除）
+   * 查找所有实体
    */
-  findAll(options?: FindManyOptions<T> & SoftDeleteOptions): Promise<T[]>;
+  findAll(options?: FindManyOptions<T>): Promise<T[]>;
 
   /**
-   * 根据ID查找（自动过滤已删除）
+   * 根据ID查找实体
    */
-  findById(id: string | number, options?: FindOneOptions<T> & SoftDeleteOptions): Promise<T | null>;
+  findById(id: string | number, options?: FindOneOptions<T>): Promise<T | null>;
 
   /**
-   * 查找一个（自动过滤已删除）
+   * 查找单个实体
    */
-  findOne(options?: FindOneOptions<T> & SoftDeleteOptions): Promise<T | null>;
+  findOne(options?: FindOneOptions<T>): Promise<T | null>;
 
   /**
-   * 统计数量（自动过滤已删除）
+   * 统计数量
    */
-  count(options?: FindManyOptions<T> & SoftDeleteOptions): Promise<number>;
+  count(options?: FindManyOptions<T>): Promise<number>;
+
+  /**
+   * 删除实体
+   */
+  delete(id: string | number): Promise<void>;
+
+  /**
+   * 批量删除
+   */
+  deleteMany(ids: (string | number)[]): Promise<void>;
 }

@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { DISABLE_TIMESTAMPS_KEY, FORCE_DELETE_KEY, INCLUDE_DELETED_KEY } from '../decorators';
+import { DISABLE_TIMESTAMPS_KEY } from '../decorators';
 import { QUERY_CONTEXT } from '../types';
 import type { QueryContext } from '../types';
 
@@ -21,16 +21,6 @@ export class AuditInterceptor implements NestInterceptor {
     const controller = context.getClass();
 
     // 获取装饰器元数据
-    const includeDeleted = this.reflector.getAllAndOverride<boolean>(INCLUDE_DELETED_KEY, [
-      handler,
-      controller,
-    ]);
-
-    const forceDelete = this.reflector.getAllAndOverride<boolean>(FORCE_DELETE_KEY, [
-      handler,
-      controller,
-    ]);
-
     const disableTimestamps = this.reflector.getAllAndOverride<boolean>(DISABLE_TIMESTAMPS_KEY, [
       handler,
       controller,
@@ -38,8 +28,6 @@ export class AuditInterceptor implements NestInterceptor {
 
     // 创建查询上下文
     const queryContext: QueryContext = {
-      includeDeleted: includeDeleted || false,
-      forceDelete: forceDelete || false,
       disableTimestamps: disableTimestamps || false,
     };
 
