@@ -62,7 +62,7 @@ import { DebugExceptionFilter } from './filters/debug-exception.filter';
 export class DebugModule implements NestModule {
   constructor(private readonly configService: ConfigService) {}
 
-  configure(consumer: MiddlewareConsumer) {
+  configure(consumer: MiddlewareConsumer): void {
     // 只在开发环境启用调试中间件
     if (DevelopmentGuard.isDevelopment(this.configService)) {
       consumer.apply(DebugMiddleware).forRoutes('*'); // 应用到所有路由

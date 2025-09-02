@@ -47,7 +47,7 @@ export class ErrorDiagnosticsService {
       url?: string;
       statusCode?: number;
     },
-    metadata?: Record<string, any>,
+    metadata?: Record<string, string | number | boolean>,
   ): string {
     const errorId = generateUUID();
     const record: ErrorDiagnosticRecord = {
@@ -124,7 +124,7 @@ export class ErrorDiagnosticsService {
     records.forEach((record) => {
       if (record.context.statusCode) {
         const statusCode = record.context.statusCode;
-        errorsByStatus[statusCode] = (errorsByStatus[statusCode] || 0) + 1;
+        errorsByStatus[statusCode] = (errorsByStatus[statusCode] ?? 0) + 1;
       }
     });
 

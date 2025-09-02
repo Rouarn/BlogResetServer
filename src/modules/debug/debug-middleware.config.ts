@@ -19,7 +19,7 @@ import { DebugMiddleware } from './middleware/debug.middleware';
 export class DebugMiddlewareConfig implements NestModule {
   constructor(private readonly configService: ConfigService) {}
 
-  configure(consumer: MiddlewareConsumer) {
+  configure(consumer: MiddlewareConsumer): void {
     // 检查调试功能是否启用
     const debugEnabled = this.configService.get<boolean>('app.debug.enabled', false);
     const requestTracking = this.configService.get<boolean>('app.debug.requestTracking', false);

@@ -43,7 +43,9 @@ export class DebugMiddleware implements NestMiddleware {
     }
 
     const startTime = Date.now();
-    const requestId = this.requestTrackingService.startTracking(req);
+    const requestId = this.requestTrackingService.startTracking(
+      req as unknown as Record<string, unknown>,
+    );
 
     // 将调试信息附加到请求对象
     req.debugInfo = {
@@ -54,15 +56,15 @@ export class DebugMiddleware implements NestMiddleware {
     // 监听响应结束事件
     const originalSend = res.send;
     const originalJson = res.json;
-    let responseData: any;
+    let responseData: unknown;
 
     // 拦截响应数据
-    res.send = function (data: any) {
+    res.send = function (data: unknown) {
       responseData = data;
       return originalSend.call(this, data);
     };
 
-    res.json = function (data: any) {
+    res.json = function (data: unknown) {
       responseData = data;
       return originalJson.call(this, data);
     };
@@ -74,7 +76,7 @@ export class DebugMiddleware implements NestMiddleware {
           requestId,
           res.statusCode,
           startTime,
-          responseData,
+          responseData as Record<string, unknown> | undefined,
         );
 
         // 如果是错误响应，记录到错误诊断
@@ -85,18 +87,14 @@ export class DebugMiddleware implements NestMiddleware {
             undefined,
             {
               requestId,
-              userId: (req as any).user?.id,
+              userId: (req as unknown as { user?: { id?: string } })?.user?.id,
               ip: req.ip,
               userAgent: req.headers['user-agent'],
               method: req.method,
               url: req.url,
               statusCode: res.statusCode,
             },
-            {
-              query: req.query,
-              body: this.sanitizeBody(req.body),
-              response: responseData,
-            },
+            {},
           );
         }
       } catch (error) {
@@ -121,17 +119,14 @@ export class DebugMiddleware implements NestMiddleware {
           error.stack,
           {
             requestId,
-            userId: (req as any).user?.id,
+            userId: (req as unknown as { user?: { id?: string } })?.user?.id,
             ip: req.ip,
             userAgent: req.headers['user-agent'],
             method: req.method,
             url: req.url,
             statusCode: res.statusCode || 500,
           },
-          {
-            query: req.query,
-            body: this.sanitizeBody(req.body),
-          },
+          {},
         );
       } catch (debugError) {
         this.logger.error('调试中间件处理错误时发生异常:', debugError);
@@ -144,13 +139,13 @@ export class DebugMiddleware implements NestMiddleware {
   /**
    * 清理敏感请求体数据
    */
-  private sanitizeBody(body: any): any {
+  private sanitizeBody(body: unknown): unknown {
     if (!body || typeof body !== 'object') {
       return body;
     }
 
     const sensitiveFields = ['password', 'token', 'secret', 'key', 'authorization'];
-    const sanitized = { ...body };
+    const sanitized = { ...body } as Record<string, unknown>;
 
     for (const field of sensitiveFields) {
       if (sanitized[field]) {

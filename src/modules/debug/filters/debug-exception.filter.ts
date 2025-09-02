@@ -21,8 +21,8 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
-import { formatTimestamp, generateUUID } from 'src/utils';
 import { ErrorResponse } from 'src/common/interfaces';
+import { formatTimestamp, generateUUID } from 'src/utils';
 import { ErrorDiagnosticsService } from '../services/error-diagnostics.service';
 
 // 扩展Request接口
@@ -63,7 +63,7 @@ export class DebugExceptionFilter implements ExceptionFilter {
           message,
           stack,
           {
-            requestId: request.debugInfo?.requestId || (context.requestId as string),
+            requestId: request.debugInfo?.requestId ?? (context.requestId as string),
             userId: context.userId as string,
             ip: context.ip as string,
             userAgent: context.userAgent as string,
@@ -72,9 +72,7 @@ export class DebugExceptionFilter implements ExceptionFilter {
             statusCode: status,
           },
           {
-            query: context.query,
-            body: context.body,
-            exceptionType: exception?.constructor?.name || 'Unknown',
+            exceptionType: exception?.constructor?.name ?? 'Unknown',
             timestamp: formatTimestamp(),
           },
         );
@@ -96,7 +94,7 @@ export class DebugExceptionFilter implements ExceptionFilter {
       data: null,
       ...(this.isDebugEnabled && {
         debug: {
-          requestId: request.debugInfo?.requestId || context.requestId,
+          requestId: request.debugInfo?.requestId ?? context.requestId,
           stack: stack?.split('\n').slice(0, 10), // 限制堆栈深度
           context: {
             controller: this.extractControllerInfo(host),
@@ -121,8 +119,17 @@ export class DebugExceptionFilter implements ExceptionFilter {
       const response = exception.getResponse();
       return {
         status: exception.getStatus(),
-        message:
-          typeof response === 'string' ? response : (response as any)?.message || exception.message,
+        message: (() => {
+          if (typeof response === 'string') {
+            return response;
+          }
+          const errorResponse = response as ErrorResponse;
+          const msg = errorResponse?.message;
+          if (Array.isArray(msg)) {
+            return msg[0] || '未知错误';
+          }
+          return msg || exception.message || '未知错误';
+        })(),
         stack: exception.stack,
       };
     }
@@ -172,10 +179,13 @@ export class DebugExceptionFilter implements ExceptionFilter {
    */
   private extractContext(request: DebugRequest): Record<string, unknown> {
     return {
-      requestId: request.debugInfo?.requestId || request.headers['x-request-id'] || generateUUID(),
-      userId: (request as any).user?.id || request.headers['x-user-id'] || 'anonymous',
-      userAgent: request.headers['user-agent'] || 'unknown',
-      ip: request.ip || request.connection?.remoteAddress || 'unknown',
+      requestId: request.debugInfo?.requestId ?? request.headers['x-request-id'] ?? generateUUID(),
+      userId:
+        (request as unknown as { user?: { id?: string } })?.user?.id ??
+        request.headers['x-user-id'] ??
+        'anonymous',
+      userAgent: request.headers['user-agent'] ?? 'unknown',
+      ip: request.ip ?? request.connection?.remoteAddress ?? 'unknown',
       method: request.method,
       url: request.url,
       query: request.query,
@@ -276,7 +286,10 @@ export class DebugExceptionFilter implements ExceptionFilter {
     try {
       const ctx = host.switchToHttp();
       const request = ctx.getRequest();
-      return request.route?.path?.split('/')[1] || 'Unknown';
+      return (
+        (request as unknown as { route?: { path?: string } })?.route?.path?.split('/')[1] ??
+        'Unknown'
+      );
     } catch {
       return 'Unknown';
     }
@@ -289,7 +302,10 @@ export class DebugExceptionFilter implements ExceptionFilter {
     try {
       const ctx = host.switchToHttp();
       const request = ctx.getRequest();
-      return request.route?.stack?.[0]?.name || 'Unknown';
+      return (
+        (request as unknown as { route?: { stack?: { name?: string }[] } })?.route?.stack?.[0]
+          ?.name ?? 'Unknown'
+      );
     } catch {
       return 'Unknown';
     }

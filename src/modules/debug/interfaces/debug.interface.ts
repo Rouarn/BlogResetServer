@@ -51,11 +51,11 @@ export interface RequestSummary {
     duration: number;
   } | null;
   requestsPerMinute: number;
-  topEndpoints: Array<{
+  topEndpoints: {
     endpoint: string;
     count: number;
     averageTime: number;
-  }>;
+  }[];
 }
 
 /**
@@ -64,11 +64,11 @@ export interface RequestSummary {
 export interface ErrorSummary {
   total: number;
   last24Hours: number;
-  topErrors: Array<{
+  topErrors: {
     message: string;
     count: number;
     lastOccurred: string;
-  }>;
+  }[];
   errorsByStatus: Record<number, number>;
 }
 
@@ -88,9 +88,9 @@ export interface RequestTrackingRecord {
   requestSize?: number; // 字节
   responseSize?: number; // 字节
   headers?: Record<string, string>;
-  query?: Record<string, any>;
-  body?: any;
-  response?: any;
+  query?: Record<string, string | string[]>;
+  body?: Record<string, unknown>;
+  response?: Record<string, unknown>;
   error?: string;
 }
 
@@ -112,7 +112,7 @@ export interface ErrorDiagnosticRecord {
     url?: string;
     statusCode?: number;
   };
-  metadata?: Record<string, any>;
+  metadata?: Record<string, string | number | boolean>;
 }
 
 /**
@@ -125,7 +125,7 @@ export interface PerformanceMetric {
   name: string;
   duration: number; // 毫秒
   success: boolean;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, string | number | boolean>;
 }
 
 /**

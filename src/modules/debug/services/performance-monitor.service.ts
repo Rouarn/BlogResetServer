@@ -37,7 +37,7 @@ export class PerformanceMonitorService {
   startMonitoring(
     type: 'request' | 'database' | 'cache' | 'external',
     name: string,
-    metadata?: Record<string, any>,
+    metadata?: Record<string, string | number | boolean>,
   ): string {
     const metricId = generateUUID();
     const metric: PerformanceMetric = {
@@ -70,14 +70,14 @@ export class PerformanceMonitorService {
   finishMonitoring(
     metricId: string,
     success: boolean = true,
-    additionalMetadata?: Record<string, any>,
+    additionalMetadata?: Record<string, string | number | boolean>,
   ): void {
     const metric = this.metrics.get(metricId);
     if (!metric) {
       return;
     }
 
-    const startTime = metric.metadata?.startTime || Date.now();
+    const startTime = Number(metric.metadata?.startTime) || Date.now();
     metric.duration = Date.now() - startTime;
     metric.success = success;
     metric.metadata = {
@@ -106,7 +106,7 @@ export class PerformanceMonitorService {
     query: string,
     duration: number,
     success: boolean = true,
-    metadata?: Record<string, any>,
+    metadata?: Record<string, string | number | boolean>,
   ): string {
     const metricId = generateUUID();
     const metric: PerformanceMetric = {
@@ -141,7 +141,7 @@ export class PerformanceMonitorService {
     key: string,
     duration: number,
     hit: boolean = true,
-    metadata?: Record<string, any>,
+    metadata?: Record<string, string | number | boolean>,
   ): string {
     const metricId = generateUUID();
     const metric: PerformanceMetric = {
@@ -150,11 +150,11 @@ export class PerformanceMonitorService {
       type: 'cache',
       name: `${operation}:${this.normalizeKey(key)}`,
       duration,
-      success: true,
+      success: hit,
       metadata: {
         ...metadata,
         operation,
-        key,
+        key: this.normalizeKey(key),
         hit,
       },
     };
@@ -172,7 +172,7 @@ export class PerformanceMonitorService {
     duration: number,
     statusCode: number,
     success: boolean = true,
-    metadata?: Record<string, any>,
+    metadata?: Record<string, string | number | boolean>,
   ): string {
     const metricId = generateUUID();
     const metric: PerformanceMetric = {
@@ -203,7 +203,7 @@ export class PerformanceMonitorService {
   /**
    * 获取性能统计
    */
-  getPerformanceStats(type?: 'request' | 'database' | 'cache' | 'external') {
+  getPerformanceStats(type?: 'request' | 'database' | 'cache' | 'external'): unknown {
     let metrics = Array.from(this.metrics.values());
 
     if (type) {
@@ -257,7 +257,10 @@ export class PerformanceMonitorService {
   /**
    * 获取最慢的操作
    */
-  getSlowestOperations(limit: number = 10, type?: 'request' | 'database' | 'cache' | 'external') {
+  getSlowestOperations(
+    limit: number = 10,
+    type?: 'request' | 'database' | 'cache' | 'external',
+  ): unknown[] {
     let metrics = Array.from(this.metrics.values());
 
     if (type) {
@@ -281,7 +284,10 @@ export class PerformanceMonitorService {
   /**
    * 获取性能趋势
    */
-  getPerformanceTrends(hours: number = 24, type?: 'request' | 'database' | 'cache' | 'external') {
+  getPerformanceTrends(
+    hours: number = 24,
+    type?: 'request' | 'database' | 'cache' | 'external',
+  ): unknown[] {
     const now = Date.now();
     const startTime = now - hours * 60 * 60 * 1000;
     const interval = (hours * 60 * 60 * 1000) / 24; // 24个数据点
@@ -369,7 +375,7 @@ export class PerformanceMonitorService {
       cache: '缓存操作',
       external: 'API调用',
     };
-    return names[type] || type;
+    return names[type] ?? type;
   }
 
   /**

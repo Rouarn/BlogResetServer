@@ -1,763 +1,816 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>开发者调试面板</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
-            color: #333;
-            line-height: 1.6;
-        }
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #f5f5f5;
+        color: #333;
+        line-height: 1.6;
+      }
 
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
 
-        .header h1 {
-            font-size: 1.8rem;
-            font-weight: 600;
-        }
+      .header h1 {
+        font-size: 1.8rem;
+        font-weight: 600;
+      }
 
-        .header .subtitle {
-            opacity: 0.9;
-            margin-top: 0.5rem;
-        }
+      .header .subtitle {
+        opacity: 0.9;
+        margin-top: 0.5rem;
+      }
 
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      .dashboard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+      }
+
+      .card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        border: 1px solid #e1e5e9;
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease;
+      }
+
+      .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      }
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+      }
+
+      .card-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.2rem;
+      }
+
+      .card-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2d3748;
+      }
+
+      .metric {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f1f3f4;
+      }
+
+      .metric:last-child {
+        border-bottom: none;
+      }
+
+      .metric-label {
+        color: #666;
+        font-size: 0.9rem;
+      }
+
+      .metric-value {
+        font-weight: 600;
+        color: #2d3748;
+      }
+
+      .status-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+      }
+
+      .status-success {
+        background: #48bb78;
+      }
+      .status-warning {
+        background: #ed8936;
+      }
+      .status-error {
+        background: #f56565;
+      }
+
+      .btn {
+        background: #4299e1;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: background 0.2s ease;
+      }
+
+      .btn:hover {
+        background: #3182ce;
+      }
+
+      .btn-danger {
+        background: #e53e3e;
+      }
+
+      .btn-danger:hover {
+        background: #c53030;
+      }
+
+      .tabs {
+        display: flex;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        margin-bottom: 1.5rem;
+      }
+
+      .tab {
+        flex: 1;
+        padding: 1rem;
+        background: #f8f9fa;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #666;
+        transition: all 0.2s ease;
+      }
+
+      .tab.active {
+        background: #4299e1;
+        color: white;
+      }
+
+      .tab-content {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        display: none;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+      }
+
+      .table th,
+      .table td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      .table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #4a5568;
+      }
+
+      .chart-container {
+        height: 300px;
+        margin-top: 1rem;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 2rem;
+        color: #666;
+      }
+
+      .error {
+        background: #fed7d7;
+        color: #c53030;
+        padding: 1rem;
+        border-radius: 6px;
+        margin: 1rem 0;
+      }
+
+      .success {
+        background: #c6f6d5;
+        color: #2f855a;
+        padding: 1rem;
+        border-radius: 6px;
+        margin: 1rem 0;
+      }
+
+      @media (max-width: 768px) {
         .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 2rem;
+          padding: 1rem;
         }
 
         .dashboard {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
-            border: 1px solid #e1e5e9;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .card-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 1rem;
-            font-size: 1.2rem;
-        }
-
-        .card-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #2d3748;
-        }
-
-        .metric {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.5rem 0;
-            border-bottom: 1px solid #f1f3f4;
-        }
-
-        .metric:last-child {
-            border-bottom: none;
-        }
-
-        .metric-label {
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        .metric-value {
-            font-weight: 600;
-            color: #2d3748;
-        }
-
-        .status-indicator {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 0.5rem;
-        }
-
-        .status-success { background: #48bb78; }
-        .status-warning { background: #ed8936; }
-        .status-error { background: #f56565; }
-
-        .btn {
-            background: #4299e1;
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background 0.2s ease;
-        }
-
-        .btn:hover {
-            background: #3182ce;
-        }
-
-        .btn-danger {
-            background: #e53e3e;
-        }
-
-        .btn-danger:hover {
-            background: #c53030;
+          grid-template-columns: 1fr;
         }
 
         .tabs {
-            display: flex;
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
-            margin-bottom: 1.5rem;
+          flex-direction: column;
         }
-
-        .tab {
-            flex: 1;
-            padding: 1rem;
-            background: #f8f9fa;
-            border: none;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: #666;
-            transition: all 0.2s ease;
-        }
-
-        .tab.active {
-            background: #4299e1;
-            color: white;
-        }
-
-        .tab-content {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-
-        .table th,
-        .table td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .table th {
-            background: #f8f9fa;
-            font-weight: 600;
-            color: #4a5568;
-        }
-
-        .chart-container {
-            height: 300px;
-            margin-top: 1rem;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 2rem;
-            color: #666;
-        }
-
-        .error {
-            background: #fed7d7;
-            color: #c53030;
-            padding: 1rem;
-            border-radius: 6px;
-            margin: 1rem 0;
-        }
-
-        .success {
-            background: #c6f6d5;
-            color: #2f855a;
-            padding: 1rem;
-            border-radius: 6px;
-            margin: 1rem 0;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-            }
-            
-            .dashboard {
-                grid-template-columns: 1fr;
-            }
-            
-            .tabs {
-                flex-direction: column;
-            }
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="header">
-        <h1>🛠️ 开发者调试面板</h1>
-        <div class="subtitle">实时监控应用性能、请求追踪和错误诊断</div>
+      <h1>🛠️ 开发者调试面板</h1>
+      <div class="subtitle">实时监控应用性能、请求追踪和错误诊断</div>
     </div>
 
     <div class="container">
-        <!-- 系统概览仪表板 -->
-        <div class="dashboard">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-icon" style="background: #e6fffa; color: #319795;">📊</div>
-                    <div class="card-title">系统状态</div>
-                </div>
-                <div id="system-metrics">
-                    <div class="loading">加载中...</div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-icon" style="background: #fef5e7; color: #d69e2e;">🚀</div>
-                    <div class="card-title">请求统计</div>
-                </div>
-                <div id="request-stats">
-                    <div class="loading">加载中...</div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-icon" style="background: #fed7d7; color: #e53e3e;">⚠️</div>
-                    <div class="card-title">错误统计</div>
-                </div>
-                <div id="error-stats">
-                    <div class="loading">加载中...</div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-icon" style="background: #e6fffa; color: #319795;">⚡</div>
-                    <div class="card-title">性能指标</div>
-                </div>
-                <div id="performance-stats">
-                    <div class="loading">加载中...</div>
-                </div>
-            </div>
+      <!-- 系统概览仪表板 -->
+      <div class="dashboard">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon" style="background: #e6fffa; color: #319795">📊</div>
+            <div class="card-title">系统状态</div>
+          </div>
+          <div id="system-metrics">
+            <div class="loading">加载中...</div>
+          </div>
         </div>
 
-        <!-- 详细数据标签页 -->
-        <div class="tabs">
-            <button class="tab active" onclick="showTab('requests')">请求追踪</button>
-            <button class="tab" onclick="showTab('errors')">错误诊断</button>
-            <button class="tab" onclick="showTab('performance')">性能监控</button>
-            <button class="tab" onclick="showTab('system')">系统信息</button>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon" style="background: #fef5e7; color: #d69e2e">🚀</div>
+            <div class="card-title">请求统计</div>
+          </div>
+          <div id="request-stats">
+            <div class="loading">加载中...</div>
+          </div>
         </div>
 
-        <!-- 请求追踪 -->
-        <div id="requests-tab" class="tab-content active">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3>请求追踪记录</h3>
-                <button class="btn" onclick="refreshRequests()">刷新数据</button>
-            </div>
-            <div id="requests-content">
-                <div class="loading">加载中...</div>
-            </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon" style="background: #fed7d7; color: #e53e3e">⚠️</div>
+            <div class="card-title">错误统计</div>
+          </div>
+          <div id="error-stats">
+            <div class="loading">加载中...</div>
+          </div>
         </div>
 
-        <!-- 错误诊断 -->
-        <div id="errors-tab" class="tab-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3>错误诊断记录</h3>
-                <button class="btn" onclick="refreshErrors()">刷新数据</button>
-            </div>
-            <div id="errors-content">
-                <div class="loading">加载中...</div>
-            </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon" style="background: #e6fffa; color: #319795">⚡</div>
+            <div class="card-title">性能指标</div>
+          </div>
+          <div id="performance-stats">
+            <div class="loading">加载中...</div>
+          </div>
         </div>
+      </div>
 
-        <!-- 性能监控 -->
-        <div id="performance-tab" class="tab-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3>性能监控</h3>
-                <button class="btn" onclick="refreshPerformance()">刷新数据</button>
-            </div>
-            <div id="performance-content">
-                <div class="loading">加载中...</div>
-            </div>
-        </div>
+      <!-- 详细数据标签页 -->
+      <div class="tabs">
+        <button class="tab active" onclick="showTab('requests')">请求追踪</button>
+        <button class="tab" onclick="showTab('errors')">错误诊断</button>
+        <button class="tab" onclick="showTab('performance')">性能监控</button>
+        <button class="tab" onclick="showTab('system')">系统信息</button>
+      </div>
 
-        <!-- 系统信息 -->
-        <div id="system-tab" class="tab-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3>系统信息</h3>
-                <div>
-                    <button class="btn" onclick="refreshSystem()">刷新数据</button>
-                    <button class="btn btn-danger" onclick="clearAllData()" style="margin-left: 0.5rem;">清除数据</button>
-                </div>
-            </div>
-            <div id="system-content">
-                <div class="loading">加载中...</div>
-            </div>
+      <!-- 请求追踪 -->
+      <div id="requests-tab" class="tab-content active">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+          "
+        >
+          <h3>请求追踪记录</h3>
+          <button class="btn" onclick="refreshRequests()">刷新数据</button>
         </div>
+        <div id="requests-content">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+
+      <!-- 错误诊断 -->
+      <div id="errors-tab" class="tab-content">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+          "
+        >
+          <h3>错误诊断记录</h3>
+          <button class="btn" onclick="refreshErrors()">刷新数据</button>
+        </div>
+        <div id="errors-content">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+
+      <!-- 性能监控 -->
+      <div id="performance-tab" class="tab-content">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+          "
+        >
+          <h3>性能监控</h3>
+          <button class="btn" onclick="refreshPerformance()">刷新数据</button>
+        </div>
+        <div id="performance-content">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+
+      <!-- 系统信息 -->
+      <div id="system-tab" class="tab-content">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+          "
+        >
+          <h3>系统信息</h3>
+          <div>
+            <button class="btn" onclick="refreshSystem()">刷新数据</button>
+            <button class="btn btn-danger" onclick="clearAllData()" style="margin-left: 0.5rem">
+              清除数据
+            </button>
+          </div>
+        </div>
+        <div id="system-content">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        // 全局变量
-        let refreshInterval;
-        const API_BASE = '/api/debug';
+      // 全局变量
+      let refreshInterval;
+      const API_BASE = '/api/v1/debug';
 
-        // 初始化
-        document.addEventListener('DOMContentLoaded', function() {
+      // 初始化
+      $(document).ready(function () {
+        loadDashboard();
+        loadRequests();
+        startAutoRefresh();
+      });
+
+      // 标签页切换
+      function showTab(tabName) {
+        // 隐藏所有标签页内容
+        $('.tab-content').removeClass('active');
+
+        // 移除所有标签的激活状态
+        $('.tab').removeClass('active');
+
+        // 显示选中的标签页
+        $(`#${tabName}-tab`).addClass('active');
+        $(event.target).addClass('active');
+
+        // 加载对应数据
+        switch (tabName) {
+          case 'requests':
+            loadRequests();
+            break;
+          case 'errors':
+            loadErrors();
+            break;
+          case 'performance':
+            loadPerformance();
+            break;
+          case 'system':
+            loadSystem();
+            break;
+        }
+      }
+
+      // 加载仪表板数据
+      async function loadDashboard() {
+        try {
+          const response = await $.getJSON(`${API_BASE}/overview`);
+          const data = response.data;
+
+          if (data) {
+            updateSystemMetrics(data.systemMetrics);
+            updateRequestStats(data.requestSummary);
+            updateErrorStats(data.errorSummary);
+            updatePerformanceStats(data.requestSummary);
+          }
+        } catch (error) {
+          console.error('加载仪表板数据失败:', error);
+        }
+      }
+
+      // 更新系统指标
+      function updateSystemMetrics(system) {
+        const uptime = Math.floor(system.uptime / 3600);
+        const memoryUsage = Math.round((system.memory.used / system.memory.total) * 100);
+
+        $('#system-metrics').html(`
+              <div class="metric">
+                  <span class="metric-label">运行时间</span>
+                  <span class="metric-value">${uptime} 小时</span>
+              </div>
+              <div class="metric">
+                  <span class="metric-label">内存使用</span>
+                  <span class="metric-value">${memoryUsage}%</span>
+              </div>
+              <div class="metric">
+                  <span class="metric-label">堆内存</span>
+                  <span class="metric-value">${system.memory.used} MB</span>
+              </div>
+          `);
+      }
+
+      // 更新请求统计
+      function updateRequestStats(requests) {
+        const successRate =
+          requests.total > 0 ? Math.round((requests.success / requests.total) * 100) : 0;
+
+        $('#request-stats').html(`
+              <div class="metric">
+                  <span class="metric-label">总请求数</span>
+                  <span class="metric-value">${requests.total}</span>
+              </div>
+              <div class="metric">
+                  <span class="metric-label">成功率</span>
+                  <span class="metric-value">
+                      <span class="status-indicator ${successRate >= 95 ? 'status-success' : successRate >= 80 ? 'status-warning' : 'status-error'}"></span>
+                      ${successRate}%
+                  </span>
+              </div>
+              <div class="metric">
+                  <span class="metric-label">平均响应时间</span>
+                  <span class="metric-value">${requests.averageResponseTime || 0} ms</span>
+              </div>
+          `);
+      }
+
+      // 更新错误统计
+      function updateErrorStats(errors) {
+        $('#error-stats').html(`
+              <div class="metric">
+                  <span class="metric-label">总错误数</span>
+                  <span class="metric-value">${errors.total}</span>
+              </div>
+              <div class="metric">
+                  <span class="metric-label">最近1小时</span>
+                  <span class="metric-value">${errors.recentCount || 0}</span>
+              </div>
+              <div class="metric">
+                  <span class="metric-label">最常见错误</span>
+                  <span class="metric-value">${errors.mostCommon || 'N/A'}</span>
+              </div>
+          `);
+      }
+
+      // 更新性能统计
+      function updatePerformanceStats(performance) {
+        const requests = performance || {};
+
+        $('#performance-stats').html(`
+              <div class="metric">
+                  <span class="metric-label">平均响应时间</span>
+                  <span class="metric-value">${requests.averageResponseTime || 0} ms</span>
+              </div>
+              <div class="metric">
+                  <span class="metric-label">P95响应时间</span>
+                  <span class="metric-value">${requests.p95 || 0} ms</span>
+              </div>
+              <div class="metric">
+                  <span class="metric-label">慢请求率</span>
+                  <span class="metric-value">${requests.slowOperationRate || 0}%</span>
+              </div>
+          `);
+      }
+
+      // 加载请求数据
+      async function loadRequests() {
+        try {
+          const data = await $.getJSON(`${API_BASE}/requests?limit=50`);
+
+          if (data.code === 200) {
+            displayRequests(data.data);
+          }
+        } catch (error) {
+          $('#requests-content').html(
+            '<div class="error">加载请求数据失败: ' + error.message + '</div>',
+          );
+        }
+      }
+
+      // 显示请求数据
+      function displayRequests(requests) {
+        if (!requests || requests.length === 0) {
+          $('#requests-content').html('<div class="loading">暂无请求数据</div>');
+          return;
+        }
+
+        const table = `
+              <table class="table">
+                  <thead>
+                      <tr>
+                          <th>时间</th>
+                          <th>方法</th>
+                          <th>路径</th>
+                          <th>状态</th>
+                          <th>耗时</th>
+                          <th>IP地址</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      ${requests
+                        .map(
+                          (req) => `
+                          <tr>
+                              <td>${new Date(req.timestamp).toLocaleString()}</td>
+                              <td><span style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">${req.method}</span></td>
+                              <td>${req.url}</td>
+                              <td>
+                                  <span class="status-indicator ${req.success ? 'status-success' : 'status-error'}"></span>
+                                  ${req.statusCode || (req.success ? '200' : '500')}
+                              </td>
+                              <td>${req.duration} ms</td>
+                              <td>${req.ip || 'N/A'}</td>
+                          </tr>
+                      `,
+                        )
+                        .join('')}
+                  </tbody>
+              </table>
+          `;
+
+        $('#requests-content').html(table);
+      }
+
+      // 加载错误数据
+      async function loadErrors() {
+        try {
+          const data = await $.getJSON(`${API_BASE}/errors?limit=50`);
+
+          if (data.code === 200) {
+            displayErrors(data.data);
+          }
+        } catch (error) {
+          $('#errors-content').html(
+            '<div class="error">加载错误数据失败: ' + error.message + '</div>',
+          );
+        }
+      }
+
+      // 显示错误数据
+      function displayErrors(errors) {
+        if (!errors || errors.length === 0) {
+          $('#errors-content').html('<div class="loading">暂无错误数据</div>');
+          return;
+        }
+
+        const table = `
+              <table class="table">
+                  <thead>
+                      <tr>
+                          <th>时间</th>
+                          <th>类型</th>
+                          <th>消息</th>
+                          <th>严重程度</th>
+                          <th>请求路径</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      ${errors
+                        .map(
+                          (error) => `
+                          <tr>
+                              <td>${new Date(error.timestamp).toLocaleString()}</td>
+                              <td>${error.type}</td>
+                              <td title="${error.message}">${error.message.substring(0, 50)}${error.message.length > 50 ? '...' : ''}</td>
+                              <td>
+                                  <span class="status-indicator ${
+                                    error.severity === 'critical'
+                                      ? 'status-error'
+                                      : error.severity === 'high'
+                                        ? 'status-warning'
+                                        : 'status-success'
+                                  }"></span>
+                                  ${error.severity}
+                              </td>
+                              <td>${error.context?.url || 'N/A'}</td>
+                          </tr>
+                      `,
+                        )
+                        .join('')}
+                  </tbody>
+              </table>
+          `;
+
+        $('#errors-content').html(table);
+      }
+
+      // 加载性能数据
+      async function loadPerformance() {
+        try {
+          const [trendsData, slowestData] = await Promise.all([
+            $.getJSON(`${API_BASE}/performance/trends?hours=24`),
+            $.getJSON(`${API_BASE}/performance/slowest?limit=20`),
+          ]);
+
+          if (trendsData.code === 200 && slowestData.code === 200) {
+            displayPerformance(trendsData.data, slowestData.data);
+          }
+        } catch (error) {
+          $('#performance-content').html(
+            '<div class="error">加载性能数据失败: ' + error.message + '</div>',
+          );
+        }
+      }
+
+      // 显示性能数据
+      function displayPerformance(trends, slowest) {
+        let content = '<h4>最慢的操作</h4>';
+
+        if (slowest.requests && slowest.requests.length > 0) {
+          content += `
+                  <table class="table">
+                      <thead>
+                          <tr>
+                              <th>类型</th>
+                              <th>操作</th>
+                              <th>耗时</th>
+                              <th>时间</th>
+                              <th>状态</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          ${slowest.requests
+                            .map(
+                              (op) => `
+                              <tr>
+                                  <td>${op.type}</td>
+                                  <td>${op.name}</td>
+                                  <td>${op.duration} ms</td>
+                                  <td>${new Date(op.timestamp).toLocaleString()}</td>
+                                  <td>
+                                      <span class="status-indicator ${op.success ? 'status-success' : 'status-error'}"></span>
+                                      ${op.success ? '成功' : '失败'}
+                                  </td>
+                              </tr>
+                          `,
+                            )
+                            .join('')}
+                      </tbody>
+                  </table>
+              `;
+        } else {
+          content += '<div class="loading">暂无性能数据</div>';
+        }
+
+        $('#performance-content').html(content);
+      }
+
+      // 加载系统信息
+      async function loadSystem() {
+        try {
+          const response = await $.getJSON(`${API_BASE}/metrics/system`);
+          const data = response.data;
+
+          if (data) {
+            displaySystem(data);
+          }
+        } catch (error) {
+          $('#system-content').html(
+            '<div class="error">加载系统信息失败: ' + error.message + '</div>',
+          );
+        }
+      }
+
+      // 显示系统信息
+      function displaySystem(system) {
+        $('#system-content').html(`
+              <div class="card">
+                  <h4>系统资源</h4>
+                  <div class="metric">
+                      <span class="metric-label">Node.js版本</span>
+                      <span class="metric-value">${system.nodeVersion || 'N/A'}</span>
+                  </div>
+                  <div class="metric">
+                      <span class="metric-label">平台</span>
+                      <span class="metric-value">${system.platform || 'N/A'}</span>
+                  </div>
+                  <div class="metric">
+                      <span class="metric-label">运行时间</span>
+                      <span class="metric-value">${Math.floor(system.uptime / 3600)} 小时 ${Math.floor((system.uptime % 3600) / 60)} 分钟</span>
+                  </div>
+                  <div class="metric">
+                      <span class="metric-label">堆内存使用</span>
+                      <span class="metric-value">${system.memory.used} MB / ${system.memory.total} MB</span>
+                  </div>
+                  <div class="metric">
+                      <span class="metric-label">外部内存</span>
+                      <span class="metric-value">${system.memory.external} MB</span>
+                  </div>
+                  <div class="metric">
+                      <span class="metric-label">RSS内存</span>
+                      <span class="metric-value">${system.memory.rss} MB</span>
+                  </div>
+              </div>
+          `);
+      }
+
+      // 刷新函数
+      function refreshRequests() {
+        loadRequests();
+      }
+      function refreshErrors() {
+        loadErrors();
+      }
+      function refreshPerformance() {
+        loadPerformance();
+      }
+      function refreshSystem() {
+        loadSystem();
+      }
+
+      // 清除所有数据
+      async function clearAllData() {
+        if (!confirm('确定要清除所有调试数据吗？此操作不可撤销。')) {
+          return;
+        }
+
+        try {
+          const data = await $.ajax({
+            url: `${API_BASE}/data`,
+            method: 'DELETE',
+            dataType: 'json',
+          });
+
+          if (data.code === 200) {
+            alert('数据清除成功');
             loadDashboard();
             loadRequests();
-            startAutoRefresh();
-        });
-
-        // 标签页切换
-        function showTab(tabName) {
-            // 隐藏所有标签页内容
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // 移除所有标签的激活状态
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // 显示选中的标签页
-            document.getElementById(tabName + '-tab').classList.add('active');
-            event.target.classList.add('active');
-            
-            // 加载对应数据
-            switch(tabName) {
-                case 'requests':
-                    loadRequests();
-                    break;
-                case 'errors':
-                    loadErrors();
-                    break;
-                case 'performance':
-                    loadPerformance();
-                    break;
-                case 'system':
-                    loadSystem();
-                    break;
-            }
+          } else {
+            alert('数据清除失败: ' + data.message);
+          }
+        } catch (error) {
+          alert('数据清除失败: ' + error.message);
         }
+      }
 
-        // 加载仪表板数据
-        async function loadDashboard() {
-            try {
-                const response = await fetch(`${API_BASE}/info`);
-                const data = await response.json();
-                
-                if (data.code === 200) {
-                    updateSystemMetrics(data.data.system);
-                    updateRequestStats(data.data.requests);
-                    updateErrorStats(data.data.errors);
-                    updatePerformanceStats(data.data.performance);
-                }
-            } catch (error) {
-                console.error('加载仪表板数据失败:', error);
-            }
+      // 自动刷新
+      function startAutoRefresh() {
+        refreshInterval = setInterval(() => {
+          loadDashboard();
+        }, 30000); // 每30秒刷新一次仪表板
+      }
+
+      // 页面卸载时清理定时器
+      $(window).on('beforeunload', () => {
+        if (refreshInterval) {
+          clearInterval(refreshInterval);
         }
-
-        // 更新系统指标
-        function updateSystemMetrics(system) {
-            const container = document.getElementById('system-metrics');
-            const uptime = Math.floor(system.uptime / 3600);
-            const memoryUsage = Math.round((system.memory.heapUsed / system.memory.heapTotal) * 100);
-            
-            container.innerHTML = `
-                <div class="metric">
-                    <span class="metric-label">运行时间</span>
-                    <span class="metric-value">${uptime} 小时</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">内存使用</span>
-                    <span class="metric-value">${memoryUsage}%</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">堆内存</span>
-                    <span class="metric-value">${(system.memory.heapUsed / 1024 / 1024).toFixed(1)} MB</span>
-                </div>
-            `;
-        }
-
-        // 更新请求统计
-        function updateRequestStats(requests) {
-            const container = document.getElementById('request-stats');
-            const successRate = requests.total > 0 ? Math.round((requests.successful / requests.total) * 100) : 0;
-            
-            container.innerHTML = `
-                <div class="metric">
-                    <span class="metric-label">总请求数</span>
-                    <span class="metric-value">${requests.total}</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">成功率</span>
-                    <span class="metric-value">
-                        <span class="status-indicator ${successRate >= 95 ? 'status-success' : successRate >= 80 ? 'status-warning' : 'status-error'}"></span>
-                        ${successRate}%
-                    </span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">平均响应时间</span>
-                    <span class="metric-value">${requests.avgDuration || 0} ms</span>
-                </div>
-            `;
-        }
-
-        // 更新错误统计
-        function updateErrorStats(errors) {
-            const container = document.getElementById('error-stats');
-            
-            container.innerHTML = `
-                <div class="metric">
-                    <span class="metric-label">总错误数</span>
-                    <span class="metric-value">${errors.total}</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">最近1小时</span>
-                    <span class="metric-value">${errors.recentCount || 0}</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">最常见错误</span>
-                    <span class="metric-value">${errors.mostCommon || 'N/A'}</span>
-                </div>
-            `;
-        }
-
-        // 更新性能统计
-        function updatePerformanceStats(performance) {
-            const container = document.getElementById('performance-stats');
-            const requests = performance.requests || {};
-            
-            container.innerHTML = `
-                <div class="metric">
-                    <span class="metric-label">平均响应时间</span>
-                    <span class="metric-value">${requests.avgDuration || 0} ms</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">P95响应时间</span>
-                    <span class="metric-value">${requests.p95 || 0} ms</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">慢请求率</span>
-                    <span class="metric-value">${requests.slowOperationRate || 0}%</span>
-                </div>
-            `;
-        }
-
-        // 加载请求数据
-        async function loadRequests() {
-            try {
-                const response = await fetch(`${API_BASE}/requests?limit=50`);
-                const data = await response.json();
-                
-                if (data.code === 200) {
-                    displayRequests(data.data);
-                }
-            } catch (error) {
-                document.getElementById('requests-content').innerHTML = 
-                    '<div class="error">加载请求数据失败: ' + error.message + '</div>';
-            }
-        }
-
-        // 显示请求数据
-        function displayRequests(requests) {
-            const container = document.getElementById('requests-content');
-            
-            if (!requests || requests.length === 0) {
-                container.innerHTML = '<div class="loading">暂无请求数据</div>';
-                return;
-            }
-            
-            const table = `
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>时间</th>
-                            <th>方法</th>
-                            <th>路径</th>
-                            <th>状态</th>
-                            <th>耗时</th>
-                            <th>IP地址</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${requests.map(req => `
-                            <tr>
-                                <td>${new Date(req.timestamp).toLocaleString()}</td>
-                                <td><span style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">${req.method}</span></td>
-                                <td>${req.url}</td>
-                                <td>
-                                    <span class="status-indicator ${req.success ? 'status-success' : 'status-error'}"></span>
-                                    ${req.statusCode || (req.success ? '200' : '500')}
-                                </td>
-                                <td>${req.duration} ms</td>
-                                <td>${req.ip || 'N/A'}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
-            
-            container.innerHTML = table;
-        }
-
-        // 加载错误数据
-        async function loadErrors() {
-            try {
-                const response = await fetch(`${API_BASE}/errors?limit=50`);
-                const data = await response.json();
-                
-                if (data.code === 200) {
-                    displayErrors(data.data);
-                }
-            } catch (error) {
-                document.getElementById('errors-content').innerHTML = 
-                    '<div class="error">加载错误数据失败: ' + error.message + '</div>';
-            }
-        }
-
-        // 显示错误数据
-        function displayErrors(errors) {
-            const container = document.getElementById('errors-content');
-            
-            if (!errors || errors.length === 0) {
-                container.innerHTML = '<div class="loading">暂无错误数据</div>';
-                return;
-            }
-            
-            const table = `
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>时间</th>
-                            <th>类型</th>
-                            <th>消息</th>
-                            <th>严重程度</th>
-                            <th>请求路径</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${errors.map(error => `
-                            <tr>
-                                <td>${new Date(error.timestamp).toLocaleString()}</td>
-                                <td>${error.type}</td>
-                                <td title="${error.message}">${error.message.substring(0, 50)}${error.message.length > 50 ? '...' : ''}</td>
-                                <td>
-                                    <span class="status-indicator ${
-                                        error.severity === 'critical' ? 'status-error' : 
-                                        error.severity === 'high' ? 'status-warning' : 'status-success'
-                                    }"></span>
-                                    ${error.severity}
-                                </td>
-                                <td>${error.context?.url || 'N/A'}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
-            
-            container.innerHTML = table;
-        }
-
-        // 加载性能数据
-        async function loadPerformance() {
-            try {
-                const [trendsResponse, slowestResponse] = await Promise.all([
-                    fetch(`${API_BASE}/performance/trends?hours=24`),
-                    fetch(`${API_BASE}/performance/slowest?limit=20`)
-                ]);
-                
-                const trendsData = await trendsResponse.json();
-                const slowestData = await slowestResponse.json();
-                
-                if (trendsData.code === 200 && slowestData.code === 200) {
-                    displayPerformance(trendsData.data, slowestData.data);
-                }
-            } catch (error) {
-                document.getElementById('performance-content').innerHTML = 
-                    '<div class="error">加载性能数据失败: ' + error.message + '</div>';
-            }
-        }
-
-        // 显示性能数据
-        function displayPerformance(trends, slowest) {
-            const container = document.getElementById('performance-content');
-            
-            let content = '<h4>最慢的操作</h4>';
-            
-            if (slowest.requests && slowest.requests.length > 0) {
-                content += `
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>类型</th>
-                                <th>操作</th>
-                                <th>耗时</th>
-                                <th>时间</th>
-                                <th>状态</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${slowest.requests.map(op => `
-                                <tr>
-                                    <td>${op.type}</td>
-                                    <td>${op.name}</td>
-                                    <td>${op.duration} ms</td>
-                                    <td>${new Date(op.timestamp).toLocaleString()}</td>
-                                    <td>
-                                        <span class="status-indicator ${op.success ? 'status-success' : 'status-error'}"></span>
-                                        ${op.success ? '成功' : '失败'}
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-            } else {
-                content += '<div class="loading">暂无性能数据</div>';
-            }
-            
-            container.innerHTML = content;
-        }
-
-        // 加载系统信息
-        async function loadSystem() {
-            try {
-                const response = await fetch(`${API_BASE}/info`);
-                const data = await response.json();
-                
-                if (data.code === 200) {
-                    displaySystem(data.data);
-                }
-            } catch (error) {
-                document.getElementById('system-content').innerHTML = 
-                    '<div class="error">加载系统信息失败: ' + error.message + '</div>';
-            }
-        }
-
-        // 显示系统信息
-        function displaySystem(systemData) {
-            const container = document.getElementById('system-content');
-            const system = systemData.system;
-            
-            container.innerHTML = `
-                <div class="card">
-                    <h4>系统资源</h4>
-                    <div class="metric">
-                        <span class="metric-label">Node.js版本</span>
-                        <span class="metric-value">${process.version || 'N/A'}</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">运行时间</span>
-                        <span class="metric-value">${Math.floor(system.uptime / 3600)} 小时 ${Math.floor((system.uptime % 3600) / 60)} 分钟</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">堆内存使用</span>
-                        <span class="metric-value">${(system.memory.heapUsed / 1024 / 1024).toFixed(1)} MB / ${(system.memory.heapTotal / 1024 / 1024).toFixed(1)} MB</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">外部内存</span>
-                        <span class="metric-value">${(system.memory.external / 1024 / 1024).toFixed(1)} MB</span>
-                    </div>
-                </div>
-            `;
-        }
-
-        // 刷新函数
-        function refreshRequests() { loadRequests(); }
-        function refreshErrors() { loadErrors(); }
-        function refreshPerformance() { loadPerformance(); }
-        function refreshSystem() { loadSystem(); }
-
-        // 清除所有数据
-        async function clearAllData() {
-            if (!confirm('确定要清除所有调试数据吗？此操作不可撤销。')) {
-                return;
-            }
-            
-            try {
-                const response = await fetch(`${API_BASE}/clear`, {
-                    method: 'DELETE'
-                });
-                const data = await response.json();
-                
-                if (data.code === 200) {
-                    alert('数据清除成功');
-                    loadDashboard();
-                    loadRequests();
-                } else {
-                    alert('数据清除失败: ' + data.message);
-                }
-            } catch (error) {
-                alert('数据清除失败: ' + error.message);
-            }
-        }
-
-        // 自动刷新
-        function startAutoRefresh() {
-            refreshInterval = setInterval(() => {
-                loadDashboard();
-            }, 30000); // 每30秒刷新一次仪表板
-        }
-
-        // 页面卸载时清理定时器
-        window.addEventListener('beforeunload', () => {
-            if (refreshInterval) {
-                clearInterval(refreshInterval);
-            }
-        });
+      });
     </script>
-</body>
+  </body>
 </html>

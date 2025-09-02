@@ -10,13 +10,13 @@
  * @author NestJS Template
  * @version 1.0.0
  */
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
+import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Request } from 'express';
 import { Observable, throwError } from 'rxjs';
-import { tap, catchError, finalize } from 'rxjs/operators';
-import { Request, Response } from 'express';
-import { RequestTrackingService } from '../services/request-tracking.service';
+import { catchError, tap } from 'rxjs/operators';
 import { PerformanceMonitorService } from '../services/performance-monitor.service';
+import { RequestTrackingService } from '../services/request-tracking.service';
 
 // 扩展Request接口
 interface DebugRequest extends Request {
@@ -39,18 +39,17 @@ export class RequestTrackingInterceptor implements NestInterceptor {
     this.isDebugEnabled = this.configService.get<string>('app.environment') === 'development';
   }
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     if (!this.isDebugEnabled) {
       return next.handle();
     }
 
     const request = context.switchToHttp().getRequest<DebugRequest>();
-    const response = context.switchToHttp().getResponse();
     const controllerName = context.getClass().name;
     const handlerName = context.getHandler().name;
 
     const executionStartTime = Date.now();
-    const requestId = request.debugInfo?.requestId || 'unknown';
+    const requestId = request.debugInfo?.requestId ?? 'unknown';
 
     // 检查是否启用性能监控
     const performanceMonitoring = this.configService.get<boolean>(
@@ -95,13 +94,6 @@ export class RequestTrackingInterceptor implements NestInterceptor {
           // 如果有调试信息，更新请求记录
           if (request.debugInfo) {
             // 这里可以添加更多的执行细节
-            const metadata = {
-              controller: controllerName,
-              handler: handlerName,
-              executionTime,
-              responseData: this.sanitizeResponse(data),
-            };
-
             // 可以通过某种方式将这些信息传递给请求追踪服务
             // 由于拦截器在中间件之后执行，这里主要用于记录控制器层的信息
           }
@@ -115,16 +107,16 @@ export class RequestTrackingInterceptor implements NestInterceptor {
 
           this.logger.error(
             `[${requestId}] ${controllerName}.${handlerName} 执行失败 - ${executionTime}ms`,
-            error.stack,
+            (error as Error).stack,
           );
 
           // 完成性能监控（失败，如果启用）
           if (performanceId) {
             this.performanceMonitorService.finishMonitoring(performanceId, false, {
               executionTime,
-              errorName: error.name,
-              errorMessage: error.message,
-              statusCode: error.status || 500,
+              errorName: (error as Error).name,
+              errorMessage: (error as Error).message,
+              statusCode: (error as { status?: number }).status ?? 500,
             });
           }
 
@@ -135,14 +127,14 @@ export class RequestTrackingInterceptor implements NestInterceptor {
             executionTime,
             query: request.query,
             body: this.sanitizeBody(request.body),
-            errorName: error.name,
-            errorCode: error.code,
+            errorName: (error as Error).name,
+            errorCode: (error as { code?: string }).code,
           });
         } catch (debugError) {
           this.logger.error('请求追踪拦截器处理异常时发生错误:', debugError);
         }
 
-        return throwError(() => error);
+        return throwError(() => error as Error);
       }),
     );
   }
@@ -150,13 +142,13 @@ export class RequestTrackingInterceptor implements NestInterceptor {
   /**
    * 清理敏感请求体数据
    */
-  private sanitizeBody(body: any): any {
+  private sanitizeBody(body: unknown): unknown {
     if (!body || typeof body !== 'object') {
       return body;
     }
 
     const sensitiveFields = ['password', 'token', 'secret', 'key', 'authorization'];
-    const sanitized = { ...body };
+    const sanitized = { ...body } as Record<string, unknown>;
 
     for (const field of sensitiveFields) {
       if (sanitized[field]) {
@@ -170,20 +162,20 @@ export class RequestTrackingInterceptor implements NestInterceptor {
   /**
    * 清理敏感响应数据
    */
-  private sanitizeResponse(response: any): any {
+  private sanitizeResponse(response: unknown): unknown {
     if (!response || typeof response !== 'object') {
       return response;
     }
 
     const sensitiveFields = ['token', 'secret', 'key', 'password'];
-    const sanitized = { ...response };
+    const sanitized = { ...response } as Record<string, unknown>;
 
     // 如果响应有data字段，也需要清理
     if (sanitized.data && typeof sanitized.data === 'object') {
-      sanitized.data = { ...sanitized.data };
+      sanitized.data = { ...(sanitized.data as Record<string, unknown>) };
       for (const field of sensitiveFields) {
-        if (sanitized.data[field]) {
-          sanitized.data[field] = '***REDACTED***';
+        if ((sanitized.data as Record<string, unknown>)[field]) {
+          (sanitized.data as Record<string, unknown>)[field] = '***REDACTED***';
         }
       }
     }
@@ -201,7 +193,7 @@ export class RequestTrackingInterceptor implements NestInterceptor {
   /**
    * 计算响应大小
    */
-  private calculateResponseSize(response: any): number {
+  private calculateResponseSize(response: unknown): number {
     try {
       return JSON.stringify(response).length;
     } catch {

@@ -104,21 +104,23 @@ export class DebugService {
   /**
    * 获取最近的请求记录
    */
-  async getRecentRequests(limit: number = 50) {
+  async getRecentRequests(limit: number = 50): Promise<unknown[]> {
     return this.requestTrackingService.getRecentRequests(limit);
   }
 
   /**
    * 获取最近的错误记录
    */
-  async getRecentErrors(limit: number = 50) {
+  async getRecentErrors(limit: number = 50): Promise<unknown[]> {
     return this.errorDiagnosticsService.getRecentErrors(limit);
   }
 
   /**
    * 获取性能趋势数据
    */
-  async getPerformanceTrends(hours: number = 24) {
+  async getPerformanceTrends(
+    hours: number = 24,
+  ): Promise<{ requests: unknown[]; database: unknown[]; cache: unknown[]; external: unknown[] }> {
     return {
       requests: this.performanceMonitorService.getPerformanceTrends(hours, 'request'),
       database: this.performanceMonitorService.getPerformanceTrends(hours, 'database'),
@@ -130,7 +132,9 @@ export class DebugService {
   /**
    * 获取最慢的操作
    */
-  async getSlowestOperations(limit: number = 10) {
+  async getSlowestOperations(
+    limit: number = 10,
+  ): Promise<{ requests: unknown[]; database: unknown[]; cache: unknown[]; external: unknown[] }> {
     return {
       requests: this.performanceMonitorService.getSlowestOperations(limit, 'request'),
       database: this.performanceMonitorService.getSlowestOperations(limit, 'database'),

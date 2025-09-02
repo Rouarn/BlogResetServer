@@ -11,56 +11,51 @@
  * @version 1.0.0
  */
 import {
-  Controller,
-  Get,
-  Query,
-  Post,
   Body,
-  Param,
+  Controller,
   Delete,
-  UseGuards,
+  Get,
   HttpException,
   HttpStatus,
+  Param,
+  Post,
+  Query,
   Res,
+  UseGuards,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { Public } from 'src/common/decorators';
 import { DebugService } from './debug.service';
-import { RequestTrackingService } from './services/request-tracking.service';
+import { DevelopmentGuard } from './guards/development.guard';
+import {
+  DebugConfig,
+  DebugInfo,
+  ErrorDiagnosticRecord,
+  ErrorSummary,
+  RequestSummary,
+  RequestTrackingRecord,
+  SystemMetrics,
+} from './interfaces/debug.interface';
 import { ErrorDiagnosticsService } from './services/error-diagnostics.service';
+import { RequestTrackingService } from './services/request-tracking.service';
 
-/**
- * 开发环境守卫
- */
-class DevelopmentGuard {
-  constructor(private configService: ConfigService) {}
-
-  canActivate(): boolean {
-    const environment = this.configService.get<string>('app.environment');
-    if (environment !== 'development') {
-      throw new HttpException('调试功能仅在开发环境下可用', HttpStatus.FORBIDDEN);
-    }
-    return true;
-  }
-}
-
-@Controller('debug')
+@Controller({ path: 'debug' })
+@Public()
 @UseGuards(DevelopmentGuard)
 export class DebugController {
   constructor(
     private readonly debugService: DebugService,
     private readonly requestTrackingService: RequestTrackingService,
     private readonly errorDiagnosticsService: ErrorDiagnosticsService,
-    private readonly configService: ConfigService,
   ) {}
 
   /**
    * 调试面板页面
    */
   @Get('panel')
-  async getDebugPanel(@Res() res: Response) {
+  async getDebugPanel(@Res() res: Response): Promise<void> {
     try {
       const htmlPath = join(__dirname, 'views', 'debug-panel.html');
       const html = readFileSync(htmlPath, 'utf8');
@@ -70,7 +65,7 @@ export class DebugController {
       res.status(500).json({
         code: 500,
         message: '调试面板加载失败',
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString(),
       });
     }
@@ -80,7 +75,7 @@ export class DebugController {
    * 获取调试面板总览信息
    */
   @Get('overview')
-  async getOverview() {
+  async getOverview(): Promise<DebugInfo> {
     return this.debugService.getDebugInfo();
   }
 
@@ -88,7 +83,7 @@ export class DebugController {
    * 获取系统性能指标
    */
   @Get('metrics/system')
-  async getSystemMetrics() {
+  async getSystemMetrics(): Promise<SystemMetrics> {
     return this.debugService.getSystemMetrics();
   }
 
@@ -96,7 +91,7 @@ export class DebugController {
    * 获取请求统计摘要
    */
   @Get('metrics/requests')
-  async getRequestMetrics() {
+  async getRequestMetrics(): Promise<RequestSummary> {
     return this.debugService.getRequestSummary();
   }
 
@@ -104,7 +99,7 @@ export class DebugController {
    * 获取错误统计摘要
    */
   @Get('metrics/errors')
-  async getErrorMetrics() {
+  async getErrorMetrics(): Promise<ErrorSummary> {
     return this.debugService.getErrorSummary();
   }
 
@@ -112,7 +107,7 @@ export class DebugController {
    * 获取最近的请求记录
    */
   @Get('requests')
-  async getRecentRequests(@Query('limit') limit?: string) {
+  async getRecentRequests(@Query('limit') limit?: string): Promise<RequestTrackingRecord[]> {
     const limitNum = limit ? parseInt(limit, 10) : 50;
     return this.requestTrackingService.getRecentRequests(limitNum);
   }
@@ -131,7 +126,7 @@ export class DebugController {
       startTime?: string;
       endTime?: string;
     },
-  ) {
+  ): Promise<RequestTrackingRecord[]> {
     return this.requestTrackingService.queryRequests(filters);
   }
 
@@ -139,7 +134,7 @@ export class DebugController {
    * 获取最近的错误记录
    */
   @Get('errors')
-  async getRecentErrors(@Query('limit') limit?: string) {
+  async getRecentErrors(@Query('limit') limit?: string): Promise<ErrorDiagnosticRecord[]> {
     const limitNum = limit ? parseInt(limit, 10) : 50;
     return this.errorDiagnosticsService.getRecentErrors(limitNum);
   }
@@ -158,7 +153,7 @@ export class DebugController {
       startTime?: string;
       endTime?: string;
     },
-  ) {
+  ): Promise<ErrorDiagnosticRecord[]> {
     return this.errorDiagnosticsService.queryErrors(filters);
   }
 
@@ -166,7 +161,9 @@ export class DebugController {
    * 获取错误趋势数据
    */
   @Get('errors/trends')
-  async getErrorTrends(@Query('hours') hours?: string) {
+  async getErrorTrends(
+    @Query('hours') hours?: string,
+  ): Promise<{ timestamp: string; count: number }[]> {
     const hoursNum = hours ? parseInt(hours, 10) : 24;
     return this.errorDiagnosticsService.getErrorTrends(hoursNum);
   }
@@ -175,7 +172,7 @@ export class DebugController {
    * 获取错误详情
    */
   @Get('errors/:id')
-  async getErrorDetail(@Param('id') id: string) {
+  async getErrorDetail(@Param('id') id: string): Promise<ErrorDiagnosticRecord | null> {
     const error = this.errorDiagnosticsService.getErrorDetail(id);
     if (!error) {
       throw new HttpException('错误记录不存在', HttpStatus.NOT_FOUND);
@@ -187,84 +184,80 @@ export class DebugController {
    * 标记错误为已解决
    */
   @Post('errors/:id/resolve')
-  async resolveError(@Param('id') id: string) {
+  async resolveError(@Param('id') id: string): Promise<{ success: boolean; message: string }> {
     const success = this.errorDiagnosticsService.markErrorAsResolved(id);
     if (!success) {
       throw new HttpException('错误记录不存在', HttpStatus.NOT_FOUND);
     }
-    return { message: '错误已标记为已解决' };
+    return { success: true, message: '错误已标记为已解决' };
   }
 
   /**
    * 获取性能趋势数据
    */
   @Get('performance/trends')
-  async getPerformanceTrends(@Query('hours') hours?: string) {
+  async getPerformanceTrends(
+    @Query('hours') hours?: string,
+  ): Promise<{ requests: unknown[]; database: unknown[]; cache: unknown[]; external: unknown[] }> {
     const hoursNum = hours ? parseInt(hours, 10) : 24;
     const trends = await this.debugService.getPerformanceTrends(hoursNum);
-    
-    return {
-      code: 200,
-      message: '获取性能趋势数据成功',
-      data: trends,
-      timestamp: new Date().toISOString(),
-    };
+
+    return trends;
   }
 
   /**
    * 获取最慢的操作
    */
   @Get('performance/slowest')
-  async getSlowestOperations(@Query('limit') limit?: string) {
+  async getSlowestOperations(
+    @Query('limit') limit?: string,
+  ): Promise<{ requests: unknown[]; database: unknown[]; cache: unknown[]; external: unknown[] }> {
     const limitNum = limit ? parseInt(limit, 10) : 10;
     const slowest = await this.debugService.getSlowestOperations(limitNum);
-    
-    return {
-      code: 200,
-      message: '获取最慢操作成功',
-      data: slowest,
-      timestamp: new Date().toISOString(),
-    };
+
+    return slowest;
   }
 
   /**
    * 清除所有调试数据
    */
   @Delete('data')
-  async clearDebugData() {
+  async clearDebugData(): Promise<{ success: boolean; message: string }> {
     await this.debugService.clearDebugData();
-    return { message: '调试数据已清除' };
+    return { success: true, message: '调试数据已清除' };
   }
 
   /**
    * 清除请求追踪数据
    */
   @Delete('requests')
-  async clearRequestData() {
+  async clearRequestData(): Promise<{ success: boolean; message: string }> {
     await this.requestTrackingService.clearData();
-    return { message: '请求追踪数据已清除' };
+    return { success: true, message: '请求追踪数据已清除' };
   }
 
   /**
    * 清除错误诊断数据
    */
   @Delete('errors')
-  async clearErrorData() {
+  async clearErrorData(): Promise<{ success: boolean; message: string }> {
     await this.errorDiagnosticsService.clearData();
-    return { message: '错误诊断数据已清除' };
+    return { success: true, message: '错误诊断数据已清除' };
   }
 
   /**
    * 获取调试配置信息
    */
   @Get('config')
-  async getDebugConfig() {
+  async getDebugConfig(): Promise<DebugConfig> {
     return {
       enabled: this.debugService.isEnabled(),
-      environment: this.configService.get<string>('app.environment'),
-      nodeVersion: process.version,
-      platform: process.platform,
-      uptime: process.uptime(),
+      maxRecords: 1000,
+      retentionDays: 7,
+      trackRequests: true,
+      trackErrors: true,
+      trackPerformance: true,
+      sensitiveFields: ['password', 'token', 'secret'],
     };
   }
 
@@ -272,12 +265,11 @@ export class DebugController {
    * 健康检查端点
    */
   @Get('health')
-  async healthCheck() {
+  async healthCheck(): Promise<{ status: string; timestamp: string; uptime: number }> {
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
-      environment: this.configService.get<string>('app.environment'),
-      debug: this.debugService.isEnabled(),
+      uptime: process.uptime(),
     };
   }
 }

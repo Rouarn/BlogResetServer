@@ -34,22 +34,22 @@ export class RequestTrackingService {
   /**
    * 开始追踪请求
    */
-  startTracking(req: any): string {
+  startTracking(req: Record<string, unknown>): string {
     const requestId = generateUUID();
     const record: RequestTrackingRecord = {
       id: requestId,
       timestamp: new Date().toISOString(),
-      method: req.method,
-      url: req.url,
+      method: req.method as string,
+      url: req.url as string,
       statusCode: 0, // 初始状态
       duration: 0,
-      userAgent: req.headers['user-agent'],
-      ip: req.ip || req.connection?.remoteAddress,
-      userId: req.user?.id,
+      userAgent: (req.headers as Record<string, string>)?.['user-agent'],
+      ip: (req.ip as string) ?? (req.connection as { remoteAddress?: string })?.remoteAddress,
+      userId: (req.user as { id?: string })?.id,
       requestSize: this.calculateRequestSize(req),
-      headers: this.sanitizeHeaders(req.headers),
-      query: req.query,
-      body: this.sanitizeBody(req.body),
+      headers: this.sanitizeHeaders((req.headers as Record<string, string>) || {}),
+      query: req.query as Record<string, string | string[]>,
+      body: this.sanitizeBody((req.body as Record<string, unknown>) || {}),
     };
 
     this.requests.set(requestId, record);
@@ -70,7 +70,7 @@ export class RequestTrackingService {
     requestId: string,
     statusCode: number,
     startTime: number,
-    response?: any,
+    response?: Record<string, unknown>,
     error?: string,
   ): void {
     const record = this.requests.get(requestId);
@@ -80,8 +80,8 @@ export class RequestTrackingService {
 
     record.statusCode = statusCode;
     record.duration = Date.now() - startTime;
-    record.responseSize = this.calculateResponseSize(response);
-    record.response = this.sanitizeResponse(response);
+    record.responseSize = response ? this.calculateResponseSize(response) : 0;
+    record.response = response ? this.sanitizeResponse(response) : undefined;
     record.error = error;
 
     this.requests.set(requestId, record);
@@ -106,7 +106,7 @@ export class RequestTrackingService {
         : 0;
 
     const slowestRequest =
-      records.filter((r) => r.duration > 0).sort((a, b) => b.duration - a.duration)[0] || null;
+      records.filter((r) => r.duration > 0).sort((a, b) => b.duration - a.duration)[0] ?? null;
 
     const recentRequests = records.filter((r) => new Date(r.timestamp).getTime() > oneMinuteAgo);
     const requestsPerMinute = recentRequests.length;
@@ -115,7 +115,7 @@ export class RequestTrackingService {
     const endpointStats = new Map<string, { count: number; totalTime: number }>();
     records.forEach((record) => {
       const endpoint = `${record.method} ${this.normalizeUrl(record.url)}`;
-      const stats = endpointStats.get(endpoint) || { count: 0, totalTime: 0 };
+      const stats = endpointStats.get(endpoint) ?? { count: 0, totalTime: 0 };
       stats.count++;
       if (record.duration > 0) {
         stats.totalTime += record.duration;
@@ -232,7 +232,7 @@ export class RequestTrackingService {
   /**
    * 计算请求大小
    */
-  private calculateRequestSize(req: any): number {
+  private calculateRequestSize(req: Record<string, unknown>): number {
     try {
       return JSON.stringify({
         headers: req.headers,
@@ -247,7 +247,7 @@ export class RequestTrackingService {
   /**
    * 计算响应大小
    */
-  private calculateResponseSize(response: any): number {
+  private calculateResponseSize(response: Record<string, unknown>): number {
     try {
       return JSON.stringify(response).length;
     } catch {
@@ -258,7 +258,7 @@ export class RequestTrackingService {
   /**
    * 清理敏感请求头
    */
-  private sanitizeHeaders(headers: Record<string, any>): Record<string, string> {
+  private sanitizeHeaders(headers: Record<string, string>): Record<string, string> {
     const sensitiveHeaders = ['authorization', 'cookie', 'x-api-key'];
     const sanitized = { ...headers };
 
@@ -274,7 +274,7 @@ export class RequestTrackingService {
   /**
    * 清理敏感请求体
    */
-  private sanitizeBody(body: any): any {
+  private sanitizeBody(body: Record<string, unknown>): Record<string, unknown> {
     if (!body || typeof body !== 'object') {
       return body;
     }
@@ -294,7 +294,7 @@ export class RequestTrackingService {
   /**
    * 清理敏感响应数据
    */
-  private sanitizeResponse(response: any): any {
+  private sanitizeResponse(response: Record<string, unknown>): Record<string, unknown> {
     if (!response || typeof response !== 'object') {
       return response;
     }
