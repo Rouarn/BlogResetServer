@@ -231,11 +231,11 @@ nestjs-template/
 │   ├── modules/                  # 业务模块
 │   │   ├── auth/                 # 认证模块
 │   │   │   ├── dto/              # 数据传输对象
-│   │   │   │   ├── auth-response.dto.ts
 │   │   │   │   ├── captcha-verify.dto.ts
 │   │   │   │   ├── create-auth.dto.ts
 │   │   │   │   ├── create-user.dto.ts
-│   │   │   │   └── update-auth.dto.ts
+│   │   │   │   ├── login.dto.ts
+│   │   │   │   └── update-user.dto.ts
 │   │   │   ├── entities/         # 实体定义
 │   │   │   │   └── auth.entity.ts
 │   │   │   ├── auth.controller.ts # 认证控制器
@@ -258,7 +258,6 @@ nestjs-template/
 │   │       │   ├── storage.service.ts      # 存储服务
 │   │       │   └── validation.service.ts   # 文件验证服务
 │   │       ├── decorators/       # 装饰器
-│   │       │   ├── file-permissions.decorator.ts
 │   │       │   └── index.ts
 │   │       ├── guards/           # 权限守卫
 │   │       │   └── file-access.guard.ts
@@ -280,15 +279,16 @@ nestjs-template/
 │   │   │   └── response.constant.ts
 │   │   ├── decorators/           # 装饰器
 │   │   │   ├── current-user.decorator.ts
+│   │   │   ├── enum.decorator.ts
 │   │   │   ├── index.ts
 │   │   │   ├── jwt-auth.decorator.ts
 │   │   │   ├── public.decorator.ts
-│   │   │   ├── roles.decorator.ts
-│   │   │   └── user.decorator.ts
+│   │   │   └── roles.decorator.ts
 │   │   ├── enums/                # 枚举定义
 │   │   │   ├── gender.enum.ts
 │   │   │   ├── index.ts
-│   │   │   └── role.enum.ts
+│   │   │   ├── role.enum.ts
+│   │   │   └── status.enum.ts
 │   │   ├── exceptions/           # 异常处理
 │   │   │   ├── http.exception.ts
 │   │   │   └── index.ts
@@ -305,9 +305,11 @@ nestjs-template/
 │   │   │   └── response.interceptor.ts
 │   │   ├── interfaces/           # 接口定义
 │   │   │   ├── error-response.interface.ts
+│   │   │   ├── files.interface.ts
 │   │   │   ├── index.ts
 │   │   │   └── response.interface.ts
 │   │   ├── pipes/                # 管道
+│   │   │   ├── custom-validation.pipe.ts
 │   │   │   ├── file-validation.pipe.ts
 │   │   │   └── index.ts
 │   │   └── strategies/           # 认证策略
@@ -319,6 +321,21 @@ nestjs-template/
 │   │   ├── configuration.ts      # 配置对象
 │   │   ├── index.ts              # 配置导出
 │   │   └── validation.schema.ts  # 配置验证
+│   ├── database/                 # 数据库模块
+│   │   ├── database.module.ts    # 数据库模块主文件
+│   │   ├── index.ts              # 模块统一导出
+│   │   ├── decorators/           # 装饰器
+│   │   │   └── index.ts          # 时间戳和软删除装饰器
+│   │   ├── entities/             # 实体定义
+│   │   │   └── base.entity.ts    # 基础实体类
+│   │   ├── interceptors/         # 拦截器
+│   │   │   ├── audit.interceptor.ts # 审计拦截器
+│   │   │   └── index.ts          # 拦截器导出
+│   │   ├── subscribers/          # TypeORM 订阅者
+│   │   │   ├── audit.subscriber.ts # 审计数据库订阅者
+│   │   │   └── index.ts          # 订阅者导出
+│   │   └── types/                # 类型定义
+│   │       └── index.ts          # 配置和上下文类型
 │   ├── utils/                    # 工具模块
 │   │   ├── auth/                 # 认证工具
 │   │   │   ├── index.ts
@@ -328,6 +345,7 @@ nestjs-template/
 │   │   │   ├── date.helper.ts
 │   │   │   ├── debounce.helper.ts
 │   │   │   ├── deep-clone.helper.ts
+│   │   │   ├── enum.helper.ts
 │   │   │   ├── format-date.helper.ts
 │   │   │   ├── index.ts
 │   │   │   ├── random-string.helper.ts
@@ -348,33 +366,264 @@ nestjs-template/
 │   ├── app.module.ts             # 应用模块
 │   └── main.ts                   # 应用入口
 ├── scripts/                      # 脚本工具
+│   ├── README.md                 # 脚本说明文档
 │   ├── check-env.js              # 环境检查工具
+│   ├── remove-spec-files.bat     # 测试文件清理脚本(批处理)
+│   ├── remove-spec-files.js      # 测试文件清理脚本(Node.js)
+│   ├── remove-spec-files.ps1     # 测试文件清理脚本(PowerShell)
 │   └── setup-env.js              # 环境设置工具
-├── static/                       # 静态资源目录
+├── deploy/                       # 部署相关
+│   ├── README.md                 # 部署说明
+│   ├── config/                   # 部署配置
+│   ├── docker/                   # Docker配置
+│   ├── nginx/                    # Nginx配置
+│   └── scripts/                  # 部署脚本
 ├── .env                          # 环境变量（公共配置）
 ├── .env.development              # 开发环境配置
 ├── .env.production               # 生产环境配置
+├── .editorconfig                 # 编辑器配置
 ├── .eslintrc.js                  # ESLint配置
 ├── .gitignore                    # Git忽略文件
+├── .npmrc                        # NPM配置
+├── .nvmrc                        # Node版本配置
 ├── .prettierrc                   # Prettier配置
 ├── nest-cli.json                 # NestJS CLI配置
 ├── package.json                  # 项目配置
 ├── pnpm-lock.yaml                # PNPM锁定文件
 ├── tsconfig.json                 # TypeScript配置
+├── tsconfig.build.json           # 构建TypeScript配置
 └── README.md                     # 项目说明
 ```
+
+## 📚 模块介绍
+
+### 🔐 认证模块 (src/modules/auth)
+
+认证模块提供了完整的用户认证和授权功能，支持用户管理、JWT认证、验证码验证等核心功能。
+
+#### 核心功能
+
+- **JWT 认证**：基于 JSON Web Token 的无状态认证机制
+- **用户管理**：完整的用户生命周期管理（创建、查询、更新、删除）
+- **角色权限**：基于角色的访问控制 (RBAC)
+- **验证码系统**：图形验证码生成和验证，防止自动化攻击
+- **密码安全**：使用 bcrypt 进行密码哈希加密
+- **账户状态管理**：支持用户状态切换（启用/禁用）
+- **批量操作**：支持批量删除用户等管理操作
+
+#### API 端点
+
+**用户认证相关：**
+
+- `POST /auth/login` - 用户登录认证
+- `POST /auth/register` - 用户注册
+- `GET /auth/profile` - 获取当前用户信息
+
+**验证码相关：**
+
+- `POST /auth/captcha` - 生成图形验证码
+- `POST /auth/captcha/verify` - 验证验证码
+
+**用户管理相关：**
+
+- `GET /auth/users` - 获取用户列表（支持分页和筛选）
+- `POST /auth/users` - 创建新用户
+- `GET /auth/users/:id` - 获取指定用户信息
+- `PUT /auth/users/:id` - 更新用户信息
+- `DELETE /auth/users/:id` - 删除单个用户
+- `DELETE /auth/users/batch` - 批量删除用户
+- `PATCH /auth/users/:id/toggle-status` - 切换用户状态
+
+#### 技术特性
+
+- **安全防护**：防暴力破解、SQL注入防护
+- **数据验证**：完整的输入数据验证和清理
+- **错误处理**：统一的错误响应格式
+- **API文档**：完整的 Swagger/OpenAPI 文档支持
+- **权限控制**：基于装饰器的权限验证机制
+
+### 📁 文件管理模块 (src/modules/files)
+
+文件管理模块提供了完整的文件上传、存储、下载和管理功能，支持多种上传方式和存储策略。
+
+#### 核心功能
+
+- **多种上传方式**：单文件上传、批量上传、分块上传
+- **断点续传**：支持大文件的断点续传功能
+- **文件验证**：文件类型、大小、安全性验证
+- **存储管理**：灵活的存储策略和路径管理
+- **文件预览**：支持图片、文档等文件的在线预览
+- **权限控制**：基于用户权限的文件访问控制
+- **批量操作**：支持批量删除、批量下载等操作
+
+#### API 端点
+
+**文件上传相关：**
+
+- `POST /files/upload` - 单文件上传
+- `POST /files/upload/batch` - 批量文件上传
+- `POST /files/upload/chunk/init` - 初始化分块上传
+- `POST /files/upload/chunk/:uploadId` - 上传文件分块
+- `POST /files/upload/chunk/:uploadId/complete` - 完成分块上传
+- `GET /files/upload/progress/:uploadId` - 获取上传进度
+
+**文件管理相关：**
+
+- `GET /files` - 获取文件列表（支持分页和筛选）
+- `GET /files/:id` - 获取文件详细信息
+- `GET /files/:id/download` - 下载文件
+- `GET /files/:id/preview` - 预览文件
+- `DELETE /files/:id` - 删除文件
+
+#### 技术特性
+
+- **存储适配器**：支持本地存储，易于扩展云存储
+- **文件哈希**：自动计算文件哈希，防止重复上传
+- **路径管理**：智能的文件路径和命名策略
+- **安全检查**：文件类型白名单、恶意文件检测
+- **性能优化**：分块上传、流式处理大文件
+
+### 🛠️ 公共模块 (src/common)
+
+公共模块提供了应用程序的核心基础设施组件，包括装饰器、守卫、拦截器、过滤器等，为整个应用提供统一的功能支持。
+
+#### 核心组件
+
+**装饰器 (decorators)**
+
+- `@JwtAuth()` - JWT认证装饰器，自动应用JWT守卫
+- `@Roles()` - 角色权限装饰器，基于角色的访问控制
+- `@Public()` - 公共路由装饰器，跳过认证检查
+- `@GetCurrentUser()` - 获取当前用户装饰器
+- `@Enum()` - 枚举验证装饰器
+
+**守卫 (guards)**
+
+- `JwtAuthGuard` - JWT认证守卫，验证用户身份
+- `RolesGuard` - 角色权限守卫，检查用户权限
+- `GlobalGuard` - 全局守卫，提供请求限流和基础安全检查
+
+**拦截器 (interceptors)**
+
+- `ResponseInterceptor` - 响应拦截器，统一响应格式
+
+**过滤器 (filters)**
+
+- `HttpExceptionFilter` - HTTP异常过滤器，统一错误处理
+
+**管道 (pipes)**
+
+- `CustomValidationPipe` - 自定义验证管道
+- `FileValidationPipe` - 文件验证管道
+
+**策略 (strategies)**
+
+- `JwtAuthStrategy` - JWT认证策略，处理JWT令牌验证
+
+#### 技术特性
+
+- **模块化设计**：每个组件独立封装，易于维护和扩展
+- **类型安全**：完整的TypeScript类型定义
+- **统一标准**：提供统一的错误处理和响应格式
+- **安全防护**：内置多层安全防护机制
+- **性能优化**：高效的请求处理和响应机制
+
+### ⚙️ 配置模块 (src/config)
+
+配置模块提供了完整的环境配置管理功能，支持多环境配置、配置验证和类型安全的配置访问。
+
+#### 核心功能
+
+- **多环境支持**：开发、测试、生产环境配置分离
+- **配置验证**：使用Joi进行配置项验证
+- **类型安全**：完整的TypeScript配置类型定义
+- **动态加载**：支持运行时配置更新
+- **环境变量**：统一的环境变量管理
+
+#### 主要文件
+
+- `configuration.ts` - 配置对象定义和环境变量映射
+- `validation.schema.ts` - 配置验证规则
+- `app-config.service.ts` - 配置服务，提供类型安全的配置访问
+- `config.module.ts` - 配置模块主文件
+
+#### 支持的配置项
+
+- **应用配置**：端口、环境、调试模式等
+- **数据库配置**：连接信息、连接池、同步选项等
+- **JWT配置**：密钥、过期时间、算法等
+- **文件配置**：上传路径、文件大小限制等
+
+### 🔧 工具模块 (src/utils)
+
+工具模块提供了丰富的辅助函数、验证器和实用工具，为应用开发提供便利的工具支持。
+
+#### 认证工具 (auth)
+
+- `WhitelistAuth` - 白名单认证工具，支持路径匹配和权限检查
+
+#### 辅助函数 (helpers)
+
+- `capitalize.helper.ts` - 字符串首字母大写工具
+- `date.helper.ts` - 日期处理工具
+- `format-date.helper.ts` - 日期格式化工具
+- `debounce.helper.ts` - 防抖函数工具
+- `throttle.helper.ts` - 节流函数工具
+- `deep-clone.helper.ts` - 深拷贝工具
+- `enum.helper.ts` - 枚举处理工具
+- `random-string.helper.ts` - 随机字符串生成工具
+- `uuid.helper.ts` - UUID生成工具
+
+#### 验证器 (validators)
+
+- `email.validator.ts` - 邮箱格式验证
+- `phone.validator.ts` - 手机号码验证
+- `id-card.validator.ts` - 身份证号码验证
+- `url.validator.ts` - URL格式验证
+- `date.validator.ts` - 日期格式验证
+- `number.validator.ts` - 数字格式验证
+- `string.validator.ts` - 字符串格式验证
+
+#### 技术特性
+
+- **函数式编程**：纯函数设计，无副作用
+- **类型安全**：完整的TypeScript类型支持
+- **高性能**：优化的算法实现
+- **易于使用**：简洁的API设计
+- **可扩展性**：模块化设计，易于扩展新功能
 
 ## 🔍 数据库模块 (src/database)
 
 ### 概述
 
-`src/database` 模块提供了完整的数据审计功能，包括自动时间戳管理和软删除功能。该模块采用装饰器、拦截器、订阅者等多种设计模式，为应用提供透明、高效的数据审计能力。
+`src/database` 模块提供了完整的数据审计功能，包括自动时间戳管理功能。该模块采用装饰器、拦截器、订阅者等多种设计模式，为应用提供透明、高效的数据审计能力。
 
 ### 核心特性
 
 - ✅ **自动时间戳管理**: 自动处理实体的创建时间和更新时间
-- ✅ **软删除功能**: 支持逻辑删除，保留数据完整性
-- ✅ **查询过滤**: 自动过滤已删除数据，支持手动包含
+- ✅ **基础实体类**: 提供统一的实体基类，包含标准时间戳字段
+- ✅ **装饰器支持**: 提供禁用时间戳等控制装饰器
+- ✅ **拦截器集成**: 通过拦截器处理请求上下文和审计配置
+- ✅ **订阅者机制**: 使用 TypeORM 订阅者自动处理实体生命周期事件
+
+### 模块结构
+
+#### 核心组件
+
+- **BaseEntity** (`entities/base.entity.ts`) - 基础实体类，包含自动时间戳字段
+- **AuditSubscriber** (`subscribers/audit.subscriber.ts`) - 数据库事件订阅者
+- **AuditInterceptor** (`interceptors/audit.interceptor.ts`) - 审计拦截器
+- **DatabaseModule** (`database.module.ts`) - 模块配置和依赖注入
+
+#### 装饰器
+
+- **@DisableTimestamps()** - 禁用特定操作的时间戳自动更新
+
+#### 类型定义
+
+- **DatabaseConfig** - 数据库模块配置接口
+- **QueryContext** - 查询上下文接口
+- **BaseEntityFields** - 基础实体字段接口
 - ✅ **装饰器支持**: 提供丰富的装饰器控制审计行为
 - ✅ **类型安全**: 完整的 TypeScript 类型定义
 - ✅ **灵活配置**: 支持全局和局部配置
@@ -744,7 +993,7 @@ export class Product extends BaseEntity {
 @Entity('products')
 export class Product {
   @Column({ type: 'timestamp' })
-  createTime: Date;  // 容易出错，不一致
+  createTime: Date; // 容易出错，不一致
 }
 ```
 
