@@ -30,6 +30,9 @@ import { GlobalGuard, JwtAuthGuard, RolesGuard } from './common/guards';
 import { ResponseInterceptor } from './common/interceptors';
 import { CustomValidationPipe } from './common/pipes';
 import { JwtAuthStrategy } from './common/strategies';
+// 调试工具导入
+import { RequestTrackingInterceptor } from './modules/debug/interceptors/request-tracking.interceptor';
+import { DebugExceptionFilter } from './modules/debug/filters/debug-exception.filter';
 // 配置模块导入
 import { ConfigModule as AppConfigModule, AppConfigService } from './config';
 // 时间戳管理模块
@@ -37,6 +40,7 @@ import { DatabaseModule } from './database';
 // 业务模块导入
 import { AuthModule } from './modules/auth/auth.module';
 import { FilesModule } from './modules/files/files.module';
+import { DebugModule } from './modules/debug/debug.module';
 
 /**
  * 应用根模块配置
@@ -96,6 +100,7 @@ import { FilesModule } from './modules/files/files.module';
     // =============================================================================
     AuthModule, // 用户认证模块 (登录、注册、验证码)
     FilesModule, // 文件管理模块 (上传、下载、存储)
+    DebugModule, // 调试工具模块 (请求追踪、错误诊断、性能监控)
   ],
 
   // =============================================================================
@@ -130,8 +135,12 @@ import { FilesModule } from './modules/files/files.module';
     },
 
     // =============================================================================
-    // 全局拦截器配置
+    // 全局拦截器 - 统一响应格式化和请求追踪
     // =============================================================================
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RequestTrackingInterceptor, // 请求追踪拦截器 (调试工具)
+    },
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseInterceptor, // 响应格式化拦截器 (统一响应格式)
@@ -146,8 +155,12 @@ import { FilesModule } from './modules/files/files.module';
     },
 
     // =============================================================================
-    // 全局异常过滤器配置
+    // 全局异常过滤器 - 统一错误处理和调试诊断
     // =============================================================================
+    {
+      provide: APP_FILTER,
+      useClass: DebugExceptionFilter, // 调试异常过滤器 (错误诊断)
+    },
     {
       provide: APP_FILTER,
       useClass: HttpExceptionFilter, // HTTP 异常过滤器 (统一错误处理)

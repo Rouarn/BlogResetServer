@@ -1,11 +1,11 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import { join } from 'path';
 import { Logger, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cors from 'cors';
+import * as fs from 'fs';
+import * as path from 'path';
+import { join } from 'path';
 import { AppModule } from './app.module';
 import { appConfig } from './config';
 
@@ -35,13 +35,37 @@ async function bootstrap(): Promise<void> {
       ? join(__dirname, '..', staticConfig.root.substring(2))
       : join(__dirname, staticConfig.root);
 
-    // 调试日志
-    logger.log(`🔧 Static config root: ${staticConfig.root}`);
-    logger.log(`🔧 Static config options: ${JSON.stringify(staticConfig.options)}`);
-    logger.log(`🔧 __dirname: ${__dirname}`);
-    logger.log(`🔧 Resolved static path: ${staticPath}`);
+    // 静态资源配置日志
+    logger.log('');
+    logger.log('┌─ 📁 静态资源配置 ' + '─'.repeat(40) + '┐');
+    logger.log(`│ 📂 配置根目录: ${staticConfig.root}`);
+    logger.log(`│ ⚙️  配置选项: ${JSON.stringify(staticConfig.options)}`);
+    logger.log(`│ 📍 当前目录: ${__dirname}`);
+    logger.log(`│ 🎯 解析路径: ${staticPath}`);
+    logger.log('└' + '─'.repeat(70) + '┘');
+    logger.log('');
 
     app.useStaticAssets(staticPath, staticConfig.options);
+
+    // 调试面板静态路由配置（仅在开发环境启用）
+    if (appConfig.environment === 'development' && appConfig.isDebugEnabled) {
+      const debugPanelPath = join(__dirname, 'modules', 'debug', 'views');
+
+      logger.log('┌─ 🛠️  调试面板配置 ' + '─'.repeat(40) + '┐');
+      logger.log(`│ 📁 面板路径: ${debugPanelPath}`);
+      logger.log(`│ 🌐 访问前缀: /debug/`);
+      logger.log(`│ 📄 默认页面: debug-panel.html`);
+
+      // 配置调试面板静态资源
+      app.useStaticAssets(debugPanelPath, {
+        prefix: '/debug/',
+        index: 'debug-panel.html',
+      });
+
+      logger.log(`│ 🎛️  面板地址: http://localhost:${appConfig.port}/debug/`);
+      logger.log('└' + '─'.repeat(70) + '┘');
+      logger.log('');
+    }
 
     // Swagger文档配置（仅在开发环境启用）
     if (appConfig.swaggerOptions.enabled) {
@@ -100,6 +124,9 @@ async function bootstrap(): Promise<void> {
     logger.log(`│ 🌍 运行环境: ${appConfig.environment}`);
     logger.log(`│ 🚀 服务地址: ${appUrl}`);
     logger.log(`│ 🔗 API 访问: ${appUrl}/${versionConfig.prefix}/v${versionConfig.defaultVersion}`);
+    if (appConfig.isDebugEnabled) {
+      logger.log(`│ 🛠️  调试面板: ${appUrl}/debug/`);
+    }
     logger.log(`│ ⚡ 端口号码: ${appConfig.port}`);
     logger.log('└' + '─'.repeat(65) + '┘');
 
