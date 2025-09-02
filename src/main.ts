@@ -1,4 +1,4 @@
-import { Logger, VersioningType } from '@nestjs/common';
+import { VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -8,10 +8,9 @@ import * as path from 'path';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import { appConfig } from './config';
+import { BootstrapLoggerService } from './common/services/bootstrap-logger.service';
 
 async function bootstrap(): Promise<void> {
-  const logger = new Logger('Bootstrap');
-
   try {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
@@ -36,14 +35,8 @@ async function bootstrap(): Promise<void> {
       : join(__dirname, staticConfig.root);
 
     // 静态资源配置日志
-    logger.log('');
-    logger.log('┌─ 📁 静态资源配置 ' + '─'.repeat(40) + '┐');
-    logger.log(`│ 📂 配置根目录: ${staticConfig.root}`);
-    logger.log(`│ ⚙️  配置选项: ${JSON.stringify(staticConfig.options)}`);
-    logger.log(`│ 📍 当前目录: ${__dirname}`);
-    logger.log(`│ 🎯 解析路径: ${staticPath}`);
-    logger.log('└' + '─'.repeat(70) + '┘');
-    logger.log('');
+    const bootstrapLogger = new BootstrapLoggerService();
+    bootstrapLogger.logStaticResourceConfig(staticConfig, staticPath);
 
     app.useStaticAssets(staticPath, staticConfig.options);
 
@@ -51,20 +44,12 @@ async function bootstrap(): Promise<void> {
     if (appConfig.environment === 'development' && appConfig.isDebugEnabled) {
       const debugPanelPath = join(__dirname, 'modules', 'debug', 'views');
 
-      logger.log('┌─ 🛠️  调试面板配置 ' + '─'.repeat(40) + '┐');
-      logger.log(`│ 📁 面板路径: ${debugPanelPath}`);
-      logger.log(`│ 🌐 访问前缀: /debug/`);
-      logger.log(`│ 📄 默认页面: debug-panel.html`);
+      bootstrapLogger.logDebugPanelConfig(debugPanelPath, appConfig.port);
 
-      // 配置调试面板静态资源
       app.useStaticAssets(debugPanelPath, {
         prefix: '/debug/',
         index: 'debug-panel.html',
       });
-
-      logger.log(`│ 🎛️  面板地址: http://localhost:${appConfig.port}/debug/`);
-      logger.log('└' + '─'.repeat(70) + '┘');
-      logger.log('');
     }
 
     // Swagger文档配置（仅在开发环境启用）
@@ -95,75 +80,21 @@ async function bootstrap(): Promise<void> {
 
       // 写入API文档文件
       fs.writeFileSync(apiDocPath, JSON.stringify(document, null, 2));
-      logger.log(`📄 API文档已保存到: ${apiDocPath}`);
-      logger.log(
-        `🔗 API文档访问地址: ${appConfig.baseurl}${staticConfig.options.prefix}/api-docs.json`,
+      bootstrapLogger.logApiDocumentSaved(
+        apiDocPath,
+        appConfig.baseurl,
+        staticConfig.options.prefix,
       );
     }
 
     // 启动应用
     await app.listen(appConfig.port);
 
-    // 美化的启动信息输出
-    const appUrl = await app.getUrl();
-
-    // 空行
-    logger.log('');
-
-    // 主标题横幅
-    logger.log('╔' + '═'.repeat(68) + '╗');
-    logger.log('║' + ' '.repeat(20) + '🚀 NestJS 应用启动成功! 🚀' + ' '.repeat(22) + '║');
-    logger.log('╚' + '═'.repeat(68) + '╝');
-
-    // 空行
-    logger.log('');
-
-    // 应用信息区域
-    logger.log('┌─ 📋 应用信息 ' + '─'.repeat(51) + '┐');
-    logger.log(`│ 🏷️  应用名称: ${appConfig.appTitle}`);
-    logger.log(`│ 🌍 运行环境: ${appConfig.environment}`);
-    logger.log(`│ 🚀 服务地址: ${appUrl}`);
-    logger.log(`│ 🔗 API 访问: ${appUrl}/${versionConfig.prefix}/v${versionConfig.defaultVersion}`);
-    if (appConfig.isDebugEnabled) {
-      logger.log(`│ 🛠️  调试面板: ${appUrl}/debug/`);
-    }
-    logger.log(`│ ⚡ 端口号码: ${appConfig.port}`);
-    logger.log('└' + '─'.repeat(65) + '┘');
-
-    if (appConfig.swaggerOptions.enabled) {
-      // 空行
-      logger.log('');
-
-      // API 文档区域
-      logger.log('┌─ 📚 API 文档服务 ' + '─'.repeat(47) + '┐');
-      logger.log(`│ 🔗 Swagger UI: ${appUrl}${appConfig.swaggerOptions.prefix}`);
-      logger.log(`│ 📄 JSON 文档: ${appUrl}${staticConfig.options.prefix}/api-docs.json`);
-      logger.log('│ 💡 提示: 可导入到 Postman、Apifox 等工具');
-      logger.log('└' + '─'.repeat(65) + '┘');
-    }
-
-    // 空行
-    logger.log('');
-
-    // 状态横幅
-    logger.log('╔' + '═'.repeat(68) + '╗');
-    logger.log('║' + ' '.repeat(22) + '✨ 服务已就绪，等待请求... ✨' + ' '.repeat(17) + '║');
-    logger.log('╚' + '═'.repeat(68) + '╝');
-
-    // 空行
-    logger.log('');
+    // 输出应用启动成功信息
+    await bootstrapLogger.logApplicationStartup(app, appConfig, versionConfig, staticConfig);
   } catch (error) {
-    // 美化的错误输出
-    logger.error('');
-    logger.error('╔' + '═'.repeat(50) + '╗');
-    logger.error('║' + ' '.repeat(13) + '❌ 应用程序启动失败 ❌' + ' '.repeat(15) + '║');
-    logger.error('╚' + '═'.repeat(50) + '╝');
-    logger.error(
-      '🔍 错误详情:',
-      error instanceof Error ? (error.stack ?? error.message) : String(error),
-    );
-    logger.error('💡 请检查配置文件和依赖项是否正确');
-    logger.error('');
+    const bootstrapLogger = new BootstrapLoggerService();
+    bootstrapLogger.logApplicationError(error);
     process.exit(1);
   }
 }
