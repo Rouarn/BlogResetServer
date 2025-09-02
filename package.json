@@ -15,8 +15,9 @@
     "lint:check": "eslint \"{src,apps,libs}/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
+    "type:check": "tsc --noEmit",
     "code:fix": "pnpm run format && pnpm run lint",
-    "code:check": "pnpm run format:check && pnpm run lint:check",
+    "code:check": "pnpm run format:check && pnpm run lint:check && pnpm run type:check",
     "env:check": "node scripts/check-env.js",
     "env:setup": "node scripts/setup-env.js"
   },
@@ -71,5 +72,10 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=22.18.0",
+    "npm": ">=10.9.0",
+    "pnpm": ">=10.15.0"
   }
 }

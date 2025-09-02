@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -9,7 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as svgCaptcha from 'svg-captcha';
 import { Repository } from 'typeorm';
 import { Status, isEnabled, toggleStatus } from 'src/common/enums';
-import { BaseService } from 'src/database';
+import { BaseService, SoftDeleteRepository } from 'src/database';
 import type { CreateAuthDto } from './dto/create-auth.dto';
 import type { LoginDto } from './dto/login.dto';
 import type { BatchDeleteUserDto, UpdateUserDto } from './dto/update-user.dto';
@@ -41,16 +42,18 @@ import { Auth } from './entities/auth.entity';
 @Injectable()
 export class AuthService extends BaseService<Auth> {
   /**
-   * 构造函数
-   * @param authRepository 用户数据仓库
-   * @param jwtService JWT服务实例
+   * 用户仓库（支持软删除）
    */
+  private readonly softDeleteRepository: SoftDeleteRepository<Auth>;
+
   constructor(
     @InjectRepository(Auth)
     authRepository: Repository<Auth>,
     private readonly jwtService: JwtService,
   ) {
     super(authRepository);
+    // 创建软删除仓库实例
+    this.softDeleteRepository = new SoftDeleteRepository(Auth, authRepository.manager.connection);
   }
 
   /**
@@ -305,34 +308,60 @@ export class AuthService extends BaseService<Auth> {
   }
 
   /**
-   * 删除用户
+   * 删除用户（软删除）
    * @param id 用户ID
    * @returns 删除结果
    */
   async deleteUser(id: string): Promise<{ message: string }> {
     // 先查找用户实体
-    const user = await this.repository.findOne({ where: { id } });
+    const user = await this.softDeleteRepository.findOneActive({ where: { id } });
     if (!user) {
-      throw new NotFoundException('用户不存在');
+      throw new NotFoundException('用户不存在或已被删除');
     }
 
-    try {
-      // 使用 repository.remove() 来触发软删除拦截器
-      await this.repository.remove(user);
-    } catch (error) {
-      // 如果是软删除拦截异常，说明软删除成功
-      if (error instanceof Error && error.message === 'SOFT_DELETE_INTERCEPTED') {
-        return { message: '用户删除成功' };
-      }
-      // 其他异常继续抛出
-      throw error;
-    }
-
+    // 执行软删除
+    await this.softDeleteRepository.remove(user);
     return { message: '用户删除成功' };
   }
 
   /**
-   * 批量删除用户
+   * 恢复已删除的用户
+   * @param id 用户ID
+   * @returns 恢复结果
+   */
+  async restoreUser(id: string): Promise<{ message: string }> {
+    // 查找已删除的用户
+    const user = await this.softDeleteRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException('用户不存在');
+    }
+    if (!user.deleteTime) {
+      throw new BadRequestException('用户未被删除，无需恢复');
+    }
+
+    // 恢复用户
+    await this.softDeleteRepository.restoreEntity(id);
+    return { message: '用户恢复成功' };
+  }
+
+  /**
+   * 强制删除用户（物理删除）
+   * @param id 用户ID
+   * @returns 删除结果
+   */
+  async forceDeleteUser(id: string): Promise<{ message: string }> {
+    const user = await this.softDeleteRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException('用户不存在');
+    }
+
+    // 执行物理删除
+    await this.softDeleteRepository.forceRemove(user);
+    return { message: '用户已永久删除' };
+  }
+
+  /**
+   * 批量删除用户（软删除）
    * @param batchDeleteDto 批量删除数据
    * @returns 删除结果
    */

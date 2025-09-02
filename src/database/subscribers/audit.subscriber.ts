@@ -83,30 +83,23 @@ export class AuditSubscriber implements EntitySubscriberInterface<IBaseEntity> {
   }
 
   /**
-   * 删除前处理 - 转换为软删除
+   * 删除前处理 - 仅用于记录和验证
+   * 注意：实际的软删除逻辑现在由 SoftDeleteRepository 处理
    */
   async beforeRemove(event: RemoveEvent<IBaseEntity>): Promise<void> {
-    if (!this.isBaseEntity(event.entity as BaseEntityLike) || this.isForceDelete(event)) {
+    if (!this.isBaseEntity(event.entity as BaseEntityLike)) {
       return;
     }
 
     const entity = event.entity;
-    if (entity && !entity.deleteTime) {
-      // 执行软删除
-      const now = new Date();
-      entity.deleteTime = now;
-      entity.updateTime = now;
-
-      // 使用 queryRunner 保存软删除状态，然后阻止物理删除
-      if (event.queryRunner) {
-        await event.queryRunner.manager.save(entity);
-        // 通过抛出异常来阻止物理删除
-        throw new Error('SOFT_DELETE_INTERCEPTED');
-      } else {
-        // 如果没有 queryRunner，使用 manager 保存
-        await event.manager.save(entity);
-        throw new Error('SOFT_DELETE_INTERCEPTED');
-      }
+    if (entity) {
+      // 这里可以添加删除前的日志记录或其他业务逻辑
+      // 但不再阻止物理删除，因为软删除逻辑已经在 Repository 层处理
+      console.log(`Entity ${entity.constructor.name} is being removed`, {
+        id: (entity as unknown as Record<string, unknown>).id,
+        deleteTime: entity.deleteTime,
+        isAlreadyDeleted: !!entity.deleteTime,
+      });
     }
   }
 
@@ -143,14 +136,5 @@ export class AuditSubscriber implements EntitySubscriberInterface<IBaseEntity> {
     const entityMetadata = this.reflector.get(DISABLE_TIMESTAMPS_KEY, event.entity.constructor);
 
     return !!entityMetadata;
-  }
-
-  /**
-   * 检查是否为强制删除
-   */
-  private isForceDelete(_event: RemoveEvent<IBaseEntity>): boolean {
-    // 这里可以通过上下文或其他方式检查是否为强制删除
-    // 暂时返回 false，具体实现可能需要结合拦截器
-    return false;
   }
 }

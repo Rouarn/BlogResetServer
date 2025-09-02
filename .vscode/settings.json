@@ -2,7 +2,7 @@
   "explorer.fileNesting.enabled": true,
   "explorer.fileNesting.expand": false,
   "explorer.fileNesting.patterns": {
-    "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb, .npmrc",
+    "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb, .npmrc, .nvmrc",
     "tsconfig.json": "tsconfig.*.json, tsconfig.build.json",
     ".eslintrc.js": ".eslintignore, .eslintrc.*, eslint.config.*",
     ".prettierrc": ".prettierignore, prettier.config.*",

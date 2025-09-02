@@ -3,6 +3,8 @@ export * from './entities/base.entity';
 export * from './services/base.service';
 export * from './decorators';
 export * from './interfaces';
+export * from './repositories';
 export * from './types';
 export * from './subscribers';
 export * from './interceptors';
+export * from './utils';

@@ -30,3 +30,21 @@ export const DisableTimestamps = (): MethodDecorator => SetMetadata(DISABLE_TIME
  */
 export const SoftDeleteOperation = (): MethodDecorator =>
   SetMetadata(SOFT_DELETE_OPERATION_KEY, true);
+
+/**
+ * 使用软删除仓库装饰器 - 标记服务使用软删除仓库
+ * 这个装饰器可以用于标识哪些服务使用了软删除功能
+ */
+export const UseSoftDelete = (): ClassDecorator => SetMetadata('use_soft_delete', true);
+
+/**
+ * 软删除实体装饰器 - 标记实体支持软删除
+ * 用于标识哪些实体支持软删除功能
+ */
+export const SoftDeleteEntity = (): ClassDecorator => SetMetadata('soft_delete_entity', true);
+
+/**
+ * 排除软删除装饰器 - 在特定方法中排除软删除过滤
+ * 使用此装饰器的方法将返回包括已软删除的所有记录
+ */
+export const ExcludeSoftDelete = (): MethodDecorator => SetMetadata('exclude_soft_delete', true);
