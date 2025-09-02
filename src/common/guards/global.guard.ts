@@ -83,11 +83,16 @@ export class GlobalGuard implements CanActivate {
   private lastCleanupTime = 0;
 
   constructor() {
-    this.logger.log('全局限流守卫已初始化', {
-      normalLimit: this.config.normalLimit,
-      whitelistLimit: this.config.whitelistLimit,
-      windowSeconds: this.config.windowSeconds,
-    });
+    // 格式化美观的初始化日志
+    const initMessage = [
+      '🛡️ 全局限流守卫已初始化',
+      `📊 普通限制: ${this.config.normalLimit}/分钟`,
+      `⭐ 白名单限制: ${this.config.whitelistLimit}/分钟`,
+      `⏱️ 时间窗口: ${this.config.windowSeconds}秒`,
+      `🧹 清理概率: ${(this.config.cleanupProbability * 100).toFixed(1)}%`,
+    ].join(' | ');
+
+    this.logger.log(initMessage);
   }
 
   /**
@@ -252,7 +257,7 @@ export class GlobalGuard implements CanActivate {
   }): void {
     // 计算使用率和状态
     const usageRate = ((info.currentCount / info.limit) * 100).toFixed(1);
-    const statusIcon = info.isWhitelisted ? '🟢' : '🔵';
+    const statusIcon = info.isWhitelisted ? '🔵' : '🟢';
     const usageIcon = parseFloat(usageRate) > 80 ? '🔴' : parseFloat(usageRate) > 50 ? '🟡' : '🟢';
 
     // 格式化美观的日志消息
@@ -266,6 +271,7 @@ export class GlobalGuard implements CanActivate {
       info.isWhitelisted ? '✅ 白名单路由' : '🔒 普通路由',
     ].join(' | ');
 
-    this.logger.debug(logMessage);
+    // 使用log级别替代debug，在终端中显示为绿色，更加醒目
+    this.logger.log(logMessage);
   }
 }

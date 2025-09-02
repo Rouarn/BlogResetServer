@@ -12,15 +12,15 @@
  */
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ErrorDiagnosticsService } from './services/error-diagnostics.service';
-import { RequestTrackingService } from './services/request-tracking.service';
-import { PerformanceMonitorService } from './services/performance-monitor.service';
 import {
   DebugInfo,
-  SystemMetrics,
-  RequestSummary,
   ErrorSummary,
+  RequestSummary,
+  SystemMetrics,
 } from './interfaces/debug.interface';
+import { ErrorDiagnosticsService } from './services/error-diagnostics.service';
+import { PerformanceMonitorService } from './services/performance-monitor.service';
+import { RequestTrackingService } from './services/request-tracking.service';
 
 @Injectable()
 export class DebugService {
@@ -35,7 +35,7 @@ export class DebugService {
   ) {
     this.isDebugEnabled = this.configService.get<string>('app.environment') === 'development';
     if (this.isDebugEnabled) {
-      this.logger.log('调试模块已启用');
+      this.logger.log(`       调试模块已启用`);
     }
   }
 

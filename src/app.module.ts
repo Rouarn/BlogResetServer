@@ -123,15 +123,15 @@ import { DebugModule } from './modules/debug/debug.module';
     // =============================================================================
     {
       provide: APP_GUARD,
+      useClass: GlobalGuard, // 全局限流守卫 (优先执行限流检查)
+    },
+    {
+      provide: APP_GUARD,
       useClass: JwtAuthGuard, // JWT 认证守卫 (验证访问令牌)
     },
     {
       provide: APP_GUARD,
       useClass: RolesGuard, // 角色权限守卫 (验证用户角色)
-    },
-    {
-      provide: APP_GUARD,
-      useClass: GlobalGuard, // 全局守卫 (通用权限检查)
     },
 
     // =============================================================================
