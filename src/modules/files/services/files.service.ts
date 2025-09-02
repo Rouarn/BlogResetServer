@@ -2,7 +2,6 @@ import * as path from 'path';
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import type { Repository } from 'typeorm';
-import { BaseService } from 'src/database';
 import { formatDatePath } from 'src/utils';
 import type { FileQueryDto, FileUploadDto } from '../dto';
 import { File } from '../entities';
@@ -12,17 +11,15 @@ import { StorageService } from './storage.service';
 import { ValidationService } from './validation.service';
 
 @Injectable()
-export class FilesService extends BaseService<File> {
+export class FilesService {
   private readonly logger = new Logger(FilesService.name);
 
   constructor(
     @InjectRepository(File)
-    fileRepository: Repository<File>,
+    private readonly fileRepository: Repository<File>,
     private storageService: StorageService,
     private validationService: ValidationService,
-  ) {
-    super(fileRepository);
-  }
+  ) {}
 
   async uploadSingleFile(
     file: Express.Multer.File,
@@ -38,7 +35,7 @@ export class FilesService extends BaseService<File> {
     const fileType = this.validationService.getFileType(file.mimetype);
 
     // 检查文件是否已存在（基于hash）
-    const existingFile = await this.repository.findOne({
+    const existingFile = await this.fileRepository.findOne({
       where: { hash: fileHash },
     });
     if (existingFile) {
@@ -53,7 +50,7 @@ export class FilesService extends BaseService<File> {
     const storedPath = await this.storageService.upload(file, relativePath);
 
     // 保存文件记录
-    const fileEntity = this.repository.create({
+    const fileEntity = this.fileRepository.create({
       filename,
       originalName: file.originalname,
       mimeType: file.mimetype,
@@ -68,7 +65,7 @@ export class FilesService extends BaseService<File> {
       uploadProtocol: uploadDto.protocol,
     });
 
-    const savedFile = await this.repository.save(fileEntity);
+    const savedFile = await this.fileRepository.save(fileEntity);
     console.log('savedFile: ', savedFile);
     this.logger.log(`File uploaded successfully: ${savedFile.id}`);
 
@@ -117,7 +114,7 @@ export class FilesService extends BaseService<File> {
   ): Promise<{ data: File[]; total: number }> {
     const { size, current, type, status, search, publicOnly, sortBy, sortOrder } = queryDto;
 
-    const queryBuilder = this.repository.createQueryBuilder('file');
+    const queryBuilder = this.fileRepository.createQueryBuilder('file');
 
     // 基础过滤条件
     if (!publicOnly && userId) {
@@ -163,7 +160,7 @@ export class FilesService extends BaseService<File> {
   }
 
   async findFileById(id: string, userId?: string): Promise<File> {
-    const file = await this.repository.findOne({ where: { id } });
+    const file = await this.fileRepository.findOne({ where: { id } });
 
     if (!file) {
       throw new NotFoundException('文件不存在');
@@ -192,7 +189,7 @@ export class FilesService extends BaseService<File> {
   }
 
   async deleteFile(id: string, userId?: string): Promise<boolean> {
-    const file = await this.repository.findOne({ where: { id } });
+    const file = await this.fileRepository.findOne({ where: { id } });
 
     if (!file) {
       throw new NotFoundException('文件不存在');
@@ -210,7 +207,7 @@ export class FilesService extends BaseService<File> {
     }
 
     // 删除数据库记录
-    await this.repository.remove(file);
+    await this.fileRepository.remove(file);
     this.logger.log(`File deleted: ${id}`);
 
     return true;

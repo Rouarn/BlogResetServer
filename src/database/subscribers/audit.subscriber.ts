@@ -10,7 +10,6 @@ import type {
 import { EventSubscriber } from 'typeorm';
 import { DISABLE_TIMESTAMPS_KEY } from '../decorators';
 import { BaseEntity } from '../entities/base.entity';
-import type { IBaseEntity } from '../interfaces';
 
 // 类型定义
 interface EntityWithTimestamps {
@@ -19,12 +18,12 @@ interface EntityWithTimestamps {
   constructor: new (...args: unknown[]) => unknown;
 }
 
-// 扩展类型以兼容 IBaseEntity
+// 扩展类型以兼容 BaseEntity
 type BaseEntityLike = Omit<EntityWithTimestamps, 'constructor'> & {
   constructor?: new (...args: unknown[]) => unknown;
-} & Partial<IBaseEntity>;
+} & Partial<BaseEntity>;
 
-type AuditEvent = InsertEvent<IBaseEntity> | UpdateEvent<IBaseEntity>;
+type AuditEvent = InsertEvent<BaseEntity> | UpdateEvent<BaseEntity>;
 
 /**
  * 时间戳订阅者
@@ -32,7 +31,7 @@ type AuditEvent = InsertEvent<IBaseEntity> | UpdateEvent<IBaseEntity>;
  */
 @Injectable()
 @EventSubscriber()
-export class AuditSubscriber implements EntitySubscriberInterface<IBaseEntity> {
+export class AuditSubscriber implements EntitySubscriberInterface<BaseEntity> {
   constructor(private readonly reflector: Reflector) {}
 
   /**
@@ -45,7 +44,7 @@ export class AuditSubscriber implements EntitySubscriberInterface<IBaseEntity> {
   /**
    * 插入前处理
    */
-  beforeInsert(event: InsertEvent<IBaseEntity>): void {
+  beforeInsert(event: InsertEvent<BaseEntity>): void {
     if (!this.isBaseEntity(event.entity as BaseEntityLike) || this.isTimestampsDisabled(event)) {
       return;
     }
@@ -65,7 +64,7 @@ export class AuditSubscriber implements EntitySubscriberInterface<IBaseEntity> {
   /**
    * 更新前处理
    */
-  beforeUpdate(event: UpdateEvent<IBaseEntity>): void {
+  beforeUpdate(event: UpdateEvent<BaseEntity>): void {
     if (!this.isBaseEntity(event.entity as BaseEntityLike) || this.isTimestampsDisabled(event)) {
       return;
     }
@@ -80,7 +79,7 @@ export class AuditSubscriber implements EntitySubscriberInterface<IBaseEntity> {
   /**
    * 删除前处理 - 用于记录和验证
    */
-  async beforeRemove(event: RemoveEvent<IBaseEntity>): Promise<void> {
+  async beforeRemove(event: RemoveEvent<BaseEntity>): Promise<void> {
     if (!this.isBaseEntity(event.entity as BaseEntityLike)) {
       return;
     }
@@ -97,7 +96,7 @@ export class AuditSubscriber implements EntitySubscriberInterface<IBaseEntity> {
   /**
    * 加载后处理 - 可以在这里添加额外的逻辑
    */
-  afterLoad(_entity: IBaseEntity, _event?: LoadEvent<IBaseEntity>): void {
+  afterLoad(_entity: BaseEntity, _event?: LoadEvent<BaseEntity>): void {
     // 可以在这里添加加载后的处理逻辑
     // 例如：格式化时间戳、添加虚拟字段等
   }

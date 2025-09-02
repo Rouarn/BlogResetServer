@@ -6,10 +6,9 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Status, isEnabled, toggleStatus } from 'src/common/enums';
 import * as svgCaptcha from 'svg-captcha';
 import { Repository } from 'typeorm';
-import { Status, isEnabled, toggleStatus } from 'src/common/enums';
-import { BaseService } from 'src/database';
 import type { CreateAuthDto } from './dto/create-auth.dto';
 import type { LoginDto } from './dto/login.dto';
 import type { BatchDeleteUserDto, UpdateUserDto } from './dto/update-user.dto';
@@ -39,14 +38,12 @@ import { Auth } from './entities/auth.entity';
  * - 用户会话管理
  */
 @Injectable()
-export class AuthService extends BaseService<Auth> {
+export class AuthService {
   constructor(
     @InjectRepository(Auth)
-    authRepository: Repository<Auth>,
+    private readonly authRepository: Repository<Auth>,
     private readonly jwtService: JwtService,
-  ) {
-    super(authRepository);
-  }
+  ) {}
 
   /**
    * 获取用户信息
@@ -79,7 +76,7 @@ export class AuthService extends BaseService<Auth> {
    * @returns 成功时返回token和refreshToken，失败时返回错误消息
    */
   async login(body: LoginDto): Promise<{ accessToken: string; refreshToken: string }> {
-    const findUser = await this.repository.findOne({
+    const findUser = await this.authRepository.findOne({
       where: { userName: body.userName },
     });
 
@@ -126,7 +123,7 @@ export class AuthService extends BaseService<Auth> {
    * @returns 注册结果消息
    */
   async register(body: CreateAuthDto): Promise<{ message: string; user: Partial<Auth> }> {
-    const findUser = await this.repository.findOne({
+    const findUser = await this.authRepository.findOne({
       where: { userName: body.userName },
     });
 
@@ -135,8 +132,8 @@ export class AuthService extends BaseService<Auth> {
     }
 
     // 创建用户
-    const createUser = await this.repository.create(body as Partial<Auth>);
-    const savedUser = await this.repository.save(createUser);
+    const createUser = this.authRepository.create(body as Partial<Auth>);
+    const savedUser = await this.authRepository.save(createUser);
 
     return {
       message: '注册成功',
@@ -256,7 +253,7 @@ export class AuthService extends BaseService<Auth> {
    * @returns 用户详情
    */
   async getUserById(id: string): Promise<Auth> {
-    const user = await this.findById(id);
+    const user = await this.authRepository.findOne({ where: { id } });
 
     if (!user) {
       throw new NotFoundException('用户不存在');
@@ -275,12 +272,10 @@ export class AuthService extends BaseService<Auth> {
     current: number = 1,
     size: number = 10,
   ): Promise<{ data: Auth[]; total: number }> {
-    // 使用 BaseService 的 findAll 和 count 方法，自动过滤软删除的记录
-    const data = await this.findAll({
+    const [data, total] = await this.authRepository.findAndCount({
       skip: (current - 1) * size,
       take: size,
     });
-    const total = await this.count();
     return { data, total };
   }
 
@@ -296,7 +291,7 @@ export class AuthService extends BaseService<Auth> {
     // 合并更新数据
     Object.assign(user, updateUserDto);
 
-    return this.repository.save(user);
+    return this.authRepository.save(user);
   }
 
   /**
@@ -305,7 +300,7 @@ export class AuthService extends BaseService<Auth> {
    * @returns 删除结果
    */
   async deleteUser(id: string): Promise<{ message: string }> {
-    await this.delete(id);
+    await this.authRepository.delete(id);
     return { message: '用户删除成功' };
   }
 
@@ -320,11 +315,11 @@ export class AuthService extends BaseService<Auth> {
     const { ids } = batchDeleteDto;
 
     // 执行批量删除
-    await this.deleteMany(ids);
+    const result = await this.authRepository.delete(ids);
 
     return {
-      message: `成功删除 ${ids.length} 个用户`,
-      deletedCount: ids.length,
+      message: `成功删除 ${result.affected ?? 0} 个用户`,
+      deletedCount: result.affected ?? 0,
     };
   }
 
@@ -340,7 +335,7 @@ export class AuthService extends BaseService<Auth> {
     // 如果没有提供状态，则自动切换
     user.status = status ?? toggleStatus(user.status);
 
-    return this.repository.save(user);
+    return this.authRepository.save(user);
   }
 
   /**

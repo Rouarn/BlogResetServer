@@ -11,11 +11,9 @@ import { FilesService } from './services/files.service';
 import { StorageFactoryService } from './services/storage-factory.service';
 import { StorageService } from './services/storage.service';
 import { ValidationService } from './services/validation.service';
-import { DatabaseModule } from '../../database/database.module';
 
 @Module({
   imports: [
-    DatabaseModule,
     TypeOrmModule.forFeature([File, UploadChunk]),
     MulterModule.registerAsync({
       imports: [ConfigModule],
