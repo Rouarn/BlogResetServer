@@ -79,9 +79,9 @@ export class RequestTrackingInterceptor implements NestInterceptor {
           const executionTime = Date.now() - executionStartTime;
 
           // 记录控制器执行信息
-          this.logger.debug(
-            `[${requestId}] ${controllerName}.${handlerName} 执行完成 - ${executionTime}ms`,
-          );
+          // this.logger.debug(
+          //   `[${requestId}] ${controllerName}.${handlerName} 执行完成 - ${executionTime}ms`,
+          // );
 
           // 完成性能监控（如果启用）
           if (performanceId) {
