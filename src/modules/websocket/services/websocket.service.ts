@@ -18,8 +18,8 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
 import type { Server } from 'socket.io';
+import { v4 as uuidv4 } from 'uuid';
 import type {
   AuthenticatedSocket,
   ConnectionStatus,
@@ -689,5 +689,65 @@ export class WebSocketService {
   async getUserRooms(socketId: string): Promise<string[]> {
     const socket = this.connections.get(socketId);
     return socket?.rooms ? Array.from(socket.rooms) : [];
+  }
+
+  /**
+   * 获取公共房间列表
+   * @returns 公共房间列表
+   */
+  async getPublicRooms(): Promise<string[]> {
+    const publicRooms: string[] = [];
+
+    // 添加默认公共房间
+    publicRooms.push('lobby');
+
+    // 从现有房间中筛选公共房间
+    for (const [roomId, roomInfo] of this.rooms) {
+      if (roomInfo.type === 'public' || roomId.startsWith('public_')) {
+        publicRooms.push(roomId);
+      }
+    }
+
+    // 添加一些预定义的公共房间
+    const predefinedRooms = ['public_general', 'public_tech', 'public_random'];
+    for (const room of predefinedRooms) {
+      if (!publicRooms.includes(room)) {
+        publicRooms.push(room);
+      }
+    }
+
+    return publicRooms;
+  }
+
+  /**
+   * 获取房间成员数量
+   * @param roomId 房间ID
+   * @returns 成员数量
+   */
+  async getRoomMemberCount(roomId: string): Promise<number> {
+    if (!this.server) {
+      return 0;
+    }
+
+    try {
+      const room = this.server.sockets.adapter.rooms.get(roomId);
+      return room ? room.size : 0;
+    } catch (error) {
+      this.logger.error(`获取房间 ${roomId} 成员数量失败: ${(error as Error).message}`);
+      return 0;
+    }
+  }
+
+  /**
+   * 检查房间是否为公共房间
+   * @param roomId 房间ID
+   * @returns 是否为公共房间
+   */
+  isPublicRoom(roomId: string): boolean {
+    return (
+      roomId === 'lobby' ||
+      roomId.startsWith('public_') ||
+      (this.rooms.has(roomId) && this.rooms.get(roomId)?.type === 'public')
+    );
   }
 }

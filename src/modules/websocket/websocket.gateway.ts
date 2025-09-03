@@ -18,6 +18,15 @@
  */
 
 import {
+  Injectable,
+  Logger,
+  UseFilters,
+  UseGuards,
+  UseInterceptors,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
+import {
   ConnectedSocket,
   MessageBody,
   OnGatewayConnection,
@@ -28,44 +37,25 @@ import {
   WebSocketServer,
   WsException,
 } from '@nestjs/websockets';
-import {
-  Injectable,
-  Logger,
-  UseFilters,
-  UseGuards,
-  UseInterceptors,
-  UsePipes,
-  ValidationPipe,
-} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Server } from 'socket.io';
+import { WebSocketExceptionFilter } from './filters/websocket-exception.filter';
+import { WebSocketAuthGuard } from './guards/websocket-auth.guard';
+import { WebSocketOptionalAuthGuard } from './guards/websocket-optional-auth.guard';
+import { WebSocketInterceptor } from './interceptors/websocket.interceptor';
 import type {
   AuthenticatedSocket,
-  WebSocketResponse,
+  BroadcastData,
+  ConnectionStatus,
   JoinRoomData,
   LeaveRoomData,
   SendMessageData,
-  BroadcastData,
-  ConnectionStatus,
+  WebSocketResponse,
 } from './interfaces';
 import { WebSocketMessageType } from './interfaces';
 import { WebSocketService } from './services/websocket.service';
-import { WebSocketAuthGuard } from './guards/websocket-auth.guard';
-import { WebSocketExceptionFilter } from './filters/websocket-exception.filter';
-import { WebSocketInterceptor } from './interceptors/websocket.interceptor';
 
-/**
- * WebSocket 网关配置
- */
-const GATEWAY_CONFIG = {
-  cors: {
-    origin: process.env.CORS_ORIGIN?.split(',') ?? ['http://localhost:3000'],
-    credentials: true,
-  },
-  transports: ['websocket', 'polling'],
-  allowEIO3: true,
-  pingTimeout: 60000,
-  pingInterval: 25000,
-};
+// WebSocket 网关配置将在构造函数中动态生成
 
 /**
  * WebSocket 网关
@@ -75,7 +65,14 @@ const GATEWAY_CONFIG = {
 @Injectable()
 @WSGateway({
   namespace: '/ws',
-  ...GATEWAY_CONFIG,
+  cors: {
+    origin: true, // 将在运行时动态设置
+    credentials: true,
+  },
+  transports: ['websocket', 'polling'],
+  allowEIO3: true,
+  pingTimeout: 60000,
+  pingInterval: 25000,
 })
 @UseFilters(WebSocketExceptionFilter)
 @UseInterceptors(WebSocketInterceptor)
@@ -85,15 +82,23 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
   private server: Server;
 
   private readonly logger = new Logger(WebSocketGateway.name);
+  private readonly corsOrigins: string[];
 
-  constructor(private readonly webSocketService: WebSocketService) {}
+  constructor(
+    private readonly webSocketService: WebSocketService,
+    private readonly configService: ConfigService,
+  ) {
+    // 从配置服务获取 CORS 源
+    this.corsOrigins = this.configService.get<string[]>('app.websocket.corsOrigins', [
+      'http://localhost:3000',
+    ]);
+  }
 
   /**
    * 网关初始化
    * @param server Socket.IO 服务器实例
    */
   afterInit(server: Server): void {
-    this.logger.log('WebSocket 网关初始化完成');
     this.server = server;
 
     // 设置服务器实例到服务中
@@ -101,6 +106,54 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
 
     // 配置服务器级别的中间件
     this.setupServerMiddleware();
+
+    // 输出详细的网关初始化信息
+    this.logGatewayInitialization();
+  }
+
+  /**
+   * 输出网关初始化信息
+   */
+  private logGatewayInitialization(): void {
+    const originsDisplay = this.corsOrigins.join(', ');
+
+    this.logger.log('');
+    this.logger.log('╔═══════════════════════════════════════════════════════════════════╗');
+    this.logger.log('║                  🚀 WebSocket 网关初始化完成 🚀                   ║');
+    this.logger.log('╚═══════════════════════════════════════════════════════════════════╝');
+    this.logger.log('');
+    this.logger.log('┌─ 🌐 服务器配置 ──────────────────────────────────────────────────┐');
+    this.logger.log(`│ 📍 命名空间: /ws`);
+    this.logger.log(`│ 🔗 CORS源: ${originsDisplay}`);
+    this.logger.log(`│ 🚀 传输协议: websocket, polling`);
+    this.logger.log(`│ 🔒 凭据支持: ✅ 已启用`);
+    this.logger.log(`│ ⏰ Ping超时: 60秒`);
+    this.logger.log(`│ 📡 Ping间隔: 25秒`);
+    this.logger.log(`│ 🔧 EIO3支持: ✅ 已启用`);
+    this.logger.log('└──────────────────────────────────────────────────────────────────┘');
+    this.logger.log('');
+    this.logger.log('┌─ 🛡️  安全特性 ───────────────────────────────────────────────────┐');
+    this.logger.log('│ 🔐 身份验证: JWT Token 验证');
+    this.logger.log('│ 🛡️  异常过滤: WebSocketExceptionFilter');
+    this.logger.log('│ 📊 请求拦截: WebSocketInterceptor');
+    this.logger.log('│ ✅ 数据验证: ValidationPipe');
+    this.logger.log('│ 🔒 路由守卫: WebSocketAuthGuard');
+    this.logger.log('└──────────────────────────────────────────────────────────────────┘');
+    this.logger.log('');
+    this.logger.log('┌─ 📡 可用事件 ────────────────────────────────────────────────────┐');
+    this.logger.log('│ 🏠 join-room     - 加入房间');
+    this.logger.log('│ 🚪 leave-room    - 离开房间');
+    this.logger.log('│ 💬 send-message  - 发送消息');
+    this.logger.log('│ 📢 broadcast     - 广播消息');
+    this.logger.log('│ 📋 get-rooms     - 获取房间列表');
+    this.logger.log('│ 📊 get-status    - 获取连接状态');
+    this.logger.log('│ 🏓 ping          - 心跳检测');
+    this.logger.log('└──────────────────────────────────────────────────────────────────┘');
+    this.logger.log('');
+    this.logger.log('╔═══════════════════════════════════════════════════════════════════╗');
+    this.logger.log('║              ✨ WebSocket 服务已就绪，等待连接... ✨              ║');
+    this.logger.log('╚═══════════════════════════════════════════════════════════════════╝');
+    this.logger.log('');
   }
 
   /**
@@ -465,6 +518,210 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
       },
       timestamp: Date.now(),
     };
+  }
+
+  /**
+   * 获取公共房间列表（匿名用户可访问）
+   * @param socket 客户端 Socket
+   * @returns 公共房间列表
+   */
+  @SubscribeMessage('get-public-rooms')
+  @UseGuards(WebSocketOptionalAuthGuard)
+  async handleGetPublicRooms(@ConnectedSocket() socket: AuthenticatedSocket): Promise<
+    WebSocketResponse<{
+      rooms: { id: string; memberCount: number }[];
+      userType: 'authenticated' | 'anonymous';
+    }>
+  > {
+    try {
+      const userType = socket.isAuthenticated ? 'authenticated' : 'anonymous';
+      const userId = socket.user?.id ?? 'anonymous';
+
+      this.logger.log(
+        `📋 ${userType === 'authenticated' ? '认证' : '匿名'}用户 ${userId} 请求公共房间列表`,
+      );
+
+      // 获取公共房间列表
+      const publicRoomIds = await this.webSocketService.getPublicRooms();
+
+      // 获取每个房间的成员数量
+      const roomsWithCount = await Promise.all(
+        publicRoomIds.map(async (roomId) => ({
+          id: roomId,
+          memberCount: await this.webSocketService.getRoomMemberCount(roomId),
+        })),
+      );
+
+      this.logger.log(`✅ 返回 ${roomsWithCount.length} 个公共房间给${userType}用户 ${userId}`);
+
+      return {
+        success: true,
+        data: {
+          rooms: roomsWithCount,
+          userType,
+        },
+        timestamp: Date.now(),
+      };
+    } catch (error) {
+      this.logger.error(`获取公共房间列表失败: ${(error as Error).message}`);
+      throw new WsException({
+        code: 'GET_PUBLIC_ROOMS_FAILED',
+        message: '获取公共房间列表失败',
+        timestamp: Date.now(),
+      });
+    }
+  }
+
+  /**
+   * 加入公共房间（匿名用户可访问）
+   * @param socket 客户端 Socket
+   * @param data 房间数据
+   * @returns 加入结果
+   */
+  @SubscribeMessage('join-public-room')
+  @UseGuards(WebSocketOptionalAuthGuard)
+  async handleJoinPublicRoom(
+    @ConnectedSocket() socket: AuthenticatedSocket,
+    @MessageBody() data: { room: string },
+  ): Promise<WebSocketResponse<{ room: string; members: number; userType: string }>> {
+    try {
+      const { room } = data;
+
+      if (!room || !this.isValidRoomName(room)) {
+        throw new WsException({
+          code: 'INVALID_ROOM_NAME',
+          message: '房间名称无效',
+          timestamp: Date.now(),
+        });
+      }
+
+      // 使用服务方法检查是否为公共房间
+      const publicRooms = await this.webSocketService.getPublicRooms();
+      if (!publicRooms.includes(room)) {
+        throw new WsException({
+          code: 'ROOM_NOT_PUBLIC',
+          message: '该房间不是公共房间',
+          timestamp: Date.now(),
+        });
+      }
+
+      await socket.join(room);
+      const members = await this.webSocketService.getRoomMemberCount(room);
+
+      const userType = socket.isAuthenticated ? '认证用户' : '匿名用户';
+      const userId = socket.userId ?? 'anonymous';
+
+      this.logger.log(`${userType} ${userId} 加入公共房间: ${room}`);
+
+      // 通知房间内其他用户
+      socket.to(room).emit('user-joined', {
+        type: WebSocketMessageType.NOTIFICATION,
+        data: {
+          userId,
+          userType,
+          room,
+          message: `${userType} 加入了房间`,
+        },
+        timestamp: Date.now(),
+      });
+
+      return {
+        success: true,
+        data: { room, members, userType },
+        timestamp: Date.now(),
+      };
+    } catch (error) {
+      this.logger.error(`加入公共房间失败: ${(error as Error).message}`);
+
+      if (error instanceof WsException) {
+        throw error;
+      }
+
+      throw new WsException({
+        code: 'JOIN_PUBLIC_ROOM_FAILED',
+        message: '加入公共房间失败',
+        timestamp: Date.now(),
+      });
+    }
+  }
+
+  /**
+   * 在公共房间发送消息（匿名用户可访问）
+   * @param socket 客户端 Socket
+   * @param data 消息数据
+   * @returns 发送结果
+   */
+  @SubscribeMessage('send-public-message')
+  @UseGuards(WebSocketOptionalAuthGuard)
+  async handleSendPublicMessage(
+    @ConnectedSocket() socket: AuthenticatedSocket,
+    @MessageBody() data: { room: string; content: string; messageType?: string },
+  ): Promise<WebSocketResponse<{ messageId: string }>> {
+    try {
+      const { room, content, messageType = 'text' } = data;
+
+      if (!room || !content) {
+        throw new WsException({
+          code: 'INVALID_MESSAGE_DATA',
+          message: '消息数据无效',
+          timestamp: Date.now(),
+        });
+      }
+
+      // 使用服务方法检查是否为公共房间
+      const publicRooms = await this.webSocketService.getPublicRooms();
+      if (!publicRooms.includes(room)) {
+        throw new WsException({
+          code: 'ROOM_NOT_PUBLIC',
+          message: '只能在公共房间发送消息',
+          timestamp: Date.now(),
+        });
+      }
+
+      const messageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      const userType = socket.isAuthenticated ? '认证用户' : '匿名用户';
+      const userId = socket.userId ?? 'anonymous';
+      const userName = socket.user?.name ?? '匿名用户';
+
+      // 构建消息对象
+      const message = {
+        type: WebSocketMessageType.MESSAGE,
+        data: {
+          messageId,
+          content,
+          messageType,
+          senderId: userId,
+          senderName: userName,
+          senderType: userType,
+          room,
+          timestamp: Date.now(),
+        },
+        timestamp: Date.now(),
+      };
+
+      // 发送消息到房间内所有用户
+      this.server.to(room).emit('message', message);
+
+      this.logger.log(`${userType} ${userId} 在公共房间 ${room} 发送消息: ${messageId}`);
+
+      return {
+        success: true,
+        data: { messageId },
+        timestamp: Date.now(),
+      };
+    } catch (error) {
+      this.logger.error(`发送公共消息失败: ${(error as Error).message}`);
+
+      if (error instanceof WsException) {
+        throw error;
+      }
+
+      throw new WsException({
+        code: 'SEND_PUBLIC_MESSAGE_FAILED',
+        message: '发送公共消息失败',
+        timestamp: Date.now(),
+      });
+    }
   }
 
   /**

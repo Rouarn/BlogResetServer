@@ -18,6 +18,7 @@
  */
 
 import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import type { Socket } from 'socket.io';
@@ -50,6 +51,8 @@ interface WebSocketContext {
 export class WebSocketInterceptor implements NestInterceptor {
   private readonly logger = new Logger(WebSocketInterceptor.name);
   private requestCounter = 0;
+
+  constructor(private readonly configService: ConfigService) {}
 
   /**
    * 拦截 WebSocket 请求
@@ -283,7 +286,10 @@ export class WebSocketInterceptor implements NestInterceptor {
    */
   private shouldIncludeMetadata(_context: WebSocketContext): boolean {
     // 在开发环境或调试模式下包含元数据
-    return process.env.NODE_ENV === 'development' || process.env.WS_INCLUDE_METADATA === 'true';
+    return (
+      this.configService.get<string>('NODE_ENV') === 'development' ||
+      this.configService.get<boolean>('app.websocket.includeMetadata', false)
+    );
   }
 
   /**
@@ -300,7 +306,7 @@ export class WebSocketInterceptor implements NestInterceptor {
     }
 
     // 根据日志级别决定
-    const logLevel = process.env.WS_LOG_LEVEL ?? 'info';
+    const logLevel = this.configService.get<string>('app.websocket.logLevel', 'info');
 
     return logLevel === 'debug' || logLevel === 'verbose';
   }
@@ -322,7 +328,8 @@ export class WebSocketInterceptor implements NestInterceptor {
       return {
         code: error.name || 'UNKNOWN_ERROR',
         message: error.message || '发生了未知错误',
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+        details:
+          this.configService.get<string>('NODE_ENV') === 'development' ? error.stack : undefined,
         timestamp,
       };
     }
@@ -407,7 +414,10 @@ export class WebSocketInterceptor implements NestInterceptor {
    */
   private recordPerformanceMetrics(context: WebSocketContext, processingTime: number): void {
     // 记录慢请求
-    const slowRequestThreshold = parseInt(process.env.WS_SLOW_REQUEST_THRESHOLD ?? '1000', 10);
+    const slowRequestThreshold = this.configService.get<number>(
+      'app.websocket.slowRequestThreshold',
+      1000,
+    );
 
     if (processingTime > slowRequestThreshold) {
       this.logger.warn(`WebSocket 慢请求检测: ${context.event} (${processingTime}ms)`, {

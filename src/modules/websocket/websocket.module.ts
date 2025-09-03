@@ -17,7 +17,7 @@
  * @version 1.0.0
  */
 
-import { Module } from '@nestjs/common';
+import { Module, Logger } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
@@ -85,10 +85,40 @@ import { WebSocketInterceptor } from './interceptors/websocket.interceptor';
   ],
 })
 export class WebSocketModule {
+  private readonly logger = new Logger(WebSocketModule.name);
+
   /**
    * 模块初始化时的日志
    */
   constructor() {
-    console.log('WebSocket 模块已加载');
+    this.logModuleInitialization();
+  }
+
+  /**
+   * 输出模块初始化信息
+   */
+  private logModuleInitialization(): void {
+    this.logger.log('');
+    this.logger.log('╔═══════════════════════════════════════════════════════════════════╗');
+    this.logger.log('║                   🔌 WebSocket 模块初始化完成 🔌                  ║');
+    this.logger.log('╚═══════════════════════════════════════════════════════════════════╝');
+    this.logger.log('');
+    this.logger.log('┌─ 📦 模块组件 ────────────────────────────────────────────────────┐');
+    this.logger.log('│ 🚀 WebSocketGateway: 网关服务');
+    this.logger.log('│ 🔧 WebSocketService: 核心服务');
+    this.logger.log('│ 🛡️  WebSocketAuthGuard: 身份验证守卫');
+    this.logger.log('│ 🔍 WebSocketInterceptor: 请求拦截器');
+    this.logger.log('│ ⚠️  WebSocketExceptionFilter: 异常过滤器');
+    this.logger.log('└──────────────────────────────────────────────────────────────────┘');
+    this.logger.log('');
+    this.logger.log('┌─ ⚡ 核心功能 ─────────────────────────────────────────────────────┐');
+    this.logger.log('│ 🏠 房间管理: 支持加入/离开房间');
+    this.logger.log('│ 💬 消息传递: 实时消息发送与接收');
+    this.logger.log('│ 📢 广播功能: 支持房间内广播');
+    this.logger.log('│ 📊 状态监控: 连接状态实时监控');
+    this.logger.log('│ 🔍 健康检查: Ping/Pong 心跳检测');
+    this.logger.log('│ 🛡️  异常处理: 完整的错误处理机制');
+    this.logger.log('└──────────────────────────────────────────────────────────────────┘');
+    this.logger.log('');
   }
 }

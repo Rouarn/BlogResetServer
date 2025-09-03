@@ -18,6 +18,7 @@
  */
 
 import { ArgumentsHost, Catch, ExceptionFilter, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { WsException } from '@nestjs/websockets';
 import type { Socket } from 'socket.io';
 import type { WebSocketError } from '../interfaces';
@@ -30,6 +31,8 @@ import type { WebSocketError } from '../interfaces';
 @Catch()
 export class WebSocketExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(WebSocketExceptionFilter.name);
+
+  constructor(private readonly configService: ConfigService) {}
 
   /**
    * 捕获异常并处理
@@ -248,7 +251,8 @@ export class WebSocketExceptionFilter implements ExceptionFilter {
     return {
       code: 'UNKNOWN_ERROR',
       message: '发生了未知错误，请稍后重试',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      details:
+        this.configService.get<string>('NODE_ENV') === 'development' ? error.message : undefined,
       timestamp: Date.now(),
     };
   }

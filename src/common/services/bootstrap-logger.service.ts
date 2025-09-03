@@ -78,7 +78,7 @@ export class BootstrapLoggerService {
     this.logger.log(
       `│ 🔗 API 访问: ${appUrl}/${versionConfig.prefix}/v${versionConfig.defaultVersion}`,
     );
-
+    this.logger.log(`│ 🔌 WebSocket: ${appUrl}/ws`);
     this.logger.log(`│ ⚡ 端口号码: ${appConfig.port}`);
     this.logger.log('└' + '─'.repeat(65) + '┘');
 

@@ -164,6 +164,8 @@ export interface WebSocketError {
 export interface AuthenticatedSocket extends Socket {
   /** 用户ID */
   userId?: string;
+  /** 是否已认证 */
+  isAuthenticated?: boolean;
   /** 用户信息 */
   user?: {
     id: string;
@@ -172,7 +174,7 @@ export interface AuthenticatedSocket extends Socket {
     role?: string;
     avatar?: string;
   };
-  /** 当前所在房间列表 */
+  /** 用户所在房间 */
   rooms: Set<string>;
   /** 连接时间 */
   connectedAt?: Date;
