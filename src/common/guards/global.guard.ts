@@ -4,9 +4,11 @@ import {
   Injectable,
   Logger,
   UnauthorizedException,
+  Inject,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { WhitelistAuth, getCurrentTimestamp } from 'src/utils';
+import { ICacheService } from 'src/modules/cache';
 
 /**
  * 限流配置接口
@@ -18,8 +20,6 @@ interface RateLimitConfig {
   readonly whitelistLimit: number;
   /** 时间窗口（秒） */
   readonly windowSeconds: number;
-  /** 内存清理概率（0-1） */
-  readonly cleanupProbability: number;
 }
 
 /**
@@ -32,28 +32,38 @@ interface RateLimitItem {
 }
 
 /**
- * 全局限流守卫（GlobalGuard）
+ * 缓存键前缀常量
+ */
+const RATE_LIMIT_PREFIX = 'rate_limit:';
+const CACHE_TTL_SECONDS = 60;
+
+/**
+ * 全局限流守卫（GlobalGuard）- Redis缓存版
  *
  * 用于对所有进入系统的 HTTP 请求进行限流控制，防止单个 IP 在单位时间内频繁请求，保护系统免受恶意刷接口攻击。
  *
  * 功能说明：
- * - 基于内存实现滑动窗口限流，支持白名单路由差异化限流策略
+ * - 基于Redis缓存实现分布式滑动窗口限流，支持白名单路由差异化限流策略
  * - 超过限制后，抛出 401 UnauthorizedException 异常
  * - 优化的日志输出，减少性能开销
- * - 智能内存管理，防止内存泄漏
+ * - 利用Redis TTL机制自动清理过期数据，无需手动内存管理
+ * - 支持多实例部署的分布式限流
  *
  * 性能优化：
+ * - 使用Redis缓存替代内存存储，支持集群部署
  * - 合并多条日志为单条结构化日志
- * - 优化内存清理策略
+ * - 缓存服务异常时自动降级，不影响业务流程
  * - 减少不必要的字符串操作
  *
  * 依赖项：
+ * - ICacheService：缓存服务，用于存储限流数据
  * - Logger：用于记录请求日志
  * - WhitelistAuth：白名单路由检查
  * - getCurrentTimestamp：获取当前时间戳
  *
  * 用法示例：
  * - 在主模块中通过 APP_GUARD 全局注册该守卫，实现全局限流
+ * - 确保缓存模块已正确配置和注册
  */
 @Injectable()
 export class GlobalGuard implements CanActivate {
@@ -69,27 +79,16 @@ export class GlobalGuard implements CanActivate {
     normalLimit: 100,
     whitelistLimit: 200,
     windowSeconds: 60,
-    cleanupProbability: 0.01,
   };
 
-  /**
-   * 内存限流存储
-   */
-  private readonly rateLimitStore = new Map<string, RateLimitItem>();
-
-  /**
-   * 上次清理时间
-   */
-  private lastCleanupTime = 0;
-
-  constructor() {
+  constructor(@Inject('I_CACHE_SERVICE') private readonly cacheService: ICacheService) {
     // 格式化美观的初始化日志
     const initMessage = [
-      '🛡️ 全局限流守卫已初始化',
+      '🛡️ 全局限流守卫已初始化（Redis缓存版）',
       `📊 普通限制: ${this.config.normalLimit}/分钟`,
       `⭐ 白名单限制: ${this.config.whitelistLimit}/分钟`,
       `⏱️ 时间窗口: ${this.config.windowSeconds}秒`,
-      `🧹 清理概率: ${(this.config.cleanupProbability * 100).toFixed(1)}%`,
+      `💾 缓存TTL: ${CACHE_TTL_SECONDS}秒`,
     ].join(' | ');
 
     this.logger.log(initMessage);
@@ -111,10 +110,7 @@ export class GlobalGuard implements CanActivate {
     const limit = isWhitelisted ? this.config.whitelistLimit : this.config.normalLimit;
 
     // 执行限流检查
-    const rateLimitResult = this.checkRateLimit(clientIp, limit);
-
-    // 定期清理过期记录
-    this.performCleanupIfNeeded();
+    const rateLimitResult = await this.checkRateLimit(clientIp, limit);
 
     // 记录请求信息（优化后的单条日志）
     this.logRequestInfo({
@@ -125,7 +121,7 @@ export class GlobalGuard implements CanActivate {
       limit,
       isWhitelisted,
       windowSeconds: this.config.windowSeconds,
-      storeSize: this.rateLimitStore.size,
+      storeSize: 0, // Redis缓存无需显示存储大小
     });
 
     return true;
@@ -154,90 +150,66 @@ export class GlobalGuard implements CanActivate {
   }
 
   /**
-   * 执行限流检查
+   * 执行限流检查（使用缓存服务）
    * @param ip 客户端IP
    * @param limit 限流阈值
    * @returns 限流检查结果
    * @throws UnauthorizedException 超过限流阈值时抛出
    */
-  private checkRateLimit(ip: string, limit: number): { currentCount: number } {
-    const key = `rate_limit:${ip}`;
+  private async checkRateLimit(ip: string, limit: number): Promise<{ currentCount: number }> {
+    const key = `${RATE_LIMIT_PREFIX}${ip}`;
     const now = getCurrentTimestamp();
     const windowMs = this.config.windowSeconds * 1000;
 
-    const stored = this.rateLimitStore.get(key);
+    try {
+      // 从缓存获取限流记录
+      const stored = await this.cacheService.get<RateLimitItem>(key);
 
-    if (!stored || now > stored.resetTime) {
-      // 创建新的限流记录
-      const newItem: RateLimitItem = {
-        count: 1,
-        resetTime: now + windowMs,
-        firstRequestTime: now,
-      };
-      this.rateLimitStore.set(key, newItem);
-      return { currentCount: 1 };
-    }
+      if (!stored || now > stored.resetTime) {
+        // 创建新的限流记录
+        const newItem: RateLimitItem = {
+          count: 1,
+          resetTime: now + windowMs,
+          firstRequestTime: now,
+        };
 
-    // 增加请求计数
-    stored.count++;
-
-    // 检查是否超过限制
-    if (stored.count > limit) {
-      // 记录限流事件
-      this.logger.warn('🚫 触发限流保护', {
-        ip,
-        currentCount: stored.count,
-        limit,
-        windowSeconds: this.config.windowSeconds,
-        duration: Math.round((now - stored.firstRequestTime) / 1000),
-      });
-
-      throw new UnauthorizedException({
-        message: '请求过于频繁，请稍后再试',
-        error: 'Too Many Requests',
-        statusCode: 429,
-        retryAfter: Math.ceil((stored.resetTime - now) / 1000),
-      });
-    }
-
-    return { currentCount: stored.count };
-  }
-
-  /**
-   * 定期清理过期的限流记录
-   */
-  private performCleanupIfNeeded(): void {
-    const now = getCurrentTimestamp();
-
-    // 基于时间间隔的清理策略，避免频繁的随机清理
-    const shouldCleanup =
-      Math.random() < this.config.cleanupProbability || now - this.lastCleanupTime > 300000; // 5分钟强制清理一次
-
-    if (!shouldCleanup) {
-      return;
-    }
-
-    const initialSize = this.rateLimitStore.size;
-    let cleanedCount = 0;
-
-    // 清理过期记录
-    for (const [key, item] of this.rateLimitStore.entries()) {
-      if (now > item.resetTime) {
-        this.rateLimitStore.delete(key);
-        cleanedCount++;
+        // 存储到缓存，设置TTL为窗口时间
+        await this.cacheService.set(key, newItem, { ttl: CACHE_TTL_SECONDS });
+        return { currentCount: 1 };
       }
-    }
 
-    this.lastCleanupTime = now;
+      // 增加请求计数
+      stored.count++;
 
-    // 记录清理结果
-    if (cleanedCount > 0) {
-      this.logger.debug('🧹 内存清理完成', {
-        cleanedCount,
-        remainingCount: this.rateLimitStore.size,
-        initialSize,
-        cleanupRatio: `${((cleanedCount / initialSize) * 100).toFixed(1)}%`,
+      // 检查是否超过限制
+      if (stored.count > limit) {
+        // 记录限流事件
+        this.logger.warn('🚫 触发限流保护', {
+          ip,
+          currentCount: stored.count,
+          limit,
+          windowSeconds: this.config.windowSeconds,
+          duration: Math.round((now - stored.firstRequestTime) / 1000),
+        });
+
+        throw new UnauthorizedException({
+          message: '请求过于频繁，请稍后再试',
+          error: 'Too Many Requests',
+          statusCode: 429,
+          retryAfter: Math.ceil((stored.resetTime - now) / 1000),
+        });
+      }
+
+      // 更新缓存中的计数
+      await this.cacheService.set(key, stored, { ttl: CACHE_TTL_SECONDS });
+      return { currentCount: stored.count };
+    } catch (error) {
+      // 缓存服务异常时，允许请求通过，避免影响业务
+      this.logger.error('缓存服务异常，限流检查跳过', {
+        ip,
+        error: (error as Error).message,
       });
+      return { currentCount: 1 };
     }
   }
 
