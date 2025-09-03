@@ -156,14 +156,6 @@ export class AppConfigService {
   }
 
   /**
-   * 判断是否启用调试模式
-   * @returns 如果启用调试模式返回 true
-   */
-  get isDebugEnabled(): boolean {
-    return this.configService.get<string>('NEST_ENABLE_DEBUG') === 'true';
-  }
-
-  /**
    * 获取日志级别
    * @returns 日志级别字符串，默认 'info'
    */

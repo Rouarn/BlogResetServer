@@ -77,21 +77,6 @@ async function bootstrap(): Promise<void> {
     // 启用静态资源服务
     app.useStaticAssets(staticPath, staticConfig.options);
 
-    // 配置开发调试面板（仅在开发环境启用）
-    // 提供系统监控、日志查看、性能分析等调试功能
-    if (appConfig.environment === 'development' && appConfig.isDebugEnabled) {
-      const debugPanelPath = join(__dirname, 'modules', 'debug', 'views');
-
-      // 记录调试面板配置信息
-      bootstrapLogger.logDebugPanelConfig(debugPanelPath, appConfig.port);
-
-      // 设置调试面板静态资源路由
-      app.useStaticAssets(debugPanelPath, {
-        prefix: '/debug/', // 调试面板访问路径前缀
-        index: 'debug-panel.html', // 默认首页文件
-      });
-    }
-
     // 配置Swagger API文档系统
     // 自动生成交互式API文档，支持在线测试和导出
     if (appConfig.swaggerOptions.enabled) {

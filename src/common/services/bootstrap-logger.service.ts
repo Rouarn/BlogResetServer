@@ -32,19 +32,6 @@ export class BootstrapLoggerService {
   /**
    * 输出调试面板配置信息
    */
-  logDebugPanelConfig(debugPanelPath: string, port: number): void {
-    this.logger.log('╔═══════════════════════════════════════════════════════════════════╗');
-    this.logger.log('║                     🛠️   调试面板配置 🛠️                            ║');
-    this.logger.log('╚═══════════════════════════════════════════════════════════════════╝');
-    this.logger.log('');
-    this.logger.log('┌─ 🎛️  面板详情 ────────────────────────────────────────────────────────┐');
-    this.logger.log(`│ 📁 面板路径: ${debugPanelPath}`);
-    this.logger.log(`│ 🌐 访问前缀: /debug/`);
-    this.logger.log(`│ 📄 默认页面: debug-panel.html`);
-    this.logger.log(`│ 🎛️  面板地址: http://localhost:${port}/debug/`);
-    this.logger.log('└──────────────────────────────────────────────────────────────────────┘');
-    this.logger.log('');
-  }
 
   /**
    * 记录API文档保存信息
@@ -91,9 +78,7 @@ export class BootstrapLoggerService {
     this.logger.log(
       `│ 🔗 API 访问: ${appUrl}/${versionConfig.prefix}/v${versionConfig.defaultVersion}`,
     );
-    if (appConfig.isDebugEnabled) {
-      this.logger.log(`│ 🛠️  调试面板: ${appUrl}/debug/`);
-    }
+
     this.logger.log(`│ ⚡ 端口号码: ${appConfig.port}`);
     this.logger.log('└' + '─'.repeat(65) + '┘');
 

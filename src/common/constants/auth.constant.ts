@@ -14,8 +14,6 @@ export const WHITE_LIST_ROUTES = [
   '/health',
   '/api-docs',
   '/api-docs/*',
-  '/debug',
-  '/debug/*',
 ] as const;
 
 /**

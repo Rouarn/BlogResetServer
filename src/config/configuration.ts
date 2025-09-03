@@ -93,32 +93,6 @@ export default registerAs('app', () => ({
     enabled: process.env.NEST_USER_NODE_ENV !== 'production',
   },
 
-  // 调试和开发工具配置
-  debug: {
-    // 调试模式开关
-    enabled:
-      process.env.NEST_ENABLE_DEBUG === 'true' || process.env.NEST_USER_NODE_ENV === 'development',
-    // 日志级别
-    logLevel:
-      process.env.NEST_LOG_LEVEL ??
-      (process.env.NEST_USER_NODE_ENV === 'production' ? 'error' : 'debug'),
-    // 性能监控开关
-    performanceMonitoring:
-      process.env.NEST_PERFORMANCE_MONITORING === 'true' ||
-      process.env.NEST_USER_NODE_ENV === 'development',
-    // 请求追踪开关
-    requestTracking:
-      process.env.NEST_REQUEST_TRACKING === 'true' ||
-      process.env.NEST_USER_NODE_ENV === 'development',
-    // 错误详细信息开关
-    detailedErrors:
-      process.env.NEST_DETAILED_ERRORS === 'true' ||
-      process.env.NEST_USER_NODE_ENV === 'development',
-    // 调试面板访问开关
-    panelEnabled:
-      process.env.NEST_DEBUG_PANEL === 'true' || process.env.NEST_USER_NODE_ENV === 'development',
-  },
-
   // Redis 缓存配置
   redis: {
     // Redis 功能开关，默认在开发环境启用，生产环境需要显式配置
