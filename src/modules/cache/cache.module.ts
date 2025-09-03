@@ -59,7 +59,11 @@ export class CacheModule implements OnModuleInit {
     const redisEnabled = this.configService.get<boolean>('app.redis.enabled', false);
 
     this.logger.log('');
-    this.logger.log('┌─ 🚀 缓存模块初始化完成 ──────────────────────────────────────────┐');
+    this.logger.log('╔═══════════════════════════════════════════════════════════════════╗');
+    this.logger.log('║                    🚀 缓存模块初始化完成 🚀                       ║');
+    this.logger.log('╚═══════════════════════════════════════════════════════════════════╝');
+    this.logger.log('');
+    this.logger.log('┌─ 📦 缓存配置信息 ────────────────────────────────────────────────┐');
     this.logger.log(`│ 📦 缓存类型: ${cacheType === 'redis' ? '💎 Redis' : '💾 Memory'}`);
     this.logger.log(`│ ⚡ Redis状态: ${redisEnabled ? '✅ 已启用' : '❌ 已禁用'}`);
 
@@ -82,7 +86,7 @@ export class CacheModule implements OnModuleInit {
     this.logger.log(
       `│ 🏷️  键前缀: ${this.configService.get<string>('app.redis.cache.keyPrefix', 'nestjs:')}`,
     );
-    this.logger.log('└─────────────────────────────────────────────────────────────────┘');
+    this.logger.log('└──────────────────────────────────────────────────────────────────┘');
     this.logger.log('');
   }
 

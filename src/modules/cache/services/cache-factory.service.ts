@@ -30,7 +30,11 @@ export class CacheFactoryService implements OnModuleDestroy {
    */
   private logCacheConfiguration(): void {
     this.logger.log('');
-    this.logger.log('┌─ ⚙️  缓存服务配置 ' + '─'.repeat(47) + '┐');
+    this.logger.log('╔═══════════════════════════════════════════════════════════════════╗');
+    this.logger.log('║                      ⚙️   缓存服务配置 ⚙️                           ║');
+    this.logger.log('╚═══════════════════════════════════════════════════════════════════╝');
+    this.logger.log('');
+    this.logger.log('┌─ 📋 配置详情 ───────────────────────────────────────────────────┐');
     this.logger.log(
       `│ 📦 缓存类型: ${this.cacheConfig.type === CacheServiceType.REDIS ? '💎 Redis' : '💾 内存缓存'}`,
     );
@@ -40,7 +44,7 @@ export class CacheFactoryService implements OnModuleDestroy {
     if (this.cacheConfig.type === CacheServiceType.MEMORY) {
       this.logger.log(`│ 📊 最大容量: ${this.cacheConfig.maxSize}个键`);
     }
-    this.logger.log('└' + '─'.repeat(65) + '┘');
+    this.logger.log('└─────────────────────────────────────────────────────────────────┘');
     this.logger.log('');
   }
 
