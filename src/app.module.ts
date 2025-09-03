@@ -38,6 +38,7 @@ import { DatabaseModule } from './database';
 // 业务模块导入
 import { AuthModule } from './modules/auth/auth.module';
 import { FilesModule } from './modules/files/files.module';
+import { WebSocketModule } from './modules/websocket/websocket.module';
 
 import { CacheModule } from './modules/cache/cache.module';
 
@@ -100,6 +101,7 @@ import { CacheModule } from './modules/cache/cache.module';
     // 业务模块注册
     AuthModule, // 用户认证模块 (登录、注册、验证码)
     FilesModule, // 文件管理模块 (上传、下载、存储)
+    WebSocketModule, // WebSocket 模块 (实时通信、房间管理)
     CacheModule, // 缓存模块 (Redis/内存缓存，支持装饰器)
   ],
 

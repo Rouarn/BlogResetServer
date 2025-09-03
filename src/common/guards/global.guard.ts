@@ -1,14 +1,14 @@
 import {
   CanActivate,
   ExecutionContext,
+  Inject,
   Injectable,
   Logger,
   UnauthorizedException,
-  Inject,
 } from '@nestjs/common';
 import type { Request } from 'express';
-import { WhitelistAuth, getCurrentTimestamp } from 'src/utils';
 import { ICacheService } from 'src/modules/cache';
+import { WhitelistAuth, getCurrentTimestamp } from 'src/utils';
 
 /**
  * 限流配置接口
@@ -84,7 +84,7 @@ export class GlobalGuard implements CanActivate {
   constructor(@Inject('I_CACHE_SERVICE') private readonly cacheService: ICacheService) {
     // 格式化美观的初始化日志
     const initMessage = [
-      '🛡️ 全局限流守卫已初始化（Redis缓存版）',
+      '🛡️  全局限流守卫已初始化（Redis缓存版）',
       `📊 普通限制: ${this.config.normalLimit}/分钟`,
       `⭐ 白名单限制: ${this.config.whitelistLimit}/分钟`,
       `⏱️ 时间窗口: ${this.config.windowSeconds}秒`,
