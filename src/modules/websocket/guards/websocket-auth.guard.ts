@@ -70,10 +70,10 @@ export class WebSocketAuthGuard implements CanActivate {
 
       // 将用户信息附加到 socket
       const authenticatedSocket = client as AuthenticatedSocket;
-      authenticatedSocket.userId = (payload.sub || payload.userId) as string;
+      authenticatedSocket.userId = (payload.sub ?? payload.userId) as string;
       authenticatedSocket.user = {
-        id: (payload.sub || payload.userId) as string,
-        name: (payload.name || payload.username) as string,
+        id: (payload.sub ?? payload.userId) as string,
+        name: (payload.name ?? payload.username) as string,
         email: payload.email as string | undefined,
         role: payload.role as string | undefined,
         avatar: payload.avatar as string | undefined,

@@ -201,7 +201,7 @@ export class WebSocketExceptionFilter implements ExceptionFilter {
     return {
       code: 'VALIDATION_ERROR',
       message: '数据验证失败',
-      details: (error as { details?: unknown }).details || (error as Error).message,
+      details: (error as { details?: unknown }).details ?? (error as Error).message,
       timestamp: Date.now(),
     };
   }
