@@ -41,6 +41,7 @@ import { DatabaseModule } from './database';
 import { AuthModule } from './modules/auth/auth.module';
 import { FilesModule } from './modules/files/files.module';
 import { DebugModule } from './modules/debug/debug.module';
+import { CacheModule } from './modules/cache/cache.module';
 
 /**
  * 应用根模块配置
@@ -98,9 +99,11 @@ import { DebugModule } from './modules/debug/debug.module';
     // =============================================================================
     // 业务模块 - 应用功能模块
     // =============================================================================
+    // 业务模块注册
     AuthModule, // 用户认证模块 (登录、注册、验证码)
     FilesModule, // 文件管理模块 (上传、下载、存储)
     DebugModule, // 调试工具模块 (请求追踪、错误诊断、性能监控)
+    CacheModule, // 缓存模块 (Redis/内存缓存，支持装饰器)
   ],
 
   // =============================================================================

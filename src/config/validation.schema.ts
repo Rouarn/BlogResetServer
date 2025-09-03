@@ -73,7 +73,17 @@ export const validationSchema = Joi.object({
   NEST_SWAGGER_VERSION: Joi.string().default('1.0'),
   NEST_SWAGGER_PREFIX: Joi.string().default('/api-docs'),
 
-  // 数据库连接配置
+  // Redis 缓存配置 (可选)
+  NEST_REDIS_ENABLED: Joi.string().valid('true', 'false').default('true'),
+  NEST_REDIS_HOST: Joi.string().default('localhost'),
+  NEST_REDIS_PORT: Joi.number().default(6379),
+  NEST_REDIS_PASSWORD: Joi.string().allow('').optional(),
+  NEST_REDIS_DB: Joi.number().default(0),
+  NEST_REDIS_DEFAULT_TTL: Joi.number().default(3600),
+  NEST_REDIS_KEY_PREFIX: Joi.string().default('nestjs:'),
+  NEST_REDIS_MAX_SIZE: Joi.number().default(1000),
+
+  // 数据库配置 (必需)
   NEST_DATABASE_HOST: Joi.string().default('localhost'),
   NEST_DATABASE_PORT: Joi.number().default(3306),
   NEST_DATABASE_USER: Joi.string().required(),

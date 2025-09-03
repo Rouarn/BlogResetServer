@@ -119,6 +119,46 @@ export default registerAs('app', () => ({
       process.env.NEST_DEBUG_PANEL === 'true' || process.env.NEST_USER_NODE_ENV === 'development',
   },
 
+  // Redis 缓存配置
+  redis: {
+    // Redis 功能开关，默认在开发环境启用，生产环境需要显式配置
+    enabled:
+      process.env.NEST_REDIS_ENABLED === 'true' ||
+      (process.env.NEST_USER_NODE_ENV === 'development' &&
+        process.env.NEST_REDIS_ENABLED !== 'false'),
+
+    // Redis 连接配置
+    host: process.env.NEST_REDIS_HOST ?? 'localhost',
+    port: process.env.NEST_REDIS_PORT ? parseInt(process.env.NEST_REDIS_PORT, 10) : 6379,
+    password: process.env.NEST_REDIS_PASSWORD ?? undefined,
+    db: process.env.NEST_REDIS_DB ? parseInt(process.env.NEST_REDIS_DB, 10) : 0,
+
+    // 连接选项
+    options: {
+      retryDelayOnFailover: 100,
+      enableReadyCheck: false,
+      maxRetriesPerRequest: 3,
+      lazyConnect: true, // 延迟连接，避免启动时连接失败导致应用崩溃
+      keepAlive: 30000,
+      connectTimeout: 10000,
+      commandTimeout: 5000,
+    },
+
+    // 缓存配置
+    cache: {
+      // 默认缓存过期时间（秒）
+      defaultTtl: process.env.NEST_REDIS_DEFAULT_TTL
+        ? parseInt(process.env.NEST_REDIS_DEFAULT_TTL, 10)
+        : 3600,
+      // 键前缀
+      keyPrefix: process.env.NEST_REDIS_KEY_PREFIX ?? 'nestjs:',
+      // 最大缓存大小（内存缓存fallback使用）
+      maxSize: process.env.NEST_REDIS_MAX_SIZE
+        ? parseInt(process.env.NEST_REDIS_MAX_SIZE, 10)
+        : 1000,
+    },
+  },
+
   // 数据库连接配置
   database: {
     type: 'mysql' as const,
