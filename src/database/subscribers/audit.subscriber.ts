@@ -8,6 +8,7 @@ import type {
   UpdateEvent,
 } from 'typeorm';
 import { EventSubscriber } from 'typeorm';
+
 import { DISABLE_TIMESTAMPS_KEY } from '../decorators';
 import { BaseEntity } from '../entities/base.entity';
 

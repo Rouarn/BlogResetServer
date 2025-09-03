@@ -20,6 +20,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { Server } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
+
 import type {
   AuthenticatedSocket,
   ConnectionStatus,

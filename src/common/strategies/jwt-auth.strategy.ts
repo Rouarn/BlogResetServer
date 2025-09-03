@@ -28,12 +28,12 @@ import type { Auth } from 'src/modules/auth/entities/auth.entity';
 export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
   /**
    * 构造函数
-   * @param _config 配置服务实例，用于获取 JWT 密钥
+   * @param config 配置服务实例，用于获取 JWT 密钥
    */
-  constructor(private readonly _config: ConfigService) {
+  constructor(private readonly config: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: _config.get<string>('NEST_JWT_SECRET'),
+      secretOrKey: config.get<string>('NEST_JWT_SECRET') ?? 'default-secret-key',
     });
   }
 

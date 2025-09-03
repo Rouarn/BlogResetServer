@@ -28,6 +28,7 @@ import type { Response } from 'express';
 import { GetCurrentUser } from 'src/common/decorators';
 import { FileValidationPipe, FilesValidationPipe } from 'src/common/pipes';
 import type { Auth as CurrentUser } from 'src/modules/auth/entities/auth.entity';
+
 import {
   ChunkUploadCompleteDto,
   ChunkUploadDto,

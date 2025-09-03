@@ -140,5 +140,5 @@ export const isStrongPassword = (password: string): boolean => {
  * @returns 是否包含特殊字符
  */
 export const hasSpecialChars = (str: string): boolean => {
-  return /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(str);
+  return /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(str);
 };

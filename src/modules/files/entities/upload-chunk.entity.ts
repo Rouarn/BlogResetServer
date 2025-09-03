@@ -1,5 +1,6 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntity } from 'src/database';
+
 import { File } from './file.entity';
 
 @Entity('ra_upload_chunks')

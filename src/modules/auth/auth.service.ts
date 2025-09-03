@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Status, isEnabled, toggleStatus } from 'src/common/enums';
 import * as svgCaptcha from 'svg-captcha';
 import { Repository } from 'typeorm';
+
 import type { CreateAuthDto } from './dto/create-auth.dto';
 import type { LoginDto } from './dto/login.dto';
 import type { BatchDeleteUserDto, UpdateUserDto } from './dto/update-user.dto';

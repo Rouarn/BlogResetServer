@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { fileTypeFromBuffer } from 'file-type';
 import type { StaticConfig as StaticConfigType } from 'src/common/interfaces';
 import { getCurrentTimestamp, randomString } from 'src/utils';
+
 import { FileType } from '../enums';
 
 @Injectable()

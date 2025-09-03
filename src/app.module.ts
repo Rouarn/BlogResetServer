@@ -21,6 +21,7 @@ import { ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core/constants';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
+
 // 应用核心组件
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -39,7 +40,6 @@ import { DatabaseModule } from './database';
 import { AuthModule } from './modules/auth/auth.module';
 import { FilesModule } from './modules/files/files.module';
 import { WebSocketModule } from './modules/websocket/websocket.module';
-
 import { CacheModule } from './modules/cache/cache.module';
 
 /**

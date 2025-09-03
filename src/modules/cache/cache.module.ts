@@ -10,6 +10,7 @@
 
 import { Global, Logger, Module, OnModuleInit, Provider } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+
 import { ICacheService } from './interfaces';
 import { CacheFactoryService } from './services/cache-factory.service';
 

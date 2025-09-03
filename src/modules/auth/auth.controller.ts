@@ -18,6 +18,7 @@ import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nes
 import type { Request } from 'express';
 import { GetCurrentUser, Public } from 'src/common/decorators';
 import { formatISOString } from 'src/utils';
+
 import { AuthService } from './auth.service';
 import { CaptchaVerifyDto } from './dto/captcha-verify.dto';
 import { CreateAuthDto } from './dto/create-auth.dto';

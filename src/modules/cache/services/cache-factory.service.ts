@@ -10,6 +10,7 @@
 
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+
 import { CacheConfig, CacheServiceType, ICacheService } from '../interfaces';
 import { MemoryCacheService } from './memory-cache.service';
 import { RedisCacheService } from './redis-cache.service';

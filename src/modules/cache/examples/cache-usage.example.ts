@@ -8,6 +8,7 @@
  */
 
 import { Injectable, Logger, Inject } from '@nestjs/common';
+
 import { Cache, CacheEvict, ICacheService } from '../index';
 
 /**

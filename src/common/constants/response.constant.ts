@@ -1,4 +1,5 @@
 import { formatTimestamp } from 'src/utils/helpers';
+
 import type { DefaultPagination, SuccessResponse } from '../interfaces/response.interface';
 
 /**
