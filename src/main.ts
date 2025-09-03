@@ -12,6 +12,7 @@
 import { VersioningType } from '@nestjs/common'; // API版本控制类型
 import { NestFactory } from '@nestjs/core'; // NestJS应用工厂
 import type { NestExpressApplication } from '@nestjs/platform-express'; // Express应用类型定义
+import { IoAdapter } from '@nestjs/platform-socket.io'; // Socket.IO适配器
 
 // Swagger API文档模块
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -45,6 +46,10 @@ async function bootstrap(): Promise<void> {
   try {
     // 创建NestJS应用实例，使用Express平台
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+    // 配置WebSocket适配器
+    // 启用Socket.IO支持，用于实时通信功能
+    app.useWebSocketAdapter(new IoAdapter(app));
 
     // 配置CORS跨域资源共享中间件
     // 允许前端应用从不同域名访问API

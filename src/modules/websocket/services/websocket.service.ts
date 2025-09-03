@@ -99,7 +99,6 @@ export class WebSocketService {
       // 设置 socket 属性
       socket.connectedAt = new Date();
       socket.lastActiveAt = new Date();
-      socket.rooms = new Set();
 
       this.logger.log(`连接已添加: ${socketId} (用户: ${userId ?? '匿名'})`);
     } catch (error) {

@@ -3,12 +3,12 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
-    "deleteOutDir": true,
-    "assets": [
-      {
-        "include": "modules/debug/views/**/*",
-        "outDir": "dist"
-      }
-    ]
+    "deleteOutDir": true
+    // "assets": [
+    //   {
+    //     "include": "modules/websocket/views/**/*",
+    //     "outDir": "dist"
+    //   }
+    // ]
   }
 }
