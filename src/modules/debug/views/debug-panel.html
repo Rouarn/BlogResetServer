@@ -440,7 +440,13 @@
             updatePerformanceStats(data.requestSummary);
           }
         } catch (error) {
-          console.error('加载仪表板数据失败:', error);
+          // 显示错误提示而不是控制台输出
+          const errorMsg = document.createElement('div');
+          errorMsg.className = 'error-message';
+          errorMsg.innerHTML = '❌ 加载仪表板数据失败，请刷新页面重试';
+          errorMsg.style.cssText = 'position:fixed;top:20px;right:20px;background:#ff4757;color:white;padding:10px 15px;border-radius:5px;z-index:9999;';
+          document.body.appendChild(errorMsg);
+          setTimeout(() => errorMsg.remove(), 5000);
         }
       }
 

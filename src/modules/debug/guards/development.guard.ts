@@ -48,7 +48,7 @@ export class DevelopmentGuard implements CanActivate {
 
     if (!isAllowed) {
       const request = context.switchToHttp().getRequest<Request>();
-      this.logger.warn(`调试功能访问被拒绝 - 调试模式未启用`, {
+      this.logger.warn(`🚫 调试功能访问被拒绝 - 调试模式未启用`, {
         ip: request.ip,
         userAgent: request.get('User-Agent'),
         url: request.url,

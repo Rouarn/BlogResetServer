@@ -207,7 +207,7 @@ export class RequestTrackingService {
    */
   async clearData(): Promise<void> {
     this.requests.clear();
-    this.logger.log('请求追踪数据已清除');
+    this.logger.log('🧹 请求追踪数据已清除');
   }
 
   /**
@@ -225,7 +225,7 @@ export class RequestTrackingService {
     }
 
     if (deletedCount > 0) {
-      this.logger.debug(`清理了 ${deletedCount} 条过期请求记录`);
+      this.logger.debug(`🗑️ 清理了 ${deletedCount} 条过期请求记录`);
     }
   }
 

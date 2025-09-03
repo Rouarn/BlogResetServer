@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type {
   EntitySubscriberInterface,
@@ -32,6 +32,8 @@ type AuditEvent = InsertEvent<BaseEntity> | UpdateEvent<BaseEntity>;
 @Injectable()
 @EventSubscriber()
 export class AuditSubscriber implements EntitySubscriberInterface<BaseEntity> {
+  private readonly logger = new Logger(AuditSubscriber.name);
+
   constructor(private readonly reflector: Reflector) {}
 
   /**
@@ -86,8 +88,8 @@ export class AuditSubscriber implements EntitySubscriberInterface<BaseEntity> {
 
     const entity = event.entity;
     if (entity) {
-      // 这里可以添加删除前的日志记录或其他业务逻辑
-      console.log(`Entity ${entity.constructor.name} is being removed`, {
+      // 记录实体删除操作
+      this.logger.debug(`🗑️ 实体删除: ${entity.constructor.name}`, {
         id: (entity as unknown as Record<string, unknown>).id,
       });
     }

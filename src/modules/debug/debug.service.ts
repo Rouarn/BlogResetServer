@@ -157,7 +157,7 @@ export class DebugService {
       this.performanceMonitorService.clearData(),
     ]);
 
-    this.logger.log('调试数据已清除');
+    this.logger.log('🧹 调试数据已清除');
   }
 
   /**

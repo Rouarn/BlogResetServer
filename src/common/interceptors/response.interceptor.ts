@@ -1,5 +1,5 @@
 import type { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import type { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { formatTimestamp } from 'src/utils';
@@ -42,6 +42,7 @@ import {
  */
 @Injectable()
 export class ResponseInterceptor<T = unknown> implements NestInterceptor {
+  private readonly logger = new Logger(ResponseInterceptor.name);
   /**
    * 拦截并格式化响应数据
    * @param context 执行上下文，包含请求相关信息
@@ -163,7 +164,7 @@ export class ResponseInterceptor<T = unknown> implements NestInterceptor {
     }
 
     // 如果不符合规定格式，返回空数据并记录警告
-    console.warn('分页接口必须返回 { data: T[], total: number } 格式的数据');
+    this.logger.warn('⚠️ 分页接口数据格式错误: 必须返回 { data: T[], total: number } 格式');
     return this.buildPaginatedData([], 0, pageSize, current);
   }
 }

@@ -26,10 +26,10 @@ export class StorageService implements StorageAdapter {
   private async ensureUploadDirectory(): Promise<void> {
     try {
       await fs.access(this.config.basePath);
-      this.logger.log(`Upload directory exists: ${this.config.basePath}`);
+      this.logger.debug(`📁 上传目录已存在: ${this.config.basePath}`);
     } catch {
       await fs.mkdir(this.config.basePath, { recursive: true });
-      this.logger.log(`Created upload directory: ${this.config.basePath}`);
+      this.logger.log(`📁 创建上传目录: ${this.config.basePath}`);
     }
   }
 
@@ -37,21 +37,24 @@ export class StorageService implements StorageAdapter {
     const fullPath = path.join(this.config.basePath, relativePath);
     const directory = path.dirname(fullPath);
 
-    this.logger.log(`Upload config - basePath: ${this.config.basePath}`);
-    this.logger.log(`Upload config - relativePath: ${relativePath}`);
-    this.logger.log(`Upload config - fullPath: ${fullPath}`);
-    this.logger.log(`Upload config - directory: ${directory}`);
+    this.logger.debug(`📤 开始上传文件: ${file.originalname} -> ${relativePath}`);
+    this.logger.debug(`📂 目标路径: ${fullPath}`);
 
-    // 确保目录存在
-    await fs.mkdir(directory, { recursive: true });
-    this.logger.log(`Directory created/verified: ${directory}`);
+    try {
+      // 确保目录存在
+      await fs.mkdir(directory, { recursive: true });
 
-    // 写入文件
-    await fs.writeFile(fullPath, file.buffer);
-    this.logger.log(`File written to: ${fullPath}`);
+      // 写入文件
+      await fs.writeFile(fullPath, file.buffer);
 
-    this.logger.log(`File uploaded successfully: ${relativePath}`);
-    return relativePath;
+      this.logger.log(
+        `✅ 文件上传成功: ${file.originalname} (${(file.size / 1024).toFixed(2)}KB) -> ${relativePath}`,
+      );
+      return relativePath;
+    } catch (error) {
+      this.logger.error(`❌ 文件上传失败: ${file.originalname} -> ${relativePath}`, error);
+      throw error;
+    }
   }
 
   async download(relativePath: string): Promise<Buffer> {
@@ -63,10 +66,10 @@ export class StorageService implements StorageAdapter {
     try {
       const fullPath = path.join(this.config.basePath, relativePath);
       await fs.unlink(fullPath);
-      this.logger.log(`File deleted: ${relativePath}`);
+      this.logger.log(`🗑️ 文件删除成功: ${relativePath}`);
       return true;
     } catch (error) {
-      this.logger.error(`Failed to delete file: ${relativePath}`, error);
+      this.logger.error(`❌ 文件删除失败: ${relativePath}`, error);
       return false;
     }
   }

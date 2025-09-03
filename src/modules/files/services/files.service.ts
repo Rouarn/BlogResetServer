@@ -66,8 +66,9 @@ export class FilesService {
     });
 
     const savedFile = await this.fileRepository.save(fileEntity);
-    console.log('savedFile: ', savedFile);
-    this.logger.log(`File uploaded successfully: ${savedFile.id}`);
+    this.logger.log(
+      `📁 文件上传成功: ${savedFile.originalName} (${savedFile.id}) - ${(savedFile.size / 1024).toFixed(2)}KB`,
+    );
 
     return this.mapToUploadResult(savedFile);
   }
@@ -100,7 +101,7 @@ export class FilesService {
           error: (error as Error).message,
         });
         results.failureCount++;
-        this.logger.error(`Failed to upload file: ${file.originalname}`, error);
+        this.logger.error(`❌ 文件上传失败: ${file.originalname}`, error);
       }
     });
 
@@ -203,12 +204,12 @@ export class FilesService {
     // 删除物理文件
     const deleted = await this.storageService.delete(file.path);
     if (!deleted) {
-      this.logger.warn(`Failed to delete physical file: ${file.path}`);
+      this.logger.warn(`⚠️ 物理文件删除失败: ${file.path}`);
     }
 
     // 删除数据库记录
     await this.fileRepository.remove(file);
-    this.logger.log(`File deleted: ${id}`);
+    this.logger.log(`🗑️ 文件删除成功: ${file.originalName} (${id})`);
 
     return true;
   }

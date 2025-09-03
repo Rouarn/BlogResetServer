@@ -53,7 +53,9 @@ export class ChunkService {
     const chunkDir = path.join('chunks', uploadId);
     await this.storageService.createDirectory(chunkDir);
 
-    this.logger.log(`Chunk upload initialized: ${uploadId}`);
+    this.logger.log(
+      `🚀 分块上传初始化: ${initDto.filename} (${uploadId}) - ${initDto.totalChunks}个分块`,
+    );
 
     return {
       uploadId,
@@ -119,7 +121,7 @@ export class ChunkService {
     file.uploadedChunks = (file.uploadedChunks ?? 0) + 1;
     await this.fileRepository.save(file);
 
-    this.logger.log(`Chunk uploaded: ${uploadId} - ${chunkNumber}`);
+    this.logger.log(`📦 分块上传完成: ${chunkNumber}/${file.totalChunks} (${uploadId})`);
 
     return {
       uploadId,
@@ -166,7 +168,9 @@ export class ChunkService {
     // 清理分块文件
     await this.cleanupChunks(uploadId);
 
-    this.logger.log(`Chunk upload completed: ${uploadId}`);
+    this.logger.log(
+      `✅ 分块上传全部完成: ${file.originalName} (${uploadId}) - ${(file.size / 1024).toFixed(2)}KB`,
+    );
     return completedFile;
   }
 
@@ -213,9 +217,9 @@ export class ChunkService {
       const chunkDir = path.join('chunks', uploadId);
       // 这里应该实现删除整个目录的逻辑
       // 由于我们的存储服务目前只支持删除单个文件，这里先记录日志
-      this.logger.log(`Should cleanup chunk directory: ${chunkDir}`);
+      this.logger.debug(`🧹 准备清理分块目录: ${chunkDir}`);
     } catch (error) {
-      this.logger.error(`Failed to cleanup chunks for upload: ${uploadId}`, error);
+      this.logger.error(`❌ 分块清理失败: ${uploadId}`, error);
     }
   }
 

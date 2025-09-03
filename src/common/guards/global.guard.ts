@@ -184,7 +184,7 @@ export class GlobalGuard implements CanActivate {
     // 检查是否超过限制
     if (stored.count > limit) {
       // 记录限流事件
-      this.logger.warn('触发限流保护', {
+      this.logger.warn('🚫 触发限流保护', {
         ip,
         currentCount: stored.count,
         limit,
@@ -232,7 +232,7 @@ export class GlobalGuard implements CanActivate {
 
     // 记录清理结果
     if (cleanedCount > 0) {
-      this.logger.debug('内存清理完成', {
+      this.logger.debug('🧹 内存清理完成', {
         cleanedCount,
         remainingCount: this.rateLimitStore.size,
         initialSize,

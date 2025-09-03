@@ -127,7 +127,7 @@ export class PerformanceMonitorService {
 
     // 记录慢查询
     if (duration > this.getSlowThreshold('database')) {
-      this.logger.warn(`慢查询: ${metric.name} - ${duration}ms`, { query, metadata });
+      this.logger.warn(`🐌 慢查询: ${metric.name} - ${duration}ms`, { query, metadata });
     }
 
     return metricId;
@@ -194,7 +194,11 @@ export class PerformanceMonitorService {
 
     // 记录慢API调用
     if (duration > this.getSlowThreshold('external')) {
-      this.logger.warn(`慢API调用: ${metric.name} - ${duration}ms`, { url, statusCode, metadata });
+      this.logger.warn(`🐌 慢API调用: ${metric.name} - ${duration}ms`, {
+        url,
+        statusCode,
+        metadata,
+      });
     }
 
     return metricId;
@@ -330,7 +334,7 @@ export class PerformanceMonitorService {
    */
   async clearData(): Promise<void> {
     this.metrics.clear();
-    this.logger.log('性能监控数据已清除');
+    this.logger.log('🧹 性能监控数据已清除');
   }
 
   /**
@@ -348,7 +352,7 @@ export class PerformanceMonitorService {
     }
 
     if (deletedCount > 0) {
-      this.logger.debug(`清理了 ${deletedCount} 条过期性能记录`);
+      this.logger.debug(`🗑️ 清理了 ${deletedCount} 条过期性能记录`);
     }
   }
 

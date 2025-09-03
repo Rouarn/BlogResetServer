@@ -264,7 +264,7 @@ export class ErrorDiagnosticsService {
    */
   async clearData(): Promise<void> {
     this.errors.clear();
-    this.logger.log('错误诊断数据已清除');
+    this.logger.log('🧹 错误诊断数据已清除');
   }
 
   /**
@@ -282,7 +282,7 @@ export class ErrorDiagnosticsService {
     }
 
     if (deletedCount > 0) {
-      this.logger.debug(`清理了 ${deletedCount} 条过期错误记录`);
+      this.logger.debug(`🗑️ 清理了 ${deletedCount} 条过期错误记录`);
     }
   }
 

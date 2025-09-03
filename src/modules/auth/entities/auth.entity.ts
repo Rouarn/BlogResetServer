@@ -1,11 +1,13 @@
 import * as bcrypt from 'bcryptjs';
 import { Exclude } from 'class-transformer';
 import { BeforeInsert, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Logger } from '@nestjs/common';
 import { Gender, Role, Status } from 'src/common/enums';
 import { BaseEntity } from 'src/database';
 
 @Entity('ra_users')
 export class Auth extends BaseEntity {
+  private readonly logger = new Logger(Auth.name);
   @PrimaryGeneratedColumn('uuid', { comment: '用户id' })
   id: string; // 用户id
 
@@ -62,7 +64,8 @@ export class Auth extends BaseEntity {
       // 同步地使用新生成的盐对密码进行哈希处理
       this.password = bcrypt.hashSync(this.password, salt);
     } catch (err) {
-      console.error('Error during hashing:', err);
+      this.logger.error('🔐 密码加密失败:', err);
+      throw new Error('密码加密过程中发生错误');
     }
   }
 }
