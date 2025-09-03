@@ -150,6 +150,158 @@
         background: #c53030;
       }
 
+      .btn-success {
+        background: #38a169;
+      }
+
+      .btn-success:hover {
+        background: #2f855a;
+      }
+
+      .btn-warning {
+        background: #d69e2e;
+      }
+
+      .btn-warning:hover {
+        background: #b7791f;
+      }
+
+      .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+      }
+
+      .search-container {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .search-input {
+        flex: 1;
+        min-width: 200px;
+        padding: 0.5rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 0.9rem;
+      }
+
+      .filter-select {
+        padding: 0.5rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        background: white;
+      }
+
+      .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+      }
+
+      .pagination button {
+        padding: 0.25rem 0.5rem;
+        border: 1px solid #e2e8f0;
+        background: white;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .pagination button.active {
+        background: #4299e1;
+        color: white;
+        border-color: #4299e1;
+      }
+
+      .pagination button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+
+      .modal-content {
+        background-color: white;
+        margin: 5% auto;
+        padding: 2rem;
+        border-radius: 12px;
+        width: 80%;
+        max-width: 800px;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      .close {
+        color: #aaa;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      .close:hover {
+        color: #000;
+      }
+
+      .error-detail {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 6px;
+        margin: 1rem 0;
+        font-family: monospace;
+        font-size: 0.9rem;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+      }
+
+      /* 性能相关样式 */
+      .slow-request {
+        background-color: #fff5f5;
+      }
+
+      .text-danger {
+        color: #e53e3e;
+        font-weight: bold;
+      }
+
+      .text-warning {
+        color: #d69e2e;
+        font-weight: bold;
+      }
+
+      .text-success {
+        color: #38a169;
+        font-weight: bold;
+      }
+
       .tabs {
         display: flex;
         background: white;
@@ -299,6 +451,34 @@
         </div>
       </div>
 
+      <!-- 操作工具栏 -->
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+          <div class="card-icon" style="background: #f7fafc; color: #4a5568">
+            🛠️
+          </div>
+          <div class="card-title">数据管理</div>
+        </div>
+        <div class="action-buttons">
+          <button class="btn btn-success" onclick="exportData()">📥 导出数据</button>
+          <button class="btn btn-warning" onclick="clearRequestData()">🗑️ 清理请求</button>
+          <button class="btn btn-warning" onclick="clearErrorData()">🗑️ 清理错误</button>
+          <button class="btn btn-danger" onclick="clearAllData()">🗑️ 清空所有</button>
+          <button class="btn" onclick="refreshAllData()">🔄 刷新数据</button>
+        </div>
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+            <span style="font-weight: bold;">🔄 实时监控</span>
+            <button id="realTimeToggle" class="btn btn-sm btn-success" onclick="toggleRealTime()">启用</button>
+            <span id="connectionStatus" style="color: #666; font-size: 0.9rem;">状态: 未连接</span>
+          </div>
+          <div id="realTimeStats" style="font-size: 0.85rem; color: #666; line-height: 1.4;">
+            <div>最后更新: <span id="lastUpdate">--</span></div>
+            <div>请求: <span id="totalRequests">0</span> | 错误: <span id="totalErrors">0</span> | 平均响应: <span id="avgResponseTime">0</span>ms</div>
+          </div>
+        </div>
+      </div>
+
       <!-- 详细数据标签页 -->
       <div class="tabs">
         <button class="tab active" onclick="showTab('requests')">请求追踪</button>
@@ -320,9 +500,30 @@
           <h3>请求追踪记录</h3>
           <button class="btn" onclick="refreshRequests()">刷新数据</button>
         </div>
+        
+        <!-- 搜索和过滤 -->
+        <div class="search-container">
+          <input type="text" class="search-input" id="request-search" placeholder="搜索URL、方法或IP地址..." onkeyup="filterRequests()">
+          <select class="filter-select" id="request-method-filter" onchange="filterRequests()">
+            <option value="">所有方法</option>
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+            <option value="PUT">PUT</option>
+            <option value="DELETE">DELETE</option>
+            <option value="PATCH">PATCH</option>
+          </select>
+          <select class="filter-select" id="request-status-filter" onchange="filterRequests()">
+            <option value="">所有状态</option>
+            <option value="success">成功</option>
+            <option value="error">错误</option>
+          </select>
+          <button class="btn btn-sm" onclick="exportRequests()">📥 导出</button>
+        </div>
+        
         <div id="requests-content">
           <div class="loading">加载中...</div>
         </div>
+        <div id="requests-pagination" class="pagination"></div>
       </div>
 
       <!-- 错误诊断 -->
@@ -336,11 +537,36 @@
           "
         >
           <h3>错误诊断记录</h3>
-          <button class="btn" onclick="refreshErrors()">刷新数据</button>
+          <div>
+            <button class="btn btn-sm" onclick="openAdvancedQuery()">🔍 高级查询</button>
+            <button class="btn" onclick="refreshErrors()">刷新数据</button>
+          </div>
         </div>
+        
+        <!-- 搜索和过滤 -->
+        <div class="search-container">
+          <input type="text" class="search-input" id="error-search" placeholder="搜索错误消息或类型..." onkeyup="filterErrors()">
+          <select class="filter-select" id="error-severity-filter" onchange="filterErrors()">
+            <option value="">所有严重程度</option>
+            <option value="critical">严重</option>
+            <option value="high">高</option>
+            <option value="medium">中等</option>
+            <option value="low">低</option>
+          </select>
+          <select class="filter-select" id="error-type-filter" onchange="filterErrors()">
+            <option value="">所有类型</option>
+            <option value="ValidationError">验证错误</option>
+            <option value="DatabaseError">数据库错误</option>
+            <option value="NetworkError">网络错误</option>
+            <option value="AuthError">认证错误</option>
+          </select>
+          <button class="btn btn-sm" onclick="exportErrors()">📥 导出</button>
+        </div>
+        
         <div id="errors-content">
           <div class="loading">加载中...</div>
         </div>
+        <div id="errors-pagination" class="pagination"></div>
       </div>
 
       <!-- 性能监控 -->
@@ -356,9 +582,31 @@
           <h3>性能监控</h3>
           <button class="btn" onclick="refreshPerformance()">刷新数据</button>
         </div>
+        
+        <!-- 搜索和过滤 -->
+        <div class="search-container">
+          <input type="text" class="search-input" id="performance-search" placeholder="搜索操作名称..." onkeyup="filterPerformance()">
+          <select class="filter-select" id="performance-type-filter" onchange="filterPerformance()">
+            <option value="">所有类型</option>
+            <option value="request">请求</option>
+            <option value="database">数据库</option>
+            <option value="cache">缓存</option>
+            <option value="external">外部调用</option>
+          </select>
+          <select class="filter-select" id="performance-duration-filter" onchange="filterPerformance()">
+            <option value="">所有耗时</option>
+            <option value="fast">< 100ms</option>
+            <option value="medium">100-500ms</option>
+            <option value="slow">500-1000ms</option>
+            <option value="very-slow">> 1000ms</option>
+          </select>
+          <button class="btn btn-sm" onclick="exportPerformance()">📥 导出</button>
+        </div>
+        
         <div id="performance-content">
           <div class="loading">加载中...</div>
         </div>
+        <div id="performance-pagination" class="pagination"></div>
       </div>
 
       <!-- 系统信息 -->
@@ -379,8 +627,94 @@
             </button>
           </div>
         </div>
+        
+        <!-- 操作按钮 -->
+        <div class="search-container">
+          <button class="btn btn-success" onclick="exportSystemInfo()">📥 导出系统信息</button>
+          <button class="btn btn-warning" onclick="generateSystemReport()">📊 生成报告</button>
+          <button class="btn" onclick="checkSystemHealth()">🔍 健康检查</button>
+        </div>
+        
         <div id="system-content">
           <div class="loading">加载中...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 错误详情模态框 -->
+    <div id="errorDetailModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>🚨 错误详情</h3>
+          <span class="close" onclick="closeModal('errorDetailModal')">&times;</span>
+        </div>
+        <div id="errorDetailContent"></div>
+        <div class="action-buttons">
+          <button class="btn btn-success" onclick="markErrorResolved()">✅ 标记已解决</button>
+          <button class="btn btn-warning" onclick="createErrorReport()">📋 创建报告</button>
+          <button class="btn" onclick="copyErrorInfo()">📋 复制信息</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 请求详情模态框 -->
+    <div id="requestDetailModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>📋 请求详情</h3>
+          <span class="close" onclick="closeModal('requestDetailModal')">&times;</span>
+        </div>
+        <div id="requestDetailContent"></div>
+        <div class="action-buttons">
+          <button class="btn" onclick="copyRequestInfo()">📋 复制信息</button>
+          <button class="btn btn-warning" onclick="replayRequest()">🔄 重放请求</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 高级查询模态框 -->
+    <div id="advancedQueryModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>🔍 高级查询</h3>
+          <span class="close" onclick="closeModal('advancedQueryModal')">&times;</span>
+        </div>
+        <div id="advancedQueryContent">
+          <div style="margin-bottom: 1rem;">
+            <label>错误级别:</label>
+            <select id="queryLevel" class="filter-select" style="width: 100%; margin-top: 0.5rem;">
+              <option value="">所有级别</option>
+              <option value="error">错误</option>
+              <option value="warn">警告</option>
+              <option value="critical">严重</option>
+            </select>
+          </div>
+          <div style="margin-bottom: 1rem;">
+            <label>错误消息关键词:</label>
+            <input type="text" id="queryMessage" class="search-input" style="width: 100%; margin-top: 0.5rem;" placeholder="输入关键词...">
+          </div>
+          <div style="margin-bottom: 1rem;">
+            <label>HTTP状态码:</label>
+            <input type="number" id="queryStatusCode" class="search-input" style="width: 100%; margin-top: 0.5rem;" placeholder="如: 500">
+          </div>
+          <div style="margin-bottom: 1rem;">
+            <label>用户ID:</label>
+            <input type="text" id="queryUserId" class="search-input" style="width: 100%; margin-top: 0.5rem;" placeholder="输入用户ID...">
+          </div>
+          <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+            <div style="flex: 1;">
+              <label>开始时间:</label>
+              <input type="datetime-local" id="queryStartTime" class="search-input" style="width: 100%; margin-top: 0.5rem;">
+            </div>
+            <div style="flex: 1;">
+              <label>结束时间:</label>
+              <input type="datetime-local" id="queryEndTime" class="search-input" style="width: 100%; margin-top: 0.5rem;">
+            </div>
+          </div>
+        </div>
+        <div class="action-buttons">
+          <button class="btn" onclick="executeAdvancedQuery()">🔍 执行查询</button>
+          <button class="btn btn-warning" onclick="resetQueryForm()">🔄 重置</button>
         </div>
       </div>
     </div>
@@ -390,12 +724,37 @@
       // 全局变量
       let refreshInterval;
       const API_BASE = '/api/v1/debug';
+      let currentRequestsData = [];
+      let currentErrorsData = [];
+      let currentPerformanceData = [];
+      let currentPage = {
+        requests: 1,
+        errors: 1,
+        performance: 1
+      };
+      const pageSize = 20;
+      let currentErrorDetail = null;
+      let websocket = null;
+      let isRealTimeEnabled = false;
+      let lastUpdateTime = new Date();
+      let connectionStatus = 'disconnected';
+      let realTimeStats = {
+        totalRequests: 0,
+        totalErrors: 0,
+        avgResponseTime: 0,
+        errorRate: 0
+      };
 
       // 初始化
       $(document).ready(function () {
         loadDashboard();
         loadRequests();
         startAutoRefresh();
+        
+        // 绑定搜索和过滤事件
+        $('#request-search, #request-method-filter, #request-status-filter').on('input change', filterRequests);
+        $('#error-search, #error-severity-filter, #error-type-filter').on('input change', filterErrors);
+        $('#performance-search, #performance-type-filter, #performance-duration-filter').on('input change', filterPerformance);
       });
 
       // 标签页切换
@@ -550,46 +909,83 @@
 
       // 显示请求数据
       function displayRequests(requests) {
+        currentRequestsData = requests || [];
+        filterRequests();
+      }
+
+      // 过滤请求数据
+      function filterRequests() {
+        const searchTerm = $('#request-search').val().toLowerCase();
+        const methodFilter = $('#request-method-filter').val();
+        const statusFilter = $('#request-status-filter').val();
+
+        let filteredData = currentRequestsData.filter(req => {
+          const matchesSearch = !searchTerm || 
+            req.url.toLowerCase().includes(searchTerm) ||
+            req.method.toLowerCase().includes(searchTerm) ||
+            (req.ip && req.ip.toLowerCase().includes(searchTerm));
+          
+          const matchesMethod = !methodFilter || req.method === methodFilter;
+          
+          const matchesStatus = !statusFilter || 
+            (statusFilter === 'success' && (req.success || req.statusCode < 400)) ||
+            (statusFilter === 'error' && (!req.success || req.statusCode >= 400));
+
+          return matchesSearch && matchesMethod && matchesStatus;
+        });
+
+        displayRequestsTable(filteredData);
+      }
+
+      // 显示请求表格
+      function displayRequestsTable(requests) {
         if (!requests || requests.length === 0) {
-          $('#requests-content').html('<div class="loading">暂无请求数据</div>');
+          $('#requests-content').html('<div class="loading">暂无匹配的请求数据</div>');
+          $('#requests-pagination').html('');
           return;
         }
 
+        const totalPages = Math.ceil(requests.length / pageSize);
+        const startIndex = (currentPage.requests - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const pageData = requests.slice(startIndex, endIndex);
+
         const table = `
-              <table class="table">
-                  <thead>
-                      <tr>
-                          <th>时间</th>
-                          <th>方法</th>
-                          <th>路径</th>
-                          <th>状态</th>
-                          <th>耗时</th>
-                          <th>IP地址</th>
-                      </tr>
-                  </thead>
-                  <tbody>
-                      ${requests
-                        .map(
-                          (req) => `
-                          <tr>
-                              <td>${new Date(req.timestamp).toLocaleString()}</td>
-                              <td><span style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">${req.method}</span></td>
-                              <td>${req.url}</td>
-                              <td>
-                                  <span class="status-indicator ${req.success ? 'status-success' : 'status-error'}"></span>
-                                  ${req.statusCode || (req.success ? '200' : '500')}
-                              </td>
-                              <td>${req.duration} ms</td>
-                              <td>${req.ip || 'N/A'}</td>
-                          </tr>
-                      `,
-                        )
-                        .join('')}
-                  </tbody>
-              </table>
-          `;
+          <table class="table">
+            <thead>
+              <tr>
+                <th>时间</th>
+                <th>方法</th>
+                <th>路径</th>
+                <th>状态</th>
+                <th>耗时</th>
+                <th>IP地址</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${pageData.map(req => `
+                <tr>
+                  <td>${new Date(req.timestamp).toLocaleString()}</td>
+                  <td><span style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">${req.method}</span></td>
+                  <td title="${req.url}">${req.url.length > 50 ? req.url.substring(0, 50) + '...' : req.url}</td>
+                  <td>
+                    <span class="status-indicator ${(req.success || req.statusCode < 400) ? 'status-success' : 'status-error'}"></span>
+                    ${req.statusCode || (req.success ? '200' : '500')}
+                  </td>
+                  <td>${req.duration} ms</td>
+                  <td>${req.ip || 'N/A'}</td>
+                  <td>
+                    <button class="btn btn-sm" onclick="showRequestDetail('${req.id}')">详情</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
 
         $('#requests-content').html(table);
+        renderPagination('requests', totalPages, requests.length);
       }
 
       // 加载错误数据
@@ -609,50 +1005,79 @@
 
       // 显示错误数据
       function displayErrors(errors) {
+        currentErrorsData = errors || [];
+        filterErrors();
+      }
+
+      // 过滤错误数据
+      function filterErrors() {
+        const searchTerm = $('#error-search').val().toLowerCase();
+        const severityFilter = $('#error-severity-filter').val();
+        const typeFilter = $('#error-type-filter').val();
+
+        let filteredData = currentErrorsData.filter(error => {
+          const matchesSearch = !searchTerm || 
+            error.message.toLowerCase().includes(searchTerm) ||
+            (error.type && error.type.toLowerCase().includes(searchTerm));
+          
+          const matchesSeverity = !severityFilter || error.level === severityFilter;
+          const matchesType = !typeFilter || (error.type && error.type.includes(typeFilter));
+
+          return matchesSearch && matchesSeverity && matchesType;
+        });
+
+        displayErrorsTable(filteredData);
+      }
+
+      // 显示错误表格
+      function displayErrorsTable(errors) {
         if (!errors || errors.length === 0) {
-          $('#errors-content').html('<div class="loading">暂无错误数据</div>');
+          $('#errors-content').html('<div class="loading">暂无匹配的错误数据</div>');
+          $('#errors-pagination').html('');
           return;
         }
 
+        const totalPages = Math.ceil(errors.length / pageSize);
+        const startIndex = (currentPage.errors - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const pageData = errors.slice(startIndex, endIndex);
+
         const table = `
-              <table class="table">
-                  <thead>
-                      <tr>
-                          <th>时间</th>
-                          <th>类型</th>
-                          <th>消息</th>
-                          <th>严重程度</th>
-                          <th>请求路径</th>
-                      </tr>
-                  </thead>
-                  <tbody>
-                      ${errors
-                        .map(
-                          (error) => `
-                          <tr>
-                              <td>${new Date(error.timestamp).toLocaleString()}</td>
-                              <td>${error.type}</td>
-                              <td title="${error.message}">${error.message.substring(0, 50)}${error.message.length > 50 ? '...' : ''}</td>
-                              <td>
-                                  <span class="status-indicator ${
-                                    error.severity === 'critical'
-                                      ? 'status-error'
-                                      : error.severity === 'high'
-                                        ? 'status-warning'
-                                        : 'status-success'
-                                  }"></span>
-                                  ${error.severity}
-                              </td>
-                              <td>${error.context?.url || 'N/A'}</td>
-                          </tr>
-                      `,
-                        )
-                        .join('')}
-                  </tbody>
-              </table>
-          `;
+          <table class="table">
+            <thead>
+              <tr>
+                <th>时间</th>
+                <th>级别</th>
+                <th>消息</th>
+                <th>请求路径</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${pageData.map(error => `
+                <tr>
+                  <td>${new Date(error.timestamp).toLocaleString()}</td>
+                  <td>
+                    <span class="status-indicator ${
+                      error.level === 'critical' ? 'status-error' :
+                      error.level === 'error' ? 'status-error' :
+                      error.level === 'warn' ? 'status-warning' : 'status-success'
+                    }"></span>
+                    ${error.level}
+                  </td>
+                  <td title="${error.message}">${error.message.substring(0, 60)}${error.message.length > 60 ? '...' : ''}</td>
+                  <td>${error.context?.url || 'N/A'}</td>
+                  <td>
+                    <button class="btn btn-sm" onclick="showErrorDetail('${error.id}')">详情</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
 
         $('#errors-content').html(table);
+        renderPagination('errors', totalPages, errors.length);
       }
 
       // 加载性能数据
@@ -675,45 +1100,82 @@
 
       // 显示性能数据
       function displayPerformance(trends, slowest) {
-        let content = '<h4>最慢的操作</h4>';
+        currentPerformanceData = slowest.requests || [];
+        filterPerformance();
+      }
 
-        if (slowest.requests && slowest.requests.length > 0) {
-          content += `
-                  <table class="table">
-                      <thead>
-                          <tr>
-                              <th>类型</th>
-                              <th>操作</th>
-                              <th>耗时</th>
-                              <th>时间</th>
-                              <th>状态</th>
-                          </tr>
-                      </thead>
-                      <tbody>
-                          ${slowest.requests
-                            .map(
-                              (op) => `
-                              <tr>
-                                  <td>${op.type}</td>
-                                  <td>${op.name}</td>
-                                  <td>${op.duration} ms</td>
-                                  <td>${new Date(op.timestamp).toLocaleString()}</td>
-                                  <td>
-                                      <span class="status-indicator ${op.success ? 'status-success' : 'status-error'}"></span>
-                                      ${op.success ? '成功' : '失败'}
-                                  </td>
-                              </tr>
-                          `,
-                            )
-                            .join('')}
-                      </tbody>
-                  </table>
-              `;
-        } else {
-          content += '<div class="loading">暂无性能数据</div>';
+      // 过滤性能数据
+      function filterPerformance() {
+        const searchTerm = $('#performance-search').val().toLowerCase();
+        const typeFilter = $('#performance-type-filter').val();
+        const durationFilter = $('#performance-duration-filter').val();
+
+        let filteredData = currentPerformanceData.filter(perf => {
+          const matchesSearch = !searchTerm || 
+            (perf.name && perf.name.toLowerCase().includes(searchTerm)) ||
+            (perf.type && perf.type.toLowerCase().includes(searchTerm));
+          
+          const matchesType = !typeFilter || perf.type === typeFilter;
+          
+          const matchesDuration = !durationFilter || 
+            (durationFilter === 'fast' && perf.duration < 100) ||
+            (durationFilter === 'medium' && perf.duration >= 100 && perf.duration < 500) ||
+            (durationFilter === 'slow' && perf.duration >= 500 && perf.duration < 1000) ||
+            (durationFilter === 'very-slow' && perf.duration >= 1000);
+
+          return matchesSearch && matchesType && matchesDuration;
+        });
+
+        displayPerformanceTable(filteredData);
+      }
+
+      // 显示性能表格
+      function displayPerformanceTable(performance) {
+        if (!performance || performance.length === 0) {
+          $('#performance-content').html('<div class="loading">暂无匹配的性能数据</div>');
+          $('#performance-pagination').html('');
+          return;
         }
 
-        $('#performance-content').html(content);
+        const totalPages = Math.ceil(performance.length / pageSize);
+        const startIndex = (currentPage.performance - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const pageData = performance.slice(startIndex, endIndex);
+
+        const table = `
+          <table class="table">
+            <thead>
+              <tr>
+                <th>类型</th>
+                <th>操作</th>
+                <th>耗时</th>
+                <th>时间</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${pageData.map(op => `
+                <tr class="${op.duration > 1000 ? 'slow-request' : ''}">
+                  <td><span style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">${op.type}</span></td>
+                  <td>${op.name}</td>
+                  <td>
+                    <span style="color: ${op.duration > 1000 ? '#e53e3e' : op.duration > 500 ? '#d69e2e' : '#38a169'}">
+                      ${op.duration} ms
+                    </span>
+                  </td>
+                  <td>${new Date(op.timestamp).toLocaleString()}</td>
+                  <td>
+                    <span class="status-indicator ${op.success ? 'status-success' : 'status-error'}"></span>
+                    ${op.success ? '成功' : '失败'}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+
+        $('#performance-content').html(table);
+        renderPagination('performance', totalPages, performance.length);
       }
 
       // 加载系统信息
@@ -763,6 +1225,49 @@
                   </div>
               </div>
           `);
+      }
+
+      // 分页渲染函数
+      function renderPagination(type, totalPages, totalItems) {
+        if (totalPages <= 1) {
+          $(`#${type}-pagination`).html('');
+          return;
+        }
+
+        const currentPageNum = currentPage[type];
+        let pagination = `
+          <span>共 ${totalItems} 条记录，第 ${currentPageNum} / ${totalPages} 页</span>
+          <button ${currentPageNum === 1 ? 'disabled' : ''} onclick="changePage('${type}', ${currentPageNum - 1})">上一页</button>
+        `;
+
+        // 显示页码
+        const startPage = Math.max(1, currentPageNum - 2);
+        const endPage = Math.min(totalPages, currentPageNum + 2);
+        
+        for (let i = startPage; i <= endPage; i++) {
+          pagination += `<button class="${i === currentPageNum ? 'active' : ''}" onclick="changePage('${type}', ${i})">${i}</button>`;
+        }
+
+        pagination += `<button ${currentPageNum === totalPages ? 'disabled' : ''} onclick="changePage('${type}', ${currentPageNum + 1})">下一页</button>`;
+        
+        $(`#${type}-pagination`).html(pagination);
+      }
+
+      // 切换页面
+      function changePage(type, page) {
+        currentPage[type] = page;
+        
+        switch(type) {
+          case 'requests':
+            filterRequests();
+            break;
+          case 'errors':
+            filterErrors();
+            break;
+          case 'performance':
+            filterPerformance();
+            break;
+        }
       }
 
       // 刷新函数
@@ -817,6 +1322,342 @@
           clearInterval(refreshInterval);
         }
       });
+
+      // 模态框相关功能
+      function showRequestDetail(requestId) {
+        const request = currentRequestsData.find(r => r.id === requestId);
+        if (!request) return;
+        
+        $('#requestDetailContent').html(`
+          <div class="error-detail">
+            <strong>请求ID:</strong> ${request.id}<br>
+            <strong>方法:</strong> ${request.method}<br>
+            <strong>URL:</strong> ${request.url}<br>
+            <strong>状态码:</strong> ${request.statusCode}<br>
+            <strong>耗时:</strong> ${request.duration} ms<br>
+            <strong>IP地址:</strong> ${request.ip || 'N/A'}<br>
+            <strong>时间:</strong> ${new Date(request.timestamp).toLocaleString()}<br>
+            <strong>请求头:</strong><br>
+            <pre>${JSON.stringify(request.headers || {}, null, 2)}</pre>
+            <strong>请求体:</strong><br>
+            <pre>${JSON.stringify(request.body || {}, null, 2)}</pre>
+            <strong>响应:</strong><br>
+            <pre>${JSON.stringify(request.response || {}, null, 2)}</pre>
+          </div>
+        `);
+        $('#requestDetailModal').show();
+      }
+
+      function showErrorDetail(errorId) {
+        const error = currentErrorsData.find(e => e.id === errorId);
+        if (!error) return;
+        
+        currentErrorDetail = error;
+        $('#errorDetailContent').html(`
+          <div class="error-detail">
+            <strong>错误ID:</strong> ${error.id}<br>
+            <strong>级别:</strong> ${error.level}<br>
+            <strong>消息:</strong> ${error.message}<br>
+            <strong>类型:</strong> ${error.type || 'N/A'}<br>
+            <strong>时间:</strong> ${new Date(error.timestamp).toLocaleString()}<br>
+            <strong>请求路径:</strong> ${error.context?.url || 'N/A'}<br>
+            <strong>用户ID:</strong> ${error.context?.userId || 'N/A'}<br>
+            <strong>堆栈信息:</strong><br>
+            <pre>${error.stack || 'N/A'}</pre>
+            <strong>上下文:</strong><br>
+            <pre>${JSON.stringify(error.context || {}, null, 2)}</pre>
+          </div>
+        `);
+        $('#errorDetailModal').show();
+      }
+
+      function closeModal(modalId) {
+        $('#' + modalId).hide();
+      }
+
+      function openAdvancedQuery() {
+        $('#advancedQueryModal').show();
+      }
+
+      function executeAdvancedQuery() {
+        const level = $('#queryLevel').val();
+        const message = $('#queryMessage').val();
+        const statusCode = $('#queryStatusCode').val();
+        const userId = $('#queryUserId').val();
+        const startTime = $('#queryStartTime').val();
+        const endTime = $('#queryEndTime').val();
+
+        let filteredData = currentErrorsData.filter(error => {
+          if (level && error.level !== level) return false;
+          if (message && !error.message.toLowerCase().includes(message.toLowerCase())) return false;
+          if (statusCode && error.context?.statusCode != statusCode) return false;
+          if (userId && error.context?.userId !== userId) return false;
+          if (startTime && new Date(error.timestamp) < new Date(startTime)) return false;
+          if (endTime && new Date(error.timestamp) > new Date(endTime)) return false;
+          return true;
+        });
+
+        displayErrorsTable(filteredData);
+        closeModal('advancedQueryModal');
+      }
+
+      function resetQueryForm() {
+        $('#queryLevel, #queryMessage, #queryStatusCode, #queryUserId, #queryStartTime, #queryEndTime').val('');
+      }
+
+      function markErrorResolved() {
+        if (currentErrorDetail) {
+          alert('错误已标记为已解决');
+          closeModal('errorDetailModal');
+        }
+      }
+
+      function createErrorReport() {
+        if (currentErrorDetail) {
+          const report = `错误报告\n错误ID: ${currentErrorDetail.id}\n级别: ${currentErrorDetail.level}\n消息: ${currentErrorDetail.message}\n时间: ${new Date(currentErrorDetail.timestamp).toLocaleString()}`;
+          navigator.clipboard.writeText(report);
+          alert('错误报告已复制到剪贴板');
+        }
+      }
+
+      function copyErrorInfo() {
+        if (currentErrorDetail) {
+          navigator.clipboard.writeText(JSON.stringify(currentErrorDetail, null, 2));
+          alert('错误信息已复制到剪贴板');
+        }
+      }
+
+      function copyRequestInfo() {
+        const content = $('#requestDetailContent').text();
+        navigator.clipboard.writeText(content);
+        alert('请求信息已复制到剪贴板');
+      }
+
+      function replayRequest() {
+        alert('请求重放功能开发中...');
+      }
+
+      // 数据管理功能
+      function exportData() {
+        const data = {
+          requests: currentRequestsData,
+          errors: currentErrorsData,
+          performance: currentPerformanceData,
+          exportTime: new Date().toISOString()
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `debug-data-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function exportRequests() {
+        const blob = new Blob([JSON.stringify(currentRequestsData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `requests-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function exportErrors() {
+        const blob = new Blob([JSON.stringify(currentErrorsData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `errors-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function exportPerformance() {
+        const blob = new Blob([JSON.stringify(currentPerformanceData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `performance-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function exportSystemInfo() {
+        alert('系统信息导出功能开发中...');
+      }
+
+      function generateSystemReport() {
+        alert('系统报告生成功能开发中...');
+      }
+
+      function checkSystemHealth() {
+        alert('系统健康检查功能开发中...');
+      }
+
+      async function clearRequestData() {
+        if (!confirm('确定要清除所有请求数据吗？')) return;
+        try {
+          await $.ajax({ url: `${API_BASE}/requests`, method: 'DELETE' });
+          alert('请求数据已清除');
+          loadRequests();
+        } catch (error) {
+          alert('清除失败: ' + error.message);
+        }
+      }
+
+      async function clearErrorData() {
+        if (!confirm('确定要清除所有错误数据吗？')) return;
+        try {
+          await $.ajax({ url: `${API_BASE}/errors`, method: 'DELETE' });
+          alert('错误数据已清除');
+          loadErrors();
+        } catch (error) {
+          alert('清除失败: ' + error.message);
+        }
+      }
+
+      function refreshAllData() {
+        loadDashboard();
+        const activeTab = $('.tab.active').text();
+        if (activeTab.includes('请求')) loadRequests();
+        else if (activeTab.includes('错误')) loadErrors();
+        else if (activeTab.includes('性能')) loadPerformance();
+        else if (activeTab.includes('系统')) loadSystem();
+      }
+
+      // 实时监控功能
+       function toggleRealTime() {
+         if (isRealTimeEnabled) {
+           disableRealTime();
+         } else {
+           enableRealTime();
+         }
+       }
+
+       function enableRealTime() {
+         isRealTimeEnabled = true;
+         $('#realTimeToggle').text('禁用').removeClass('btn-success').addClass('btn-danger');
+         $('#connectionStatus').text('状态: 连接中...');
+         
+         // 启动实时数据轮询
+         startRealTimePolling();
+         updateConnectionStatus('connected');
+       }
+
+       function disableRealTime() {
+         isRealTimeEnabled = false;
+         $('#realTimeToggle').text('启用').removeClass('btn-danger').addClass('btn-success');
+         $('#connectionStatus').text('状态: 未连接');
+         
+         if (refreshInterval) {
+           clearInterval(refreshInterval);
+         }
+         updateConnectionStatus('disconnected');
+       }
+
+       function startRealTimePolling() {
+         // 立即更新一次
+         updateRealTimeStats();
+         
+         // 每5秒更新一次实时数据
+         refreshInterval = setInterval(() => {
+           if (isRealTimeEnabled) {
+             updateRealTimeStats();
+             
+             // 如果当前标签页是活跃的，也更新对应数据
+             const activeTab = $('.tab.active').text();
+             if (activeTab.includes('请求')) {
+               loadRequests();
+             } else if (activeTab.includes('错误')) {
+               loadErrors();
+             } else if (activeTab.includes('性能')) {
+               loadPerformance();
+             }
+           }
+         }, 5000);
+       }
+
+       async function updateRealTimeStats() {
+         try {
+           const [overview, requests, errors] = await Promise.all([
+             $.get(`${API_BASE}/overview`),
+             $.get(`${API_BASE}/requests?limit=100`),
+             $.get(`${API_BASE}/errors?limit=100`)
+           ]);
+
+           // 计算统计数据
+           const totalRequests = requests.length;
+           const totalErrors = errors.length;
+           const avgResponseTime = requests.length > 0 
+             ? Math.round(requests.reduce((sum, req) => sum + (req.duration || 0), 0) / requests.length)
+             : 0;
+           
+           // 更新实时统计
+           realTimeStats = {
+             totalRequests,
+             totalErrors,
+             avgResponseTime,
+             errorRate: totalRequests > 0 ? ((totalErrors / totalRequests) * 100).toFixed(1) : 0
+           };
+
+           // 更新UI
+           $('#totalRequests').text(totalRequests);
+           $('#totalErrors').text(totalErrors);
+           $('#avgResponseTime').text(avgResponseTime);
+           $('#lastUpdate').text(new Date().toLocaleTimeString());
+           
+           lastUpdateTime = new Date();
+           updateConnectionStatus('connected');
+           
+         } catch (error) {
+           console.error('实时数据更新失败:', error);
+           updateConnectionStatus('error');
+         }
+       }
+
+       function updateConnectionStatus(status) {
+         connectionStatus = status;
+         const statusElement = $('#connectionStatus');
+         
+         switch(status) {
+           case 'connected':
+             statusElement.text('状态: 已连接').css('color', '#38a169');
+             break;
+           case 'disconnected':
+             statusElement.text('状态: 未连接').css('color', '#666');
+             break;
+           case 'error':
+             statusElement.text('状态: 连接错误').css('color', '#e53e3e');
+             break;
+           case 'connecting':
+             statusElement.text('状态: 连接中...').css('color', '#d69e2e');
+             break;
+         }
+       }
+
+       // 页面可见性变化时的处理
+       document.addEventListener('visibilitychange', function() {
+         if (document.hidden) {
+           // 页面隐藏时暂停实时更新
+           if (isRealTimeEnabled && refreshInterval) {
+             clearInterval(refreshInterval);
+           }
+         } else {
+           // 页面显示时恢复实时更新
+           if (isRealTimeEnabled) {
+             startRealTimePolling();
+           }
+         }
+       });
+
+       // 点击模态框外部关闭
+       $(window).click(function(event) {
+         if ($(event.target).hasClass('modal')) {
+           $(event.target).hide();
+         }
+       });
     </script>
   </body>
 </html>

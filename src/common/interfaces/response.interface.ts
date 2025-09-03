@@ -1,10 +1,12 @@
+import type { HttpStatus } from '@nestjs/common';
+
 /**
  * 通用响应接口
  */
 export interface IResponse<T = unknown> {
   data: T;
   message: string | string[];
-  code: number;
+  code: HttpStatus;
   timestamp: string;
 }
 

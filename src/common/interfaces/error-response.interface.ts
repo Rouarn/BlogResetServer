@@ -1,3 +1,5 @@
+import type { HttpStatus } from '@nestjs/common';
+
 /**
  * 错误响应接口（ErrorResponse）
  *
@@ -35,7 +37,7 @@ export interface ErrorResponse {
   /** 请求是否成功，错误响应中固定为 false */
   success: boolean;
   /** HTTP 状态码 */
-  code: number;
+  code: HttpStatus;
   /** 错误信息，单个错误时为字符串，多个错误时为字符串数组 */
   message: string | string[];
   /** 错误发生时间戳 */
