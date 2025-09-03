@@ -508,6 +508,40 @@ export class DebugController {
   /**
    * 获取错误趋势数据
    */
+  @ApiOperation({
+    summary: '📈 获取错误趋势分析',
+    description: '获取指定时间范围内的错误趋势数据，包括错误数量的时间分布',
+  })
+  @ApiQuery({
+    name: 'hours',
+    required: false,
+    type: 'number',
+    description: '分析时间范围(小时)',
+    example: 24,
+  })
+  @ApiResponse({
+    status: 200,
+    description: '成功获取错误趋势数据',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          timestamp: {
+            type: 'string',
+            format: 'date-time',
+            description: '时间戳',
+            example: '2023-12-01T10:00:00.000Z',
+          },
+          count: {
+            type: 'number',
+            description: '该时间段的错误数量',
+            example: 5,
+          },
+        },
+      },
+    },
+  })
   @Get('errors/trends')
   async getErrorTrends(
     @Query('hours') hours?: string,
@@ -519,6 +553,27 @@ export class DebugController {
   /**
    * 获取错误详情
    */
+  @ApiOperation({
+    summary: '🔍 获取错误详细信息',
+    description: '根据错误ID获取详细的错误诊断记录信息',
+  })
+  @ApiParam({
+    name: 'id',
+    description: '错误记录ID',
+    type: 'string',
+    example: 'error-123456',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '成功获取错误详情',
+    schema: {
+      $ref: '#/components/schemas/ErrorDiagnosticRecord',
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: '错误记录不存在',
+  })
   @Get('errors/:id')
   async getErrorDetail(@Param('id') id: string): Promise<ErrorDiagnosticRecord | null> {
     const error = this.errorDiagnosticsService.getErrorDetail(id);
