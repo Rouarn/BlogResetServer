@@ -28,6 +28,12 @@ export const CACHE_PREFIXES = {
   USER_INFO: 'auth:userinfo',
   /** 验证码缓存前缀 */
   CAPTCHA: 'auth:captcha',
+  /** 刷新令牌缓存前缀 */
+  REFRESH_TOKEN: 'auth:refresh_token',
+  /** 重置令牌缓存前缀 */
+  RESET_TOKEN: 'auth:reset_token',
+  /** 黑名单令牌缓存前缀 */
+  BLACKLIST_TOKEN: 'auth:blacklist_token',
 } as const;
 
 /**
@@ -40,4 +46,8 @@ export const CACHE_TTL = {
   USER_LIST: 1800,
   /** 验证码缓存时间：5分钟 */
   CAPTCHA: 300,
+  /** 刷新令牌缓存时间：7天 */
+  REFRESH_TOKEN: 604800,
+  /** 重置令牌缓存时间：30分钟 */
+  RESET_TOKEN: 1800,
 } as const;

@@ -2,15 +2,10 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
-  Delete,
   Get,
   Headers,
   Ip,
-  Param,
-  Patch,
   Post,
-  Put,
-  Query,
   Req,
   UseInterceptors,
 } from '@nestjs/common';
@@ -18,13 +13,11 @@ import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nes
 import type { Request } from 'express';
 import { GetCurrentUser, Public } from 'src/common/decorators';
 import { formatISOString } from 'src/utils';
-
 import { AuthService } from './auth.service';
 import { CaptchaVerifyDto } from './dto/captcha-verify.dto';
 import { CreateAuthDto } from './dto/create-auth.dto';
-import { CreateUserDto } from './dto/create-user.dto';
-import { LoginDto } from './dto/login.dto';
-import { BatchDeleteUserDto, ToggleUserStatusDto, UpdateUserDto } from './dto/update-user.dto';
+import { LoginDto, LoginResponseDto } from './dto/login.dto';
+import { RegisterDto, RegisterResponseDto } from './dto/register.dto';
 import { Auth } from './entities/auth.entity';
 
 @ApiTags('认证管理')
@@ -32,33 +25,6 @@ import { Auth } from './entities/auth.entity';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-
-  /**
-   * 获取全部用户列表
-   *
-   * 支持分页查询，可通过 current 和 size 参数控制分页
-   * 需要 JWT 认证，确保只有授权用户可以访问
-   *
-   * @param current 当前页码，从1开始，默认为1
-   * @param size 每页数量，默认为10
-   * @returns 用户列表数组
-   */
-  @ApiOperation({
-    summary: '获取全部用户',
-    description: '获取全部用户列表，支持分页查询',
-  })
-  @ApiResponse({
-    status: 200,
-    description: '获取全部用户列表成功',
-    type: Auth,
-  })
-  @Get()
-  async getAllUsers(
-    @Query('current') current?: number,
-    @Query('size') size?: number,
-  ): Promise<{ data: Auth[]; total: number }> {
-    return this.authService.getAllUsers(current, size);
-  }
 
   /**
    * 获取验证码
@@ -113,10 +79,10 @@ export class AuthController {
     const result = await this.authService.generateCaptcha(clientInfo);
 
     return {
-      image: result.captchaImage,
-      token: result.captchaToken,
+      image: result.image,
+      token: result.token,
       expiresIn: result.expiresIn,
-      nonce: result.nonce,
+      nonce: Math.random().toString(36).substring(2, 15),
     };
   }
 
@@ -161,8 +127,8 @@ export class AuthController {
   @Post('captcha/verify')
   async verifyCaptcha(
     @Body() body: { token: string; code: string },
-    @Ip() clientIp: string,
-    @Headers('user-agent') userAgent: string,
+    @Ip() _clientIp: string,
+    @Headers('user-agent') _userAgent: string,
   ): Promise<{ success: boolean; message: string; timestamp?: string }> {
     const { token, code } = body;
 
@@ -174,14 +140,14 @@ export class AuthController {
       };
     }
 
-    const clientInfo = { ip: clientIp, userAgent };
-    const result = await this.authService.verifyCaptcha(token, code, clientInfo);
+    const result = await this.authService.verifyCaptcha({
+      token,
+      code,
+    });
 
     return {
-      success: result.valid ?? false,
-      message: result.valid
-        ? '验证码验证成功'
-        : `验证码验证失败: ${result.reason ?? result.message}`,
+      success: result.success ?? false,
+      message: result.success ? '验证码验证成功' : `验证码验证失败: ${result.message}`,
       timestamp: formatISOString(),
     };
   }
@@ -224,12 +190,12 @@ export class AuthController {
   @ApiBearerAuth()
   @Get('getUserInfo')
   getUserInfo(@GetCurrentUser() user: Auth): {
-    buttons: string[];
+    authId: string;
+    username: string;
     roles: string[];
-    userId: string;
-    userName: string;
+    lastLoginAt: Date;
   } {
-    return this.authService.getUserInfo(user);
+    return this.authService.getAuthInfo(user);
   }
 
   @ApiOperation({
@@ -270,7 +236,7 @@ export class AuthController {
   })
   @Public()
   @Post('login')
-  login(@Body() body: LoginDto): Promise<{ accessToken: string; refreshToken: string }> {
+  login(@Body() body: LoginDto): Promise<LoginResponseDto> {
     return this.authService.login(body);
   }
 
@@ -293,7 +259,7 @@ export class AuthController {
   })
   @Public()
   @Post('register')
-  register(@Body() body: CreateAuthDto): Promise<{ message: string; data: Partial<Auth> }> {
+  register(@Body() body: CreateAuthDto): Promise<RegisterResponseDto> {
     return this.authService.register(body);
   }
 
@@ -307,7 +273,7 @@ export class AuthController {
   })
   @ApiBody({
     description: '创建用户请求',
-    type: CreateUserDto,
+    type: RegisterDto,
   })
   @ApiResponse({
     status: 200,
@@ -341,12 +307,12 @@ export class AuthController {
   @Public()
   @Post('create')
   async createUser(
-    @Body() body: CreateUserDto,
-    @Req() req: Request,
+    @Body() body: RegisterDto,
+    @Req() _req: Request,
   ): Promise<{
     success: boolean;
     message: string;
-    record?: Partial<CreateAuthDto>;
+    record?: Partial<Auth>;
   }> {
     const { captchaToken, captchaCode, ...userData } = body;
 
@@ -358,18 +324,16 @@ export class AuthController {
       };
     }
 
-    // 获取客户端信息进行安全验证
-    const clientInfo = { ip: req.ip, userAgent: req.headers['user-agent'] };
-    const captchaResult = await this.authService.verifyCaptcha(
-      captchaToken,
-      captchaCode,
-      clientInfo,
-    );
+    // 验证验证码
+    const captchaResult = await this.authService.verifyCaptcha({
+      token: captchaToken,
+      code: captchaCode,
+    });
 
-    if (!captchaResult.valid) {
+    if (!captchaResult.success) {
       return {
         success: false,
-        message: `验证码验证失败: ${captchaResult.reason ?? captchaResult.message}`,
+        message: `验证码验证失败: ${captchaResult.message}`,
       };
     }
 
@@ -377,17 +341,18 @@ export class AuthController {
     try {
       // 这里可以调用实际的用户创建服务
       const result = await this.authService.register({
-        avatar: '',
-        gender: 2,
-        phone: '',
-        nickname: '',
         ...userData,
+        captchaToken,
+        captchaCode,
       });
 
       return {
         success: true,
         message: '用户创建成功',
-        record: result.data,
+        record: {
+          id: result.userId,
+          userName: result.username,
+        },
       };
     } catch (error) {
       return {
@@ -395,148 +360,5 @@ export class AuthController {
         message: '用户创建失败',
       };
     }
-  }
-
-  /**
-   * 获取单个用户详情
-   */
-  @ApiOperation({
-    summary: '获取用户详情',
-    description: '根据用户ID获取用户详细信息',
-  })
-  @ApiResponse({
-    status: 200,
-    description: '获取用户详情成功',
-    type: Auth,
-  })
-  @ApiResponse({
-    status: 404,
-    description: '用户不存在',
-  })
-  @ApiBearerAuth()
-  @Get(':id')
-  async getUserById(@Param('id') id: string): Promise<Auth> {
-    return this.authService.getUserById(id);
-  }
-
-  /**
-   * 更新用户信息
-   */
-  @ApiOperation({
-    summary: '更新用户信息',
-    description: '根据用户ID更新用户信息',
-  })
-  @ApiBody({
-    description: '更新用户信息请求',
-    type: UpdateUserDto,
-  })
-  @ApiResponse({
-    status: 200,
-    description: '更新用户信息成功',
-    type: Auth,
-  })
-  @ApiResponse({
-    status: 404,
-    description: '用户不存在',
-  })
-  @ApiBearerAuth()
-  @Put(':id')
-  async updateUser(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<Auth> {
-    return this.authService.updateUser(id, updateUserDto);
-  }
-
-  /**
-   * 删除用户
-   */
-  @ApiOperation({
-    summary: '删除用户',
-    description: '根据用户ID删除用户',
-  })
-  @ApiResponse({
-    status: 200,
-    description: '删除用户成功',
-    schema: {
-      type: 'object',
-      properties: {
-        message: {
-          type: 'string',
-          example: '用户删除成功',
-        },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 404,
-    description: '用户不存在',
-  })
-  @ApiBearerAuth()
-  @Delete(':id')
-  async deleteUser(@Param('id') id: string): Promise<{ message: string }> {
-    return this.authService.deleteUser(id);
-  }
-
-  /**
-   * 批量删除用户
-   */
-  @ApiOperation({
-    summary: '批量删除用户',
-    description: '根据用户ID数组批量删除用户',
-  })
-  @ApiBody({
-    description: '批量删除用户请求',
-    type: BatchDeleteUserDto,
-  })
-  @ApiResponse({
-    status: 200,
-    description: '批量删除用户成功',
-    schema: {
-      type: 'object',
-      properties: {
-        message: {
-          type: 'string',
-          example: '成功删除 3 个用户',
-        },
-        deletedCount: {
-          type: 'number',
-          example: 3,
-        },
-      },
-    },
-  })
-  @ApiBearerAuth()
-  @Delete('batch')
-  async batchDeleteUsers(
-    @Body() batchDeleteDto: BatchDeleteUserDto,
-  ): Promise<{ message: string; deletedCount: number }> {
-    return this.authService.batchDeleteUsers(batchDeleteDto);
-  }
-
-  /**
-   * 切换用户状态
-   */
-  @ApiOperation({
-    summary: '切换用户状态',
-    description: '启用或禁用用户账号',
-  })
-  @ApiBody({
-    description: '用户状态切换请求',
-    type: ToggleUserStatusDto,
-  })
-  @ApiResponse({
-    status: 200,
-    description: '切换用户状态成功',
-    type: Auth,
-  })
-  @ApiResponse({
-    status: 404,
-    description: '用户不存在',
-  })
-  @ApiBearerAuth()
-  @Patch(':id/status')
-  async toggleUserStatus(
-    @Param('id') id: string,
-    @Body() toggleStatusDto: ToggleUserStatusDto,
-  ): Promise<Auth> {
-    return this.authService.toggleUserStatus(id, toggleStatusDto.status);
   }
 }

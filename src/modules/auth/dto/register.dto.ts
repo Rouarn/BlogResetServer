@@ -1,0 +1,294 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Length,
+  Matches,
+} from 'class-validator';
+import { Gender } from 'src/common/enums';
+
+/**
+ * 注册DTO
+ *
+ * 用于用户注册的数据传输对象。
+ * 包含认证信息和基本用户资料信息。
+ *
+ * 字段说明：
+ * - username: 用户名（必填）
+ * - password: 密码（必填）
+ * - captchaToken: 验证码令牌（必填）
+ * - captchaCode: 验证码（必填）
+ * - nickname: 昵称（可选）
+ * - avatar: 头像（可选）
+ * - gender: 性别（可选）
+ * - mobile: 手机号（可选）
+ * - email: 邮箱（可选）
+ *
+ * 验证规则：
+ * - username: 3-20个字符，只能包含字母、数字和下划线
+ * - password: 6-50个字符
+ * - captchaCode: 4-6个字符
+ * - nickname: 2-20个字符
+ * - mobile: 11位数字手机号格式
+ * - email: 标准邮箱格式
+ *
+ * 安全特性：
+ * - 必须验证码验证
+ * - 密码强度验证
+ * - 用户名唯一性检查
+ */
+export class RegisterDto {
+  @ApiProperty({
+    description: '用户名',
+    example: 'newuser',
+    minLength: 3,
+    maxLength: 20,
+    pattern: '^[a-zA-Z0-9_]+$',
+  })
+  @IsString({ message: '用户名必须是字符串' })
+  @IsNotEmpty({ message: '用户名不能为空' })
+  @Length(3, 20, { message: '用户名长度必须在3-20个字符之间' })
+  @Matches(/^[a-zA-Z0-9_]+$/, { message: '用户名只能包含字母、数字和下划线' })
+  username: string;
+
+  @ApiProperty({
+    description: '密码',
+    example: 'password123',
+    minLength: 6,
+    maxLength: 50,
+  })
+  @IsString({ message: '密码必须是字符串' })
+  @IsNotEmpty({ message: '密码不能为空' })
+  @Length(6, 50, { message: '密码长度必须在6-50个字符之间' })
+  password: string;
+
+  @ApiProperty({
+    description: '验证码令牌',
+    example: 'captcha-token-456',
+  })
+  @IsString({ message: '验证码令牌必须是字符串' })
+  @IsNotEmpty({ message: '验证码令牌不能为空' })
+  captchaToken: string;
+
+  @ApiProperty({
+    description: '验证码',
+    example: 'EFGH',
+    minLength: 4,
+    maxLength: 6,
+  })
+  @IsString({ message: '验证码必须是字符串' })
+  @IsNotEmpty({ message: '验证码不能为空' })
+  @Length(4, 6, { message: '验证码长度必须在4-6个字符之间' })
+  captchaCode: string;
+
+  @ApiPropertyOptional({
+    description: '用户昵称',
+    example: '新用户',
+    minLength: 2,
+    maxLength: 20,
+  })
+  @IsOptional()
+  @IsString({ message: '昵称必须是字符串' })
+  @Length(2, 20, { message: '昵称长度必须在2-20个字符之间' })
+  nickname?: string;
+
+  @ApiPropertyOptional({
+    description: '用户头像URL',
+    example: 'https://example.com/avatar.jpg',
+  })
+  @IsOptional()
+  @IsString({ message: '头像必须是字符串' })
+  avatar?: string;
+
+  @ApiPropertyOptional({
+    description: '用户性别',
+    enum: Gender,
+    default: Gender.UNKNOWN,
+    example: Gender.UNKNOWN,
+  })
+  @IsOptional()
+  @IsEnum(Gender, { message: '性别值无效' })
+  gender?: Gender;
+
+  @ApiPropertyOptional({
+    description: '手机号码',
+    example: '13800138000',
+    pattern: '^1[3-9]\\d{9}$',
+  })
+  @IsOptional()
+  @IsString({ message: '手机号必须是字符串' })
+  @Matches(/^1[3-9]\d{9}$/, { message: '手机号格式不正确' })
+  mobile?: string;
+
+  @ApiPropertyOptional({
+    description: '邮箱地址',
+    example: 'newuser@example.com',
+    format: 'email',
+  })
+  @IsOptional()
+  @IsEmail({}, { message: '邮箱格式不正确' })
+  email?: string;
+}
+
+/**
+ * 注册响应DTO
+ *
+ * 注册成功后返回的数据结构。
+ *
+ * 字段说明：
+ * - message: 成功消息
+ * - userId: 新创建的用户ID
+ * - username: 用户名
+ * - needLogin: 是否需要重新登录
+ */
+export class RegisterResponseDto {
+  @ApiProperty({
+    description: '注册成功消息',
+    example: '注册成功',
+  })
+  message: string;
+
+  @ApiProperty({
+    description: '新创建的用户ID',
+    example: 'user-uuid-123',
+  })
+  userId: string;
+
+  @ApiProperty({
+    description: '用户名',
+    example: 'newuser',
+  })
+  username: string;
+
+  @ApiProperty({
+    description: '是否需要重新登录',
+    example: true,
+    default: true,
+  })
+  needLogin: boolean = true;
+}
+
+/**
+ * 修改密码DTO
+ *
+ * 用于用户修改密码的数据传输对象。
+ *
+ * 字段说明：
+ * - oldPassword: 旧密码（必填）
+ * - newPassword: 新密码（必填）
+ * - confirmPassword: 确认新密码（必填）
+ *
+ * 验证规则：
+ * - 所有密码字段都必须是6-50个字符
+ * - 新密码不能与旧密码相同
+ * - 新密码与确认密码必须一致
+ */
+export class ChangePasswordDto {
+  @ApiProperty({
+    description: '旧密码',
+    example: 'oldpassword123',
+    minLength: 6,
+    maxLength: 50,
+  })
+  @IsString({ message: '旧密码必须是字符串' })
+  @IsNotEmpty({ message: '旧密码不能为空' })
+  @Length(6, 50, { message: '旧密码长度必须在6-50个字符之间' })
+  oldPassword: string;
+
+  @ApiProperty({
+    description: '新密码',
+    example: 'newpassword123',
+    minLength: 6,
+    maxLength: 50,
+  })
+  @IsString({ message: '新密码必须是字符串' })
+  @IsNotEmpty({ message: '新密码不能为空' })
+  @Length(6, 50, { message: '新密码长度必须在6-50个字符之间' })
+  newPassword: string;
+
+  @ApiProperty({
+    description: '确认新密码',
+    example: 'newpassword123',
+    minLength: 6,
+    maxLength: 50,
+  })
+  @IsString({ message: '确认密码必须是字符串' })
+  @IsNotEmpty({ message: '确认密码不能为空' })
+  @Length(6, 50, { message: '确认密码长度必须在6-50个字符之间' })
+  confirmPassword: string;
+}
+
+/**
+ * 重置密码DTO
+ *
+ * 用于忘记密码时重置密码的数据传输对象。
+ *
+ * 字段说明：
+ * - username: 用户名（必填）
+ * - newPassword: 新密码（必填）
+ * - confirmPassword: 确认新密码（必填）
+ * - resetToken: 重置令牌（必填）
+ * - captchaToken: 验证码令牌（必填）
+ * - captchaCode: 验证码（必填）
+ */
+export class ResetPasswordDto {
+  @ApiProperty({
+    description: '用户名',
+    example: 'admin',
+  })
+  @IsString({ message: '用户名必须是字符串' })
+  @IsNotEmpty({ message: '用户名不能为空' })
+  username: string;
+
+  @ApiProperty({
+    description: '新密码',
+    example: 'newpassword123',
+    minLength: 6,
+    maxLength: 50,
+  })
+  @IsString({ message: '新密码必须是字符串' })
+  @IsNotEmpty({ message: '新密码不能为空' })
+  @Length(6, 50, { message: '新密码长度必须在6-50个字符之间' })
+  newPassword: string;
+
+  @ApiProperty({
+    description: '确认新密码',
+    example: 'newpassword123',
+    minLength: 6,
+    maxLength: 50,
+  })
+  @IsString({ message: '确认密码必须是字符串' })
+  @IsNotEmpty({ message: '确认密码不能为空' })
+  @Length(6, 50, { message: '确认密码长度必须在6-50个字符之间' })
+  confirmPassword: string;
+
+  @ApiProperty({
+    description: '重置令牌',
+    example: 'reset-token-789',
+  })
+  @IsString({ message: '重置令牌必须是字符串' })
+  @IsNotEmpty({ message: '重置令牌不能为空' })
+  resetToken: string;
+
+  @ApiProperty({
+    description: '验证码令牌',
+    example: 'captcha-token-789',
+  })
+  @IsString({ message: '验证码令牌必须是字符串' })
+  @IsNotEmpty({ message: '验证码令牌不能为空' })
+  captchaToken: string;
+
+  @ApiProperty({
+    description: '验证码',
+    example: 'IJKL',
+    minLength: 4,
+    maxLength: 6,
+  })
+  @IsString({ message: '验证码必须是字符串' })
+  @IsNotEmpty({ message: '验证码不能为空' })
+  @Length(4, 6, { message: '验证码长度必须在4-6个字符之间' })
+  captchaCode: string;
+}
