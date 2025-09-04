@@ -82,16 +82,19 @@ export class GlobalGuard implements CanActivate {
   };
 
   constructor(@Inject('I_CACHE_SERVICE') private readonly cacheService: ICacheService) {
-    // 格式化美观的初始化日志
-    const initMessage = [
-      '🛡️  全局限流守卫已初始化（Redis缓存版）',
-      `📊 普通限制: ${this.config.normalLimit}/分钟`,
-      `⭐ 白名单限制: ${this.config.whitelistLimit}/分钟`,
-      `⏱️ 时间窗口: ${this.config.windowSeconds}秒`,
-      `💾 缓存TTL: ${CACHE_TTL_SECONDS}秒`,
-    ].join(' | ');
-
-    this.logger.log(initMessage);
+    this.logger.log('');
+    this.logger.log('╔═══════════════════════════════════════════════════════════════════╗');
+    this.logger.log('║                  🛡️  全局限流守卫已初始化 🛡️                        ║');
+    this.logger.log('╚═══════════════════════════════════════════════════════════════════╝');
+    this.logger.log('');
+    this.logger.log('┌─ 🛡️  限流配置信息 ────────────────────────────────────────────────┐');
+    this.logger.log(`│ 📊 普通限制: ${this.config.normalLimit}/分钟`);
+    this.logger.log(`│ ⭐ 白名单限制: ${this.config.whitelistLimit}/分钟`);
+    this.logger.log(`│ ⏱️  时间窗口: ${this.config.windowSeconds}秒`);
+    this.logger.log(`│ 💾 缓存TTL: ${CACHE_TTL_SECONDS}秒`);
+    this.logger.log(`│ 🔧 缓存类型: Redis缓存版`);
+    this.logger.log('└──────────────────────────────────────────────────────────────────┘');
+    this.logger.log('');
   }
 
   /**
