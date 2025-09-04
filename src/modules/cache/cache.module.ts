@@ -29,13 +29,11 @@ const cacheServiceProvider: Provider = {
 /**
  * ICacheService 接口提供者
  * 为依赖注入提供接口绑定
+ * 复用 CACHE_SERVICE 实例，避免重复初始化
  */
 const iCacheServiceProvider: Provider = {
   provide: 'I_CACHE_SERVICE',
-  useFactory: async (cacheFactory: CacheFactoryService): Promise<ICacheService> => {
-    return await cacheFactory.getCacheService();
-  },
-  inject: [CacheFactoryService],
+  useExisting: 'CACHE_SERVICE',
 };
 
 @Global()
