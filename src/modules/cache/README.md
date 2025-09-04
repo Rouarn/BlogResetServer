@@ -7,6 +7,8 @@
 - **双重缓存策略**: Redis 主缓存 + 内存缓存备用
 - **自动降级**: Redis 不可用时自动切换到内存缓存
 - **装饰器支持**: `@Cache` 和 `@CacheEvict` 装饰器
+- **动态缓存键**: 支持 `${0}`, `${1}` 等参数占位符，自动生成缓存键
+- **多种缓存模式**: 支持参数索引、自动参数、条件缓存等多种模式
 - **类型安全**: 完全的 TypeScript 类型支持
 - **统计监控**: 缓存命中率、内存使用等统计信息
 - **健康检查**: 缓存服务健康状态监控
@@ -93,19 +95,50 @@ export class UserService {
 
 #### @CacheEvict 装饰器
 
+`@CacheEvict` 装饰器用于在方法执行后清除指定的缓存，同样支持占位符语法：
+
 ```typescript
 @Injectable()
 export class UserService {
-  // 清除单个缓存
+  // 清除单个缓存 - ${0} 表示方法的第一个参数 (id)
   @CacheEvict({ key: 'user:${0}' })
   async updateUser(id: string, data: UpdateUserDto): Promise<User> {
+    // 执行更新操作后，会自动清除 'user:123' 这样的缓存键
     return await this.userRepository.update(id, data);
   }
 
-  // 清除多个缓存
+  // 清除多个相关缓存 - 同时清除用户基本信息和用户资料缓存
   @CacheEvict({ keys: ['user:${0}', 'user:profile:${0}'] })
   async deleteUser(id: string): Promise<boolean> {
+    // 执行删除操作后，会同时清除：
+    // - 'user:123' (用户基本信息缓存)
+    // - 'user:profile:123' (用户资料缓存)
     return await this.userRepository.delete(id);
+  }
+
+  // 使用多个参数的占位符
+  @CacheEvict({ keys: ['user:search:${0}:page:${1}', 'user:count:${0}'] })
+  async updateUserStatus(query: string, page: number, status: string): Promise<void> {
+    // 会清除搜索结果缓存和计数缓存
+    await this.userRepository.updateStatusByQuery(query, status);
+  }
+
+  // 模式匹配清除缓存
+  @CacheEvict({ pattern: 'user:${0}:*' })
+  async updateUserAllData(id: string, data: any): Promise<User> {
+    // 清除所有以 'user:123:' 开头的缓存键
+    // 如: user:123:profile, user:123:settings, user:123:permissions 等
+    return await this.userRepository.updateAll(id, data);
+  }
+
+  // 条件清除缓存
+  @CacheEvict({ 
+    key: 'user:${0}', 
+    condition: (id: string, data: UpdateUserDto) => data.clearCache === true 
+  })
+  async conditionalUpdateUser(id: string, data: UpdateUserDto): Promise<User> {
+    // 只有当 data.clearCache 为 true 时才清除缓存
+    return await this.userRepository.update(id, data);
   }
 
   // 清除所有缓存
@@ -157,7 +190,97 @@ export class UserService {
 }
 ```
 
-### 3. 批量操作
+### 3. 缓存键占位符详解
+
+缓存装饰器支持多种占位符模式来动态生成缓存键：
+
+#### 参数索引占位符
+
+使用 `${index}` 格式引用方法参数，索引从 0 开始：
+
+```typescript
+@Injectable()
+export class UserService {
+  // ${0} 表示第一个参数 (id)
+  @Cache({ key: 'user:${0}', ttl: 3600 })
+  async getUserById(id: string): Promise<User> {
+    // 实际缓存键: user:123 (当 id = '123' 时)
+    return await this.userRepository.findById(id);
+  }
+
+  // ${0} 和 ${1} 分别表示第一个和第二个参数
+  @Cache({ key: 'user:search:${0}:page:${1}', ttl: 1800 })
+  async searchUsers(query: string, page: number): Promise<User[]> {
+    // 实际缓存键: user:search:john:page:1 (当 query='john', page=1 时)
+    return await this.userRepository.search(query, page);
+  }
+
+  // 多个占位符组合使用
+  @Cache({ key: 'user:${0}:profile:${1}', ttl: 7200 })
+  async getUserProfile(id: string, includePrivate: boolean): Promise<UserProfile> {
+    // 实际缓存键: user:123:profile:true (当 id='123', includePrivate=true 时)
+    return await this.userRepository.getProfile(id, includePrivate);
+  }
+}
+```
+
+#### 自动参数模式
+
+```typescript
+// useArgs: true - 自动使用所有参数生成缓存键
+@Cache({ useArgs: true, ttl: 1800 })
+async searchUsers(query: string, page: number, limit: number): Promise<User[]> {
+  // 实际缓存键: "john":1:10 (当 query='john', page=1, limit=10 时)
+  return await this.userRepository.search(query, page, limit);
+}
+
+// argIndexes - 指定使用哪些参数索引
+@Cache({ argIndexes: [0, 2], ttl: 1800 })
+async searchUsers(query: string, page: number, limit: number): Promise<User[]> {
+  // 实际缓存键: "john":10 (只使用第0和第2个参数)
+  return await this.userRepository.search(query, page, limit);
+}
+```
+
+#### 占位符工作原理
+
+占位符替换由 `generateCacheKey` 函数处理：
+
+```typescript
+// 内部实现示例
+function generateCacheKey(template: string, args: any[]): string {
+  if (!template) {
+    // 如果没有模板，将所有参数连接起来
+    return args.map(arg => JSON.stringify(arg)).join(':');
+  }
+  
+  // 替换 ${index} 占位符
+  return template.replace(/\$\{(\d+)\}/g, (match, index) => {
+    const argIndex = parseInt(index, 10);
+    return argIndex < args.length ? String(args[argIndex]) : match;
+  });
+}
+```
+
+#### 缓存键命名最佳实践
+
+```typescript
+// ✅ 推荐的命名格式
+'module:entity:id'              // user:profile:123
+'module:entity:action:params'   // user:search:john:page:1
+'module:list:filter:value'      // product:list:category:electronics
+
+// ✅ 使用有意义的前缀
+@Cache({ key: 'user:profile:${0}', ttl: 3600 })
+@Cache({ key: 'product:details:${0}', ttl: 7200 })
+@Cache({ key: 'order:summary:${0}:${1}', ttl: 1800 })
+
+// ❌ 避免的命名方式
+@Cache({ key: '${0}', ttl: 3600 })           // 太简单，容易冲突
+@Cache({ key: 'cache_${0}_data', ttl: 3600 }) // 无意义的前缀
+```
+
+### 4. 批量操作
 
 ```typescript
 // 批量删除缓存
@@ -264,10 +387,23 @@ try {
 ### 1. 缓存键命名规范
 
 ```typescript
-// 推荐的键命名格式
-'module:entity:id'          // user:profile:123
-'module:entity:action:args' // user:search:john:page1
-'module:list:filter'        // product:list:category:electronics
+// 推荐的键命名格式（与占位符配合使用）
+'module:entity:id'              // user:profile:123
+'module:entity:action:params'   // user:search:john:page:1
+'module:list:filter:value'      // product:list:category:electronics
+
+// 装饰器中的占位符使用
+@Cache({ key: 'user:profile:${0}', ttl: 3600 })        // 用户资料
+@Cache({ key: 'product:details:${0}', ttl: 7200 })     // 商品详情
+@Cache({ key: 'order:list:${0}:status:${1}', ttl: 1800 }) // 订单列表
+
+// 避免使用过于简单的键名
+// ❌ 不推荐
+@Cache({ key: '${0}' })              // 太简单，容易冲突
+@Cache({ key: 'data_${0}' })         // 无意义前缀
+
+// ✅ 推荐
+@Cache({ key: 'user:profile:${0}' }) // 清晰的业务含义
 ```
 
 ### 2. 合理设置 TTL
@@ -368,6 +504,13 @@ logger.debug('Cache operation details...');
 ```
 
 ## 📝 更新日志
+
+### v1.1.0
+- ✅ 新增动态缓存键支持，支持 `${0}`, `${1}` 等参数占位符
+- ✅ 增强 `@Cache` 装饰器，支持多种缓存键生成模式
+- ✅ 增强 `@CacheEvict` 装饰器，支持模式匹配和条件清除
+- ✅ 完善缓存键命名最佳实践文档
+- ✅ 新增占位符工作原理详细说明
 
 ### v1.0.0
 - ✅ 初始版本发布

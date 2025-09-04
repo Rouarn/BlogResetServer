@@ -1,5 +1,7 @@
+import { CACHE_PREFIXES, CACHE_TOKENS, CACHE_TTL } from '@/common/constants';
 import {
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -9,7 +11,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Status, isEnabled, toggleStatus } from 'src/common/enums';
 import * as svgCaptcha from 'svg-captcha';
 import { Repository } from 'typeorm';
-
+import { Cache, CacheEvict, ICacheService } from '../cache';
 import type { CreateAuthDto } from './dto/create-auth.dto';
 import type { LoginDto } from './dto/login.dto';
 import type { BatchDeleteUserDto, UpdateUserDto } from './dto/update-user.dto';
@@ -44,6 +46,8 @@ export class AuthService {
     @InjectRepository(Auth)
     private readonly authRepository: Repository<Auth>,
     private readonly jwtService: JwtService,
+    @Inject(CACHE_TOKENS.I_CACHE_SERVICE)
+    private readonly cacheService: ICacheService,
   ) {}
 
   /**
@@ -54,6 +58,7 @@ export class AuthService {
    * @param user 用户数据传输对象
    * @returns 包含用户权限、角色、ID和用户名的信息对象
    */
+  @Cache({ key: `${CACHE_PREFIXES.USER_INFO}:\${0.id}`, ttl: CACHE_TTL.USER_LIST })
   getUserInfo(user: Auth): {
     buttons: string[];
     roles: string[];
@@ -150,7 +155,7 @@ export class AuthService {
    * @param clientInfo 客户端信息（IP、User-Agent等）
    * @returns 验证码图片、令牌、过期时间和随机数
    */
-  generateCaptcha(
+  async generateCaptcha(
     clientInfo: Record<string, unknown>,
   ): Promise<{ captchaImage: string; captchaToken: string; expiresIn: number; nonce: string }> {
     // 创建验证码，设置选项使其更安全
@@ -167,27 +172,30 @@ export class AuthService {
 
     const captchaCode = captcha.text; // 验证码文本
     const nonce = Math.random().toString(36).substring(2, 15);
+    const captchaToken = `captcha_${nonce}_${Date.now()}`;
 
-    // 生成验证码令牌（实际应该包含加密的验证码信息）
-    const captchaToken = this.jwtService.sign(
-      {
-        code: captchaCode,
-        nonce,
-        clientInfo,
-        timestamp: Date.now(),
-      },
-      { expiresIn: '5m' },
-    );
+    // 使用缓存存储验证码信息，替代 JWT token 方式
+    const captchaData = {
+      code: captchaCode.toLowerCase(),
+      nonce,
+      clientInfo,
+      timestamp: Date.now(),
+    };
+
+    // 存储到缓存中，5分钟过期
+    await this.cacheService.set(`${CACHE_PREFIXES.CAPTCHA}:${captchaToken}`, captchaData, {
+      ttl: CACHE_TTL.CAPTCHA,
+    });
 
     // 将SVG验证码转换为base64格式的图片
     const captchaImage = `data:image/svg+xml;base64,${Buffer.from(captcha.data).toString('base64')}`;
 
-    return Promise.resolve({
+    return {
       captchaImage,
       captchaToken,
-      expiresIn: 300, // 5分钟
+      expiresIn: CACHE_TTL.CAPTCHA, // 5分钟
       nonce,
-    });
+    };
   }
 
   /**
@@ -206,27 +214,46 @@ export class AuthService {
     _clientInfo: Record<string, unknown>,
   ): Promise<{ success: boolean; message: string; valid?: boolean; reason?: string }> {
     try {
-      const decoded = this.jwtService.verify(token);
+      // 从缓存中获取验证码信息
+      const captchaData = await this.cacheService.get<{
+        code: string;
+        nonce: string;
+        clientInfo: Record<string, unknown>;
+        timestamp: number;
+      }>(`${CACHE_PREFIXES.CAPTCHA}:${token}`);
+
+      if (!captchaData) {
+        return {
+          success: false,
+          message: '验证码无效或已过期',
+          valid: false,
+          reason: 'Captcha not found or expired',
+        };
+      }
 
       // 验证验证码
-      if ((decoded as { code?: string }).code?.toLowerCase() !== code.toLowerCase()) {
+      if (captchaData.code !== code.toLowerCase()) {
         return { success: false, message: '验证码错误', valid: false, reason: 'Incorrect code' };
       }
 
       // 验证时间戳（防止重放攻击）
       const now = Date.now();
-      if (now - (decoded as { timestamp?: number }).timestamp! > 300000) {
-        // 5分钟过期
+      if (now - captchaData.timestamp > CACHE_TTL.CAPTCHA * 1000) {
+        // 验证码过期
+        await this.cacheService.del(`${CACHE_PREFIXES.CAPTCHA}:${token}`);
         return { success: false, message: '验证码已过期', valid: false, reason: 'Token expired' };
       }
 
+      // 验证成功后删除缓存，防止重复使用
+      await this.cacheService.del(`${CACHE_PREFIXES.CAPTCHA}:${token}`);
+
       return { success: true, message: '验证成功', valid: true };
-    } catch {
+    } catch (error) {
       return {
         success: false,
-        message: '验证码无效',
+        message: '验证码验证失败',
         valid: false,
-        reason: 'Token verification failed',
+        reason: 'Captcha verification error',
       };
     }
   }
@@ -253,6 +280,7 @@ export class AuthService {
    * @param id 用户ID
    * @returns 用户详情
    */
+  @Cache({ key: `${CACHE_PREFIXES.USER}:\${0}`, ttl: CACHE_TTL.USER_INFO })
   async getUserById(id: string): Promise<Auth> {
     const user = await this.authRepository.findOne({ where: { id } });
 
@@ -269,6 +297,7 @@ export class AuthService {
    * @param size 每页数量
    * @returns 用户列表
    */
+  @Cache({ key: `${CACHE_PREFIXES.USERS}:page:\${0}:size:\${1}`, ttl: CACHE_TTL.USER_LIST })
   async getAllUsers(
     current: number = 1,
     size: number = 10,
@@ -286,6 +315,13 @@ export class AuthService {
    * @param updateUserDto 更新数据
    * @returns 更新后的用户信息
    */
+  @CacheEvict({
+    keys: [
+      `${CACHE_PREFIXES.USER}:\${0}`,
+      `${CACHE_PREFIXES.USER_INFO}:\${0}`,
+      `${CACHE_PREFIXES.USERS}:*`,
+    ],
+  })
   async updateUser(id: string, updateUserDto: UpdateUserDto): Promise<Auth> {
     const user = await this.getUserById(id);
 
@@ -300,6 +336,13 @@ export class AuthService {
    * @param id 用户ID
    * @returns 删除结果
    */
+  @CacheEvict({
+    keys: [
+      `${CACHE_PREFIXES.USER}:\${0}`,
+      `${CACHE_PREFIXES.USER_INFO}:\${0}`,
+      `${CACHE_PREFIXES.USERS}:*`,
+    ],
+  })
   async deleteUser(id: string): Promise<{ message: string }> {
     await this.authRepository.delete(id);
     return { message: '用户删除成功' };
@@ -310,6 +353,13 @@ export class AuthService {
    * @param batchDeleteDto 批量删除数据
    * @returns 删除结果
    */
+  @CacheEvict({
+    keys: [
+      `${CACHE_PREFIXES.USER}:*`,
+      `${CACHE_PREFIXES.USER_INFO}:*`,
+      `${CACHE_PREFIXES.USERS}:*`,
+    ],
+  })
   async batchDeleteUsers(
     batchDeleteDto: BatchDeleteUserDto,
   ): Promise<{ message: string; deletedCount: number }> {
@@ -330,6 +380,13 @@ export class AuthService {
    * @param status 新状态（可选，如果不提供则自动切换）
    * @returns 更新后的用户信息
    */
+  @CacheEvict({
+    keys: [
+      `${CACHE_PREFIXES.USER}:\${0}`,
+      `${CACHE_PREFIXES.USER_INFO}:\${0}`,
+      `${CACHE_PREFIXES.USERS}:*`,
+    ],
+  })
   async toggleUserStatus(id: string, status?: Status): Promise<Auth> {
     const user = await this.getUserById(id);
 
