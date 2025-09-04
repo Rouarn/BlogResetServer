@@ -293,7 +293,7 @@ export class AuthController {
   })
   @Public()
   @Post('register')
-  register(@Body() body: CreateAuthDto): Promise<{ message: string; user: Partial<Auth> }> {
+  register(@Body() body: CreateAuthDto): Promise<{ message: string; data: Partial<Auth> }> {
     return this.authService.register(body);
   }
 
@@ -387,7 +387,7 @@ export class AuthController {
       return {
         success: true,
         message: '用户创建成功',
-        record: result.user,
+        record: result.data,
       };
     } catch (error) {
       return {
