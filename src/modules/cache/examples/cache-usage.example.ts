@@ -7,8 +7,8 @@
  * @version 1.0.0
  */
 
-import { Injectable, Logger, Inject } from '@nestjs/common';
-
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { CACHE_TOKENS } from 'src/common/constants';
 import { Cache, CacheEvict, ICacheService } from '../index';
 
 /**
@@ -39,7 +39,10 @@ interface UserSearchQuery {
 export class CacheUsageExampleService {
   private readonly logger = new Logger(CacheUsageExampleService.name);
 
-  constructor(@Inject('I_CACHE_SERVICE') private readonly cacheService: ICacheService) {}
+  constructor(
+    @Inject(CACHE_TOKENS.I_CACHE_SERVICE)
+    private readonly cacheService: ICacheService,
+  ) {}
 
   // =============================================================================
   // 基础缓存装饰器使用示例

@@ -7,6 +7,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import { CACHE_TOKENS } from 'src/common/constants';
 import { ICacheService } from 'src/modules/cache';
 import { WhitelistAuth, getCurrentTimestamp } from 'src/utils';
 
@@ -81,7 +82,10 @@ export class GlobalGuard implements CanActivate {
     windowSeconds: 60,
   };
 
-  constructor(@Inject('I_CACHE_SERVICE') private readonly cacheService: ICacheService) {
+  constructor(
+    @Inject(CACHE_TOKENS.I_CACHE_SERVICE)
+    private readonly cacheService: ICacheService,
+  ) {
     this.logger.log('');
     this.logger.log('╔═══════════════════════════════════════════════════════════════════╗');
     this.logger.log('║                  🛡️  全局限流守卫已初始化 🛡️                        ║');

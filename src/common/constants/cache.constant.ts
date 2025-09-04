@@ -13,7 +13,7 @@
  */
 export const CACHE_TOKENS = {
   /** ICacheService 接口令牌 */
-  I_CACHE_SERVICE: 'I_CACHE_SERVICE',
+  I_CACHE_SERVICE: Symbol('I_CACHE_SERVICE'),
 } as const;
 
 /**
