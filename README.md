@@ -11,6 +11,9 @@
 - ✅ **文件管理**: 完整的文件上传下载系统，支持分块上传、断点续传
 - ✅ **多协议支持**: HTTP 文件传输协议
 - ✅ **存储适配器**: 本地存储方案
+- ✅ **API响应格式**: 灵活的响应格式，支持直接返回数据或包装格式
+- ✅ **缓存系统**: Redis + 内存双重缓存，支持装饰器语法和自动降级
+- ✅ **实时通信**: WebSocket 支持，基于 Socket.IO 的房间管理和消息广播
 - ✅ **API文档**: 集成 Swagger 自动生成文档
 - ✅ **验证码系统**: SVG验证码，防爬虫机制
 - ✅ **环境配置**: 完善的环境变量管理
@@ -18,7 +21,7 @@
 
 ## 📋 技术栈
 
-- **框架**: NestJS 10.x
+- **框架**: NestJS 11.x
 - **语言**: TypeScript 5.x
 - **数据库**: MySQL + TypeORM
 - **认证**: JWT + Passport
@@ -223,6 +226,111 @@ pnpm run start:dev
 2. 定期运行 `pnpm run env:check` 验证配置
 3. 部署前确保生产环境配置正确
 
+## 🔄 API 响应格式规范
+
+本项目采用灵活的 API 响应格式设计，支持多种返回方式以提高开发效率和兼容性。
+
+### 📋 普通接口响应格式
+
+普通接口支持以下两种返回格式：
+
+**1. 直接返回数据格式**
+
+```typescript
+// 控制器中直接返回数据
+return userData; // 直接返回 User 对象或其他数据
+return { name: 'John', age: 25 }; // 直接返回对象
+```
+
+**2. 包装格式**
+
+```typescript
+// 控制器中返回包装格式
+return {
+  success: true,
+  data: userData,
+  message: '操作成功',
+};
+```
+
+**统一输出格式**
+
+无论使用哪种返回格式，响应拦截器都会自动处理并统一输出为：
+
+```json
+{
+  "success": true,
+  "data": {
+    /* 实际数据 */
+  },
+  "message": "操作成功",
+  "timestamp": "2024-01-15T10:30:00.000Z"
+}
+```
+
+### 📄 分页接口响应格式
+
+分页接口同样支持两种返回格式：
+
+**1. 直接返回分页数据格式**
+
+```typescript
+// 服务层返回
+return {
+  data: users, // 数据数组
+  total: 100, // 总数
+};
+```
+
+**2. 包装格式**
+
+```typescript
+// 控制器中返回包装格式
+return {
+  success: true,
+  data: {
+    list: users, // 数据数组
+    total: 100, // 总数
+  },
+  message: '获取成功',
+};
+```
+
+**统一输出格式**
+
+分页接口的统一输出格式为：
+
+```json
+{
+  "success": true,
+  "data": {
+    "list": [
+      /* 数据数组 */
+    ],
+    "total": 100,
+    "page": 1,
+    "pageSize": 10,
+    "totalPages": 10
+  },
+  "message": "获取成功",
+  "timestamp": "2024-01-15T10:30:00.000Z"
+}
+```
+
+### 🔧 技术实现
+
+- **响应拦截器**: `ResponseInterceptor` 自动处理不同的返回格式
+- **类型定义**: `DeveloperResponse<T>` 和 `DeveloperPaginatedResponse<T>` 提供类型安全
+- **自动识别**: 拦截器智能识别返回格式并自动转换
+- **默认消息**: 当未提供 `message` 时，自动使用默认消息
+
+### 💡 使用建议
+
+1. **服务层**: 推荐直接返回数据，保持简洁
+2. **控制器层**: 可根据需要选择直接返回或包装格式
+3. **错误处理**: 统一通过异常处理机制处理错误响应
+4. **类型安全**: 使用提供的 TypeScript 类型定义确保类型安全
+
 ## 📁 项目结构
 
 ```
@@ -241,37 +349,69 @@ nestjs-template/
 │   │   │   ├── auth.controller.ts # 认证控制器
 │   │   │   ├── auth.service.ts   # 认证服务
 │   │   │   └── auth.module.ts    # 认证模块
-│   │   └── files/                # 文件管理模块
-│   │       ├── dto/              # 数据传输对象
-│   │       │   ├── file-query.dto.ts
-│   │       │   ├── file-upload.dto.ts
-│   │       │   ├── index.ts
-│   │       │   └── swagger-responses.dto.ts
-│   │       ├── entities/         # 数据库实体
-│   │       │   ├── file.entity.ts
-│   │       │   ├── index.ts
-│   │       │   └── upload-chunk.entity.ts
-│   │       ├── services/         # 服务类
-│   │       │   ├── chunk.service.ts        # 分块上传服务
-│   │       │   ├── files.service.ts        # 文件管理服务
-│   │       │   ├── storage-factory.service.ts # 存储工厂服务
-│   │       │   ├── storage.service.ts      # 存储服务
-│   │       │   └── validation.service.ts   # 文件验证服务
-│   │       ├── decorators/       # 装饰器
-│   │       │   └── index.ts
-│   │       ├── guards/           # 权限守卫
-│   │       │   └── file-access.guard.ts
+│   │   ├── files/                # 文件管理模块
+│   │   │   ├── dto/              # 数据传输对象
+│   │   │   │   ├── file-query.dto.ts
+│   │   │   │   ├── file-upload.dto.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   └── swagger-responses.dto.ts
+│   │   │   ├── entities/         # 数据库实体
+│   │   │   │   ├── file.entity.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   └── upload-chunk.entity.ts
+│   │   │   ├── services/         # 服务类
+│   │   │   │   ├── chunk.service.ts        # 分块上传服务
+│   │   │   │   ├── files.service.ts        # 文件管理服务
+│   │   │   │   ├── storage-factory.service.ts # 存储工厂服务
+│   │   │   │   ├── storage.service.ts      # 存储服务
+│   │   │   │   └── validation.service.ts   # 文件验证服务
+│   │   │   ├── decorators/       # 装饰器
+│   │   │   │   └── index.ts
+│   │   │   ├── guards/           # 权限守卫
+│   │   │   │   └── file-access.guard.ts
+│   │   │   ├── interfaces/       # 接口定义
+│   │   │   │   ├── file-upload.interface.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── storage-factory.interface.ts
+│   │   │   │   └── storage.interface.ts
+│   │   │   ├── enums/            # 枚举定义
+│   │   │   │   ├── file-status.enum.ts
+│   │   │   │   ├── file-type.enum.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── files.controller.ts # 文件管理控制器
+│   │   │   └── files.module.ts   # 文件模块
+│   │   ├── cache/                # 缓存模块
+│   │   │   ├── decorators/       # 缓存装饰器
+│   │   │   │   ├── cache.decorator.ts      # @Cache 装饰器
+│   │   │   │   ├── cache-evict.decorator.ts # @CacheEvict 装饰器
+│   │   │   │   └── index.ts
+│   │   │   ├── services/         # 缓存服务
+│   │   │   │   ├── cache-factory.service.ts # 缓存工厂服务
+│   │   │   │   ├── memory-cache.service.ts  # 内存缓存服务
+│   │   │   │   ├── redis-cache.service.ts   # Redis 缓存服务
+│   │   │   │   └── index.ts
+│   │   │   ├── interfaces/       # 接口定义
+│   │   │   │   └── index.ts      # 缓存接口和类型定义
+│   │   │   ├── interceptors/     # 缓存拦截器
+│   │   │   │   ├── cache.interceptor.ts     # 缓存拦截器
+│   │   │   │   └── index.ts
+│   │   │   ├── cache.module.ts   # 缓存模块
+│   │   │   └── index.ts          # 模块统一导出
+│   │   └── websocket/            # WebSocket 模块
+│   │       ├── filters/          # WebSocket 异常过滤器
+│   │       │   └── websocket-exception.filter.ts
+│   │       ├── guards/           # WebSocket 守卫
+│   │       │   ├── websocket-auth.guard.ts          # WebSocket 认证守卫
+│   │       │   └── websocket-optional-auth.guard.ts # WebSocket 可选认证守卫
+│   │       ├── interceptors/     # WebSocket 拦截器
+│   │       │   └── websocket.interceptor.ts
 │   │       ├── interfaces/       # 接口定义
-│   │       │   ├── file-upload.interface.ts
-│   │       │   ├── index.ts
-│   │       │   ├── storage-factory.interface.ts
-│   │       │   └── storage.interface.ts
-│   │       ├── enums/            # 枚举定义
-│   │       │   ├── file-status.enum.ts
-│   │       │   ├── file-type.enum.ts
-│   │       │   └── index.ts
-│   │       ├── files.controller.ts # 文件管理控制器
-│   │       └── files.module.ts   # 文件模块
+│   │       │   └── index.ts      # WebSocket 接口和类型定义
+│   │       ├── services/         # WebSocket 服务
+│   │       │   └── websocket.service.ts
+│   │       ├── websocket.gateway.ts # WebSocket 网关
+│   │       ├── websocket.module.ts  # WebSocket 模块
+│   │       └── index.ts          # 模块统一导出
 │   ├── common/                   # 公共模块
 │   │   ├── constants/            # 常量定义
 │   │   │   ├── auth.constant.ts
@@ -482,6 +622,155 @@ nestjs-template/
 - **路径管理**：智能的文件路径和命名策略
 - **安全检查**：文件类型白名单、恶意文件检测
 - **性能优化**：分块上传、流式处理大文件
+
+📖 **详细文档**: [文件管理模块使用指南](src/modules/files/README.md)
+
+### 🚀 缓存模块 (src/modules/cache)
+
+缓存模块提供了基于 Redis 和内存缓存的高性能缓存解决方案，支持自动降级和装饰器语法，为应用提供灵活的缓存策略。
+
+#### 核心功能
+
+- **双重缓存策略**：Redis 主缓存 + 内存缓存备用，确保高可用性
+- **自动降级机制**：Redis 不可用时自动切换到内存缓存
+- **装饰器支持**：`@Cache` 和 `@CacheEvict` 装饰器，简化缓存操作
+- **类型安全**：完全的 TypeScript 类型支持
+- **统计监控**：缓存命中率、内存使用等统计信息
+- **健康检查**：缓存服务健康状态监控
+- **灵活配置**：支持环境变量和动态配置
+
+#### 使用方式
+
+**装饰器方式（推荐）：**
+
+```typescript
+@Injectable()
+export class UserService {
+  // 基础缓存：使用用户ID作为缓存键
+  @Cache({ key: 'user:${0}', ttl: 3600 })
+  async getUserById(id: string): Promise<User> {
+    return await this.userRepository.findById(id);
+  }
+
+  // 清除缓存
+  @CacheEvict({ key: 'user:${0}' })
+  async updateUser(id: string, data: UpdateUserDto): Promise<User> {
+    return await this.userRepository.update(id, data);
+  }
+}
+```
+
+**服务注入方式：**
+
+```typescript
+@Injectable()
+export class UserService {
+  constructor(private readonly cacheService: ICacheService) {}
+
+  async getUserById(id: string): Promise<User> {
+    const cacheKey = `user:${id}`;
+    let user = await this.cacheService.get<User>(cacheKey);
+    
+    if (!user) {
+      user = await this.userRepository.findById(id);
+      await this.cacheService.set(cacheKey, user, { ttl: 3600 });
+    }
+    
+    return user;
+  }
+}
+```
+
+#### 技术特性
+
+- **高性能**：Redis 集群支持，内存缓存 LRU 淘汰策略
+- **容错机制**：自动故障转移，不影响业务逻辑
+- **监控统计**：实时缓存命中率和性能指标
+- **批量操作**：支持批量读写和模式匹配
+- **安全可靠**：完善的错误处理和资源清理机制
+
+📖 **详细文档**: [缓存模块使用指南](src/modules/cache/README.md)
+
+### 🌐 WebSocket 模块 (src/modules/websocket)
+
+WebSocket 模块提供了完整的实时双向通信功能，基于 Socket.IO 构建，支持房间管理、用户认证和消息广播等高级特性。
+
+#### 核心功能
+
+- **实时通信**：基于 Socket.IO 的高性能 WebSocket 实现
+- **房间管理**：支持用户加入/离开房间，房间消息广播
+- **用户认证**：集成 JWT 认证，支持多种 Token 传递方式
+- **消息路由**：灵活的事件处理和消息路由机制
+- **连接管理**：自动连接状态管理和重连机制
+- **异常处理**：完善的 WebSocket 异常过滤和错误处理
+- **拦截器支持**：请求/响应拦截器，统一消息格式
+
+#### 主要事件
+
+**系统事件：**
+
+- `ping` - 心跳检测
+- `join-room` - 加入房间
+- `leave-room` - 离开房间
+- `get-online-users` - 获取在线用户
+- `get-room-members` - 获取房间成员
+
+**消息事件：**
+
+- `message` - 发送消息
+- `broadcast` - 广播消息
+
+#### 客户端集成
+
+**基础连接：**
+
+```javascript
+const socket = io('ws://localhost:8848', {
+  path: '/ws',
+  query: {
+    token: 'your-jwt-token-here', // JWT 认证
+  },
+});
+
+// 连接事件
+socket.on('connect', () => {
+  console.log('连接成功:', socket.id);
+});
+
+// 发送消息
+socket.emit('message', {
+  content: 'Hello Server!',
+  timestamp: Date.now(),
+});
+
+// 监听消息
+socket.on('message', (data) => {
+  console.log('收到消息:', data);
+});
+```
+
+**房间操作：**
+
+```javascript
+// 加入房间
+socket.emit('join-room', 'chat-room-1');
+
+// 监听房间消息
+socket.on('room-message', (data) => {
+  console.log('房间消息:', data);
+});
+```
+
+#### 技术特性
+
+- **高并发**：支持大量并发连接和消息处理
+- **安全认证**：多种 JWT Token 传递方式，灵活的认证策略
+- **跨域支持**：完善的 CORS 配置和跨域处理
+- **类型安全**：完整的 TypeScript 接口定义
+- **易于扩展**：模块化设计，支持自定义事件处理器
+- **调试友好**：详细的日志记录和错误信息
+
+📖 **详细文档**: [WebSocket 模块使用指南](src/modules/websocket/README.md)
 
 ### 🛠️ 公共模块 (src/common)
 

@@ -346,10 +346,7 @@ export class AuthController {
   ): Promise<{
     success: boolean;
     message: string;
-    user?: Partial<Auth>;
-    timestamp?: string;
-    data?: Record<string, unknown>;
-    error?: string;
+    record?: Partial<CreateAuthDto>;
   }> {
     const { captchaToken, captchaCode, ...userData } = body;
 
@@ -358,7 +355,6 @@ export class AuthController {
       return {
         success: false,
         message: '验证码token和验证码不能为空',
-        timestamp: formatISOString(),
       };
     }
 
@@ -374,27 +370,29 @@ export class AuthController {
       return {
         success: false,
         message: `验证码验证失败: ${captchaResult.reason ?? captchaResult.message}`,
-        timestamp: formatISOString(),
       };
     }
 
     // 验证码通过，执行用户创建逻辑
     try {
       // 这里可以调用实际的用户创建服务
-      // const result = await this.authService.createUser(userData);
+      const result = await this.authService.register({
+        avatar: '',
+        gender: 2,
+        phone: '',
+        nickname: '',
+        ...userData,
+      });
 
       return {
         success: true,
         message: '用户创建成功',
-        data: userData,
-        timestamp: formatISOString(),
+        record: result.user,
       };
     } catch (error) {
       return {
         success: false,
         message: '用户创建失败',
-        error: (error as Error).message,
-        timestamp: formatISOString(),
       };
     }
   }

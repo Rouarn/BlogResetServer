@@ -1,6 +1,6 @@
 import { formatTimestamp } from 'src/utils/helpers';
 
-import type { DefaultPagination, SuccessResponse } from '../interfaces/response.interface';
+import type { PaginationParams, SuccessResponse } from '../interfaces/response.interface';
 
 /**
  * 成功响应常量
@@ -16,7 +16,7 @@ export const SUCCESS_RESPONSE: SuccessResponse = {
 /**
  * 默认分页参数
  */
-export const DEFAULT_PAGINATION: DefaultPagination & {
+export const DEFAULT_PAGINATION: PaginationParams & {
   MIN_PAGE: number;
   DEFAULT_PAGE_SIZE: number;
 } = {

@@ -123,7 +123,7 @@ export class AuthService {
    * @param body 包含用户注册信息的数据传输对象
    * @returns 注册结果消息
    */
-  async register(body: CreateAuthDto): Promise<{ message: string; user: Partial<Auth> }> {
+  async register(body: CreateAuthDto): Promise<{ message: string; user: Partial<CreateAuthDto> }> {
     const findUser = await this.authRepository.findOne({
       where: { userName: body.userName },
     });

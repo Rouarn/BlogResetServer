@@ -1,7 +1,7 @@
 import type { HttpStatus } from '@nestjs/common';
 
 /**
- * 通用响应接口
+ * 通用响应接口 - 返回给前端的格式
  */
 export interface IResponse<T = unknown> {
   data: T;
@@ -29,9 +29,39 @@ export interface ErrorResponse extends IResponse<null> {
 }
 
 /**
- * 分页数据类型
+ * 开发者接口返回数据类型（普通接口）
+ * Controller 中可以返回的格式:
+ * 1. 直接返回数据: T (如 {token: 'xxx'} 或 string 等)
+ * 2. 包装格式: {data: T, message?: string}
+ */
+export type DeveloperResponse<T = unknown> =
+  | T
+  | {
+      data: T;
+      message?: string;
+    };
+
+/**
+ * 开发者接口返回数据类型（分页接口）
+ * Controller 中可以返回的格式:
+ * 1. 直接返回分页数据: {list: T[], total: number}
+ * 2. 包装格式: {data: {list: T[], total: number}, message?: string}
+ */
+export type DeveloperPaginatedResponse<T = unknown> =
+  | { list: T[]; total: number }
+  | {
+      data: {
+        list: T[];
+        total: number;
+      };
+      message?: string;
+    };
+
+/**
+ * 分页数据类型 - 返回给前端的格式
  * @param records 分页数据列表
  * @param total 总记录数
+ * @param totalPages 总页数
  * @param current 当前页码
  * @param size 每页数量
  */
@@ -44,23 +74,16 @@ export interface PaginatedData<T = unknown> {
 }
 
 /**
- * 分页响应类型
- * @param code 响应码
- * @param message 响应信息
- * @param data 响应数据 通用数据字段
- * @param data.records 分页数据列表
- * @param data.total 总记录数
- * @param data.current 当前页码
- * @param data.size 每页数量
+ * 分页响应类型 - 返回给前端的格式
  */
 export type PaginatedResponse<T = unknown> = IResponse<PaginatedData<T>>;
 
 /**
- * 默认分页参数
+ * 分页参数
  * @param current 当前页码
  * @param size 每页数量
  */
-export interface DefaultPagination {
+export interface PaginationParams {
   current: number;
   size: number;
 }
