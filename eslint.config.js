@@ -8,15 +8,19 @@
  *
  * @author NestJS Template Team
  * @since 1.0.0
- */
+  */
 
-const js = require('@eslint/js');
-const tseslint = require('@typescript-eslint/eslint-plugin');
-const tsparser = require('@typescript-eslint/parser');
-const importPlugin = require('eslint-plugin-import');
-const prettierPlugin = require('eslint-plugin-prettier');
+import tseslint from '@typescript-eslint/eslint-plugin';
+import tsparser from '@typescript-eslint/parser';
+import importPlugin from 'eslint-plugin-import';
+import prettierPlugin from 'eslint-plugin-prettier';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-module.exports = [
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+export default [
   // 忽略文件配置
   {
     ignores: [
@@ -28,7 +32,7 @@ module.exports = [
       '**/*.d.ts',
     ],
   },
-  
+
   // 基础配置
   {
     files: ['src/**/*.ts', 'apps/**/*.ts', 'libs/**/*.ts'],
@@ -54,8 +58,8 @@ module.exports = [
     },
     plugins: {
       '@typescript-eslint': tseslint,
-      'import': importPlugin,
-      'prettier': prettierPlugin,
+      import: importPlugin,
+      prettier: prettierPlugin,
     },
     rules: {
       // TypeScript 规则
@@ -91,21 +95,21 @@ module.exports = [
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-unsafe-member-access': 'warn',
       '@typescript-eslint/no-unsafe-return': 'warn',
-      
+
       // Import 规则（简化版）
       'import/no-duplicates': 'error',
       'import/no-unresolved': 'off',
-      
+
       // NestJS 特定规则优化
       '@typescript-eslint/no-useless-constructor': 'off',
       '@typescript-eslint/parameter-properties': 'off',
       '@typescript-eslint/no-inferrable-types': 'off',
-      
+
       // 基础规则
       'no-unused-vars': 'off', // 使用 TypeScript 版本
       'no-undef': 'off', // TypeScript 处理
       'no-useless-escape': 'warn',
-      
+
       // 代码质量规则
       '@typescript-eslint/prefer-as-const': 'error',
       '@typescript-eslint/prefer-optional-chain': 'error',
@@ -113,10 +117,9 @@ module.exports = [
       '@typescript-eslint/no-unnecessary-type-assertion': 'error',
       '@typescript-eslint/array-type': ['error', { default: 'array' }],
       '@typescript-eslint/prefer-literal-enum-member': 'error',
-      
+
       // Prettier 集成
       'prettier/prettier': 'error',
     },
-    // settings 移除以避免依赖问题
   },
 ];

@@ -5,6 +5,7 @@
   "author": "我与夏季",
   "private": true,
   "license": "UNLICENSED",
+  "type": "module",
   "scripts": {
     "start": "cross-env NODE_ENV=development nest start",
     "start:dev": "cross-env NODE_ENV=development nest start --watch",
@@ -50,12 +51,10 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
-    "@eslint/js": "9.34.0",
     "@nestjs/cli": "^11.0.10",
     "@nestjs/schematics": "^11.0.7",
     "@nestjs/swagger": "^11.2.0",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
-    "@types/bcryptjs": "^3.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/multer": "^2.0.0",
