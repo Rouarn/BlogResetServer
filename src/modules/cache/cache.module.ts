@@ -13,34 +13,25 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { ICacheService } from './interfaces';
 import { CacheFactoryService } from './services/cache-factory.service';
+import { CACHE_TOKENS } from 'src/common/constants';
 
 /**
  * 缓存服务提供者
- * 通过工厂服务创建缓存实例
+ * 通过工厂服务创建缓存实例，统一使用接口令牌
  */
 const cacheServiceProvider: Provider = {
-  provide: 'CACHE_SERVICE',
+  provide: CACHE_TOKENS.I_CACHE_SERVICE,
   useFactory: async (cacheFactory: CacheFactoryService): Promise<ICacheService> => {
     return await cacheFactory.getCacheService();
   },
   inject: [CacheFactoryService],
 };
 
-/**
- * ICacheService 接口提供者
- * 为依赖注入提供接口绑定
- * 复用 CACHE_SERVICE 实例，避免重复初始化
- */
-const iCacheServiceProvider: Provider = {
-  provide: 'I_CACHE_SERVICE',
-  useExisting: 'CACHE_SERVICE',
-};
-
 @Global()
 @Module({
   imports: [ConfigModule],
-  providers: [CacheFactoryService, cacheServiceProvider, iCacheServiceProvider],
-  exports: [CacheFactoryService, 'CACHE_SERVICE', 'I_CACHE_SERVICE'],
+  providers: [CacheFactoryService, cacheServiceProvider],
+  exports: [CacheFactoryService, 'I_CACHE_SERVICE'],
 })
 export class CacheModule implements OnModuleInit {
   private readonly logger = new Logger(CacheModule.name);

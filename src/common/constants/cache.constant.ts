@@ -12,9 +12,7 @@
  * 缓存服务注入令牌
  */
 export const CACHE_TOKENS = {
-  /** 缓存服务令牌 */
-  CACHE_SERVICE: 'CACHE_SERVICE',
-  /** ICacheService 接口令牌（推荐使用） */
+  /** ICacheService 接口令牌 */
   I_CACHE_SERVICE: 'I_CACHE_SERVICE',
 } as const;
 
