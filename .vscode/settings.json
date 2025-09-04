@@ -6,7 +6,7 @@
     "tsconfig.json": "tsconfig.*.json, tsconfig.build.json",
     ".gitignore": ".gitattributes, .gitmodules, .gitmessage, .mailmap, .git-blame*",
     "README.md": "CHANGELOG.md, CONTRIBUTING.md, LICENSE, AUTHORS, CONTRIBUTORS",
-    "nest-cli.json": "nest-cli.*.json, .nest-cli.json, .editorconfig, eslint.config.js, .prettierrc",
+    "nest-cli.json": "nest-cli.*.json, .nest-cli.json, .editorconfig, eslint.config.mjs, .prettierrc",
     ".env": ".env.*, .envrc, env.d.ts",
     "docker-compose.yml": "docker-compose.*.yml, .dockerignore, Dockerfile*"
   },
