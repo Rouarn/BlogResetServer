@@ -1,5 +1,14 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, Length, Matches } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Length,
+  Matches,
+} from 'class-validator';
+import { Gender } from 'src/common/enums';
 
 /**
  * 创建认证信息DTO
@@ -66,4 +75,43 @@ export class CreateAuthDto {
   @IsNotEmpty({ message: '验证码不能为空' })
   @Length(4, 6, { message: '验证码长度必须在4-6个字符之间' })
   captchaCode: string;
+
+  @ApiPropertyOptional({
+    description: '昵称',
+    example: '小明',
+    minLength: 2,
+    maxLength: 20,
+  })
+  @IsOptional()
+  @IsString({ message: '昵称必须是字符串' })
+  @Length(2, 20, { message: '昵称长度必须在2-20个字符之间' })
+  nickname?: string;
+
+  @ApiPropertyOptional({
+    description: '邮箱地址',
+    example: 'user@example.com',
+  })
+  @IsOptional()
+  @IsEmail({}, { message: '邮箱格式不正确' })
+  email?: string;
+
+  @ApiPropertyOptional({
+    description: '手机号码',
+    example: '13800138000',
+    pattern: '^1[3-9]\\d{9}$',
+  })
+  @IsOptional()
+  @IsString({ message: '手机号必须是字符串' })
+  @Matches(/^1[3-9]\d{9}$/, { message: '手机号格式不正确' })
+  mobile?: string;
+
+  @ApiPropertyOptional({
+    description: '性别',
+    example: 'MALE',
+    enum: Gender,
+    default: Gender.UNKNOWN,
+  })
+  @IsOptional()
+  @IsEnum(Gender, { message: '性别值不正确' })
+  gender?: Gender;
 }

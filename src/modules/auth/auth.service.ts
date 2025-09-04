@@ -179,13 +179,11 @@ export class AuthService {
     await this.updateLastLogin(auth.id);
 
     // 生成JWT令牌
-    const payload: JwtPayloadDto = {
+    const payload = {
       sub: auth.id,
       username: auth.userName,
       authId: auth.id,
       roles: auth.user?.roles || 'USER',
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24小时
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -538,13 +536,11 @@ export class AuthService {
     }
 
     // 生成新的访问令牌
-    const payload: JwtPayloadDto = {
+    const payload = {
       sub: auth.id,
       username: auth.userName,
       authId: auth.id,
       roles: 'USER',
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24小时
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -729,7 +725,6 @@ export class AuthService {
    */
   private async lockAccount(authId: string): Promise<void> {
     await this.authRepository.update(authId, {
-      isLocked: true,
       lockedAt: new Date(),
     });
   }
@@ -741,7 +736,6 @@ export class AuthService {
    */
   private async unlockAccount(authId: string): Promise<void> {
     await this.authRepository.update(authId, {
-      isLocked: false,
       loginAttempts: 0,
       lockedAt: undefined,
     });
