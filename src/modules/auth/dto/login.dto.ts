@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, Length, IsOptional, IsBoolean } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
 
 /**
  * 登录DTO
@@ -12,7 +12,6 @@ import { IsString, IsNotEmpty, Length, IsOptional, IsBoolean } from 'class-valid
  * - password: 密码（必填）
  * - captchaToken: 验证码令牌（可选）
  * - captchaCode: 验证码（可选）
- * - rememberMe: 记住我（可选）
  *
  * 验证规则：
  * - username: 3-20个字符
@@ -22,7 +21,6 @@ import { IsString, IsNotEmpty, Length, IsOptional, IsBoolean } from 'class-valid
  * 安全特性：
  * - 密码字段不会在响应中返回
  * - 支持验证码验证
- * - 支持记住登录状态
  */
 export class LoginDto {
   @ApiProperty({
@@ -65,15 +63,6 @@ export class LoginDto {
   @IsString({ message: '验证码必须是字符串' })
   @Length(4, 6, { message: '验证码长度必须在4-6个字符之间' })
   captchaCode?: string;
-
-  @ApiPropertyOptional({
-    description: '记住我',
-    example: true,
-    default: false,
-  })
-  @IsOptional()
-  @IsBoolean({ message: '记住我必须是布尔值' })
-  rememberMe?: boolean = false;
 }
 
 /**
