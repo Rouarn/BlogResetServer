@@ -21,7 +21,6 @@ import { ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core/constants';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-
 // 应用核心组件
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -31,7 +30,6 @@ import { GlobalGuard, JwtAuthGuard, RolesGuard } from './common/guards';
 import { ResponseInterceptor } from './common/interceptors';
 import { CustomValidationPipe } from './common/pipes';
 import { JwtAuthStrategy } from './common/strategies';
-
 // 配置模块导入
 import { ConfigModule as AppConfigModule, AppConfigService } from './config';
 // 时间戳管理模块

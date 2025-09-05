@@ -4,7 +4,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { StaticConfig } from 'src/common/interfaces';
 import { appConfig } from 'src/config';
-
 import type { StorageAdapter, StorageConfig } from '../interfaces';
 
 @Injectable()

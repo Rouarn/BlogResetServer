@@ -9,7 +9,6 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-
 import { FileType } from '../enums';
 
 export class FileUploadDto {

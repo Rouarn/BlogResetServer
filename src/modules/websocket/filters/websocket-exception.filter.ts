@@ -21,7 +21,6 @@ import { ArgumentsHost, Catch, ExceptionFilter, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { WsException } from '@nestjs/websockets';
 import type { Socket } from 'socket.io';
-
 import type { WebSocketError } from '../interfaces';
 
 /**

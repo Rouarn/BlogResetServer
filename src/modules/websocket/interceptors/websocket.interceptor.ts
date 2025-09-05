@@ -22,7 +22,6 @@ import { ConfigService } from '@nestjs/config';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import type { Socket } from 'socket.io';
-
 import type { WebSocketResponse, AuthenticatedSocket } from '../interfaces';
 
 /**

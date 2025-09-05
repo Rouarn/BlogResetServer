@@ -10,7 +10,6 @@ import type { Request } from 'express';
 import type { Observable } from 'rxjs';
 import type { Auth } from 'src/modules/auth/entities/auth.entity';
 import { WhitelistAuth } from 'src/utils';
-
 import { IS_PUBLIC_KEY } from '../decorators';
 
 /**

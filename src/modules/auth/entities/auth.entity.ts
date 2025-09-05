@@ -3,7 +3,7 @@ import { Exclude } from 'class-transformer';
 import { Status } from 'src/common/enums';
 import { BaseEntity } from 'src/database';
 import { BeforeInsert, Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { User } from '../../users/entities/user.entity';
+import { User } from '@/modules/users/entities/user.entity';
 
 /**
  * 认证实体

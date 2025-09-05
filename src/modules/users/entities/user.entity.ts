@@ -1,7 +1,7 @@
 import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntity } from 'src/database';
 import { Gender, Role } from 'src/common/enums';
-import { Auth } from '../../auth/entities/auth.entity';
+import { Auth } from '@/modules/auth/entities/auth.entity';
 
 /**
  * 用户信息实体

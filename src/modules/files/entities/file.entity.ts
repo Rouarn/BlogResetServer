@@ -1,6 +1,5 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntity } from 'src/database';
-
 import { FileStatus, FileType } from '../enums';
 import { UploadChunk } from './upload-chunk.entity';
 

@@ -11,7 +11,6 @@
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
-
 import { ICacheService, CacheOptions, CacheStats } from '../interfaces';
 
 @Injectable()

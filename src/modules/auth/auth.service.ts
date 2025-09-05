@@ -37,7 +37,6 @@ import type {
   ValidateTokenDto,
   ValidateTokenResponseDto,
 } from './dto/token.dto';
-
 import { User } from '../users/entities/user.entity';
 import { Auth } from './entities/auth.entity';
 

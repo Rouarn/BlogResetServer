@@ -1,5 +1,4 @@
 import { SetMetadata } from '@nestjs/common';
-
 import { AUTH_METADATA_KEYS } from '../constants/auth.constant';
 
 /**

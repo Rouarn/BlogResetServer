@@ -20,11 +20,9 @@
 import { Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-
 // WebSocket 核心组件
 import { WebSocketService } from './services/websocket.service';
 import { WebSocketGateway } from './websocket.gateway';
-
 // 守卫、过滤器和拦截器
 import { WebSocketExceptionFilter } from './filters/websocket-exception.filter';
 import { WebSocketAuthGuard } from './guards/websocket-auth.guard';

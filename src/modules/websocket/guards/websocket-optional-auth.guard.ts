@@ -20,7 +20,6 @@
 import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type { Socket } from 'socket.io';
-
 import type { AuthenticatedSocket } from '../interfaces';
 
 /**

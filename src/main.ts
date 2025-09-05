@@ -13,16 +13,13 @@ import { VersioningType } from '@nestjs/common'; // API版本控制类型
 import { NestFactory } from '@nestjs/core'; // NestJS应用工厂
 import type { NestExpressApplication } from '@nestjs/platform-express'; // Express应用类型定义
 import { IoAdapter } from '@nestjs/platform-socket.io'; // Socket.IO适配器
-
 // Swagger API文档模块
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-
 // 第三方依赖
 import cors from 'cors'; // 跨域资源共享中间件
 import * as fs from 'fs'; // 文件系统操作
 import * as path from 'path'; // 路径处理工具
 import { join } from 'path'; // 路径拼接工具
-
 // 应用模块和配置
 import { AppModule } from './app.module'; // 应用根模块
 import { appConfig } from './config'; // 应用配置服务

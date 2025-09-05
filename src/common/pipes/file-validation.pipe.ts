@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-
 import type { StaticConfig } from '../interfaces';
 
 /**

@@ -21,7 +21,6 @@ import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/commo
 import { JwtService } from '@nestjs/jwt';
 import { WsException } from '@nestjs/websockets';
 import type { Socket } from 'socket.io';
-
 import type { AuthenticatedSocket } from '../interfaces';
 
 /**
@@ -168,90 +167,6 @@ export class WebSocketAuthGuard implements CanActivate {
     } catch (error) {
       this.logger.error(`验证 JWT Token 失败: ${(error as Error).message}`);
       return null;
-    }
-  }
-
-  /**
-   * 验证用户权限（可扩展）
-   * @param userId 用户ID
-   * @param requiredRole 所需角色
-   * @returns 是否有权限
-   */
-  private async validateUserPermissions(userId: string, _requiredRole?: string): Promise<boolean> {
-    try {
-      // 这里可以添加更复杂的权限验证逻辑
-      // 例如：查询数据库验证用户状态、角色等
-
-      // 基础验证：用户ID 不能为空
-      if (!userId) {
-        return false;
-      }
-
-      // 如果需要特定角色，可以在这里验证
-      if (_requiredRole) {
-        // TODO: 实现角色验证逻辑
-        // const user = await this.userService.findById(userId);
-        // return user && user.role === requiredRole;
-      }
-
-      return true;
-    } catch (error) {
-      this.logger.error(`验证用户权限失败: ${(error as Error).message}`, (error as Error).stack);
-      return false;
-    }
-  }
-
-  /**
-   * 检查连接速率限制（可扩展）
-   * @param clientIp 客户端IP
-   * @returns 是否允许连接
-   */
-  private async checkRateLimit(_clientIp: string): Promise<boolean> {
-    try {
-      // 这里可以实现连接速率限制逻辑
-      // 例如：使用 Redis 记录连接频率
-
-      // 基础实现：总是允许（生产环境中应该实现真正的限流）
-      return true;
-    } catch (error) {
-      this.logger.error(
-        `检查连接速率限制失败: ${(error as Error).message}`,
-        (error as Error).stack,
-      );
-      return false;
-    }
-  }
-
-  /**
-   * 记录连接审计日志（可扩展）
-   * @param socket WebSocket 连接
-   * @param userId 用户ID
-   * @param success 是否成功
-   */
-  private logConnectionAttempt(socket: Socket, userId?: string, success: boolean = true): void {
-    try {
-      const logData = {
-        socketId: socket.id,
-        userId,
-        clientIp: socket.handshake.address,
-        userAgent: socket.handshake.headers['user-agent'],
-        timestamp: new Date().toISOString(),
-        success,
-      };
-
-      if (success) {
-        this.logger.log(`WebSocket 连接成功: ${JSON.stringify(logData)}`);
-      } else {
-        this.logger.warn(`WebSocket 连接失败: ${JSON.stringify(logData)}`);
-      }
-
-      // 这里可以将审计日志发送到外部系统
-      // 例如：发送到日志收集服务、安全监控系统等
-    } catch (error) {
-      this.logger.error(
-        `记录连接审计日志失败: ${(error as Error).message}`,
-        (error as Error).stack,
-      );
     }
   }
 }

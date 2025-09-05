@@ -2,7 +2,6 @@ import * as path from 'path';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { StaticConfig } from 'src/common/interfaces';
-
 import { StorageService } from './storage.service';
 import type {
   StorageAdapter,
