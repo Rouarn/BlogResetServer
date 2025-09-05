@@ -48,7 +48,7 @@ export class AppModule {}
 
 ```env
 # CORS 配置（WebSocket 使用全局 CORS 配置）
-NEST_CORS_ORIGINS=http://localhost:3000,http://localhost:9527
+NEST_CORS_ORIGINS=http://127.0.0.1:8848,http://localhost:9527
 
 # 注意：
 # - WebSocket 端口通常与主服务端口相同（NEST_PORT）
@@ -466,13 +466,11 @@ LOG_LEVEL=debug
 ### 常见问题排查
 
 1. **连接失败**
-
    - 检查端口是否正确 (默认 8848)
    - 确认 CORS 配置
    - 验证网络连接
 
 2. **认证失败**
-
    - 检查 JWT Token 是否有效
    - 确认 Token 格式正确
    - 验证用户权限
