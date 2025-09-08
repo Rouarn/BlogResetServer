@@ -38,8 +38,8 @@ import { DatabaseModule } from './database';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { FilesModule } from './modules/files/files.module';
-import { WebSocketModule } from './modules/websocket/websocket.module';
-import { CacheModule } from './modules/cache/cache.module';
+import { WebSocketModule } from './shared/websocket/websocket.module';
+import { CacheModule } from './shared/cache/cache.module';
 
 /**
  * 应用根模块配置

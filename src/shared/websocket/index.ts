@@ -10,13 +10,13 @@
  * 使用示例:
  * ```typescript
  * // 导入整个模块
- * import { WebSocketModule } from '@/modules/websocket';
+ * import { WebSocketModule } from '@/shared/websocket';
  *
- * // 导入特定组件
- * import { WebSocketService, WebSocketGateway } from '@/modules/websocket';
+ * // 导入服务和网关
+ * import { WebSocketService, WebSocketGateway } from '@/shared/websocket';
  *
  * // 导入类型定义
- * import type { WebSocketMessage, AuthenticatedSocket } from '@/modules/websocket';
+ * import type { WebSocketMessage, AuthenticatedSocket } from '@/shared/websocket';
  * ```
  *
  * @author NestJS Template

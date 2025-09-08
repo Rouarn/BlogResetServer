@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { CACHE_TOKENS } from 'src/common/constants';
-import { ICacheService } from 'src/modules/cache';
+import { ICacheService } from '@/shared/cache';
 import { WhitelistAuth, getCurrentTimestamp } from 'src/utils';
 
 /**

@@ -31,7 +31,7 @@ WebSocket 服务默认运行在 `ws://localhost:8848/ws` 端点（端口与主�
 #### 1. 模块导入
 
 ```typescript
-import { WebSocketModule } from './modules/websocket';
+import { WebSocketModule } from '@/shared/websocket';
 
 @Module({
   imports: [

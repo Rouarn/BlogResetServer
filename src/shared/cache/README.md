@@ -65,7 +65,7 @@ NEST_REDIS_ENABLED=false
 
 ```typescript
 import { Injectable } from '@nestjs/common';
-import { Cache } from '@/modules/cache';
+import { Cache } from '@/shared/cache';
 
 @Injectable()
 export class UserService {
@@ -153,7 +153,7 @@ export class UserService {
 
 ```typescript
 import { Injectable } from '@nestjs/common';
-import { ICacheService } from '@/modules/cache';
+import { ICacheService } from '@/shared/cache';
 
 @Injectable()
 export class UserService {
@@ -345,7 +345,7 @@ await this.cacheService.set('key', 'value', {
 ### 缓存工厂服务
 
 ```typescript
-import { CacheFactoryService } from '@/modules/cache';
+import { CacheFactoryService } from '@/shared/cache';
 
 @Injectable()
 export class MyService {

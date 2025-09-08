@@ -3,7 +3,7 @@ import { ConflictException, Inject, Injectable, NotFoundException } from '@nestj
 import { InjectRepository } from '@nestjs/typeorm';
 import { Status, isEnabled, toggleStatus, Role } from 'src/common/enums';
 import { Repository } from 'typeorm';
-import { Cache, CacheEvict, ICacheService } from '../cache';
+import { Cache, CacheEvict, ICacheService } from '@/shared/cache';
 import type { CreateUserDto } from './dto/create-user.dto';
 import type { BatchDeleteUserDto, UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';

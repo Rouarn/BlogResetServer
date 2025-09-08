@@ -14,7 +14,7 @@ import * as crypto from 'crypto';
 import { isEnabled } from 'src/common/enums';
 import * as svgCaptcha from 'svg-captcha';
 import { Repository } from 'typeorm';
-import { Cache, ICacheService } from '../cache';
+import { Cache, ICacheService } from '@/shared/cache';
 import { UsersService } from '../users/users.service';
 import type {
   CaptchaResponseDto,
