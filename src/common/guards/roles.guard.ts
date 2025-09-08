@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Role } from 'src/common/enums/index';
 import { ROLES_KEY } from '../decorators';
@@ -48,6 +48,10 @@ export class RolesGuard implements CanActivate {
       (user as { roles?: string[] })?.roles?.includes(role),
     );
 
-    return hasPermission;
+    if (!hasPermission) {
+      throw new ForbiddenException('权限不足，无法访问该资源');
+    }
+
+    return true;
   }
 }

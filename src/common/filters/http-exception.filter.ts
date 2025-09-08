@@ -63,7 +63,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     return {
       requestId: request.headers['x-request-id'] ?? generateUUID(),
       userId:
-        (request as Request & { user?: { id?: string } }).user?.id ??
+        (request as Request & { user?: { authId?: string } }).user?.authId ??
         request.headers['x-user-id'] ??
         'anonymous',
       userAgent: request.headers['user-agent'] ?? 'unknown',
@@ -97,27 +97,30 @@ export class HttpExceptionFilter implements ExceptionFilter {
   }
 
   /**
-   * 创建结构化日志
+   * 格式化请求参数
    */
-  private _createStructuredLog(
-    level: string,
-    status: number,
-    message: string,
-    context: Record<string, unknown>,
-    stack?: string,
-  ): string {
-    const logData = {
-      timestamp: formatTimestamp(),
-      level,
-      status,
-      message,
-      context,
-      stack: stack ?? null,
-      service: 'NestJS-Template',
-      environment: process.env.NODE_ENV ?? 'development',
-    };
+  private formatQueryParams(query: Record<string, unknown>): string {
+    const params: string[] = [];
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined && value !== null && value !== '') {
+        params.push(`${key}=${value}`);
+      } else if (value === '') {
+        params.push(`${key}=<empty>`);
+      }
+    }
+    return params.length > 0 ? `{${params.join(', ')}}` : '{}';
+  }
 
-    return JSON.stringify(logData, null, 2);
+  /**
+   * 格式化IP地址
+   */
+  private formatIpAddress(ip: string): string {
+    if (ip === 'unknown') return 'unknown';
+    // 简化IPv6映射的IPv4地址
+    if (ip.startsWith('::ffff:')) {
+      return ip.replace('::ffff:', '');
+    }
+    return ip;
   }
 
   /**
@@ -128,20 +131,50 @@ export class HttpExceptionFilter implements ExceptionFilter {
     context: Record<string, unknown>,
     status: number,
     message: string,
-    // structuredLog: string,
-    // stack?: string,
   ): void {
-    const logMessage = `[${level}] ${context.method} ${context.url} - ${status} - ${message}`;
-    const icons = {
-      CRITICAL: '💥',
-      ERROR: '❌',
-      WARNING: '⚠️',
-      INFO: 'ℹ️',
-      DEBUG: '🔍',
-    };
+    // 构建请求ID
+    const requestId = (context.requestId as string)?.substring(0, 8) || 'unknown';
 
-    const icon = icons[level as keyof typeof icons] ?? '🔍';
-    const formattedMessage = `${icon} ${logMessage}`;
+    // 获取用户信息
+    const userId = context.userId && context.userId !== 'anonymous' ? context.userId : 'anonymous';
+
+    // 获取IP信息
+    const formattedIp = this.formatIpAddress(context.ip as string);
+
+    // 获取请求参数
+    let queryParams = 'N/A';
+    if (context.query && Object.keys(context.query as object).length > 0) {
+      queryParams = this.formatQueryParams(context.query as Record<string, unknown>);
+    }
+
+    // 获取请求体信息
+    let requestBody = 'N/A';
+    if (
+      context.body &&
+      typeof context.body === 'object' &&
+      Object.keys(context.body).length > 0 &&
+      ['POST', 'PUT', 'PATCH'].includes(context.method as string)
+    ) {
+      const bodyStr = JSON.stringify(context.body);
+      requestBody = bodyStr.length > 80 ? `${bodyStr.substring(0, 80)}...` : bodyStr;
+    }
+
+    // 获取客户端信息
+    let clientInfo = 'Unknown';
+    if (context.userAgent && context.userAgent !== 'unknown') {
+      const ua = context.userAgent as string;
+
+      const browserMatch = ua.match(/(Chrome|Firefox|Safari|Edge)\/(\d+)/);
+      if (browserMatch) {
+        clientInfo = `${browserMatch[1]}/${browserMatch[2]}`;
+      } else if (ua.includes('Postman')) {
+        clientInfo = 'Postman';
+      } else if (ua.includes('curl')) {
+        clientInfo = 'curl';
+      } else if (ua.includes('axios')) {
+        clientInfo = 'axios';
+      }
+    }
 
     // 根据级别选择日志方法
     const logMethod =
@@ -153,21 +186,70 @@ export class HttpExceptionFilter implements ExceptionFilter {
         DEBUG: this.logger.debug.bind(this.logger),
       }[level] ?? this.logger.debug.bind(this.logger);
 
-    // 记录基本日志
-    logMethod(formattedMessage);
+    // 构建表格格式的日志
+    const tableWidth = 120; // 增加表格宽度
+    const separator = '─'.repeat(tableWidth);
+    const tableHeader = `┌${separator}┐`;
+    const tableFooter = `└${separator}┘`;
 
-    // 对于DEBUG级别，只记录简单信息
-    if (level === 'DEBUG') {
-      return;
-    }
+    const formatRow = (label: string, value: string): string[] => {
+      const labelWidth = 15; // 固定标签宽度
+      const valueWidth = tableWidth - labelWidth - 4; // 4 = '│ ' + ' │'
 
-    // 记录结构化日志
-    // logMethod(`📊 结构化日志: ${structuredLog}`);
+      // 处理长值的换行显示
+      if (value.length > valueWidth) {
+        const lines = [];
+        let remainingValue = value;
 
-    // 记录错误堆栈（仅对CRITICAL和ERROR级别）
-    // if (stack && (level === 'CRITICAL' || level === 'ERROR')) {
-    //   this.logger.error(`📚 错误堆栈:\n${stack}`);
-    // }
+        // 第一行
+        const firstLine = remainingValue.substring(0, valueWidth - 3) + '...';
+        const paddedLabel = label.padEnd(labelWidth);
+        lines.push(`│ ${paddedLabel} ${firstLine.padEnd(valueWidth)} │`);
+
+        // 如果还有更多内容，显示完整内容的多行
+        remainingValue = remainingValue.substring(valueWidth - 3);
+        while (remainingValue.length > 0) {
+          const chunk = remainingValue.substring(0, valueWidth);
+          const emptyLabel = ' '.repeat(labelWidth);
+          lines.push(`│ ${emptyLabel} ${chunk.padEnd(valueWidth)} │`);
+          remainingValue = remainingValue.substring(valueWidth);
+        }
+
+        return lines;
+      } else {
+        const paddedLabel = label.padEnd(labelWidth);
+        const paddedValue = value.padEnd(valueWidth);
+        return [`│ ${paddedLabel} ${paddedValue} │`];
+      }
+    };
+
+    // 记录表格格式的日志
+    logMethod('');
+    logMethod(tableHeader);
+
+    // 记录每个字段，处理可能的多行内容
+    const logRows = [
+      formatRow('Level', level),
+      formatRow('Request ID', requestId),
+      formatRow('Method', context.method as string),
+      formatRow('URL', context.url as string),
+      formatRow('Status', status.toString()),
+      formatRow('Message', message),
+      formatRow('User ID', userId.toString()),
+      formatRow('IP Address', formattedIp),
+      formatRow('Query Params', queryParams),
+      formatRow('Request Body', requestBody),
+      formatRow('Client', clientInfo),
+      formatRow('Timestamp', formatTimestamp()),
+    ];
+
+    // 输出所有行
+    logRows.forEach((rowLines) => {
+      rowLines.forEach((line) => logMethod(line));
+    });
+
+    logMethod(tableFooter);
+    logMethod('');
   }
 
   /**
@@ -179,6 +261,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
+    console.log('request: ', request);
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let messages: string[] = ['Internal server error'];
@@ -238,13 +321,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
     // 提取上下文信息
     const context = this.extractContext(request);
     const logLevel = this.getLogLevel(status, request.url);
-    // const stack = exception instanceof Error ? exception.stack : undefined;
-
-    // 创建结构化日志
-    // const structuredLog = this.createStructuredLog(logLevel, status, messages.join(', '), context, stack);
 
     // 记录日志
-    this.logError(logLevel, context, status, messages.join(', ') /**structuredLog, stack*/);
+    this.logError(logLevel, context, status, messages.join(', '));
 
     response.status(status).json(errorResponse);
   }
