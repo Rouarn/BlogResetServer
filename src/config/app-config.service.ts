@@ -3,12 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import type { ServeStaticOptions } from '@nestjs/platform-express/interfaces/serve-static-options.interface';
 import type { FileUploadOptions } from '../modules/files/interfaces';
 
-export interface UploadsConfig {
-  path: string;
-  maxSize: number;
-  allowedTypes: string[];
-}
-
 /**
  * 应用配置服务（AppConfigService）
  *

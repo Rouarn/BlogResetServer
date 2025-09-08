@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
+import { IsNotEmpty, IsString, Length } from 'class-validator';
 
 /**
  * 登录DTO
@@ -44,25 +44,6 @@ export class LoginDto {
   @IsNotEmpty({ message: '密码不能为空' })
   @Length(6, 50, { message: '密码长度必须在6-50个字符之间' })
   password: string;
-
-  @ApiPropertyOptional({
-    description: '验证码令牌',
-    example: 'captcha-token-123',
-  })
-  @IsOptional()
-  @IsString({ message: '验证码令牌必须是字符串' })
-  captchaToken?: string;
-
-  @ApiPropertyOptional({
-    description: '验证码',
-    example: 'ABCD',
-    minLength: 4,
-    maxLength: 6,
-  })
-  @IsOptional()
-  @IsString({ message: '验证码必须是字符串' })
-  @Length(4, 6, { message: '验证码长度必须在4-6个字符之间' })
-  captchaCode?: string;
 }
 
 /**

@@ -19,11 +19,10 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cors from 'cors'; // 跨域资源共享中间件
 import * as fs from 'fs'; // 文件系统操作
 import * as path from 'path'; // 路径处理工具
-import { join } from 'path'; // 路径拼接工具
 // 应用模块和配置
 import { AppModule } from './app.module'; // 应用根模块
-import { appConfig } from './config'; // 应用配置服务
 import { BootstrapLoggerService } from './common/services'; // 启动日志服务
+import { appConfig } from './config'; // 应用配置服务
 
 /**
  * 应用程序启动函数
@@ -67,10 +66,7 @@ async function bootstrap(): Promise<void> {
     const staticConfig = appConfig.staticAssetsOptions;
 
     // 处理静态资源路径解析
-    // 注意：__dirname在编译后指向dist/src，需要正确解析到项目根目录
-    const staticPath = staticConfig.root.startsWith('./')
-      ? join(__dirname, '..', staticConfig.root.substring(2)) // 相对路径：回到项目根目录
-      : join(__dirname, staticConfig.root); // 绝对路径：直接使用
+    const staticPath = path.join(__dirname, staticConfig.root);
 
     // 初始化启动日志服务并记录静态资源配置
     const bootstrapLogger = new BootstrapLoggerService();

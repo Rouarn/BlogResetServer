@@ -1,4 +1,5 @@
 import { CACHE_PREFIXES, CACHE_TOKENS, CACHE_TTL } from '@/common/constants';
+import { Cache, ICacheService } from '@/shared/cache';
 import {
   BadRequestException,
   ConflictException,
@@ -9,12 +10,12 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 import { isEnabled } from 'src/common/enums';
 import * as svgCaptcha from 'svg-captcha';
 import { Repository } from 'typeorm';
-import { Cache, ICacheService } from '@/shared/cache';
+import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import type {
   CaptchaResponseDto,
@@ -37,7 +38,6 @@ import type {
   ValidateTokenDto,
   ValidateTokenResponseDto,
 } from './dto/token.dto';
-import { User } from '../users/entities/user.entity';
 import { Auth } from './entities/auth.entity';
 
 /**
@@ -126,12 +126,12 @@ export class AuthService {
       where: { userName: loginDto.username },
       relations: ['user'],
     });
-
+    console.log(auth, 'auth');
     if (!auth) {
       // 记录登录失败尝试（可选：防止用户名枚举攻击）
       throw new UnauthorizedException('用户名或密码错误');
     }
-
+    console.log(auth.user, 'auth.user');
     // 检查账号是否被锁定
     if (auth.isLocked()) {
       if (auth.lockedAt) {
@@ -228,15 +228,10 @@ export class AuthService {
       throw new ConflictException('用户名已存在');
     }
 
-    // 生成盐值和密码哈希
-    const salt = await bcrypt.genSalt(12);
-    const hashedPassword = await bcrypt.hash(registerDto.password, salt);
-
-    // 创建认证记录
+    // 创建认证记录（密码将通过@BeforeInsert钩子自动加密）
     const auth = this.authRepository.create({
       userName: registerDto.username,
-      password: hashedPassword,
-      salt,
+      password: registerDto.password, // 原始密码，将被@BeforeInsert钩子加密
       isLocked: false,
       loginAttempts: 0,
     });
@@ -415,13 +410,14 @@ export class AuthService {
     }
 
     // 生成新的盐值和密码哈希
-    const salt = await bcrypt.genSalt(12);
-    const hashedPassword = await bcrypt.hash(changePasswordDto.newPassword, salt);
+    const salt = bcrypt.genSaltSync(10);
+    const hashedPassword = bcrypt.hashSync(changePasswordDto.newPassword, salt);
 
     // 更新密码
     await this.authRepository.update(authId, {
       password: hashedPassword,
       salt,
+      passwordChangedAt: new Date(),
     });
 
     // 清除相关缓存
@@ -464,8 +460,8 @@ export class AuthService {
     }
 
     // 生成新的盐值和密码哈希
-    const salt = await bcrypt.genSalt(12);
-    const hashedPassword = await bcrypt.hash(resetPasswordDto.newPassword, salt);
+    const salt = bcrypt.genSaltSync(10);
+    const hashedPassword = bcrypt.hashSync(resetPasswordDto.newPassword, salt);
 
     // 更新密码并解锁账号
     await this.authRepository.update(tokenData.authId, {
@@ -473,6 +469,7 @@ export class AuthService {
       salt,
       isLocked: false,
       loginAttempts: 0,
+      passwordChangedAt: new Date(),
     });
 
     // 清除重置令牌和相关缓存
