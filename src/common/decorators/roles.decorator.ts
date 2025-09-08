@@ -25,7 +25,7 @@ export const ROLES_KEY = 'roles';
  * ```typescript
  * @Get('admin-only')
  * @JwtAuth()
- * @Roles(Role.ADMIN, Role.SUPER)
+ * @Roles(Role.SYSTEM_ADMIN, Role.ORG_ADMIN)
  * getAdminData() {
  *   return { message: '仅管理员可访问' };
  * }

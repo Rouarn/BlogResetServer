@@ -16,7 +16,6 @@ import cors from 'cors';
 import * as fs from 'fs';
 import * as path from 'path';
 import { AppModule } from './app.module';
-
 import { BootstrapLoggerService } from './common/services';
 import { appConfig } from './config';
 

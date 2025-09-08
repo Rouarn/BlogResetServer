@@ -1,9 +1,9 @@
 import { CACHE_PREFIXES, CACHE_TOKENS, CACHE_TTL } from '@/common/constants';
+import { Cache, CacheEvict, ICacheService } from '@/shared/cache';
 import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Status, isEnabled, toggleStatus, Role } from 'src/common/enums';
+import { Role, Status, isEnabled, toggleStatus } from 'src/common/enums';
 import { Repository } from 'typeorm';
-import { Cache, CacheEvict, ICacheService } from '@/shared/cache';
 import type { CreateUserDto } from './dto/create-user.dto';
 import type { BatchDeleteUserDto, UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';

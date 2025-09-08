@@ -8,6 +8,7 @@
 - ✅ **类型安全**: 完全使用 TypeScript 开发
 - ✅ **数据库支持**: 集成 TypeORM，支持 MySQL
 - ✅ **身份认证**: JWT + Passport 认证体系
+- ✅ **角色权限**: 层级化角色系统，支持RBAC权限控制
 - ✅ **文件管理**: 完整的文件上传下载系统，支持分块上传、断点续传
 - ✅ **多协议支持**: HTTP 文件传输协议
 - ✅ **存储适配器**: 本地存储方案
@@ -581,6 +582,147 @@ nestjs-template/
 - **错误处理**：统一的错误响应格式
 - **API文档**：完整的 Swagger/OpenAPI 文档支持
 - **权限控制**：基于装饰器的权限验证机制
+
+### 🔑 用户角色系统 (src/common/enums/role.enum.ts)
+
+本项目重新设计了一套通用的用户角色系统，旨在提供灵活、可扩展且符合最佳实践的权限管理解决方案。新的角色系统适用于各种业务场景，具有良好的类型安全性和向后兼容性。
+
+#### 🎯 核心特性
+
+- **层级化权限设计**：基于数值的权限层级，便于权限比较和继承
+- **角色分组管理**：将角色按功能分组，便于管理和权限控制
+- **类型安全**：完整的 TypeScript 类型定义，编译时错误检查
+- **向后兼容**：保持与旧系统的兼容性，平滑迁移
+- **可扩展性**：易于添加新角色和权限级别
+- **最佳实践**：遵循 NestJS 和企业级应用的最佳实践
+
+#### 🏗️ 架构设计
+
+```
+角色系统架构
+├── Role (枚举) - 定义所有角色类型
+├── ROLE_HIERARCHY - 角色权限层级映射
+├── ROLE_CONFIG - 角色显示配置信息
+├── ROLE_GROUPS - 角色功能分组
+├── RoleUtils (工具类) - 角色操作方法
+└── 兼容性函数 - 向后兼容的函数导出
+```
+
+#### 角色定义
+
+**角色层级 (从高到低)**：
+
+| 角色 | 值 | 层级 | 描述 | 权限范围 |
+|------|----|----|------|----------|
+| SYSTEM_ADMIN | `system_admin` | 100 | 系统管理员 | 全系统 |
+| ORG_ADMIN | `org_admin` | 80 | 组织管理员 | 全系统 |
+| DEPT_ADMIN | `dept_admin` | 60 | 部门管理员 | 组织/部门级 |
+| PROJECT_ADMIN | `project_admin` | 50 | 项目管理员 | 组织/部门级 |
+| POWER_USER | `power_user` | 40 | 高级用户 | 个人级 |
+| USER | `user` | 20 | 标准用户 | 个人级 |
+| VIEWER | `viewer` | 10 | 只读用户 | 受限访问 |
+| GUEST | `guest` | 1 | 访客 | 受限访问 |
+
+**角色分组**：
+
+- **ADMIN**: 管理员组 (SYSTEM_ADMIN, ORG_ADMIN, DEPT_ADMIN, PROJECT_ADMIN)
+- **BUSINESS**: 业务用户组 (POWER_USER, USER)
+- **READONLY**: 只读用户组 (VIEWER, GUEST)
+
+#### 使用方法
+
+**基本使用**：
+
+```typescript
+import { Role, RoleUtils } from '@/common/enums/role.enum';
+
+// 角色验证
+const isValid = RoleUtils.isValidRole('system_admin'); // true
+
+// 获取角色信息
+const label = RoleUtils.getRoleLabel(Role.SYSTEM_ADMIN); // '系统管理员'
+const level = RoleUtils.getRoleLevel(Role.SYSTEM_ADMIN); // 100
+
+// 权限比较
+const canManage = RoleUtils.canManageRole(Role.ORG_ADMIN, Role.USER); // true
+const hasPermission = RoleUtils.hasPermission(Role.USER, Role.VIEWER); // true
+```
+
+**在控制器中使用**：
+
+```typescript
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Roles } from '@/common/decorators';
+import { Role } from '@/common/enums';
+import { JwtAuthGuard, RolesGuard } from '@/common/guards';
+
+@Controller('admin')
+@UseGuards(JwtAuthGuard, RolesGuard)
+export class AdminController {
+  @Get('users')
+  @Roles(Role.SYSTEM_ADMIN, Role.ORG_ADMIN)
+  getUsers() {
+    return '只有系统管理员和组织管理员可以访问';
+  }
+  
+  @Get('reports')
+  @Roles(Role.DEPT_ADMIN)
+  getReports() {
+    return '部门管理员及以上角色可以访问';
+  }
+}
+```
+
+**在服务中使用**：
+
+```typescript
+import { Injectable } from '@nestjs/common';
+import { Role, RoleUtils } from '@/common/enums/role.enum';
+
+@Injectable()
+export class UserService {
+  canEditUser(currentUserRole: Role, targetUserRole: Role): boolean {
+    return RoleUtils.canManageRole(currentUserRole, targetUserRole);
+  }
+  
+  getAssignableRoles(currentUserRole: Role): Role[] {
+    return RoleUtils.getManageableRoles(currentUserRole);
+  }
+}
+```
+
+#### RoleUtils 工具类主要方法
+
+- **验证和解析**：`isValidRole()`, `parseRole()`
+- **角色信息**：`getRoleLevel()`, `getRoleLabel()`, `getRoleDescription()`
+- **权限比较**：`compareRoles()`, `canManageRole()`, `hasPermission()`
+- **角色分组**：`isAdminRole()`, `isBusinessRole()`, `isReadOnlyRole()`
+- **角色关系**：`getManageableRoles()`, `getSuperiorRoles()`
+- **选项生成**：`getRoleOptions()`, `getGroupedRoleOptions()`
+
+#### 迁移指南
+
+**从旧系统迁移**：
+
+```typescript
+// 旧系统 → 新系统映射
+Role.SUPER → Role.SYSTEM_ADMIN
+Role.ADMIN → Role.ORG_ADMIN
+Role.USER → Role.USER
+
+// 函数调用保持不变（向后兼容）
+getRoleLabel(role) // 仍然可用
+canManageRole(roleA, roleB) // 仍然可用
+```
+
+**最佳实践**：
+
+- ✅ 使用工具方法进行权限检查，避免直接比较字符串
+- ✅ 检查管理权限后再进行角色分配
+- ✅ 使用角色选项生成器简化前端集成
+- ✅ 验证角色有效性，提供友好的错误处理
+
+📖 **完整文档**: 参考 `src/common/enums/role.example.ts` 查看详细使用示例
 
 ### 📁 文件管理模块 (src/modules/files)
 

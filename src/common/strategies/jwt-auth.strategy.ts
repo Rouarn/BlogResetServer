@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { Status } from 'src/common/enums';
+import { Status, Role } from 'src/common/enums';
 import { AuthService } from 'src/modules/auth/auth.service';
 
 /**
@@ -91,10 +91,12 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
       }
 
       // 返回标准化的认证信息
+      const userRoles = authInfo.user?.roles ? [authInfo.user.roles] : [Role.USER];
+      console.log('JWT Strategy - User roles:', userRoles, 'Type:', typeof userRoles[0]);
       return {
         authId: authInfo.id,
         username: authInfo.userName,
-        roles: [authInfo.user?.roles || 'USER'],
+        roles: userRoles,
         lastLoginAt: authInfo.lastLoginAt,
       };
     } catch (error) {

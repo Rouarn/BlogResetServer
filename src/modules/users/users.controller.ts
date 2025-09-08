@@ -1,35 +1,35 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
   Query,
   UseGuards,
-  HttpStatus,
 } from '@nestjs/common';
 import {
-  ApiTags,
+  ApiBearerAuth,
   ApiOperation,
-  ApiResponse,
   ApiParam,
   ApiQuery,
-  ApiBearerAuth,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard, RolesGuard } from 'src/common/guards';
 import { Roles } from 'src/common/decorators';
 import { Role } from 'src/common/enums';
-import { UsersService } from './users.service';
+import { JwtAuthGuard, RolesGuard } from 'src/common/guards';
 import { CreateUserDto } from './dto/create-user.dto';
 import {
-  UpdateUserDto,
   BatchDeleteUserDto,
-  ToggleUserStatusDto,
   QueryUserDto,
+  ToggleUserStatusDto,
+  UpdateUserDto,
 } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
+import { UsersService } from './users.service';
 
 /**
  * 用户控制器（UsersController）
@@ -67,7 +67,7 @@ export class UsersController {
    */
   @Post()
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER)
+  @Roles(Role.SYSTEM_ADMIN, Role.ORG_ADMIN)
   @ApiOperation({ summary: '创建用户', description: '创建新的用户资料' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -92,7 +92,7 @@ export class UsersController {
    */
   @Get()
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER)
+  @Roles(Role.SYSTEM_ADMIN, Role.ORG_ADMIN)
   @ApiOperation({ summary: '获取用户列表', description: '分页获取用户列表，支持筛选' })
   @ApiQuery({ name: 'current', required: false, description: '当前页码', example: 1 })
   @ApiQuery({ name: 'size', required: false, description: '每页数量', example: 10 })
@@ -168,7 +168,7 @@ export class UsersController {
    */
   @Delete(':id')
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER)
+  @Roles(Role.SYSTEM_ADMIN, Role.ORG_ADMIN)
   @ApiOperation({ summary: '删除用户', description: '删除指定用户' })
   @ApiParam({ name: 'id', description: '用户ID', example: 'uuid-123' })
   @ApiResponse({
@@ -195,7 +195,7 @@ export class UsersController {
    */
   @Post('batch-delete')
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER)
+  @Roles(Role.SYSTEM_ADMIN, Role.ORG_ADMIN)
   @ApiOperation({ summary: '批量删除用户', description: '批量删除多个用户' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -224,7 +224,7 @@ export class UsersController {
    */
   @Patch(':id/enable')
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER)
+  @Roles(Role.SYSTEM_ADMIN, Role.ORG_ADMIN)
   @ApiOperation({ summary: '启用用户', description: '启用指定用户账户' })
   @ApiParam({ name: 'id', description: '用户ID', example: 'uuid-123' })
   @ApiResponse({
@@ -246,7 +246,7 @@ export class UsersController {
    */
   @Patch(':id/disable')
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER)
+  @Roles(Role.SYSTEM_ADMIN, Role.ORG_ADMIN)
   @ApiOperation({ summary: '禁用用户', description: '禁用指定用户账户' })
   @ApiParam({ name: 'id', description: '用户ID', example: 'uuid-123' })
   @ApiResponse({
@@ -268,7 +268,7 @@ export class UsersController {
    */
   @Patch(':id/toggle-status')
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER)
+  @Roles(Role.SYSTEM_ADMIN, Role.ORG_ADMIN)
   @ApiOperation({ summary: '切换用户状态', description: '切换用户启用/禁用状态' })
   @ApiParam({ name: 'id', description: '用户ID', example: 'uuid-123' })
   @ApiResponse({
