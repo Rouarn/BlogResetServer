@@ -66,10 +66,16 @@ async function bootstrap(): Promise<void> {
     const staticConfig = appConfig.staticAssetsOptions;
 
     // 处理静态资源路径解析
-    // 统一使用相对于项目根目录的路径处理方式
-    const staticPath = path.isAbsolute(staticConfig.root)
-      ? staticConfig.root // 绝对路径：直接使用
-      : path.resolve(process.cwd(), staticConfig.root); // 相对路径：相对于项目根目录
+    // 开发环境：使用 dist/static，生产环境：使用项目根目录的 static
+    let staticPath: string;
+    if (path.isAbsolute(staticConfig.root)) {
+      staticPath = staticConfig.root; // 绝对路径：直接使用
+    } else {
+      // 相对路径处理：开发环境指向 dist 目录，生产环境指向项目根目录
+      const isDevelopment = process.env.NODE_ENV === 'development';
+      const baseDir = isDevelopment ? path.join(process.cwd(), 'dist') : process.cwd();
+      staticPath = path.resolve(baseDir, staticConfig.root);
+    }
 
     // 初始化启动日志服务并记录静态资源配置
     const bootstrapLogger = new BootstrapLoggerService();
@@ -99,7 +105,7 @@ async function bootstrap(): Promise<void> {
 
       // 导出API文档为JSON格式
       // 便于导入到Postman、Apifox等第三方API测试工具
-      const docsDir = path.join(__dirname, `${staticConfig.options.prefix}`);
+      const docsDir = staticPath;
       const apiDocPath = path.join(docsDir, 'api-docs.json');
 
       // 确保文档目录存在
