@@ -54,7 +54,7 @@ export const validationSchema = Joi.object({
     .default('development'),
 
   // 静态资源和文件上传统一配置
-  NEST_STATIC_ASSETS_PATH: Joi.string().default('./static'), // 静态资源存储路径
+  NEST_STATIC_ASSETS_DIR: Joi.string().default('./static'), // 静态资源存储路径
   NEST_STATIC_ASSETS_MAX_AGE: Joi.number().default(86400), // 24小时缓存
   NEST_STATIC_ASSETS_PREFIX: Joi.string().default('/static'), // 静态资源访问前缀
 

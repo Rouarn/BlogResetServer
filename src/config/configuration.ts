@@ -57,7 +57,7 @@ export default registerAs('app', () => ({
   // 静态资源和文件上传统一配置
   static: {
     root: process.env.NEST_STATIC_ASSETS_PATH ?? './static',
-    prefix: process.env.NEST_STATIC_ASSETS_PREFIX ?? './static',
+    prefix: process.env.NEST_STATIC_ASSETS_PREFIX ?? '/static',
     maxAge: process.env.NEST_STATIC_ASSETS_MAXAGE ?? 86400, // 24小时缓存
 
     // 文件上传配置

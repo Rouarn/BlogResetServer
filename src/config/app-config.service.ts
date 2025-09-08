@@ -119,7 +119,7 @@ export class AppConfigService {
     uploads: FileUploadOptions;
   } {
     return {
-      root: this.configService.get<string>('NEST_STATIC_ASSETS_PATH', './static'),
+      root: this.configService.get<string>('NEST_STATIC_ASSETS_DIR', './static'),
       options: {
         prefix: this.configService.get<string>('NEST_STATIC_ASSETS_PREFIX', '/static'),
         maxAge: this.configService.get<string>('NEST_STATIC_ASSETS_MAXAGE', '86400'),

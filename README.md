@@ -670,12 +670,12 @@ export class UserService {
   async getUserById(id: string): Promise<User> {
     const cacheKey = `user:${id}`;
     let user = await this.cacheService.get<User>(cacheKey);
-    
+
     if (!user) {
       user = await this.userRepository.findById(id);
       await this.cacheService.set(cacheKey, user, { ttl: 3600 });
     }
-    
+
     return user;
   }
 }
@@ -1888,7 +1888,7 @@ const swaggerConfig = appConfig.swaggerOptions;
 | `NEST_JWT_ACCESS_TOKEN_TTL` | JWT过期时间      | `7d`                                          | `1d`              |
 | `NEST_DATABASE_SYNCHRONIZE` | 数据库同步       | `true`                                        | 开发环境为 `true` |
 | `NEST_DATABASE_LOGGING`     | 数据库日志       | `true`                                        | `false`           |
-| `NEST_STATIC_ASSETS_PATH`   | 静态资源路径     | `./uploads`                                   | `./static`        |
+| `NEST_STATIC_ASSETS_DIR`    | 静态资源路径     | `./uploads`                                   | `./static`        |
 | `NEST_STATIC_ASSETS_URL`    | 静态资源URL前缀  | `/static`                                     | `/static`         |
 | `NEST_STATIC_ASSETS_MAXAGE` | 静态资源缓存时间 | `86400`                                       | `86400`           |
 | `NEST_CORS_ORIGINS`         | CORS允许的源     | `http://localhost:3000,http://localhost:9527` | 默认配置          |
@@ -1919,7 +1919,7 @@ NEST_JWT_SECRET=xiaji-dev-secret-key-2024
 NEST_JWT_ACCESS_TOKEN_TTL=7d
 
 # 静态资源配置
-NEST_STATIC_ASSETS_PATH=./static
+NEST_STATIC_ASSETS_DIR=./static
 NEST_STATIC_ASSETS_URL=/static
 NEST_STATIC_ASSETS_MAXAGE=86400
 
@@ -1955,7 +1955,7 @@ NEST_JWT_SECRET=your-very-strong-production-secret
 NEST_JWT_ACCESS_TOKEN_TTL=1d
 
 # 静态资源配置
-NEST_STATIC_ASSETS_PATH=/var/www/static
+NEST_STATIC_ASSETS_DIR=/var/www/static
 NEST_STATIC_ASSETS_URL=/static
 NEST_STATIC_ASSETS_MAXAGE=2592000
 
@@ -2081,7 +2081,7 @@ Files模块已经完全集成了项目的静态资源配置系统，确保文件
 #### 主要改进
 
 - ✅ **统一路径管理**: 使用`src/config`中的静态资源配置
-- ✅ **环境变量支持**: 通过`NEST_STATIC_ASSETS_PATH`配置存储路径
+- ✅ **环境变量支持**: 通过`NEST_STATIC_ASSETS_DIR`配置存储路径
 - ✅ **URL前缀配置**: 通过`NEST_STATIC_ASSETS_URL`配置访问路径
 - ✅ **缓存控制**: 支持静态资源缓存时间配置
 
@@ -2089,7 +2089,7 @@ Files模块已经完全集成了项目的静态资源配置系统，确保文件
 
 ```bash
 # 静态资源路径（文件存储位置）
-NEST_STATIC_ASSETS_PATH=./static
+NEST_STATIC_ASSETS_DIR=./static
 
 # 静态资源URL前缀（文件访问路径）
 NEST_STATIC_ASSETS_URL=/static

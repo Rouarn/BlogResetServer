@@ -66,7 +66,10 @@ async function bootstrap(): Promise<void> {
     const staticConfig = appConfig.staticAssetsOptions;
 
     // 处理静态资源路径解析
-    const staticPath = path.join(__dirname, staticConfig.root);
+    // 统一使用相对于项目根目录的路径处理方式
+    const staticPath = path.isAbsolute(staticConfig.root)
+      ? staticConfig.root // 绝对路径：直接使用
+      : path.resolve(process.cwd(), staticConfig.root); // 相对路径：相对于项目根目录
 
     // 初始化启动日志服务并记录静态资源配置
     const bootstrapLogger = new BootstrapLoggerService();
