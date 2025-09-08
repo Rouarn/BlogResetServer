@@ -56,10 +56,7 @@ export default registerAs('app', () => ({
 
   // 静态资源和文件上传统一配置
   static: {
-    // 根据环境自动设置静态资源根目录
-    // 开发环境: ./dist/static (便于开发调试)
-    // 生产环境: ./static (项目根目录)
-    root: process.env.NEST_USER_NODE_ENV === 'development' ? './dist/static' : './static',
+    root: process.env.NEST_STATIC_ASSETS_PATH ?? './static',
     prefix: process.env.NEST_STATIC_ASSETS_PREFIX ?? './static',
     maxAge: process.env.NEST_STATIC_ASSETS_MAXAGE ?? 86400, // 24小时缓存
 

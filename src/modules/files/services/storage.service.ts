@@ -1,7 +1,7 @@
-import * as fs from 'fs/promises';
-import * as path from 'path';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 import type { StaticConfig } from 'src/common/interfaces';
 import { appConfig } from 'src/config';
 import type { StorageAdapter, StorageConfig } from '../interfaces';
@@ -86,11 +86,10 @@ export class StorageService implements StorageAdapter {
 
   getUrl(relativePath: string): string {
     const baseUrl = this.configService.get('NEST_BASE_URL', 'http://localhost:3000');
-    const port = this.configService.get('NEST_PORT', 3000);
 
     const staticConfig = appConfig.staticAssetsOptions;
     // 使用静态资源URL前缀构建访问地址，添加uploads子目录
-    return `${baseUrl}:${port}${staticConfig.uploads.prefix}/${relativePath}`;
+    return `${baseUrl}${staticConfig.uploads.prefix}/${relativePath}`;
   }
 
   async getFileStats(relativePath: string): Promise<{ size: number; mtime: Date } | null> {
