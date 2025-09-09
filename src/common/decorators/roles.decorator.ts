@@ -16,7 +16,6 @@ export const ROLES_KEY = 'roles';
  * - 在路由元数据中设置所需的角色列表
  * - RolesGuard 会检查当前用户是否拥有其中任意一个角色
  * - 支持同时指定多个角色，用户拥有其中任意一个即可访问
- * - 需要配合 RolesGuard 和 JwtAuthGuard 一起使用
  *
  * 依赖项：
  * - Role: 角色枚举类型
@@ -24,7 +23,6 @@ export const ROLES_KEY = 'roles';
  * 用法示例：
  * ```typescript
  * @Get('admin-only')
- * @JwtAuth()
  * @Roles(Role.SYSTEM_ADMIN, Role.ORG_ADMIN)
  * getAdminData() {
  *   return { message: '仅管理员可访问' };
