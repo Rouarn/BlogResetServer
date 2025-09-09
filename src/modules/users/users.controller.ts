@@ -20,7 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators';
 import { Role } from 'src/common/enums';
-import { JwtAuthGuard, RolesGuard } from 'src/common/guards';
+import { RolesGuard } from 'src/common/guards';
 import { CreateUserDto } from './dto/create-user.dto';
 import {
   BatchDeleteUserDto,
@@ -56,7 +56,6 @@ import { UsersService } from './users.service';
  */
 @ApiTags('用户管理')
 @Controller('users')
-@UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -66,7 +65,6 @@ export class UsersController {
    * 仅管理员可操作
    */
   @Post()
-  @UseGuards(RolesGuard)
   @Roles(Role.SYSTEM_ADMIN, Role.ORG_ADMIN)
   @ApiOperation({ summary: '创建用户', description: '创建新的用户资料' })
   @ApiResponse({
