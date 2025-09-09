@@ -56,10 +56,10 @@ export class CacheFactoryService implements OnModuleDestroy {
 
     return {
       type: redisEnabled ? CacheServiceType.REDIS : CacheServiceType.MEMORY,
-      enabled: this.configService.get<boolean>('app.cache.enabled', true),
-      defaultTtl: this.configService.get<number>('app.cache.defaultTtl', 3600),
-      keyPrefix: this.configService.get<string>('app.cache.keyPrefix', 'app:cache:'),
-      maxSize: this.configService.get<number>('app.cache.maxSize', 1000),
+      enabled: this.configService.get<boolean>('app.redis.cache.enabled', true),
+      defaultTtl: this.configService.get<number>('app.redis.cache.defaultTtl', 3600),
+      keyPrefix: this.configService.get<string>('app.redis.cache.keyPrefix', 'app:cache:'),
+      maxSize: this.configService.get<number>('app.redis.cache.maxSize', 1000),
     };
   }
 
