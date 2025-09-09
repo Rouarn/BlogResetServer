@@ -1,4 +1,5 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { BusinessExceptionFactory } from '@/common/exceptions';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
@@ -74,7 +75,7 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
     try {
       // 验证载荷必要字段
       if (!payload.sub || !payload.username) {
-        throw new UnauthorizedException('无效的令牌载荷');
+        throw BusinessExceptionFactory.forbidden('令牌验证', { reason: '无效的令牌载荷', payload });
       }
 
       // 通过认证服务获取完整的用户认证信息
@@ -82,12 +83,18 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
 
       // 检查认证状态
       if (!authInfo || authInfo.status !== Status.ENABLED) {
-        throw new UnauthorizedException('账号已被禁用或不存在');
+        throw BusinessExceptionFactory.forbidden('账号访问', {
+          reason: '账号已被禁用或不存在',
+          authId: payload.sub,
+        });
       }
 
       // 检查账号是否被锁定
       if (authInfo.isLocked()) {
-        throw new UnauthorizedException('账号已被锁定');
+        throw BusinessExceptionFactory.forbidden('账号访问', {
+          reason: '账号已被锁定',
+          authId: payload.sub,
+        });
       }
 
       // 返回标准化的认证信息
@@ -101,10 +108,13 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
       };
     } catch (error) {
       // 统一异常处理
-      if (error instanceof UnauthorizedException) {
+      if (error instanceof Error && error.name === 'BusinessException') {
         throw error;
       }
-      throw new UnauthorizedException('令牌验证失败');
+      throw BusinessExceptionFactory.forbidden('令牌验证', {
+        reason: '令牌验证失败',
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 }

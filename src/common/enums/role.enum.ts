@@ -147,7 +147,12 @@ export class RoleUtils {
   /**
    * 获取角色配置信息
    */
-  static getRoleConfig(role: Role) {
+  static getRoleConfig(role: Role): {
+    label: string;
+    description: string;
+    color: string;
+    icon?: string;
+  } {
     return (
       ROLE_CONFIG[role] ?? {
         label: '未知角色',
@@ -275,7 +280,19 @@ export class RoleUtils {
   /**
    * 获取角色选项列表（用于表单选择）
    */
-  static getRoleOptions(includeGroups: RoleGroup[] = ['ADMIN', 'BUSINESS', 'READONLY']) {
+  static getRoleOptions(includeGroups: RoleGroup[] = ['ADMIN', 'BUSINESS', 'READONLY']): {
+    value: Role;
+    label: string;
+    description: string;
+    level: number;
+    group: RoleGroup | null;
+    config: {
+      label: string;
+      description: string;
+      color: string;
+      icon?: string;
+    };
+  }[] {
     const allowedRoles = includeGroups.flatMap((group) => ROLE_GROUPS[group]);
 
     return allowedRoles
@@ -293,7 +310,22 @@ export class RoleUtils {
   /**
    * 获取分组的角色选项
    */
-  static getGroupedRoleOptions() {
+  static getGroupedRoleOptions(): Record<
+    string,
+    {
+      value: Role;
+      label: string;
+      description: string;
+      level: number;
+      group: RoleGroup | null;
+      config: {
+        label: string;
+        description: string;
+        color: string;
+        icon?: string;
+      };
+    }[]
+  > {
     const options = this.getRoleOptions();
     const grouped: Record<string, typeof options> = {};
 
@@ -332,18 +364,24 @@ export class RoleUtils {
  * 角色装饰器工厂
  * 用于方法级别的角色权限控制
  */
-export function RequireRole(minRole: Role) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
-    const originalMethod = descriptor.value;
+export function RequireRole(minRole: Role): MethodDecorator {
+  return function (
+    target: object,
+    propertyKey: string | symbol | undefined,
+    descriptor: PropertyDescriptor,
+  ) {
+    const originalMethod = descriptor.value as (...args: unknown[]) => unknown;
 
-    descriptor.value = function (...args: any[]) {
+    descriptor.value = function (...args: unknown[]) {
       // 这里可以添加权限检查逻辑
       // 实际实现需要结合具体的认证系统
       return originalMethod.apply(this, args);
     };
 
     // 存储元数据供其他装饰器或守卫使用
-    Reflect.defineMetadata('minRole', minRole, target, propertyKey);
+    if (propertyKey) {
+      Reflect.defineMetadata('minRole', minRole, target, propertyKey);
+    }
   };
 }
 

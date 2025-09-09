@@ -1,13 +1,7 @@
 import { CACHE_PREFIXES, CACHE_TOKENS, CACHE_TTL } from '@/common/constants';
 import { Cache, ICacheService } from '@/shared/cache';
-import {
-  BadRequestException,
-  ConflictException,
-  Inject,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { BusinessExceptionFactory } from '@/common/exceptions';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
@@ -129,7 +123,7 @@ export class AuthService {
     console.log(auth, 'auth');
     if (!auth) {
       // 记录登录失败尝试（可选：防止用户名枚举攻击）
-      throw new UnauthorizedException('用户名或密码错误');
+      throw BusinessExceptionFactory.forbidden('登录', { username: loginDto.username });
     }
     console.log(auth.user, 'auth.user');
     // 检查账号是否被锁定
@@ -137,7 +131,10 @@ export class AuthService {
       if (auth.lockedAt) {
         const lockTime = new Date(auth.lockedAt.getTime() + 30 * 60 * 1000); // 30分钟锁定
         if (new Date() < lockTime) {
-          throw new BadRequestException(`账号已被锁定，请在 ${lockTime.toLocaleString()} 后重试`);
+          throw BusinessExceptionFactory.systemBusy({
+            lockTime: lockTime.toLocaleString(),
+            reason: '账号被锁定',
+          });
         } else {
           // 锁定时间已过，解锁账号
           await this.unlockAccount(auth.id);
@@ -160,15 +157,20 @@ export class AuthService {
       // 检查是否需要锁定账号（5次失败后锁定）
       if (auth.loginAttempts + 1 >= 5) {
         await this.lockAccount(auth.id);
-        throw new BadRequestException('登录失败次数过多，账号已被锁定30分钟');
+        throw BusinessExceptionFactory.systemBusy({
+          reason: '登录失败次数过多，账号已被锁定30分钟',
+        });
       }
 
-      throw new UnauthorizedException('用户名或密码错误');
+      throw BusinessExceptionFactory.forbidden('登录', { username: loginDto.username });
     }
 
     // 检查认证状态
     if (!isEnabled(auth.status)) {
-      throw new UnauthorizedException('用户已被禁用');
+      throw BusinessExceptionFactory.forbidden('访问', {
+        reason: '用户已被禁用',
+        username: loginDto.username,
+      });
     }
 
     // 登录成功，重置登录失败次数
@@ -225,7 +227,7 @@ export class AuthService {
     });
 
     if (existingAuth) {
-      throw new ConflictException('用户名已存在');
+      throw BusinessExceptionFactory.conflict('用户名已存在', { username: registerDto.username });
     }
 
     // 创建认证记录（密码将通过@BeforeInsert钩子自动加密）
@@ -395,7 +397,7 @@ export class AuthService {
   ): Promise<{ message: string }> {
     const auth = await this.authRepository.findOne({ where: { id: authId } });
     if (!auth) {
-      throw new NotFoundException('认证记录不存在');
+      throw BusinessExceptionFactory.notFound('认证记录', { authId });
     }
 
     // 验证旧密码
@@ -406,7 +408,7 @@ export class AuthService {
     );
 
     if (!isOldPasswordValid) {
-      throw new UnauthorizedException('旧密码错误');
+      throw BusinessExceptionFactory.forbidden('密码修改', { reason: '旧密码错误' });
     }
 
     // 生成新的盐值和密码哈希
@@ -444,19 +446,19 @@ export class AuthService {
     }>(`${CACHE_PREFIXES.RESET_TOKEN}:${resetPasswordDto.resetToken}`);
 
     if (!tokenData) {
-      throw new BadRequestException('重置令牌无效或已过期');
+      throw BusinessExceptionFactory.invalidParameter('重置令牌', { reason: '无效或已过期' });
     }
 
     // 检查令牌是否过期（30分钟有效期）
     const now = Date.now();
     if (now - tokenData.timestamp > 30 * 60 * 1000) {
       await this.cacheService.del(`${CACHE_PREFIXES.RESET_TOKEN}:${resetPasswordDto.resetToken}`);
-      throw new BadRequestException('重置令牌已过期');
+      throw BusinessExceptionFactory.invalidParameter('重置令牌', { reason: '已过期' });
     }
 
     // 验证用户名是否匹配
     if (tokenData.username !== resetPasswordDto.username) {
-      throw new BadRequestException('用户名与重置令牌不匹配');
+      throw BusinessExceptionFactory.invalidParameter('用户名', { reason: '与重置令牌不匹配' });
     }
 
     // 生成新的盐值和密码哈希
@@ -509,7 +511,7 @@ export class AuthService {
     // 从缓存中验证刷新令牌
     const authId = await this.validateRefreshToken(refreshToken);
     if (!authId) {
-      throw new UnauthorizedException('刷新令牌无效或已过期');
+      throw BusinessExceptionFactory.forbidden('令牌刷新', { reason: '刷新令牌无效或已过期' });
     }
 
     // 获取认证信息
@@ -519,16 +521,16 @@ export class AuthService {
     });
 
     if (!auth) {
-      throw new UnauthorizedException('认证记录不存在');
+      throw BusinessExceptionFactory.notFound('认证记录', { authId });
     }
 
     // 检查账号状态
     if (auth.isLocked()) {
-      throw new UnauthorizedException('账号已被锁定');
+      throw BusinessExceptionFactory.forbidden('访问', { reason: '账号已被锁定', authId });
     }
 
     if (!isEnabled(auth.status)) {
-      throw new UnauthorizedException('用户已被禁用');
+      throw BusinessExceptionFactory.forbidden('访问', { reason: '用户已被禁用', authId });
     }
 
     // 生成新的访问令牌
@@ -763,7 +765,7 @@ export class AuthService {
       relations: ['user'],
     });
     if (!auth) {
-      throw new NotFoundException('认证记录不存在');
+      throw BusinessExceptionFactory.notFound('认证记录', { authId });
     }
     return auth;
   }

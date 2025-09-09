@@ -1,9 +1,5 @@
-import {
-  ExecutionContext,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { ExecutionContext, Injectable } from '@nestjs/common';
+import { BusinessExceptionFactory } from '@/common/exceptions';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import type { Request } from 'express';
@@ -75,12 +71,13 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
    * @param user 验证通过后的用户对象
    * @param info 验证失败时的错误信息
    * @returns 认证通过的用户对象
-   * @throws UnauthorizedException token 校验失败
-   * @throws NotFoundException 用户不存在
+   * @throws BusinessException token 校验失败
+   * @throws BusinessException 用户不存在
    */
   handleRequest<TUser = Auth>(error: Error, user: Auth, info: unknown): TUser {
-    if (info || error) throw new UnauthorizedException('token校验失败');
-    if (typeof user !== 'object') throw new NotFoundException('用户不存在');
+    if (info || error)
+      throw BusinessExceptionFactory.forbidden('token校验', { error: error?.message, info });
+    if (typeof user !== 'object') throw BusinessExceptionFactory.notFound('用户', { user });
 
     return user as TUser;
   }

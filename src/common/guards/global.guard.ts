@@ -1,11 +1,5 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Inject,
-  Injectable,
-  Logger,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Inject, Injectable, Logger } from '@nestjs/common';
+import { BusinessExceptionFactory } from '@/common/exceptions';
 import type { Request } from 'express';
 import { CACHE_TOKENS } from 'src/common/constants';
 import { ICacheService } from '@/shared/cache';
@@ -199,11 +193,12 @@ export class GlobalGuard implements CanActivate {
           duration: Math.round((now - stored.firstRequestTime) / 1000),
         });
 
-        throw new UnauthorizedException({
+        throw BusinessExceptionFactory.systemBusy({
           message: '请求过于频繁，请稍后再试',
-          error: 'Too Many Requests',
-          statusCode: 429,
+          currentCount: stored.count,
+          limit,
           retryAfter: Math.ceil((stored.resetTime - now) / 1000),
+          ip,
         });
       }
 

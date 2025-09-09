@@ -1,6 +1,7 @@
 import { CACHE_PREFIXES, CACHE_TOKENS, CACHE_TTL } from '@/common/constants';
+import { BusinessExceptionFactory } from '@/common/exceptions';
 import { Cache, CacheEvict, ICacheService } from '@/shared/cache';
-import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role, Status, isEnabled, toggleStatus } from 'src/common/enums';
 import { Repository } from 'typeorm';
@@ -51,7 +52,7 @@ export class UsersService {
         where: { email: createUserDto.email },
       });
       if (existingUser) {
-        throw new ConflictException('邮箱已被使用');
+        throw BusinessExceptionFactory.conflict('邮箱已被使用', { email: createUserDto.email });
       }
     }
 
@@ -103,7 +104,7 @@ export class UsersService {
       relations: ['auth'],
     });
     if (!user) {
-      throw new NotFoundException('用户不存在');
+      throw BusinessExceptionFactory.notFound('用户', { id });
     }
     return user;
   }
@@ -159,7 +160,10 @@ export class UsersService {
         where: { email: updateUserDto.email },
       });
       if (existingUser && existingUser.id !== id) {
-        throw new ConflictException('邮箱已被使用');
+        throw BusinessExceptionFactory.conflict('邮箱已被使用', {
+          email: updateUserDto.email,
+          userId: id,
+        });
       }
     }
 
@@ -204,7 +208,7 @@ export class UsersService {
 
     const users = await this.userRepository.findByIds(ids);
     if (users.length === 0) {
-      throw new NotFoundException('未找到要删除的用户');
+      throw BusinessExceptionFactory.notFound('要删除的用户', { ids });
     }
 
     await this.userRepository.remove(users);
@@ -226,7 +230,7 @@ export class UsersService {
     const user = await this.findById(id);
 
     if (!user.auth) {
-      throw new NotFoundException('用户认证信息不存在');
+      throw BusinessExceptionFactory.notFound('用户认证信息', { userId: id });
     }
 
     // 更新认证状态

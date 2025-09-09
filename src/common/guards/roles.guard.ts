@@ -1,4 +1,5 @@
-import { CanActivate, ExecutionContext, Injectable, ForbiddenException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { BusinessExceptionFactory } from '@/common/exceptions';
 import { Reflector } from '@nestjs/core';
 import { Role } from 'src/common/enums/index';
 import { ROLES_KEY } from '../decorators';
@@ -41,15 +42,16 @@ export class RolesGuard implements CanActivate {
     if (!requiredRoles) {
       return true;
     }
-    const request = context.switchToHttp().getRequest();
-    const { user } = request;
+    const request = context.switchToHttp().getRequest<{ user?: { roles?: string[] } }>();
+    const user = request.user;
 
-    const hasPermission = requiredRoles.some((role) =>
-      (user as { roles?: string[] })?.roles?.includes(role),
-    );
+    const hasPermission = requiredRoles.some((role) => user?.roles?.includes(role));
 
     if (!hasPermission) {
-      throw new ForbiddenException('权限不足，无法访问该资源');
+      throw BusinessExceptionFactory.forbidden('资源访问', {
+        requiredRoles,
+        userRoles: user?.roles,
+      });
     }
 
     return true;

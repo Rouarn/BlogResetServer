@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
+import { Injectable, PipeTransform } from '@nestjs/common';
+import { BusinessExceptionFactory } from '@/common/exceptions';
 import { ConfigService } from '@nestjs/config';
 import type { StaticConfig } from '../interfaces';
 
@@ -42,25 +43,32 @@ export class FileValidationPipe implements PipeTransform {
    */
   transform(file: Express.Multer.File): Express.Multer.File {
     if (!file) {
-      throw new BadRequestException('文件不能为空');
+      throw BusinessExceptionFactory.invalidParameter('文件', { reason: '文件不能为空' });
     }
 
     // 验证文件大小
     const staticConfig = this.configService.get<StaticConfig>('app.static');
 
     if (!staticConfig?.upload) {
-      throw new BadRequestException('文件上传配置未找到');
+      throw BusinessExceptionFactory.systemBusy({ reason: '文件上传配置未找到' });
     }
 
     const maxSize = staticConfig.upload.maxFileSize;
     if (file.size > maxSize) {
-      throw new BadRequestException(`文件大小超出限制，最大允许 ${maxSize / 1024 / 1024}MB`);
+      throw BusinessExceptionFactory.invalidParameter('文件大小', {
+        fileSize: file.size,
+        maxSize,
+        maxSizeMB: maxSize / 1024 / 1024,
+      });
     }
 
     // 验证文件类型
     const allowedTypes = staticConfig.upload.allowedTypes;
     if (allowedTypes.length > 0 && !allowedTypes.includes(file.mimetype)) {
-      throw new BadRequestException(`不支持的文件类型: ${file.mimetype}`);
+      throw BusinessExceptionFactory.invalidParameter('文件类型', {
+        fileType: file.mimetype,
+        allowedTypes,
+      });
     }
 
     return file;
@@ -107,18 +115,21 @@ export class FilesValidationPipe implements PipeTransform {
    */
   transform(files: Express.Multer.File[]): Express.Multer.File[] {
     if (!files || files.length === 0) {
-      throw new BadRequestException('文件列表不能为空');
+      throw BusinessExceptionFactory.invalidParameter('文件列表', { reason: '文件列表不能为空' });
     }
 
     const staticConfig = this.configService.get<StaticConfig>('app.static');
 
     if (!staticConfig?.upload) {
-      throw new BadRequestException('文件上传配置未找到');
+      throw BusinessExceptionFactory.systemBusy({ reason: '文件上传配置未找到' });
     }
 
     const maxFiles = staticConfig.upload.maxBatchFiles;
     if (files.length > maxFiles) {
-      throw new BadRequestException(`批量上传文件数量超出限制，最大允许 ${maxFiles} 个文件`);
+      throw BusinessExceptionFactory.invalidParameter('文件数量', {
+        fileCount: files.length,
+        maxFiles,
+      });
     }
 
     const fileValidationPipe = new FileValidationPipe(this.configService);
