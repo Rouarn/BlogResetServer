@@ -100,15 +100,66 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * 格式化请求参数
    */
   private formatQueryParams(query: Record<string, unknown>): string {
+    if (!query || Object.keys(query).length === 0) {
+      return 'N/A';
+    }
+
     const params: string[] = [];
     for (const [key, value] of Object.entries(query)) {
-      if (value !== undefined && value !== null && value !== '') {
-        params.push(`${key}=${value}`);
-      } else if (value === '') {
+      if (value === '' || value === null || value === undefined) {
         params.push(`${key}=<empty>`);
+      } else {
+        params.push(`${key}=${String(value)}`);
       }
     }
-    return params.length > 0 ? `{${params.join(', ')}}` : '{}';
+    return params.length > 0 ? params.join(', ') : 'N/A';
+  }
+
+  /**
+   * 格式化请求体
+   */
+  private formatRequestBody(body: unknown): string {
+    if (!body || typeof body !== 'object' || Object.keys(body).length === 0) {
+      return 'N/A';
+    }
+
+    try {
+      const jsonString = JSON.stringify(body, null, 2);
+      if (jsonString.length > 300) {
+        return jsonString.substring(0, 300) + '...';
+      }
+      return jsonString;
+    } catch {
+      return String(body).substring(0, 300);
+    }
+  }
+
+  /**
+   * 格式化表格行
+   */
+  private formatRow(label: string, value: string, maxContentLength: number = 80): string[] {
+    const labelWidth = 15;
+    const paddedLabel = label.padEnd(labelWidth);
+
+    if (value.length <= maxContentLength) {
+      return [`│ ${paddedLabel}  ${value}`];
+    }
+
+    const lines = [];
+    let remaining = value;
+
+    while (remaining.length > 0) {
+      const chunk = remaining.substring(0, maxContentLength);
+      remaining = remaining.substring(maxContentLength);
+
+      if (lines.length === 0) {
+        lines.push(`│ ${paddedLabel}  ${chunk}`);
+      } else {
+        lines.push(`│ ${' '.repeat(labelWidth)}  ${chunk}`);
+      }
+    }
+
+    return lines;
   }
 
   /**
@@ -141,23 +192,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
     // 获取IP信息
     const formattedIp = this.formatIpAddress(context.ip as string);
 
-    // 获取请求参数
-    let queryParams = 'N/A';
-    if (context.query && Object.keys(context.query as object).length > 0) {
-      queryParams = this.formatQueryParams(context.query as Record<string, unknown>);
-    }
-
-    // 获取请求体信息
-    let requestBody = 'N/A';
-    if (
-      context.body &&
-      typeof context.body === 'object' &&
-      Object.keys(context.body).length > 0 &&
-      ['POST', 'PUT', 'PATCH'].includes(context.method as string)
-    ) {
-      const bodyStr = JSON.stringify(context.body);
-      requestBody = bodyStr.length > 80 ? `${bodyStr.substring(0, 80)}...` : bodyStr;
-    }
+    // 获取请求参数和请求体信息
+    const queryParams = this.formatQueryParams(context.query as Record<string, unknown>);
+    const requestBody = ['POST', 'PUT', 'PATCH'].includes(context.method as string)
+      ? this.formatRequestBody(context.body)
+      : 'N/A';
 
     // 获取客户端信息
     let clientInfo = 'Unknown';
@@ -186,67 +225,54 @@ export class HttpExceptionFilter implements ExceptionFilter {
         DEBUG: this.logger.debug.bind(this.logger),
       }[level] ?? this.logger.debug.bind(this.logger);
 
-    // 构建表格格式的日志
-    const tableWidth = 120; // 增加表格宽度
+    // 构建表格格式的日志 - 动态计算最佳宽度
+    const allValues = [
+      level,
+      requestId,
+      context.method as string,
+      context.url as string,
+      String(status),
+      message,
+      String(userId),
+      formattedIp,
+      queryParams,
+      requestBody,
+      clientInfo,
+      formatTimestamp(),
+    ];
+
+    // 找到最长的内容，但限制最大宽度避免过宽
+    const maxContentLength = Math.min(
+      Math.max(...allValues.map((v) => v.length), 40), // 最小40字符
+      100, // 最大100字符
+    );
+
+    const tableWidth = 15 + maxContentLength + 5; // label宽度 + 内容宽度 + 边框和空格
     const separator = '─'.repeat(tableWidth);
-    const tableHeader = `┌${separator}┐`;
-    const tableFooter = `└${separator}┘`;
-
-    const formatRow = (label: string, value: string): string[] => {
-      const labelWidth = 15; // 固定标签宽度
-      const valueWidth = tableWidth - labelWidth - 4; // 4 = '│ ' + ' │'
-
-      // 处理长值的换行显示
-      if (value.length > valueWidth) {
-        const lines = [];
-        let remainingValue = value;
-
-        // 第一行
-        const firstLine = remainingValue.substring(0, valueWidth - 3) + '...';
-        const paddedLabel = label.padEnd(labelWidth);
-        lines.push(`│ ${paddedLabel} ${firstLine.padEnd(valueWidth)} │`);
-
-        // 如果还有更多内容，显示完整内容的多行
-        remainingValue = remainingValue.substring(valueWidth - 3);
-        while (remainingValue.length > 0) {
-          const chunk = remainingValue.substring(0, valueWidth);
-          const emptyLabel = ' '.repeat(labelWidth);
-          lines.push(`│ ${emptyLabel} ${chunk.padEnd(valueWidth)} │`);
-          remainingValue = remainingValue.substring(valueWidth);
-        }
-
-        return lines;
-      } else {
-        const paddedLabel = label.padEnd(labelWidth);
-        const paddedValue = value.padEnd(valueWidth);
-        return [`│ ${paddedLabel} ${paddedValue} │`];
-      }
-    };
+    const tableHeader = `┌${separator}`;
+    const tableFooter = `└${separator}`;
 
     // 记录表格格式的日志
     logMethod('');
     logMethod(tableHeader);
 
     // 记录每个字段，处理可能的多行内容
-    const logRows = [
-      formatRow('Level', level),
-      formatRow('Request ID', requestId),
-      formatRow('Method', context.method as string),
-      formatRow('URL', context.url as string),
-      formatRow('Status', status.toString()),
-      formatRow('Message', message),
-      formatRow('User ID', userId.toString()),
-      formatRow('IP Address', formattedIp),
-      formatRow('Query Params', queryParams),
-      formatRow('Request Body', requestBody),
-      formatRow('Client', clientInfo),
-      formatRow('Timestamp', formatTimestamp()),
-    ];
+    const logRows = [];
+    logRows.push(...this.formatRow('Level', level, maxContentLength));
+    logRows.push(...this.formatRow('Request ID', requestId, maxContentLength));
+    logRows.push(...this.formatRow('Method', context.method as string, maxContentLength));
+    logRows.push(...this.formatRow('URL', context.url as string, maxContentLength));
+    logRows.push(...this.formatRow('Status', String(status), maxContentLength));
+    logRows.push(...this.formatRow('Message', message, maxContentLength));
+    logRows.push(...this.formatRow('User Auth ID', String(userId), maxContentLength));
+    logRows.push(...this.formatRow('IP Address', formattedIp, maxContentLength));
+    logRows.push(...this.formatRow('Query Params', queryParams, maxContentLength));
+    logRows.push(...this.formatRow('Request Body', requestBody, maxContentLength));
+    logRows.push(...this.formatRow('Client', clientInfo, maxContentLength));
+    logRows.push(...this.formatRow('Timestamp', formatTimestamp(), maxContentLength));
 
     // 输出所有行
-    logRows.forEach((rowLines) => {
-      rowLines.forEach((line) => logMethod(line));
-    });
+    logRows.forEach((line) => logMethod(line));
 
     logMethod(tableFooter);
     logMethod('');
@@ -261,7 +287,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
-    console.log('request: ', request);
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let messages: string[] = ['Internal server error'];
