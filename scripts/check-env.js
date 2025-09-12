@@ -13,7 +13,6 @@
  * - .env (可选，通用环境变量)
  * - .env.development (必需，开发环境配置)
  * - .env.production (可选，生产环境配置)
- * - .env.example (必需，配置模板文件)
  *
  * 使用方法：
  * - 直接运行：node scripts/check-env.js
@@ -90,7 +89,6 @@ function main() {
     { name: '.env', path: path.join(rootDir, '.env'), required: false },
     { name: '.env.development', path: path.join(rootDir, '.env.development'), required: true },
     { name: '.env.production', path: path.join(rootDir, '.env.production'), required: false },
-    { name: '.env.example', path: path.join(rootDir, '.env.example'), required: true },
   ];
 
   // 检查环境文件存在性

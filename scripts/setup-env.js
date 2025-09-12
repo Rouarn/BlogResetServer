@@ -88,7 +88,7 @@ async function setupEnvironment() {
   const rootDir = path.resolve(__dirname, '..');
 
   // 检查现有文件
-  const envFiles = ['.env', '.env.development', '.env.production', '.env.example'];
+  const envFiles = ['.env', '.env.development', '.env.production'];
 
   log('\n📁 检查现有环境文件:', 'yellow');
   const existingFiles = [];
@@ -154,12 +154,7 @@ async function setupEnvironment() {
   createEnvFile(path.join(rootDir, '.env.development'), devConfig);
   createEnvFile(path.join(rootDir, '.env.production'), prodConfig);
 
-  // 创建示例文件
-  const exampleConfig = {
-    ...Object.fromEntries(Object.keys(commonConfig).map((key) => [key, ''])),
-    ...Object.fromEntries(Object.keys(devConfig).map((key) => [key, ''])),
-  };
-  createEnvFile(path.join(rootDir, '.env.example'), exampleConfig);
+
 
   log('\n🎉 环境配置完成！', 'green');
   log('\n📋 下一步操作 (PNPM):', 'cyan');
