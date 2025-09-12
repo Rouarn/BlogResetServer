@@ -28,6 +28,7 @@
 /node_modules
 # 其他构建输出
 /build
+/deploy
 # 静态资源目录
 /static
 # PNPM 锁文件

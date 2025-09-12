@@ -31,11 +31,15 @@ console.log('📁 创建部署目录:', deployPath);
 
 // 复制 dist 目录
 console.log('📦 复制 dist 目录...');
-execSync(`xcopy "${distPath}" "${path.join(deployPath, 'dist')}" /E /I /H /Y`, { stdio: 'inherit' });
+execSync(`xcopy "${distPath}" "${path.join(deployPath, 'dist')}" /E /I /H /Y`, {
+  stdio: 'inherit',
+});
 
 // 动态生成生产环境 package.json
 console.log('📄 生成生产环境 package.json...');
-const originalPackageJson = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'));
+const originalPackageJson = JSON.parse(
+  fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'),
+);
 
 // 创建生产环境 package.json
 const productionPackageJson = {
@@ -47,17 +51,23 @@ const productionPackageJson = {
   license: originalPackageJson.license,
   scripts: {
     start: 'cross-env NODE_ENV=production node dist/main.js',
-    'start:simple': 'node dist/main.js'
+    'start:simple': 'node dist/main.js',
   },
   dependencies: {
-     // 从原始 package.json 复制所有生产依赖
-     ...originalPackageJson.dependencies,
-     // 确保包含一些可能在 devDependencies 中但生产环境需要的包
-     ...(originalPackageJson.devDependencies?.cors && { cors: originalPackageJson.devDependencies.cors }),
-     ...(originalPackageJson.devDependencies?.['cross-env'] && { 'cross-env': originalPackageJson.devDependencies['cross-env'] }),
-     ...(originalPackageJson.devDependencies?.['@nestjs/swagger'] && { '@nestjs/swagger': originalPackageJson.devDependencies['@nestjs/swagger'] })
-   },
-  engines: originalPackageJson.engines
+    // 从原始 package.json 复制所有生产依赖
+    ...originalPackageJson.dependencies,
+    // 确保包含一些可能在 devDependencies 中但生产环境需要的包
+    ...(originalPackageJson.devDependencies?.cors && {
+      cors: originalPackageJson.devDependencies.cors,
+    }),
+    ...(originalPackageJson.devDependencies?.['cross-env'] && {
+      'cross-env': originalPackageJson.devDependencies['cross-env'],
+    }),
+    ...(originalPackageJson.devDependencies?.['@nestjs/swagger'] && {
+      '@nestjs/swagger': originalPackageJson.devDependencies['@nestjs/swagger'],
+    }),
+  },
+  engines: originalPackageJson.engines,
 };
 
 // 写入生产环境 package.json
@@ -69,7 +79,7 @@ const envFiles = ['.env.production', '.env'];
 for (const envFile of envFiles) {
   const srcEnv = path.join(projectRoot, envFile);
   const destEnv = path.join(deployPath, envFile);
-  
+
   if (fs.existsSync(srcEnv)) {
     console.log(`📄 复制环境文件: ${envFile}`);
     fs.copyFileSync(srcEnv, destEnv);
@@ -98,6 +108,22 @@ fs.writeFileSync(path.join(deployPath, 'start.sh'), startScriptLinux);
 fs.chmodSync(path.join(deployPath, 'start.sh'), '755');
 console.log('📄 创建Linux启动脚本: start.sh');
 
+// 创建宝塔面板专用启动文件
+const btPanelStartScript = `#!/usr/bin/env node
+
+// 宝塔面板专用启动文件
+// 设置生产环境变量
+process.env.NODE_ENV = 'production';
+
+// 启动应用
+console.log('正在启动 NestJS 应用...');
+require('./dist/main.js');
+`;
+
+fs.writeFileSync(path.join(deployPath, 'app.js'), btPanelStartScript);
+fs.chmodSync(path.join(deployPath, 'app.js'), '755');
+console.log('📄 创建宝塔面板启动文件: app.js');
+
 // 创建安装依赖脚本 (Windows)
 const installScriptWin = `@echo off
 echo 正在安装生产依赖...
@@ -121,53 +147,266 @@ fs.chmodSync(path.join(deployPath, 'install.sh'), '755');
 console.log('📄 创建Linux安装脚本: install.sh');
 
 // 创建部署说明文件
-const deployReadme = `# 部署说明
+const deployReadme = `# NestJS 应用部署指南
 
-## 快速部署步骤
+这是一个 NestJS 应用的完整部署包，包含了在不同环境下部署所需的所有文件和脚本。
+
+## 📦 部署包内容
+
+- **应用文件**: 编译后的 NestJS 应用代码
+- **配置文件**: .env.production 环境配置
+- **启动脚本**: 适用于不同平台的启动脚本
+- **依赖文件**: package.json 和 package-lock.json
+
+## 🚀 快速部署
 
 ### Windows 服务器
-1. 将此目录上传到服务器
-2. 双击运行 \`install.bat\` 或在命令行运行: \`npm install --omit=dev\`
-3. 配置环境变量（.env.production）
-4. 双击运行 \`start.bat\` 或运行: \`npm start\`
+
+1. **安装依赖**
+   \`\`\`
+   双击运行 install.bat
+   \`\`\`
+   或在命令行中执行：
+   \`\`\`
+   npm install --omit=dev
+   \`\`\`
+
+2. **启动应用**
+   \`\`\`
+   双击运行 start.bat
+   \`\`\`
+   或在命令行中执行：
+   \`\`\`
+   set NODE_ENV=production && node dist/main.js
+   \`\`\`
 
 ### Linux 服务器
-1. 将此目录上传到服务器
-2. 运行安装脚本: \`chmod +x install.sh && ./install.sh\`
-3. 或直接运行: \`npm install --omit=dev\`
-4. 配置环境变量（.env.production）
-5. 运行启动脚本: \`chmod +x start.sh && ./start.sh\`
-6. 或直接运行: \`npm start\` 或 \`node dist/main.js\`
 
-## 宝塔面板配置
+1. **安装依赖**
+   \`\`\`bash
+   chmod +x install.sh
+   ./install.sh
+   \`\`\`
 
-- 项目路径: 上传目录的完整路径
-- 启动文件: dist/main.js
-- 运行目录: 项目根目录
-- 启动方式: node dist/main.js
-- 端口: 检查应用配置的端口（通常是3000）
+2. **启动应用**
+   \`\`\`bash
+   chmod +x start.sh
+   ./start.sh
+   \`\`\`
 
-## 重要依赖说明
+### 宝塔面板部署
 
-本项目包含以下关键依赖：
-- @nestjs/swagger: API文档生成（已自动包含）
-- cors: 跨域支持
-- cross-env: 环境变量支持
+#### 方式一：Node.js 项目管理（推荐）
 
-## 注意事项
+1. 登录宝塔面板，进入「软件商店」→「运行环境」
+2. 安装「Node.js 版本管理器」
+3. 进入「网站」→「Node项目」→「添加Node项目」
+4. 配置项目信息：
+   - **项目路径**: 选择部署目录
+   - **启动文件**: app.js
+   - **端口**: 8848（或其他可用端口）
+   - **项目名称**: 自定义名称
+5. 点击「提交」创建项目
+6. 在项目列表中点击「启动」
 
-- 确保 Node.js 版本 >= 22.18.0
-- 确保数据库和 Redis 连接配置正确
-- 确保防火墙开放应用端口
-- Linux服务器请使用 .sh 脚本，Windows服务器使用 .bat 脚本
-- 推荐使用 \`npm install --omit=dev\` 而不是 \`--production\`
+#### 方式二：使用 PM2 管理
 
-## 故障排除
+1. **安装 PM2**
+   \`\`\`bash
+   npm install -g pm2
+   \`\`\`
 
-如果遇到 "Cannot find module" 错误：
-1. 检查 package.json 中是否包含所需依赖
-2. 重新运行 \`npm install --omit=dev\`
-3. 确认 Node.js 版本兼容性
+2. **启动应用**
+   \`\`\`bash
+   pm2 start app.js --name nestjs-app
+   \`\`\`
+
+3. **设置开机自启**
+   \`\`\`bash
+   pm2 startup
+   pm2 save
+   \`\`\`
+
+4. **常用 PM2 命令**
+   \`\`\`bash
+   pm2 list          # 查看应用列表
+   pm2 logs          # 查看日志
+   pm2 restart all   # 重启所有应用
+   pm2 stop all      # 停止所有应用
+   \`\`\`
+
+## ⚙️ 配置说明
+
+### 端口配置
+
+- **默认端口**: 8848
+- **修改端口**: 编辑 .env.production 文件中的 PORT 变量
+- **防火墙**: 确保已开放相应端口
+
+### 环境变量
+
+应用会自动加载 .env.production 文件中的环境变量，主要配置项：
+
+\`\`\`env
+# 应用端口
+PORT=8848
+
+# 数据库配置
+DB_HOST=localhost
+DB_PORT=3306
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+DB_DATABASE=your_database
+
+# JWT 配置
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRES_IN=7d
+
+# 其他配置...
+\`\`\`
+
+## 🔧 系统要求
+
+### 基础环境
+- **Node.js**: >= 22.18.0
+- **npm**: >= 8.0.0
+- **操作系统**: Windows 10+, Linux (Ubuntu 18.04+, CentOS 7+)
+
+### 硬件要求
+- **内存**: 最少 512MB，推荐 1GB+
+- **磁盘**: 最少 100MB 可用空间
+- **网络**: 稳定的网络连接
+
+## 🐛 故障排除
+
+### 常见问题及解决方案
+
+#### 1. 端口被占用
+**现象**: 启动时提示端口已被使用
+
+**解决方案**:
+\`\`\`bash
+# Windows 查看端口占用
+netstat -ano | findstr :8848
+
+# Linux 查看端口占用
+lsof -i :8848
+
+# 修改端口或停止占用进程
+\`\`\`
+
+#### 2. 依赖安装失败
+**现象**: npm install 报错
+
+**解决方案**:
+\`\`\`bash
+# 清除缓存
+npm cache clean --force
+
+# 使用国内镜像
+npm config set registry https://registry.npmmirror.com
+
+# 重新安装
+npm install --omit=dev
+\`\`\`
+
+#### 3. 环境变量未生效
+**现象**: 应用无法读取配置
+
+**解决方案**:
+- 检查 .env.production 文件是否存在
+- 确认 NODE_ENV 设置为 production
+- 验证环境变量格式是否正确
+
+#### 4. 权限问题 (Linux)
+**现象**: 脚本无法执行
+
+**解决方案**:
+\`\`\`bash
+# 添加执行权限
+chmod +x *.sh
+
+# 检查文件所有者
+ls -la
+\`\`\`
+
+#### 5. 数据库连接失败
+**现象**: 应用启动后无法连接数据库
+
+**解决方案**:
+- 检查数据库服务是否启动
+- 验证连接配置是否正确
+- 确认数据库用户权限
+- 检查防火墙设置
+
+### 日志查看
+
+\`\`\`bash
+# 应用日志
+tail -f logs/application.log
+
+# PM2 日志
+pm2 logs nestjs-app
+
+# 系统日志 (Linux)
+journalctl -u your-service-name
+\`\`\`
+
+## 📈 性能优化
+
+### 生产环境最佳实践
+
+1. **环境配置**
+   - 确保 NODE_ENV=production
+   - 启用 gzip 压缩
+   - 配置适当的缓存策略
+
+2. **进程管理**
+   - 使用 PM2 进行进程管理
+   - 配置集群模式提高性能
+   - 设置内存和 CPU 限制
+
+3. **监控和日志**
+   - 配置日志轮转
+   - 设置性能监控
+   - 配置错误报警
+
+## 🔒 安全建议
+
+1. **网络安全**
+   - 配置防火墙规则
+   - 使用 HTTPS
+   - 限制不必要的端口访问
+
+2. **应用安全**
+   - 定期更新依赖包
+   - 使用强密码和密钥
+   - 启用请求限制和验证
+
+3. **系统安全**
+   - 定期更新系统补丁
+   - 配置适当的用户权限
+   - 启用日志审计
+
+## 📞 技术支持
+
+如果在部署过程中遇到问题，请按以下步骤排查：
+
+1. ✅ 检查 Node.js 版本是否符合要求
+2. ✅ 确认所有依赖已正确安装
+3. ✅ 验证环境变量配置
+4. ✅ 检查端口占用情况
+5. ✅ 确认防火墙设置
+6. ✅ 查看应用日志
+
+如问题仍未解决，请联系开发团队并提供：
+- 错误日志
+- 系统环境信息
+- 部署步骤记录
+
+---
+
+**部署成功后，您的 NestJS 应用将在指定端口运行，可通过浏览器访问应用接口。**
 `;
 
 fs.writeFileSync(path.join(deployPath, 'README.md'), deployReadme);
