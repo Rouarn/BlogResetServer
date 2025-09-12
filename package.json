@@ -22,7 +22,9 @@
     "code:check": "pnpm run format:check && pnpm run lint:check && pnpm run type:check",
     "env:check": "node scripts/check-env.js",
     "env:setup": "node scripts/setup-env.js",
-    "clean:tests": "node scripts/remove-spec-files.js"
+    "clean:tests": "node scripts/remove-spec-files.js",
+    "deploy:prepare": "node scripts/deploy.js",
+    "deploy:build": "npm run build:prod && npm run deploy:prepare"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.6",
