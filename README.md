@@ -145,28 +145,6 @@ pnpm run code:fix
 pnpm run code:check
 ```
 
-### 🧹 项目清理
-
-```bash
-# 清理构建缓存
-pnpm run clean
-
-# 清理构建文件
-pnpm run clean:build
-
-# 清理依赖文件
-pnpm run clean:deps
-
-# 完全清理项目（包括 node_modules 和 pnpm-lock.yaml）
-pnpm run clean:all
-
-# 重新安装依赖
-pnpm run reinstall
-
-# 完全重新开始（清理所有并重新安装）
-pnpm run fresh
-```
-
 ### 📦 依赖管理
 
 ```bash
@@ -178,15 +156,6 @@ pnpm run update:latest
 
 # 交互式更新依赖
 pnpm run update:interactive
-
-# 检查过时的依赖
-pnpm run deps:check
-
-# 安全审计
-pnpm run deps:audit
-
-# 修复安全问题
-pnpm run deps:fix
 ```
 
 ### 🚀 部署相关
@@ -200,9 +169,6 @@ pnpm run deploy:build
 
 # 完整部署流程（代码检查 + 构建 + 部署准备）
 pnpm run deploy
-
-# 提交前代码检查
-pnpm run precommit
 ```
 
 ### 🔧 环境配置工具
