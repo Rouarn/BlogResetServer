@@ -513,12 +513,6 @@ nestjs-template/
 │   ├── remove-spec-files.js      # 测试文件清理脚本(Node.js)
 │   ├── remove-spec-files.ps1     # 测试文件清理脚本(PowerShell)
 │   └── setup-env.js              # 环境设置工具
-├── deploy/                       # 部署相关
-│   ├── README.md                 # 部署说明
-│   ├── config/                   # 部署配置
-│   ├── docker/                   # Docker配置
-│   ├── nginx/                    # Nginx配置
-│   └── scripts/                  # 部署脚本
 ├── .env                          # 环境变量（公共配置）
 ├── .env.development              # 开发环境配置
 ├── .env.production               # 生产环境配置
@@ -612,16 +606,16 @@ nestjs-template/
 
 **角色层级 (从高到低)**：
 
-| 角色 | 值 | 层级 | 描述 | 权限范围 |
-|------|----|----|------|----------|
-| SYSTEM_ADMIN | `system_admin` | 100 | 系统管理员 | 全系统 |
-| ORG_ADMIN | `org_admin` | 80 | 组织管理员 | 全系统 |
-| DEPT_ADMIN | `dept_admin` | 60 | 部门管理员 | 组织/部门级 |
-| PROJECT_ADMIN | `project_admin` | 50 | 项目管理员 | 组织/部门级 |
-| POWER_USER | `power_user` | 40 | 高级用户 | 个人级 |
-| USER | `user` | 20 | 标准用户 | 个人级 |
-| VIEWER | `viewer` | 10 | 只读用户 | 受限访问 |
-| GUEST | `guest` | 1 | 访客 | 受限访问 |
+| 角色          | 值              | 层级 | 描述       | 权限范围    |
+| ------------- | --------------- | ---- | ---------- | ----------- |
+| SYSTEM_ADMIN  | `system_admin`  | 100  | 系统管理员 | 全系统      |
+| ORG_ADMIN     | `org_admin`     | 80   | 组织管理员 | 全系统      |
+| DEPT_ADMIN    | `dept_admin`    | 60   | 部门管理员 | 组织/部门级 |
+| PROJECT_ADMIN | `project_admin` | 50   | 项目管理员 | 组织/部门级 |
+| POWER_USER    | `power_user`    | 40   | 高级用户   | 个人级      |
+| USER          | `user`          | 20   | 标准用户   | 个人级      |
+| VIEWER        | `viewer`        | 10   | 只读用户   | 受限访问    |
+| GUEST         | `guest`         | 1    | 访客       | 受限访问    |
 
 **角色分组**：
 
@@ -664,7 +658,7 @@ export class AdminController {
   getUsers() {
     return '只有系统管理员和组织管理员可以访问';
   }
-  
+
   @Get('reports')
   @Roles(Role.DEPT_ADMIN)
   getReports() {
@@ -684,7 +678,7 @@ export class UserService {
   canEditUser(currentUserRole: Role, targetUserRole: Role): boolean {
     return RoleUtils.canManageRole(currentUserRole, targetUserRole);
   }
-  
+
   getAssignableRoles(currentUserRole: Role): Role[] {
     return RoleUtils.getManageableRoles(currentUserRole);
   }
@@ -3323,75 +3317,6 @@ pnpm run lint
 pnpm run env:check
 ```
 
-## 🚀 部署
-
-### 生产环境部署
-
-1. **构建项目**:
-
-```bash
-pnpm run build
-```
-
-2. **配置生产环境变量**:
-
-```bash
-# 创建生产环境配置
-cp .env.example .env.production
-# 编辑生产环境配置
-```
-
-3. **启动生产服务**:
-
-```bash
-pnpm run start:prod
-```
-
-### Docker部署（可选）
-
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm install -g pnpm
-RUN pnpm install --frozen-lockfile
-COPY . .
-RUN pnpm run build
-EXPOSE 3000
-CMD ["pnpm", "run", "start:prod"]
-```
-
-## 📦 生产部署
-
-本项目提供了完整的生产部署方案，支持 Docker 和 PM2 两种部署方式。
-
-### 🚀 快速部署
-
-#### 环境要求
-
-- **Docker 部署**：需要预装 Docker + Docker Compose
-- **PM2 部署**：需要预装 Node.js + PM2 + MySQL
-
-#### 一键部署
-
-```bash
-# 1. 配置环境
-cp deploy/config/.env.production .env
-# 编辑 .env 文件，修改数据库密码和 JWT 密钥
-
-# 2. 执行一键部署
-chmod +x deploy/scripts/quick-deploy.sh
-./deploy/scripts/quick-deploy.sh
-# 按提示选择部署方式
-
-# 3. 访问应用
-# http://your-server:3000
-```
-
-### 📖 完整部署指南
-
-详细的部署文档请查看：**[deploy/README.md](deploy/README.md)**
-
 **包含内容：**
 
 - 🔧 **环境要求**：Docker/PM2 预装软件清单和安装命令
@@ -3408,9 +3333,8 @@ chmod +x deploy/scripts/quick-deploy.sh
 如有问题，请：
 
 1. 查看本README文档
-2. 查看 `deploy/README.md` 详细部署文档
-3. 运行 `pnpm run env:check` 检查配置
-4. 提交Issue或联系开发团队
+2. 运行 `pnpm run env:check` 检查配置
+3. 提交Issue或联系开发团队
 
 ## 📝 更新日志
 
