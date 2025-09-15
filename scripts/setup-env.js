@@ -59,7 +59,7 @@ const envTemplates = {
   },
   common: {
     NEST_JWT_SECRET: '',
-    NEST_JWT_EXPIRES_IN: '7d',
+    NEST_JWT_ACCESS_TOKEN_TTL: '1d',
   },
 };
 
@@ -153,8 +153,6 @@ async function setupEnvironment() {
   createEnvFile(path.join(rootDir, '.env'), commonConfig);
   createEnvFile(path.join(rootDir, '.env.development'), devConfig);
   createEnvFile(path.join(rootDir, '.env.production'), prodConfig);
-
-
 
   log('\n🎉 环境配置完成！', 'green');
   log('\n📋 下一步操作 (PNPM):', 'cyan');

@@ -42,9 +42,9 @@ import { WebSocketInterceptor } from './interceptors/websocket.interceptor';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
+        secret: configService.get<string>('NEST_JWT_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '24h'),
+          expiresIn: configService.get<string>('NEST_JWT_ACCESS_TOKEN_TTL', '24h'),
         },
       }),
       inject: [ConfigService],
