@@ -162,40 +162,104 @@ export class AuthController {
     schema: {
       type: 'object',
       properties: {
-        buttons: {
-          type: 'array',
-          items: { type: 'string' },
-          description: '用户权限按钮',
-          example: ['B_CODE1', 'B_CODE2', 'B_CODE3'],
-        },
-        roles: {
-          type: 'array',
-          items: { type: 'string' },
-          description: '用户角色',
-          example: ['admin', 'user'],
-        },
         userId: {
-          type: 'number',
+          type: 'string',
           description: '用户ID',
-          example: 1,
+          example: '1',
         },
-        userName: {
+        username: {
           type: 'string',
           description: '用户名',
           example: 'john_doe',
+        },
+        nickname: {
+          type: 'string',
+          description: '昵称',
+          example: 'John',
+        },
+        avatar: {
+          type: 'string',
+          description: '头像',
+          example: 'https://example.com/avatar.jpg',
+        },
+        roles: {
+          type: 'string',
+          description: '角色',
+          example: 'admin',
+        },
+        email: {
+          type: 'string',
+          description: '邮箱',
+          example: 'john@example.com',
+        },
+        gender: {
+          type: 'string',
+          description: '性别',
+          example: '男',
+        },
+        mobile: {
+          type: 'string',
+          description: '手机号',
+          example: '13800138000',
+        },
+        bio: {
+          type: 'string',
+          description: '个人简介',
+          example: '这是一个简短的个人介绍',
+        },
+        birthday: {
+          type: 'string',
+          description: '生日',
+          example: '1990-01-01',
+        },
+        city: {
+          type: 'string',
+          description: '所在城市',
+          example: '北京市',
+        },
+        profession: {
+          type: 'string',
+          description: '职业',
+          example: '软件工程师',
+        },
+        authId: {
+          type: 'string',
+          description: '认证ID',
+          example: 'auth-uuid-123',
+        },
+        lastLoginAt: {
+          type: 'string',
+          description: '最后登录时间',
+          example: '2023-12-01T10:00:00.000Z',
+        },
+        lastLoginIp: {
+          type: 'string',
+          description: '最后登录IP',
+          example: '192.168.1.100',
         },
       },
     },
   })
   @ApiBearerAuth()
   @Get('getUserInfo')
-  getUserInfo(@GetCurrentUser() user: Auth): {
-    authId: string;
+  async getUserInfo(@GetCurrentUser() user: Auth): Promise<{
+    userId: string;
     username: string;
-    roles: string[];
-    lastLoginAt: Date;
-  } {
-    return this.authService.getAuthInfo(user);
+    nickname: string;
+    avatar: string;
+    roles: string;
+    email: string;
+    gender: string;
+    mobile: string;
+    bio: string;
+    birthday: string;
+    city: string;
+    profession: string;
+    authId: string;
+    lastLoginAt: string;
+    lastLoginIp: string;
+  }> {
+    return await this.authService.getAuthInfo(user);
   }
 
   @ApiOperation({
@@ -209,30 +273,7 @@ export class AuthController {
   @ApiResponse({
     status: 201,
     description: '登录成功',
-    schema: {
-      oneOf: [
-        {
-          type: 'object',
-          properties: {
-            accessToken: {
-              type: 'string',
-              description: 'JWT访问令牌',
-              example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-            },
-            refreshToken: {
-              type: 'string',
-              description: 'JWT刷新令牌',
-              example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-            },
-          },
-        },
-        {
-          type: 'string',
-          description: '错误消息',
-          example: '用户不存在',
-        },
-      ],
-    },
+    type: LoginResponseDto,
   })
   @Public()
   @Post('login')
@@ -351,7 +392,7 @@ export class AuthController {
         message: '用户创建成功',
         record: {
           id: result.userId,
-          userName: result.username,
+          username: result.username,
         },
       };
     } catch (error) {

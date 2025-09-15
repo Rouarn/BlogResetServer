@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
 import { BusinessExceptionFactory } from '@/common/exceptions';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
@@ -102,7 +102,7 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
 
       return {
         authId: authInfo.id,
-        username: authInfo.userName,
+        username: authInfo.username,
         roles: userRoles,
         lastLoginAt: authInfo.lastLoginAt,
       };

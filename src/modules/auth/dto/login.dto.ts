@@ -83,23 +83,4 @@ export class LoginResponseDto {
     default: 'Bearer',
   })
   tokenType: string = 'Bearer';
-
-  @ApiProperty({
-    description: '用户基本信息',
-    type: 'object',
-    properties: {
-      userId: { type: 'string', description: '用户ID' },
-      username: { type: 'string', description: '用户名' },
-      nickname: { type: 'string', description: '昵称' },
-      avatar: { type: 'string', description: '头像' },
-      roles: { type: 'string', description: '角色' },
-    },
-  })
-  user: {
-    userId: string;
-    username: string;
-    nickname: string;
-    avatar: string;
-    roles: string;
-  };
 }

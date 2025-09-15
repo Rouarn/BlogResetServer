@@ -1,7 +1,9 @@
 import { CACHE_PREFIXES, CACHE_TOKENS, CACHE_TTL } from '@/common/constants';
+import { GENDER_LABELS } from '@/common/enums/gender.enum';
+import { BusinessExceptionFactory } from '@/common/exceptions';
+import { jwtOptions } from '@/config';
 import { Cache, ICacheService } from '@/shared/cache';
 import { Inject, Injectable } from '@nestjs/common';
-import { BusinessExceptionFactory } from '@/common/exceptions';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
@@ -82,25 +84,58 @@ export class AuthService {
   ) {}
 
   /**
-   * 获取认证用户基本信息
+   * 获取认证用户详细信息
    *
-   * 返回认证用户的基本信息，用于JWT载荷和会话管理
+   * 从数据库查询认证用户的详细信息，包含所有非敏感字段
    *
-   * @param auth 认证实体
-   * @returns 包含认证ID、用户名等基本信息
+   * @param auth 认证实体（仅用于获取ID）
+   * @returns 包含用户ID、用户名、昵称、头像、角色、邮箱、性别、手机号等信息
    */
   @Cache({ key: `${CACHE_PREFIXES.USER_INFO}:\${0.id}`, ttl: CACHE_TTL.USER_INFO })
-  getAuthInfo(auth: Auth): {
-    authId: string;
+  async getAuthInfo(auth: Auth): Promise<{
+    userId: string;
     username: string;
-    roles: string[];
-    lastLoginAt: Date;
-  } {
+    nickname: string;
+    avatar: string;
+    roles: string;
+    email: string;
+    gender: string;
+    mobile: string;
+    bio: string;
+    birthday: string;
+    city: string;
+    profession: string;
+    authId: string;
+    lastLoginAt: string;
+    lastLoginIp: string;
+  }> {
+    // 从数据库查询完整的认证和用户信息
+    const authWithUser = await this.authRepository.findOne({
+      where: { id: auth.id },
+      relations: ['user'],
+    });
+
+    if (!authWithUser) {
+      throw BusinessExceptionFactory.notFound('用户信息不存在');
+    }
+
     return {
-      authId: auth.id,
-      username: auth.userName,
-      roles: [auth.user?.roles || 'USER'],
-      lastLoginAt: auth.lastLoginAt,
+      userId: authWithUser.user?.id || authWithUser.id,
+      username: authWithUser.username,
+      nickname: authWithUser.user?.nickname || authWithUser.username,
+      avatar: authWithUser.user?.avatar || '',
+      roles: authWithUser.user?.roles || 'USER',
+      email: authWithUser.user?.email || '',
+      gender:
+        authWithUser.user?.gender !== undefined ? GENDER_LABELS[authWithUser.user.gender] : '',
+      mobile: authWithUser.user?.mobile || '',
+      bio: authWithUser.user?.bio || '',
+      birthday: authWithUser.user?.birthday?.toISOString(),
+      city: authWithUser.user?.city || '',
+      profession: authWithUser.user?.profession || '',
+      authId: authWithUser.id,
+      lastLoginAt: authWithUser.lastLoginAt ? authWithUser.lastLoginAt.toISOString() : '',
+      lastLoginIp: authWithUser.lastLoginIp ?? '',
     };
   }
 
@@ -117,7 +152,7 @@ export class AuthService {
   async login(loginDto: LoginDto): Promise<LoginResponseDto> {
     // 查找认证记录，包含关联的用户信息
     const auth = await this.authRepository.findOne({
-      where: { userName: loginDto.username },
+      where: { username: loginDto.username },
       relations: ['user'],
     });
     console.log(auth, 'auth');
@@ -182,7 +217,7 @@ export class AuthService {
     // 生成JWT令牌
     const payload = {
       sub: auth.id,
-      username: auth.userName,
+      username: auth.username,
       authId: auth.id,
       roles: auth.user?.roles || 'USER',
     };
@@ -199,14 +234,7 @@ export class AuthService {
       accessToken,
       refreshToken,
       tokenType: 'Bearer',
-      expiresIn: 24 * 60 * 60,
-      user: {
-        userId: auth.id,
-        username: auth.userName,
-        nickname: auth.user?.nickname,
-        avatar: auth.user?.avatar,
-        roles: auth.user?.roles ?? 'USER',
-      },
+      expiresIn: jwtOptions.expiresIn,
     };
   }
 
@@ -223,7 +251,7 @@ export class AuthService {
   async register(registerDto: RegisterDto): Promise<RegisterResponseDto> {
     // 检查用户名是否已存在
     const existingAuth = await this.authRepository.findOne({
-      where: { userName: registerDto.username },
+      where: { username: registerDto.username },
     });
 
     if (existingAuth) {
@@ -232,7 +260,7 @@ export class AuthService {
 
     // 创建认证记录（密码将通过@BeforeInsert钩子自动加密）
     const auth = this.authRepository.create({
-      userName: registerDto.username,
+      username: registerDto.username,
       password: registerDto.password, // 原始密码，将被@BeforeInsert钩子加密
       isLocked: false,
       loginAttempts: 0,
@@ -241,9 +269,9 @@ export class AuthService {
     const savedAuth = await this.authRepository.save(auth);
 
     // 总是创建关联的用户记录，确保两个表的数据一致性
-    await this.usersService.create({
+    const createdUser = await this.usersService.create({
       authId: savedAuth.id,
-      nickname: registerDto.nickname ?? savedAuth.userName, // 如果没有昵称，使用用户名
+      nickname: registerDto.nickname ?? savedAuth.username, // 如果没有昵称，使用用户名
       email: registerDto.email,
       avatar: registerDto.avatar,
       gender: registerDto.gender,
@@ -257,7 +285,12 @@ export class AuthService {
     return {
       message: '注册成功',
       userId: savedAuth.id,
-      username: savedAuth.userName,
+      username: savedAuth.username,
+      nickname: createdUser.nickname,
+      avatar: createdUser.avatar,
+      email: createdUser.email,
+      gender: createdUser.gender !== undefined ? GENDER_LABELS[createdUser.gender] : '',
+      mobile: createdUser.mobile,
       needLogin: true,
     };
   }
@@ -536,7 +569,7 @@ export class AuthService {
     // 生成新的访问令牌
     const payload = {
       sub: auth.id,
-      username: auth.userName,
+      username: auth.username,
       authId: auth.id,
       roles: 'USER',
     };
@@ -642,7 +675,7 @@ export class AuthService {
         message: '令牌有效',
         user: {
           id: auth.id,
-          username: auth.userName,
+          username: auth.username,
           email: auth.user?.email || '',
         },
         payload,
@@ -778,7 +811,7 @@ export class AuthService {
    */
   async getAuthByUsername(username: string): Promise<Auth | null> {
     return this.authRepository.findOne({
-      where: { userName: username },
+      where: { username: username },
       relations: ['user'],
     });
   }
@@ -791,7 +824,7 @@ export class AuthService {
    */
   async isUsernameExists(username: string): Promise<boolean> {
     const count = await this.authRepository.count({
-      where: { userName: username },
+      where: { username: username },
     });
     return count > 0;
   }

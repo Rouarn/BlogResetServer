@@ -39,7 +39,7 @@ export interface CurrentUser {
  * getProfile(@GetCurrentUser() user: CurrentUser) {
  *   return {
  *     authId: user.authId,
- *     username: user.userName,
+ *     username: user.username,
  *     roles: user.roles
  *   };
  * }

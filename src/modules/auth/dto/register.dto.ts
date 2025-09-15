@@ -142,6 +142,11 @@ export class RegisterDto {
  * - message: 成功消息
  * - userId: 新创建的用户ID
  * - username: 用户名
+ * - nickname: 昵称
+ * - avatar: 头像
+ * - email: 邮箱
+ * - gender: 性别
+ * - mobile: 手机号
  * - needLogin: 是否需要重新登录
  */
 export class RegisterResponseDto {
@@ -162,6 +167,37 @@ export class RegisterResponseDto {
     example: 'newuser',
   })
   username: string;
+
+  @ApiProperty({
+    description: '昵称',
+    example: 'New User',
+  })
+  nickname: string;
+
+  @ApiPropertyOptional({
+    description: '头像',
+    example: 'https://example.com/avatar.jpg',
+  })
+  avatar?: string;
+
+  @ApiPropertyOptional({
+    description: '邮箱',
+    example: 'user@example.com',
+  })
+  email?: string;
+
+  @ApiPropertyOptional({
+    description: '性别',
+    example: 'MALE',
+    enum: ['MALE', 'FEMALE', 'OTHER'],
+  })
+  gender?: string;
+
+  @ApiPropertyOptional({
+    description: '手机号',
+    example: '13800138000',
+  })
+  mobile?: string;
 
   @ApiProperty({
     description: '是否需要重新登录',

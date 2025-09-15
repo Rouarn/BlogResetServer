@@ -51,7 +51,7 @@ export default registerAs('app', () => ({
   // JWT 认证配置
   jwt: {
     secret: process.env.NEST_JWT_SECRET ?? 'your-secret-key',
-    accessTokenTtl: process.env.NEST_JWT_ACCESS_TOKEN_TTL ?? '1d',
+    accessTokenTtl: process.env.NEST_JWT_ACCESS_TOKEN_TTL ?? 3600,
   },
 
   // 静态资源和文件上传统一配置

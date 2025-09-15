@@ -1999,7 +1999,7 @@ const jwtConfig = appConfig.jwtOptions;
 /*
 {
   secret: 'your-jwt-secret',
-  expiresIn: '1d'
+  expiresIn: 3600
 }
 */
 ```
@@ -2099,7 +2099,8 @@ NEST_DATABASE_LOGGING=false
 
 # JWT配置
 NEST_JWT_SECRET=xiaji-dev-secret-key-2024
-NEST_JWT_ACCESS_TOKEN_TTL=7d
+NEST_JWT_ACCESS_TOKEN_TTL=3600
+NEST_JWT_REFRESH_TOKEN_TTL=604800
 
 # 静态资源配置
 NEST_STATIC_ASSETS_DIR=./static
@@ -2135,7 +2136,8 @@ NEST_DATABASE_LOGGING=false
 
 # JWT配置
 NEST_JWT_SECRET=your-very-strong-production-secret
-NEST_JWT_ACCESS_TOKEN_TTL=1d
+NEST_JWT_ACCESS_TOKEN_TTL=3600
+NEST_JWT_REFRESH_TOKEN_TTL=604800
 
 # 静态资源配置
 NEST_STATIC_ASSETS_DIR=/var/www/static

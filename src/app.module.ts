@@ -62,9 +62,9 @@ import { CacheModule } from './shared/cache/cache.module';
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('NEST_JWT_SECRET'), // JWT 签名密钥
         signOptions: {
-          expiresIn: configService.get<string>( // JWT 过期时间
+          expiresIn: configService.get<number>( // JWT 过期时间
             'NEST_JWT_ACCESS_TOKEN_TTL',
-            '1d', // 默认 1 天
+            3600, // 默认 1 天
           ),
         },
       }),

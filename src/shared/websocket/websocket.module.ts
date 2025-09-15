@@ -44,7 +44,7 @@ import { WebSocketInterceptor } from './interceptors/websocket.interceptor';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('NEST_JWT_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>('NEST_JWT_ACCESS_TOKEN_TTL', '24h'),
+          expiresIn: configService.get<number>('NEST_JWT_ACCESS_TOKEN_TTL', 3600),
         },
       }),
       inject: [ConfigService],

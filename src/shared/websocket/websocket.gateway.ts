@@ -26,6 +26,7 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   ConnectedSocket,
   MessageBody,
@@ -37,7 +38,6 @@ import {
   WebSocketServer,
   WsException,
 } from '@nestjs/websockets';
-import { ConfigService } from '@nestjs/config';
 import { Server } from 'socket.io';
 import { WebSocketExceptionFilter } from './filters/websocket-exception.filter';
 import { WebSocketAuthGuard } from './guards/websocket-auth.guard';
@@ -681,7 +681,7 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
       const messageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
       const userType = socket.isAuthenticated ? '认证用户' : '匿名用户';
       const userId = socket.userId ?? 'anonymous';
-      const userName = socket.user?.name ?? '匿名用户';
+      const username = socket.user?.name ?? '匿名用户';
 
       // 构建消息对象
       const message = {
@@ -691,7 +691,7 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
           content,
           messageType,
           senderId: userId,
-          senderName: userName,
+          senderName: username,
           senderType: userType,
           room,
           timestamp: Date.now(),

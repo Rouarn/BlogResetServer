@@ -1,9 +1,9 @@
+import { User } from '@/modules/users/entities/user.entity';
 import * as bcrypt from 'bcryptjs';
 import { Exclude } from 'class-transformer';
 import { Status } from 'src/common/enums';
 import { BaseEntity } from 'src/database';
 import { BeforeInsert, Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { User } from '@/modules/users/entities/user.entity';
 
 /**
  * 认证实体
@@ -16,7 +16,7 @@ export class Auth extends BaseEntity {
   id: string;
 
   @Column({ length: 100, unique: true, comment: '用户名' })
-  userName: string;
+  username: string;
 
   @Exclude()
   @Column({ comment: '密码' })

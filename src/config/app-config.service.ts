@@ -102,10 +102,10 @@ export class AppConfigService {
    * 获取 JWT 认证配置
    * @returns JWT 配置对象，包含密钥和过期时间
    */
-  get jwtOptions(): { secret: string | undefined; expiresIn: string } {
+  get jwtOptions(): { secret: string | undefined; expiresIn: number } {
     return {
       secret: this.configService.get<string>('NEST_JWT_SECRET'),
-      expiresIn: this.configService.get<string>('NEST_JWT_ACCESS_TOKEN_TTL', '1d'),
+      expiresIn: this.configService.get<number>('NEST_JWT_ACCESS_TOKEN_TTL', 3600),
     };
   }
 

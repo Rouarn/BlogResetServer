@@ -59,7 +59,7 @@ const envTemplates = {
   },
   common: {
     NEST_JWT_SECRET: '',
-    NEST_JWT_ACCESS_TOKEN_TTL: '1d',
+    NEST_JWT_ACCESS_TOKEN_TTL: 3600,
   },
 };
 

@@ -65,7 +65,7 @@ export const validationSchema = Joi.object({
 
   // JWT 认证配置
   NEST_JWT_SECRET: Joi.string().required(),
-  NEST_JWT_ACCESS_TOKEN_TTL: Joi.string().default('1d'),
+  NEST_JWT_ACCESS_TOKEN_TTL: Joi.number().default(3600),
 
   // Swagger API 文档配置
   NEST_SWAGGER_TITLE: Joi.string().default('API Documentation'),
