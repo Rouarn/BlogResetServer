@@ -6,6 +6,7 @@ import {
   Headers,
   Ip,
   Post,
+  Put,
   Req,
   UseInterceptors,
 } from '@nestjs/common';
@@ -17,7 +18,7 @@ import { AuthService } from './auth.service';
 import { CaptchaVerifyDto } from './dto/captcha-verify.dto';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { LoginDto, LoginResponseDto } from './dto/login.dto';
-import { RegisterDto, RegisterResponseDto } from './dto/register.dto';
+import { ChangePasswordDto, RegisterDto, RegisterResponseDto } from './dto/register.dto';
 import { Auth } from './entities/auth.entity';
 
 @ApiTags('认证管理')
@@ -252,11 +253,11 @@ export class AuthController {
     gender: string;
     mobile: string;
     bio: string;
-    birthday: string;
+    birthday: Date;
     city: string;
     profession: string;
     authId: string;
-    lastLoginAt: string;
+    lastLoginAt: Date;
     lastLoginIp: string;
   }> {
     return await this.authService.getAuthInfo(user);
@@ -399,6 +400,69 @@ export class AuthController {
       return {
         success: false,
         message: '用户创建失败',
+      };
+    }
+  }
+
+  /**
+   * 修改密码
+   *
+   * 允许已登录用户修改自己的密码。需要提供当前密码进行验证。
+   *
+   * @param changePasswordDto 修改密码数据
+   * @param req 请求对象
+   * @returns 修改结果
+   */
+  @Put('change-password')
+  @ApiOperation({
+    summary: '修改密码',
+    description: '允许已登录用户修改自己的密码',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '密码修改成功',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        message: { type: 'string', example: '密码修改成功' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: '密码修改失败',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: false },
+        message: { type: 'string', example: '当前密码错误' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: '未授权访问',
+  })
+  async changePassword(
+    @Body() changePasswordDto: ChangePasswordDto,
+    @Req() req: Request,
+  ): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    try {
+      const user = req.user as { id: string; username: string };
+      await this.authService.changePassword(changePasswordDto, user.id);
+
+      return {
+        success: true,
+        message: '密码修改成功',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message ?? '密码修改失败',
       };
     }
   }

@@ -102,11 +102,11 @@ export class AuthService {
     gender: string;
     mobile: string;
     bio: string;
-    birthday: string;
+    birthday: Date;
     city: string;
     profession: string;
     authId: string;
-    lastLoginAt: string;
+    lastLoginAt: Date;
     lastLoginIp: string;
   }> {
     // 从数据库查询完整的认证和用户信息
@@ -130,11 +130,11 @@ export class AuthService {
         authWithUser.user?.gender !== undefined ? GENDER_LABELS[authWithUser.user.gender] : '',
       mobile: authWithUser.user?.mobile || '',
       bio: authWithUser.user?.bio || '',
-      birthday: authWithUser.user?.birthday?.toISOString(),
+      birthday: authWithUser.user?.birthday,
       city: authWithUser.user?.city || '',
       profession: authWithUser.user?.profession || '',
       authId: authWithUser.id,
-      lastLoginAt: authWithUser.lastLoginAt ? authWithUser.lastLoginAt.toISOString() : '',
+      lastLoginAt: authWithUser.lastLoginAt,
       lastLoginIp: authWithUser.lastLoginIp ?? '',
     };
   }
@@ -155,12 +155,12 @@ export class AuthService {
       where: { username: loginDto.username },
       relations: ['user'],
     });
-    console.log(auth, 'auth');
+
     if (!auth) {
       // 记录登录失败尝试（可选：防止用户名枚举攻击）
       throw BusinessExceptionFactory.forbidden('登录', { username: loginDto.username });
     }
-    console.log(auth.user, 'auth.user');
+
     // 检查账号是否被锁定
     if (auth.isLocked()) {
       if (auth.lockedAt) {
