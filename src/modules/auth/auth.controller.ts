@@ -446,23 +446,13 @@ export class AuthController {
   })
   async changePassword(
     @Body() changePasswordDto: ChangePasswordDto,
-    @Req() req: Request,
-  ): Promise<{
-    success: boolean;
-    message: string;
-  }> {
+    @GetCurrentUser() user: { authId: string },
+  ): Promise<{ message: string }> {
     try {
-      const user = req.user as { id: string; username: string };
-      await this.authService.changePassword(changePasswordDto, user.id);
-
+      return this.authService.changePassword(changePasswordDto, user.authId);
+    } catch (_) {
       return {
-        success: true,
-        message: '密码修改成功',
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message ?? '密码修改失败',
+        message: '密码修改失败',
       };
     }
   }

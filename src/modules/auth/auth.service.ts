@@ -441,7 +441,7 @@ export class AuthService {
     );
 
     if (!isOldPasswordValid) {
-      throw BusinessExceptionFactory.forbidden('密码修改', { reason: '旧密码错误' });
+      throw BusinessExceptionFactory.validation('旧密码错误');
     }
 
     // 生成新的盐值和密码哈希
