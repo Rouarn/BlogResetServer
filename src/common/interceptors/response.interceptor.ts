@@ -130,6 +130,21 @@ export class ResponseInterceptor<T = unknown> implements NestInterceptor {
       };
     }
 
+    // 检查是否为只有消息的格式 {message: string}
+    if (
+      typeof rawData === 'object' &&
+      rawData !== null &&
+      'message' in rawData &&
+      Object.prototype.hasOwnProperty.call(rawData, 'message') &&
+      !('data' in rawData)
+    ) {
+      const messageData = rawData as { message: string };
+      return {
+        data: undefined as T,
+        message: messageData.message,
+      };
+    }
+
     // 直接返回的数据格式
     return {
       data: rawData as T,
