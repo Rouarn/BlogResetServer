@@ -140,7 +140,7 @@ export class ResponseInterceptor<T = unknown> implements NestInterceptor {
     ) {
       const messageData = rawData as { message: string };
       return {
-        data: undefined as T,
+        data: {} as T,
         message: messageData.message,
       };
     }

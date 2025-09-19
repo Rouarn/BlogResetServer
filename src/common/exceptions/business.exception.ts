@@ -184,7 +184,7 @@ export class BusinessExceptionFactory {
    */
   static forbidden(action: string, context?: Record<string, unknown>): BusinessException {
     return new BusinessException(
-      `无权限执行操作：${action}`,
+      `无权限执行操作：${action}  ${context?.reason ?? ''}`,
       HttpStatus.FORBIDDEN,
       context,
       LogLevel.WARNING,
