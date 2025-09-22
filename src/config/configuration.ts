@@ -23,7 +23,7 @@ import { registerAs } from '@nestjs/config';
  * 环境变量映射：
  * - NEST_GLOB_APP_TITLE → app.title
  * - NEST_PORT → app.port
- * - NEST_USER_NODE_ENV → app.environment
+ * - NODE_ENV → app.environment
  * - NEST_JWT_SECRET → app.jwt.secret
  * - NEST_DATABASE_HOST → app.database.host
  * - 等等...
@@ -46,7 +46,7 @@ export default registerAs('app', () => ({
   title: process.env.NEST_GLOB_APP_TITLE ?? 'NestJS Application',
   port: process.env.NEST_PORT ? parseInt(process.env.NEST_PORT, 10) : 3000,
   baseurl: process.env.NEST_BASE_URL ?? 'http://localhost:3000',
-  environment: process.env.NEST_USER_NODE_ENV ?? 'development',
+  environment: process.env.NODE_ENV ?? 'development',
 
   // JWT 认证配置
   jwt: {
@@ -87,7 +87,7 @@ export default registerAs('app', () => ({
     description: process.env.NEST_SWAGGER_DESCRIPTION ?? 'API文档',
     version: process.env.NEST_SWAGGER_VERSION ?? '1.0',
     prefix: process.env.NEST_SWAGGER_PREFIX ?? '/api-docs',
-    enabled: process.env.NEST_USER_NODE_ENV !== 'production',
+    enabled: process.env.NODE_ENV !== 'production',
   },
 
   // Redis 缓存配置
@@ -95,8 +95,7 @@ export default registerAs('app', () => ({
     // Redis 功能开关，默认在开发环境启用，生产环境需要显式配置
     enabled:
       process.env.NEST_REDIS_ENABLED === 'true' ||
-      (process.env.NEST_USER_NODE_ENV === 'development' &&
-        process.env.NEST_REDIS_ENABLED !== 'false'),
+      (process.env.NODE_ENV === 'development' && process.env.NEST_REDIS_ENABLED !== 'false'),
 
     // Redis 连接配置
     host: process.env.NEST_REDIS_HOST ?? 'localhost',
@@ -160,8 +159,7 @@ export default registerAs('app', () => ({
     password: process.env.NEST_DATABASE_PASSWORD ?? '',
     database: process.env.NEST_DATABASE_NAME ?? 'nestjs_app',
     synchronize:
-      process.env.NEST_DATABASE_SYNCHRONIZE === 'true' ||
-      process.env.NEST_USER_NODE_ENV === 'development',
+      process.env.NEST_DATABASE_SYNCHRONIZE === 'true' || process.env.NODE_ENV === 'development',
     // 精细化日志控制 - 默认关闭所有查询日志
     logging: process.env.NEST_DATABASE_LOGGING === 'true' ? true : false,
     // 关闭额外的数据库通知

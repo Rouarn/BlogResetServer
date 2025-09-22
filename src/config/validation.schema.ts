@@ -14,7 +14,7 @@ import Joi from 'joi';
  * 验证规则分类：
  * - 必需配置：NEST_JWT_SECRET, NEST_DATABASE_USER, NEST_DATABASE_PASSWORD, NEST_DATABASE_NAME
  * - 可选配置：其他所有配置都有默认值
- * - 枚举限制：NEST_USER_NODE_ENV 只能是 'development', 'production', 'test' 之一
+ * - 枚举限制：NODE_ENV 只能是 'development', 'production', 'test' 之一
  * - 类型验证：端口号必须是数字，文件大小必须是数字等
  *
  * 验证失败处理：
@@ -24,7 +24,7 @@ import Joi from 'joi';
  * 环境变量说明：
  * - NEST_GLOB_APP_TITLE: 应用标题
  * - NEST_PORT: 应用运行端口
- * - NEST_USER_NODE_ENV: 运行环境 (development/production/test)
+ * - NODE_ENV: 运行环境 (development/production/test)
  * - NEST_JWT_SECRET: JWT 签名密钥 (必需)
  * - NEST_JWT_ACCESS_TOKEN_TTL: JWT 令牌有效期
  * - NEST_STATIC_ASSETS_*: 静态资源相关配置
@@ -41,7 +41,7 @@ import Joi from 'joi';
  * NEST_DATABASE_PASSWORD=password
  * NEST_DATABASE_NAME=my_app_db
  * NEST_PORT=3000
- * NEST_USER_NODE_ENV=development
+ * NODE_ENV=development
  * ```
  */
 export const validationSchema = Joi.object({
@@ -49,9 +49,7 @@ export const validationSchema = Joi.object({
   NEST_GLOB_APP_TITLE: Joi.string().default('NestJS Application'),
   NEST_PORT: Joi.number().default(3000),
   NEST_BASE_URL: Joi.string().default('http://localhost:3000'),
-  NEST_USER_NODE_ENV: Joi.string()
-    .valid('development', 'production', 'test')
-    .default('development'),
+  NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
 
   // 静态资源和文件上传统一配置
   NEST_STATIC_ASSETS_DIR: Joi.string().default('./static'), // 静态资源存储路径
