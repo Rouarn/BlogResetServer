@@ -78,7 +78,7 @@ export class CreateAuthDto {
 
   @ApiPropertyOptional({
     description: '昵称',
-    example: '小明',
+    example: 'newuser',
     minLength: 2,
     maxLength: 20,
   })

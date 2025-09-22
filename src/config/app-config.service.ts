@@ -71,7 +71,7 @@ export class AppConfigService {
    * @returns 环境名称 ('development' | 'production' | 'test')
    */
   get environment(): string {
-    return this.configService.get<string>('NEST_USER_NODE_ENV', 'development');
+    return this.configService.get<string>('NODE_ENV', 'development');
   }
 
   /**

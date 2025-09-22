@@ -2067,7 +2067,7 @@ const swaggerConfig = appConfig.swaggerOptions;
 
 | 变量名                      | 描述             | 示例值                                        | 默认值            |
 | --------------------------- | ---------------- | --------------------------------------------- | ----------------- |
-| `NEST_USER_NODE_ENV`        | 运行环境         | `development`                                 | `development`     |
+| `NODE_ENV`                  | 运行环境         | `development`                                 | `development`     |
 | `NEST_JWT_ACCESS_TOKEN_TTL` | JWT过期时间      | `7d`                                          | `1d`              |
 | `NEST_DATABASE_SYNCHRONIZE` | 数据库同步       | `true`                                        | 开发环境为 `true` |
 | `NEST_DATABASE_LOGGING`     | 数据库日志       | `true`                                        | `false`           |
@@ -2086,7 +2086,7 @@ const swaggerConfig = appConfig.swaggerOptions;
 ```bash
 # 应用配置
 NEST_PORT=8848
-NEST_USER_NODE_ENV=development
+NODE_ENV=development
 
 # 数据库配置
 NEST_DATABASE_HOST=127.0.0.1
@@ -2123,7 +2123,7 @@ NEST_LOG_LEVEL=debug
 ```bash
 # 应用配置
 NEST_PORT=3000
-NEST_USER_NODE_ENV=production
+NODE_ENV=production
 
 # 数据库配置
 NEST_DATABASE_HOST=your-production-db-host
