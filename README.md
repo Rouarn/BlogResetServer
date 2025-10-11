@@ -75,7 +75,8 @@ cp .env.example .env.development
 确保 MySQL 服务已启动，并创建对应的数据库：
 
 ```sql
-CREATE DATABASE dbtest CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE
+DATABASE dbtest CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 ### 5. 启动开发服务器
@@ -653,16 +654,16 @@ nestjs-template/
 
 **角色层级 (从高到低)**：
 
-| 角色          | 值              | 层级 | 描述       | 权限范围    |
-| ------------- | --------------- | ---- | ---------- | ----------- |
-| SYSTEM_ADMIN  | `system_admin`  | 100  | 系统管理员 | 全系统      |
-| ORG_ADMIN     | `org_admin`     | 80   | 组织管理员 | 全系统      |
-| DEPT_ADMIN    | `dept_admin`    | 60   | 部门管理员 | 组织/部门级 |
-| PROJECT_ADMIN | `project_admin` | 50   | 项目管理员 | 组织/部门级 |
-| POWER_USER    | `power_user`    | 40   | 高级用户   | 个人级      |
-| USER          | `user`          | 20   | 标准用户   | 个人级      |
-| VIEWER        | `viewer`        | 10   | 只读用户   | 受限访问    |
-| GUEST         | `guest`         | 1    | 访客       | 受限访问    |
+| 角色            | 值               | 层级  | 描述    | 权限范围   |
+|---------------|-----------------|-----|-------|--------|
+| SYSTEM_ADMIN  | `system_admin`  | 100 | 系统管理员 | 全系统    |
+| ORG_ADMIN     | `org_admin`     | 80  | 组织管理员 | 全系统    |
+| DEPT_ADMIN    | `dept_admin`    | 60  | 部门管理员 | 组织/部门级 |
+| PROJECT_ADMIN | `project_admin` | 50  | 项目管理员 | 组织/部门级 |
+| POWER_USER    | `power_user`    | 40  | 高级用户  | 个人级    |
+| USER          | `user`          | 20  | 标准用户  | 个人级    |
+| VIEWER        | `viewer`        | 10  | 只读用户  | 受限访问   |
+| GUEST         | `guest`         | 1   | 访客    | 受限访问   |
 
 **角色分组**：
 
@@ -827,6 +828,7 @@ canManageRole(roleA, roleB) // 仍然可用
 **装饰器方式（推荐）：**
 
 ```typescript
+
 @Injectable()
 export class UserService {
   // 基础缓存：使用用户ID作为缓存键
@@ -846,9 +848,11 @@ export class UserService {
 **服务注入方式：**
 
 ```typescript
+
 @Injectable()
 export class UserService {
-  constructor(private readonly cacheService: ICacheService) {}
+  constructor(private readonly cacheService: ICacheService) {
+  }
 
   async getUserById(id: string): Promise<User> {
     const cacheKey = `user:${id}`;
@@ -1154,7 +1158,8 @@ import { DatabaseModule } from './database';
     }),
   ],
 })
-export class AppModule {}
+export class AppModule {
+}
 ```
 
 #### 2. 实体继承
@@ -1280,7 +1285,11 @@ export class UserController {
 ```typescript
 @Delete(':id/force')
 @ForceDelete()  // 此方法将执行物理删除
-async forceDeleteUser(@Param('id') id: string) {
+async
+forceDeleteUser(@Param('id')
+id: string
+)
+{
   return this.userService.remove(id);
 }
 ```
@@ -1292,7 +1301,12 @@ async forceDeleteUser(@Param('id') id: string) {
 ```typescript
 @Put(':id/system-update')
 @DisableTimestamps()  // 系统更新不修改 updateTime
-async systemUpdate(@Param('id') id: string, @Body() data: any) {
+async
+systemUpdate(@Param('id')
+id: string, @Body()
+data: any
+)
+{
   return this.userService.update(id, data);
 }
 ```
@@ -1304,6 +1318,7 @@ async systemUpdate(@Param('id') id: string, @Body() data: any) {
 支持从配置服务动态加载审计配置：
 
 ```typescript
+
 @Module({
   imports: [
     DatabaseModule.forRootAsync({
@@ -1317,7 +1332,8 @@ async systemUpdate(@Param('id') id: string, @Body() data: any) {
     }),
   ],
 })
-export class AppModule {}
+export class AppModule {
+}
 ```
 
 #### 2. 特性模块使用
@@ -1325,11 +1341,13 @@ export class AppModule {}
 在特定模块中使用审计功能：
 
 ```typescript
+
 @Module({
   imports: [DatabaseModule.forFeature()],
   providers: [UserService],
 })
-export class UserModule {}
+export class UserModule {
+}
 ```
 
 #### 3. 自定义查询
@@ -1337,6 +1355,7 @@ export class UserModule {}
 在服务中进行自定义查询时的最佳实践：
 
 ```typescript
+
 @Injectable()
 export class UserService extends BaseService<User> {
   // 查找活跃用户（排除软删除）
@@ -1397,28 +1416,39 @@ export interface QueryContext {
 export interface IBaseService<T extends IBaseEntity> {
   // 基础 CRUD 操作
   create(entityData: DeepPartial<T>): Promise<T>;
+
   update(id: string | number, entityData: DeepPartial<T>): Promise<T>;
+
   createMany(entitiesData: DeepPartial<T>[]): Promise<T[]>;
 
   // 查询操作
   findAll(options?: FindManyOptions<T> & SoftDeleteOptions): Promise<T[]>;
+
   findById(id: string | number, options?: FindOneOptions<T> & SoftDeleteOptions): Promise<T | null>;
+
   findOne(options?: FindOneOptions<T> & SoftDeleteOptions): Promise<T | null>;
+
   count(options?: FindManyOptions<T> & SoftDeleteOptions): Promise<number>;
 
   // 软删除操作
   softDelete(id: string | number): Promise<void>;
+
   softDeleteMany(ids: (string | number)[]): Promise<void>;
+
   restore(id: string | number): Promise<void>;
+
   restoreMany(ids: (string | number)[]): Promise<void>;
 
   // 包含已删除数据的查询
   findWithDeleted(options?: FindManyOptions<T>): Promise<T[]>;
+
   findOneWithDeleted(options?: FindOneOptions<T>): Promise<T | null>;
+
   findDeleted(options?: FindManyOptions<T>): Promise<T[]>;
 
   // 物理删除操作
   forceDelete(id: string | number): Promise<void>;
+
   forceDeleteMany(ids: (string | number)[]): Promise<void>;
 }
 ```
@@ -1498,6 +1528,7 @@ export class ProductService {
 #### 3. 控制器使用
 
 ```typescript
+
 @Controller('products')
 export class ProductController {
   // ✅ 推荐：使用装饰器控制行为
@@ -1523,7 +1554,8 @@ export class ProductController {
 
 ### 注意事项
 
-1. **数据库字段**: 确保数据库表包含 `create_time`、`update_time`、`delete_time` 字段（对应实体的 createTime、updateTime、deleteTime 属性）
+1. **数据库字段**: 确保数据库表包含 `create_time`、`update_time`、`delete_time` 字段（对应实体的
+   createTime、updateTime、deleteTime 属性）
 2. **字段类型**: 时间戳字段使用 `timestamp` 类型，`delete_time` 字段需要设置为可空
 3. **时区处理**: 时间戳使用数据库服务器时区，建议统一使用 UTC
 4. **性能考虑**: 软删除会增加查询复杂度，对于大数据量表需要在 `delete_time` 字段上建立索引
@@ -2053,31 +2085,31 @@ const swaggerConfig = appConfig.swaggerOptions;
 
 #### 必需环境变量
 
-| 变量名                   | 描述         | 示例值            | 默认值      |
-| ------------------------ | ------------ | ----------------- | ----------- |
-| `NEST_PORT`              | 应用端口     | `8848`            | `3000`      |
-| `NEST_DATABASE_HOST`     | 数据库主机   | `127.0.0.1`       | `localhost` |
-| `NEST_DATABASE_PORT`     | 数据库端口   | `3306`            | `3306`      |
+| 变量名                      | 描述     | 示例值               | 默认值         |
+|--------------------------|--------|-------------------|-------------|
+| `NEST_PORT`              | 应用端口   | `8848`            | `3000`      |
+| `NEST_DATABASE_HOST`     | 数据库主机  | `127.0.0.1`       | `localhost` |
+| `NEST_DATABASE_PORT`     | 数据库端口  | `3306`            | `3306`      |
 | `NEST_DATABASE_USER`     | 数据库用户名 | `root`            | -           |
-| `NEST_DATABASE_PASSWORD` | 数据库密码   | `password`        | -           |
-| `NEST_DATABASE_NAME`     | 数据库名称   | `dbtest`          | -           |
-| `NEST_JWT_SECRET`        | JWT密钥      | `your-secret-key` | -           |
+| `NEST_DATABASE_PASSWORD` | 数据库密码  | `password`        | -           |
+| `NEST_DATABASE_NAME`     | 数据库名称  | `dbtest`          | -           |
+| `NEST_JWT_SECRET`        | JWT密钥  | `your-secret-key` | -           |
 
 #### 可选环境变量
 
-| 变量名                      | 描述             | 示例值                                        | 默认值            |
-| --------------------------- | ---------------- | --------------------------------------------- | ----------------- |
-| `NODE_ENV`                  | 运行环境         | `development`                                 | `development`     |
-| `NEST_JWT_ACCESS_TOKEN_TTL` | JWT过期时间      | `7d`                                          | `1d`              |
-| `NEST_DATABASE_SYNCHRONIZE` | 数据库同步       | `true`                                        | 开发环境为 `true` |
-| `NEST_DATABASE_LOGGING`     | 数据库日志       | `true`                                        | `false`           |
-| `NEST_STATIC_ASSETS_DIR`    | 静态资源路径     | `./uploads`                                   | `./static`        |
-| `NEST_STATIC_ASSETS_URL`    | 静态资源URL前缀  | `/static`                                     | `/static`         |
-| `NEST_STATIC_ASSETS_MAXAGE` | 静态资源缓存时间 | `86400`                                       | `86400`           |
-| `NEST_CORS_ORIGINS`         | CORS允许的源     | `http://localhost:3000,http://localhost:9527` | 默认配置          |
-| `NEST_SWAGGER_PREFIX`       | Swagger路径前缀  | `/docs`                                       | `/api-docs`       |
-| `NEST_ENABLE_DEBUG`         | 启用调试模式     | `true`                                        | `false`           |
-| `NEST_LOG_LEVEL`            | 日志级别         | `debug`                                       | `info`            |
+| 变量名                         | 描述          | 示例值                                           | 默认值           |
+|-----------------------------|-------------|-----------------------------------------------|---------------|
+| `NODE_ENV`                  | 运行环境        | `development`                                 | `development` |
+| `NEST_JWT_ACCESS_TOKEN_TTL` | JWT过期时间     | `7d`                                          | `1d`          |
+| `NEST_DATABASE_SYNCHRONIZE` | 数据库同步       | `true`                                        | 开发环境为 `true`  |
+| `NEST_DATABASE_LOGGING`     | 数据库日志       | `true`                                        | `false`       |
+| `NEST_STATIC_ASSETS_DIR`    | 静态资源路径      | `./uploads`                                   | `./static`    |
+| `NEST_STATIC_ASSETS_URL`    | 静态资源URL前缀   | `/static`                                     | `/static`     |
+| `NEST_STATIC_ASSETS_MAXAGE` | 静态资源缓存时间    | `86400`                                       | `86400`       |
+| `NEST_CORS_ORIGINS`         | CORS允许的源    | `http://localhost:3000,http://localhost:9527` | 默认配置          |
+| `NEST_SWAGGER_PREFIX`       | Swagger路径前缀 | `/docs`                                       | `/api-docs`   |
+| `NEST_ENABLE_DEBUG`         | 启用调试模式      | `true`                                        | `false`       |
+| `NEST_LOG_LEVEL`            | 日志级别        | `debug`                                       | `info`        |
 
 ### 配置文件示例
 
@@ -2162,7 +2194,8 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class YourService {
-  constructor(private readonly appConfig: AppConfigService) {}
+  constructor(private readonly appConfig: AppConfigService) {
+  }
 
   someMethod() {
     const port = this.appConfig.port;
@@ -2197,7 +2230,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     }),
   ],
 })
-export class DatabaseModule {}
+export class DatabaseModule {
+}
 ```
 
 ### 配置验证
@@ -2305,22 +2339,22 @@ static/                    # 配置的静态资源根目录
 
 ### 必需变量
 
-| 变量名                   | 描述         | 示例值                      |
-| ------------------------ | ------------ | --------------------------- |
-| `NEST_PORT`              | 应用端口     | `8848`                      |
-| `NEST_DATABASE_HOST`     | 数据库主机   | `127.0.0.1`                 |
-| `NEST_DATABASE_PORT`     | 数据库端口   | `3306`                      |
+| 变量名                      | 描述     | 示例值                         |
+|--------------------------|--------|-----------------------------|
+| `NEST_PORT`              | 应用端口   | `8848`                      |
+| `NEST_DATABASE_HOST`     | 数据库主机  | `127.0.0.1`                 |
+| `NEST_DATABASE_PORT`     | 数据库端口  | `3306`                      |
 | `NEST_DATABASE_USER`     | 数据库用户名 | `root`                      |
-| `NEST_DATABASE_PASSWORD` | 数据库密码   | `1234`                      |
-| `NEST_DATABASE_NAME`     | 数据库名称   | `dbtest`                    |
-| `NEST_JWT_SECRET`        | JWT密钥      | `xiaji-dev-secret-key-2024` |
+| `NEST_DATABASE_PASSWORD` | 数据库密码  | `1234`                      |
+| `NEST_DATABASE_NAME`     | 数据库名称  | `dbtest`                    |
+| `NEST_JWT_SECRET`        | JWT密钥  | `xiaji-dev-secret-key-2024` |
 
 ### 可选变量
 
-| 变量名                      | 描述        | 默认值  |
-| --------------------------- | ----------- | ------- |
-| `NEST_DATABASE_SYNCHRONIZE` | 数据库同步  | `true`  |
-| `NEST_DATABASE_LOGGING`     | 数据库日志  | `false` |
+| 变量名                         | 描述      | 默认值     |
+|-----------------------------|---------|---------|
+| `NEST_DATABASE_SYNCHRONIZE` | 数据库同步   | `true`  |
+| `NEST_DATABASE_LOGGING`     | 数据库日志   | `false` |
 | `NEST_JWT_EXPIRES_IN`       | JWT过期时间 | `7d`    |
 
 ## 🔐 API认证与验证码系统
@@ -2683,7 +2717,9 @@ Content-Type: application/octet-stream
     "uploadId": "upload_550e8400-e29b-41d4-a716-446655440000",
     "chunkNumber": 1,
     "chunkHash": "sha256:b5d4045c3f466fa91fe2cc6abe79232a1a57cdf104f7a26e716e0a1e2789df78",
-    "uploadedChunks": [1],
+    "uploadedChunks": [
+      1
+    ],
     "remainingChunks": 99
   },
   "message": "分块上传成功"
@@ -2707,7 +2743,15 @@ Content-Type: application/octet-stream
 ```json
 {
   "uploadId": "upload_550e8400-e29b-41d4-a716-446655440000",
-  "chunks": [1, 2, 3, 4, 5, ..., 100]
+  "chunks": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    ...,
+    100
+  ]
 }
 ```
 
@@ -2745,8 +2789,22 @@ Content-Type: application/octet-stream
     "uploadId": "upload_550e8400-e29b-41d4-a716-446655440000",
     "status": "uploading",
     "totalChunks": 100,
-    "uploadedChunks": [1, 2, 3, 5, 7],
-    "missingChunks": [4, 6, 8, 9, 10, ..., 100],
+    "uploadedChunks": [
+      1,
+      2,
+      3,
+      5,
+      7
+    ],
+    "missingChunks": [
+      4,
+      6,
+      8,
+      9,
+      10,
+      ...,
+      100
+    ],
     "progress": 5.0,
     "expiresAt": "2024-01-01T13:34:56.789Z"
   },
@@ -2841,7 +2899,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         "size": 204800,
         "mimeType": "image/jpeg",
         "description": "用户头像",
-        "tags": ["avatar", "profile"],
+        "tags": [
+          "avatar",
+          "profile"
+        ],
         "downloadUrl": "/files/550e8400-e29b-41d4-a716-446655440001/download",
         "previewUrl": "/files/550e8400-e29b-41d4-a716-446655440001/preview",
         "uploadedAt": "2024-01-01T12:34:56.789Z"
@@ -2886,7 +2947,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
     "mimeType": "application/pdf",
     "hash": "sha256:a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
     "description": "这是一个示例PDF文件",
-    "tags": ["document", "example"],
+    "tags": [
+      "document",
+      "example"
+    ],
     "downloadUrl": "/files/550e8400-e29b-41d4-a716-446655440000/download",
     "previewUrl": "/files/550e8400-e29b-41d4-a716-446655440000/preview",
     "uploadProtocol": "HTTP",
@@ -2915,7 +2979,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```json
 {
   "description": "更新后的文件描述",
-  "tags": ["updated", "document", "important"]
+  "tags": [
+    "updated",
+    "document",
+    "important"
+  ]
 }
 ```
 
@@ -2927,7 +2995,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
   "data": {
     "id": "550e8400-e29b-41d4-a716-446655440000",
     "description": "更新后的文件描述",
-    "tags": ["updated", "document", "important"],
+    "tags": [
+      "updated",
+      "document",
+      "important"
+    ],
     "updatedAt": "2024-01-01T13:00:00.000Z"
   },
   "message": "文件信息更新成功"
@@ -2981,14 +3053,21 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 {
   "success": true,
   "data": {
-    "protocols": ["HTTP"],
+    "protocols": [
+      "HTTP"
+    ],
     "count": 2,
     "details": {
       "HTTP": {
         "name": "HTTP协议",
         "description": "标准HTTP文件传输",
         "maxFileSize": 10485760,
-        "supportedFeatures": ["单文件上传", "批量上传", "分块上传", "断点续传"]
+        "supportedFeatures": [
+          "单文件上传",
+          "批量上传",
+          "分块上传",
+          "断点续传"
+        ]
       }
     }
   },
@@ -3000,33 +3079,33 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 ### 通用错误码
 
-| 错误码         | HTTP状态码 | 描述           |
-| -------------- | ---------- | -------------- |
-| UNAUTHORIZED   | 401        | 未授权访问     |
-| FORBIDDEN      | 403        | 禁止访问       |
-| NOT_FOUND      | 404        | 资源不存在     |
-| INTERNAL_ERROR | 500        | 服务器内部错误 |
+| 错误码            | HTTP状态码 | 描述      |
+|----------------|---------|---------|
+| UNAUTHORIZED   | 401     | 未授权访问   |
+| FORBIDDEN      | 403     | 禁止访问    |
+| NOT_FOUND      | 404     | 资源不存在   |
+| INTERNAL_ERROR | 500     | 服务器内部错误 |
 
 ### 文件相关错误码
 
-| 错误码            | HTTP状态码 | 描述             |
-| ----------------- | ---------- | ---------------- |
-| FILE_TOO_LARGE    | 400        | 文件大小超出限制 |
-| INVALID_FILE_TYPE | 400        | 不支持的文件类型 |
-| FILE_NOT_FOUND    | 404        | 文件不存在       |
-| UPLOAD_FAILED     | 500        | 文件上传失败     |
-| DOWNLOAD_FAILED   | 500        | 文件下载失败     |
-| STORAGE_ERROR     | 500        | 存储服务错误     |
+| 错误码               | HTTP状态码 | 描述       |
+|-------------------|---------|----------|
+| FILE_TOO_LARGE    | 400     | 文件大小超出限制 |
+| INVALID_FILE_TYPE | 400     | 不支持的文件类型 |
+| FILE_NOT_FOUND    | 404     | 文件不存在    |
+| UPLOAD_FAILED     | 500     | 文件上传失败   |
+| DOWNLOAD_FAILED   | 500     | 文件下载失败   |
+| STORAGE_ERROR     | 500     | 存储服务错误   |
 
 ### 分块上传错误码
 
-| 错误码              | HTTP状态码 | 描述             |
-| ------------------- | ---------- | ---------------- |
-| INVALID_UPLOAD_ID   | 400        | 无效的上传ID     |
-| UPLOAD_EXPIRED      | 400        | 上传会话已过期   |
-| CHUNK_MISSING       | 400        | 分块缺失         |
-| CHUNK_OUT_OF_RANGE  | 400        | 分块序号超出范围 |
-| CHUNK_SIZE_MISMATCH | 400        | 分块大小不匹配   |
+| 错误码                 | HTTP状态码 | 描述       |
+|---------------------|---------|----------|
+| INVALID_UPLOAD_ID   | 400     | 无效的上传ID  |
+| UPLOAD_EXPIRED      | 400     | 上传会话已过期  |
+| CHUNK_MISSING       | 400     | 分块缺失     |
+| CHUNK_OUT_OF_RANGE  | 400     | 分块序号超出范围 |
+| CHUNK_SIZE_MISMATCH | 400     | 分块大小不匹配  |
 
 ## 配置说明
 

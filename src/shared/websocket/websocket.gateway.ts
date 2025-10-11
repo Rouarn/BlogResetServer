@@ -251,27 +251,9 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
       await socket.join(data.roomId);
 
       // 通知房间其他成员
-      const notification = this.webSocketService.createMessage(
-        WebSocketMessageType.NOTIFICATION,
-        {
-          userId: socket.user?.id,
-          username: socket.user?.name,
-          room: data.roomId,
-          timestamp: Date.now(),
-        },
-        { senderId: socket.user?.id, roomId: data.roomId },
-      );
+      this.notifyRoomMembers(socket, data.roomId);
 
-      socket.to(data.roomId).emit('notification', notification);
-
-      return {
-        success: true,
-        data: {
-          room: data.roomId,
-          members: result?.memberCount ?? 0,
-        },
-        timestamp: Date.now(),
-      };
+      return this.buildRoomResponse(data.roomId, result?.memberCount ?? 0);
     } catch (error) {
       this.logger.error(`加入房间失败: ${(error as Error).message}`, (error as Error).stack);
       throw error;
@@ -300,27 +282,9 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
       await socket.leave(data.roomId);
 
       // 通知房间其他成员
-      const notification = this.webSocketService.createMessage(
-        WebSocketMessageType.NOTIFICATION,
-        {
-          userId: socket.user?.id,
-          username: socket.user?.name,
-          room: data.roomId,
-          timestamp: Date.now(),
-        },
-        { senderId: socket.user?.id, roomId: data.roomId },
-      );
+      this.notifyRoomMembers(socket, data.roomId);
 
-      socket.to(data.roomId).emit('notification', notification);
-
-      return {
-        success: true,
-        data: {
-          room: data.roomId,
-          members: result?.memberCount ?? 0,
-        },
-        timestamp: Date.now(),
-      };
+      return this.buildRoomResponse(data.roomId, result?.memberCount ?? 0);
     } catch (error) {
       this.logger.error(`离开房间失败: ${(error as Error).message}`, (error as Error).stack);
       throw error;
@@ -450,6 +414,45 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
       this.logger.error(`广播消息失败: ${(error as Error).message}`, (error as Error).stack);
       throw error;
     }
+  }
+
+  /**
+   * 通知房间其他成员（抽取的复用方法）
+   * @param socket 客户端 Socket
+   * @param roomId 房间ID
+   */
+  private notifyRoomMembers(socket: AuthenticatedSocket, roomId: string): void {
+    const notification = this.webSocketService.createMessage(
+      WebSocketMessageType.NOTIFICATION,
+      {
+        userId: socket.user?.id,
+        username: socket.user?.name,
+        room: roomId,
+        timestamp: Date.now(),
+      },
+      { senderId: socket.user?.id, roomId },
+    );
+
+    socket.to(roomId).emit('notification', notification);
+  }
+
+  /**
+   * 构建统一的房间响应结构
+   * @param roomId 房间ID
+   * @param memberCount 成员数量
+   */
+  private buildRoomResponse(
+    roomId: string,
+    memberCount: number,
+  ): WebSocketResponse<{ room: string; members: number }> {
+    return {
+      success: true,
+      data: {
+        room: roomId,
+        members: memberCount ?? 0,
+      },
+      timestamp: Date.now(),
+    };
   }
 
   /**

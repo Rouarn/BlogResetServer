@@ -10,7 +10,7 @@
 
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ICacheService, CacheOptions, CacheStats } from '../interfaces';
+import { CacheOptions, CacheStats, ICacheService } from '../interfaces';
 
 /**
  * 缓存项接口
@@ -48,95 +48,6 @@ export class MemoryCacheService implements ICacheService, OnModuleDestroy {
     this.logger.log(`💾 内存缓存初始化完成 - 最大容量: ${this.maxSize}个键`);
     this.logger.log(`💾 缓存键前缀: ${this.keyPrefix}`);
     this.logger.log('💾 定期清理任务已启动');
-  }
-
-  /**
-   * 启动清理定时器
-   */
-  private startCleanupTimer(): void {
-    // 每5分钟清理一次过期缓存
-    this.cleanupTimer = setInterval(
-      () => {
-        this.cleanupExpired();
-      },
-      5 * 60 * 1000,
-    );
-  }
-
-  /**
-   * 获取带前缀的键名
-   */
-  private getKey(key: string, prefix?: string): string {
-    const keyPrefix = prefix ?? this.keyPrefix;
-    return `${keyPrefix}${key}`;
-  }
-
-  /**
-   * 检查缓存项是否过期
-   */
-  private isExpired(item: CacheItem): boolean {
-    if (!item.expireAt) return false;
-    return Date.now() > item.expireAt;
-  }
-
-  /**
-   * 清理过期的缓存项
-   */
-  private cleanupExpired(): void {
-    const now = Date.now();
-    let cleanedCount = 0;
-
-    for (const [key, item] of this.cache.entries()) {
-      if (item.expireAt && now > item.expireAt) {
-        this.cache.delete(key);
-        cleanedCount++;
-      }
-    }
-
-    if (cleanedCount > 0) {
-      this.logger.debug(`Cleaned up ${cleanedCount} expired cache items`);
-      this.updateStats();
-    }
-  }
-
-  /**
-   * LRU 淘汰策略：移除最久未访问的缓存项
-   */
-  private evictLRU(): void {
-    if (this.cache.size === 0) return;
-
-    let oldestKey: string | null = null;
-    let oldestTime = Date.now();
-
-    for (const [key, item] of this.cache.entries()) {
-      if (item.lastAccessed < oldestTime) {
-        oldestTime = item.lastAccessed;
-        oldestKey = key;
-      }
-    }
-
-    if (oldestKey) {
-      this.cache.delete(oldestKey);
-      this.logger.debug(`Evicted LRU cache item: ${oldestKey}`);
-    }
-  }
-
-  /**
-   * 确保缓存大小不超过限制
-   */
-  private ensureCapacity(): void {
-    while (this.cache.size >= this.maxSize) {
-      this.evictLRU();
-    }
-  }
-
-  /**
-   * 更新统计信息
-   */
-  private updateStats(): void {
-    this.stats.keys = this.cache.size;
-    // 估算内存使用量（简单估算）
-    this.stats.memoryUsage = this.cache.size * 100; // 假设每个缓存项平均100字节
   }
 
   /**
@@ -350,5 +261,94 @@ export class MemoryCacheService implements ICacheService, OnModuleDestroy {
    */
   async onModuleDestroy(): Promise<void> {
     await this.close();
+  }
+
+  /**
+   * 启动清理定时器
+   */
+  private startCleanupTimer(): void {
+    // 每5分钟清理一次过期缓存
+    this.cleanupTimer = setInterval(
+      () => {
+        this.cleanupExpired();
+      },
+      5 * 60 * 1000,
+    );
+  }
+
+  /**
+   * 获取带前缀的键名
+   */
+  private getKey(key: string, prefix?: string): string {
+    const keyPrefix = prefix ?? this.keyPrefix;
+    return `${keyPrefix}${key}`;
+  }
+
+  /**
+   * 检查缓存项是否过期
+   */
+  private isExpired(item: CacheItem): boolean {
+    if (!item.expireAt) return false;
+    return Date.now() > item.expireAt;
+  }
+
+  /**
+   * 清理过期的缓存项
+   */
+  private cleanupExpired(): void {
+    const now = Date.now();
+    let cleanedCount = 0;
+
+    for (const [key, item] of this.cache.entries()) {
+      if (item.expireAt && now > item.expireAt) {
+        this.cache.delete(key);
+        cleanedCount++;
+      }
+    }
+
+    if (cleanedCount > 0) {
+      this.logger.debug(`Cleaned up ${cleanedCount} expired cache items`);
+      this.updateStats();
+    }
+  }
+
+  /**
+   * LRU 淘汰策略：移除最久未访问的缓存项
+   */
+  private evictLRU(): void {
+    if (this.cache.size === 0) return;
+
+    let oldestKey: string | null = null;
+    let oldestTime = Date.now();
+
+    for (const [key, item] of this.cache.entries()) {
+      if (item.lastAccessed < oldestTime) {
+        oldestTime = item.lastAccessed;
+        oldestKey = key;
+      }
+    }
+
+    if (oldestKey) {
+      this.cache.delete(oldestKey);
+      this.logger.debug(`Evicted LRU cache item: ${oldestKey}`);
+    }
+  }
+
+  /**
+   * 确保缓存大小不超过限制
+   */
+  private ensureCapacity(): void {
+    while (this.cache.size >= this.maxSize) {
+      this.evictLRU();
+    }
+  }
+
+  /**
+   * 更新统计信息
+   */
+  private updateStats(): void {
+    this.stats.keys = this.cache.size;
+    // 估算内存使用量（简单估算）
+    this.stats.memoryUsage = this.cache.size * 100; // 假设每个缓存项平均100字节
   }
 }

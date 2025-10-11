@@ -174,6 +174,27 @@ export class ChunkService {
     return completedFile;
   }
 
+  async getUploadProgress(uploadId: string): Promise<UploadProgress> {
+    const file = await this.fileRepository.findOne({
+      where: { uploadId },
+    });
+
+    if (!file) {
+      throw new BadRequestException('无效的上传ID');
+    }
+
+    const progress =
+      file.totalChunks > 0 ? Math.round((file.uploadedChunks / file.totalChunks) * 100) : 0;
+
+    return {
+      uploadId,
+      totalChunks: file.totalChunks,
+      uploadedChunks: file.uploadedChunks,
+      progress,
+      status: file.status,
+    };
+  }
+
   private async mergeChunks(file: File): Promise<string> {
     const datePath = formatDatePath();
     const finalPath = path.join(datePath, file.filename);
@@ -221,26 +242,5 @@ export class ChunkService {
     } catch (error) {
       this.logger.error(`❌ 分块清理失败: ${uploadId}`, error);
     }
-  }
-
-  async getUploadProgress(uploadId: string): Promise<UploadProgress> {
-    const file = await this.fileRepository.findOne({
-      where: { uploadId },
-    });
-
-    if (!file) {
-      throw new BadRequestException('无效的上传ID');
-    }
-
-    const progress =
-      file.totalChunks > 0 ? Math.round((file.uploadedChunks / file.totalChunks) * 100) : 0;
-
-    return {
-      uploadId,
-      totalChunks: file.totalChunks,
-      uploadedChunks: file.uploadedChunks,
-      progress,
-      status: file.status,
-    };
   }
 }

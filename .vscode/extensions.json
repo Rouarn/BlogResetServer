@@ -9,5 +9,7 @@
     "ms-vscode.vscode-todo-highlight",
     "gruntfuggly.todo-tree"
   ],
-  "unwantedRecommendations": ["ms-vscode.vscode-typescript"]
+  "unwantedRecommendations": [
+    "ms-vscode.vscode-typescript"
+  ]
 }

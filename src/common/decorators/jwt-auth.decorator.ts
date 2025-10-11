@@ -1,4 +1,4 @@
-import { UseGuards, applyDecorators } from '@nestjs/common';
+import { applyDecorators, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../guards';
 
 /**

@@ -3,7 +3,7 @@ import { BusinessExceptionFactory } from '@/common/exceptions';
 import { Cache, CacheEvict, ICacheService } from '@/shared/cache';
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Role, Status, isEnabled, toggleStatus } from 'src/common/enums';
+import { isEnabled, Role, Status, toggleStatus } from 'src/common/enums';
 import { Repository } from 'typeorm';
 import type { CreateUserDto } from './dto/create-user.dto';
 import type { BatchDeleteUserDto, UpdateUserDto } from './dto/update-user.dto';

@@ -38,6 +38,33 @@ export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name);
 
   /**
+   * 捕获并处理所有异常
+   */
+  catch(exception: unknown, host: ArgumentsHost): void {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
+
+    const { status, messages } = this.extractMessages(exception);
+    const finalMessage = messages.length === 1 ? messages[0] : messages;
+
+    const errorResponse: ErrorResponse = {
+      success: false,
+      code: status,
+      message: finalMessage,
+      data: null,
+      timestamp: formatTimestamp(),
+      url: request.url,
+    };
+
+    const context = this.extractContext(request);
+    const logLevel = this.getLogLevel(status, request.url);
+    this.logError(logLevel, context, status, messages.join(', '));
+
+    response.status(status).json(errorResponse);
+  }
+
+  /**
    * 根据状态码和请求路径获取日志级别
    */
   private getLogLevel(status: number, url: string): LogLevel {
@@ -239,32 +266,5 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (ua.includes('curl')) return 'curl';
     if (ua.includes('axios')) return 'axios';
     return 'Unknown';
-  }
-
-  /**
-   * 捕获并处理所有异常
-   */
-  catch(exception: unknown, host: ArgumentsHost): void {
-    const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
-
-    const { status, messages } = this.extractMessages(exception);
-    const finalMessage = messages.length === 1 ? messages[0] : messages;
-
-    const errorResponse: ErrorResponse = {
-      success: false,
-      code: status,
-      message: finalMessage,
-      data: null,
-      timestamp: formatTimestamp(),
-      url: request.url,
-    };
-
-    const context = this.extractContext(request);
-    const logLevel = this.getLogLevel(status, request.url);
-    this.logError(logLevel, context, status, messages.join(', '));
-
-    response.status(status).json(errorResponse);
   }
 }

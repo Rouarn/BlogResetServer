@@ -398,24 +398,6 @@ export class AuthService {
   }
 
   /**
-   * 验证密码
-   *
-   * 使用bcrypt验证输入密码与存储密码是否匹配
-   *
-   * @param inputPassword 用户输入的密码
-   * @param storedSalt 存储的盐值
-   * @param storedPassword 存储的加密密码
-   * @returns 密码是否匹配
-   */
-  private async validatePassword(
-    inputPassword: string,
-    storedSalt: string,
-    storedPassword: string,
-  ): Promise<boolean> {
-    return await bcrypt.compare(inputPassword, storedPassword);
-  }
-
-  /**
    * 修改密码
    *
    * 验证旧密码并设置新密码
@@ -516,21 +498,6 @@ export class AuthService {
   }
 
   /**
-   * 生成刷新令牌
-   *
-   * 为指定认证ID生成新的刷新令牌
-   *
-   * @param authId 认证ID
-   * @returns 刷新令牌字符串
-   */
-  private async generateRefreshToken(authId: string): Promise<string> {
-    const randomBytes = crypto.randomBytes(32);
-    const timestamp = Date.now().toString();
-    const payload = `${authId}:${timestamp}:${randomBytes.toString('hex')}`;
-    return Buffer.from(payload).toString('base64url');
-  }
-
-  /**
    * 刷新访问令牌
    *
    * 使用有效的刷新令牌生成新的访问令牌
@@ -590,39 +557,6 @@ export class AuthService {
       expiresIn: 24 * 60 * 60,
       refreshExpiresIn: 7 * 24 * 60 * 60,
     };
-  }
-
-  /**
-   * 验证刷新令牌
-   *
-   * 验证刷新令牌的有效性并返回关联的认证ID
-   *
-   * @param refreshToken 刷新令牌
-   * @returns 认证ID或null
-   */
-  private async validateRefreshToken(refreshToken: string): Promise<string | null> {
-    try {
-      // 解码刷新令牌
-      const decoded = Buffer.from(refreshToken, 'base64url').toString();
-      const [authId] = decoded.split(':');
-
-      if (!authId) {
-        return null;
-      }
-
-      // 从缓存中验证令牌
-      const cachedToken = await this.cacheService.get<string>(
-        `${CACHE_PREFIXES.REFRESH_TOKEN}:${authId}`,
-      );
-
-      if (cachedToken !== refreshToken) {
-        return null;
-      }
-
-      return authId;
-    } catch (error) {
-      return null;
-    }
   }
 
   /**
@@ -730,6 +664,118 @@ export class AuthService {
   }
 
   /**
+   * 根据认证ID获取认证信息
+   *
+   * 从数据库中查询指定ID的认证信息，包含关联的用户信息
+   *
+   * @param authId 认证ID
+   * @returns 认证信息或抛出异常
+   */
+  @Cache({ key: `${CACHE_PREFIXES.USER_INFO}:\${0}`, ttl: CACHE_TTL.USER_INFO })
+  async getAuthById(authId: string): Promise<Auth> {
+    const auth = await this.authRepository.findOne({
+      where: { id: authId },
+      relations: ['user'],
+    });
+    if (!auth) {
+      throw BusinessExceptionFactory.notFound('认证记录', { authId });
+    }
+    return auth;
+  }
+
+  /**
+   * 根据用户名获取认证信息
+   *
+   * @param username 用户名
+   * @returns 认证信息或null
+   */
+  async getAuthByUsername(username: string): Promise<Auth | null> {
+    return this.authRepository.findOne({
+      where: { username: username },
+      relations: ['user'],
+    });
+  }
+
+  /**
+   * 检查用户名是否已存在
+   *
+   * @param username 用户名
+   * @returns 是否存在
+   */
+  async isUsernameExists(username: string): Promise<boolean> {
+    const count = await this.authRepository.count({
+      where: { username: username },
+    });
+    return count > 0;
+  }
+
+  /**
+   * 验证密码
+   *
+   * 使用bcrypt验证输入密码与存储密码是否匹配
+   *
+   * @param inputPassword 用户输入的密码
+   * @param storedSalt 存储的盐值
+   * @param storedPassword 存储的加密密码
+   * @returns 密码是否匹配
+   */
+  private async validatePassword(
+    inputPassword: string,
+    storedSalt: string,
+    storedPassword: string,
+  ): Promise<boolean> {
+    return await bcrypt.compare(inputPassword, storedPassword);
+  }
+
+  /**
+   * 生成刷新令牌
+   *
+   * 为指定认证ID生成新的刷新令牌
+   *
+   * @param authId 认证ID
+   * @returns 刷新令牌字符串
+   */
+  private async generateRefreshToken(authId: string): Promise<string> {
+    const randomBytes = crypto.randomBytes(32);
+    const timestamp = Date.now().toString();
+    const payload = `${authId}:${timestamp}:${randomBytes.toString('hex')}`;
+    return Buffer.from(payload).toString('base64url');
+  }
+
+  /**
+   * 验证刷新令牌
+   *
+   * 验证刷新令牌的有效性并返回关联的认证ID
+   *
+   * @param refreshToken 刷新令牌
+   * @returns 认证ID或null
+   */
+  private async validateRefreshToken(refreshToken: string): Promise<string | null> {
+    try {
+      // 解码刷新令牌
+      const decoded = Buffer.from(refreshToken, 'base64url').toString();
+      const [authId] = decoded.split(':');
+
+      if (!authId) {
+        return null;
+      }
+
+      // 从缓存中验证令牌
+      const cachedToken = await this.cacheService.get<string>(
+        `${CACHE_PREFIXES.REFRESH_TOKEN}:${authId}`,
+      );
+
+      if (cachedToken !== refreshToken) {
+        return null;
+      }
+
+      return authId;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
    * 增加登录失败次数
    *
    * @param authId 认证ID
@@ -781,51 +827,5 @@ export class AuthService {
     await this.authRepository.update(authId, {
       lastLoginAt: new Date(),
     });
-  }
-
-  /**
-   * 根据认证ID获取认证信息
-   *
-   * 从数据库中查询指定ID的认证信息，包含关联的用户信息
-   *
-   * @param authId 认证ID
-   * @returns 认证信息或抛出异常
-   */
-  @Cache({ key: `${CACHE_PREFIXES.USER_INFO}:\${0}`, ttl: CACHE_TTL.USER_INFO })
-  async getAuthById(authId: string): Promise<Auth> {
-    const auth = await this.authRepository.findOne({
-      where: { id: authId },
-      relations: ['user'],
-    });
-    if (!auth) {
-      throw BusinessExceptionFactory.notFound('认证记录', { authId });
-    }
-    return auth;
-  }
-
-  /**
-   * 根据用户名获取认证信息
-   *
-   * @param username 用户名
-   * @returns 认证信息或null
-   */
-  async getAuthByUsername(username: string): Promise<Auth | null> {
-    return this.authRepository.findOne({
-      where: { username: username },
-      relations: ['user'],
-    });
-  }
-
-  /**
-   * 检查用户名是否已存在
-   *
-   * @param username 用户名
-   * @returns 是否存在
-   */
-  async isUsernameExists(username: string): Promise<boolean> {
-    const count = await this.authRepository.count({
-      where: { username: username },
-    });
-    return count > 0;
   }
 }

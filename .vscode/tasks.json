@@ -17,7 +17,9 @@
         "showReuseMessage": true,
         "clear": false
       },
-      "problemMatcher": ["$tsc-watch"]
+      "problemMatcher": [
+        "$tsc-watch"
+      ]
     },
     {
       "label": "npm: build",
@@ -30,7 +32,9 @@
         "focus": false,
         "panel": "shared"
       },
-      "problemMatcher": ["$tsc"]
+      "problemMatcher": [
+        "$tsc"
+      ]
     },
     {
       "label": "npm: lint",
@@ -43,7 +47,9 @@
         "focus": false,
         "panel": "shared"
       },
-      "problemMatcher": ["$eslint-stylish"]
+      "problemMatcher": [
+        "$eslint-stylish"
+      ]
     },
     {
       "label": "npm: format",
@@ -68,7 +74,9 @@
         "focus": false,
         "panel": "shared"
       },
-      "problemMatcher": ["$eslint-stylish"]
+      "problemMatcher": [
+        "$eslint-stylish"
+      ]
     }
   ]
 }

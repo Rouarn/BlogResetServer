@@ -3,7 +3,7 @@ import { BusinessExceptionFactory } from '@/common/exceptions';
 import type { Request } from 'express';
 import { CACHE_TOKENS } from 'src/common/constants';
 import { ICacheService } from '@/shared/cache';
-import { WhitelistAuth, getCurrentTimestamp } from 'src/utils';
+import { getCurrentTimestamp, WhitelistAuth } from 'src/utils';
 
 /**
  * 限流配置接口

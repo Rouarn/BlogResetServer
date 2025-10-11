@@ -19,7 +19,12 @@
   "typescript.preferences.importModuleSpecifier": "relative",
   "typescript.suggest.autoImports": true,
   "npm.packageManager": "pnpm",
-  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
   "eslint.format.enable": false,
   "prettier.requireConfig": true,
   "typescript.preferences.includePackageJsonAutoImports": "auto",
@@ -31,7 +36,9 @@
   "emmet.includeLanguages": {
     "typescript": "html"
   },
-  "editor.rulers": [100],
+  "editor.rulers": [
+    100
+  ],
   "editor.wordWrap": "wordWrapColumn",
   "editor.wordWrapColumn": 100,
   "editor.tabSize": 2,

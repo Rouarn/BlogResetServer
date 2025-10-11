@@ -4,7 +4,7 @@ import type { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { formatTimestamp } from 'src/utils';
 
-import { DEFAULT_PAGINATION, SUCCESS_RESPONSE } from '../constants/response.constant';
+import { DEFAULT_PAGINATION, SUCCESS_RESPONSE } from '@/common/constants';
 import {
   DeveloperPaginatedResponse,
   DeveloperResponse,
@@ -12,7 +12,7 @@ import {
   PaginatedData,
   PaginatedResponse,
   PaginationParams,
-} from '../interfaces/response.interface';
+} from '@/common/interfaces';
 
 /**
  * 响应数据格式化拦截器（ResponseInterceptor）
@@ -207,18 +207,14 @@ export class ResponseInterceptor<T = unknown> implements NestInterceptor {
     }
 
     // 检查包装分页格式 {data: {list: T[], total: number}, message?: string}
-    if (
+    return !!(
       'data' in data &&
       typeof data.data === 'object' &&
       data.data !== null &&
       'list' in data.data &&
       'total' in data.data &&
       Array.isArray((data.data as { list: unknown; total: unknown }).list)
-    ) {
-      return true;
-    }
-
-    return false;
+    );
   }
 
   /**

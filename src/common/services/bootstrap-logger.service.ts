@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import type { ServeStaticOptions } from '@nestjs/platform-express/interfaces/serve-static-options.interface';
+import type {
+  ServeStaticOptions
+} from '@nestjs/platform-express/interfaces/serve-static-options.interface';
 import { AppConfigService } from 'src/config/app-config.service';
 import type { FileUploadOptions } from 'src/modules/files/interfaces';
 

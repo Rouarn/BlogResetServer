@@ -44,17 +44,20 @@ src/modules/files/
 ## ✨ 功能特性
 
 ### 🔄 上传方式
+
 - **单文件上传**: 支持单个文件直接上传
 - **批量上传**: 支持多文件同时上传（最多10个）
 - **分块上传**: 支持大文件分块上传，提高上传稳定性
 
 ### 🔒 安全特性
+
 - **文件类型验证**: 支持 MIME 类型白名单控制
 - **文件大小限制**: 可配置单文件和总文件大小限制
 - **权限控制**: 支持公开/私有文件访问控制
 - **哈希去重**: 基于文件哈希值避免重复存储
 
 ### 📁 文件管理
+
 - **文件预览**: 支持在线预览（图片、文档等）
 - **文件下载**: 支持文件下载功能
 - **文件删除**: 支持文件删除（仅所有者）
@@ -97,6 +100,7 @@ UPLOAD_ALLOWED_TYPES=image/jpeg,image/png,image/gif,application/pdf
 ### 文件上传
 
 #### 单文件上传
+
 ```http
 POST /files/upload
 Content-Type: multipart/form-data
@@ -110,6 +114,7 @@ Authorization: Bearer <token>
 ```
 
 #### 批量文件上传
+
 ```http
 POST /files/upload/batch
 Content-Type: multipart/form-data
@@ -123,6 +128,7 @@ Authorization: Bearer <token>
 ```
 
 #### 分块上传初始化
+
 ```http
 POST /files/upload/chunk/init
 Content-Type: application/json
@@ -140,6 +146,7 @@ Authorization: Bearer <token>
 ```
 
 #### 分块上传
+
 ```http
 POST /files/upload/chunk
 Content-Type: multipart/form-data
@@ -154,6 +161,7 @@ Authorization: Bearer <token>
 ```
 
 #### 完成分块上传
+
 ```http
 POST /files/upload/chunk/complete
 Content-Type: application/json
@@ -168,12 +176,14 @@ Authorization: Bearer <token>
 ### 文件查询
 
 #### 获取文件列表
+
 ```http
 GET /files?size=10&current=1&type=IMAGE&search=keyword
 Authorization: Bearer <token>
 ```
 
 #### 获取文件详情
+
 ```http
 GET /files/:id
 Authorization: Bearer <token>
@@ -182,18 +192,21 @@ Authorization: Bearer <token>
 ### 文件操作
 
 #### 下载文件
+
 ```http
 GET /files/:id/download
 Authorization: Bearer <token>
 ```
 
 #### 预览文件
+
 ```http
 GET /files/:id/preview
 Authorization: Bearer <token>
 ```
 
 #### 删除文件
+
 ```http
 DELETE /files/:id
 Authorization: Bearer <token>
@@ -917,19 +930,19 @@ async findFiles(queryDto: FileQueryDto, userId?: string) {
 ### 常见问题
 
 1. **文件上传失败**
-   - 检查文件大小是否超出限制
-   - 验证文件类型是否在允许列表中
-   - 确认存储路径是否有写入权限
+  - 检查文件大小是否超出限制
+  - 验证文件类型是否在允许列表中
+  - 确认存储路径是否有写入权限
 
 2. **文件访问被拒绝**
-   - 检查用户是否有访问权限
-   - 验证文件是否为公开文件
-   - 确认JWT令牌是否有效
+  - 检查用户是否有访问权限
+  - 验证文件是否为公开文件
+  - 确认JWT令牌是否有效
 
 3. **分块上传失败**
-   - 检查分块顺序是否正确
-   - 验证uploadId是否有效
-   - 确认所有分块是否上传完成
+  - 检查分块顺序是否正确
+  - 验证uploadId是否有效
+  - 确认所有分块是否上传完成
 
 ### 日志监控
 

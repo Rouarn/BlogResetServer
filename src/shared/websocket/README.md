@@ -39,7 +39,8 @@ import { WebSocketModule } from '@/shared/websocket';
     // 其他模块...
   ],
 })
-export class AppModule {}
+export class AppModule {
+}
 ```
 
 #### 2. 环境配置
@@ -98,7 +99,8 @@ import { WebSocketService } from './websocket.service';
 
 @Injectable()
 export class NotificationService {
-  constructor(private readonly wsService: WebSocketService) {}
+  constructor(private readonly wsService: WebSocketService) {
+  }
 
   // 向特定用户发送消息
   async sendToUser(userId: string, message: any) {
@@ -127,7 +129,13 @@ import { WebSocketAuthGuard } from './guards/websocket-auth.guard';
 
 @UseGuards(WebSocketAuthGuard)
 @SubscribeMessage('protected-event')
-handleProtectedEvent(client: Socket, payload: any) {
+handleProtectedEvent(client
+:
+Socket, payload
+:
+any
+)
+{
   // 只有认证用户才能访问
   const user = client.data.user;
   return { message: `Hello ${user.username}` };
@@ -141,7 +149,13 @@ import { WebSocketOptionalAuthGuard } from './guards/websocket-optional-auth.gua
 
 @UseGuards(WebSocketOptionalAuthGuard)
 @SubscribeMessage('optional-auth-event')
-handleOptionalAuthEvent(client: Socket, payload: any) {
+handleOptionalAuthEvent(client
+:
+Socket, payload
+:
+any
+)
+{
   const user = client.data.user; // 可能为 null
   if (user) {
     return { message: `Hello ${user.username}` };
@@ -157,7 +171,13 @@ handleOptionalAuthEvent(client: Socket, payload: any) {
 import { WsException } from '@nestjs/websockets';
 
 @SubscribeMessage('risky-operation')
-handleRiskyOperation(client: Socket, payload: any) {
+handleRiskyOperation(client
+:
+Socket, payload
+:
+any
+)
+{
   try {
     // 执行可能失败的操作
     return { success: true };
@@ -342,6 +362,7 @@ function WebSocketComponent() {
 ### Vue 3 集成示例
 
 ```vue
+
 <template>
   <div>
     <div>状态: {{ connected ? '已连接' : '未连接' }}</div>
@@ -353,47 +374,47 @@ function WebSocketComponent() {
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import io from 'socket.io-client';
+  import { ref, onMounted, onUnmounted } from 'vue';
+  import io from 'socket.io-client';
 
-const socket = ref(null);
-const messages = ref([]);
-const connected = ref(false);
+  const socket = ref(null);
+  const messages = ref([]);
+  const connected = ref(false);
 
-onMounted(() => {
-  const token = localStorage.getItem('jwt-token');
-  socket.value = io('ws://localhost:8848', {
-    path: '/ws',
-    query: token ? { token } : undefined,
-  });
-
-  socket.value.on('connect', () => {
-    connected.value = true;
-  });
-
-  socket.value.on('disconnect', () => {
-    connected.value = false;
-  });
-
-  socket.value.on('message', (message) => {
-    messages.value.push(message);
-  });
-});
-
-onUnmounted(() => {
-  if (socket.value) {
-    socket.value.close();
-  }
-});
-
-const sendMessage = (content) => {
-  if (socket.value && connected.value) {
-    socket.value.emit('message', {
-      content,
-      timestamp: Date.now(),
+  onMounted(() => {
+    const token = localStorage.getItem('jwt-token');
+    socket.value = io('ws://localhost:8848', {
+      path: '/ws',
+      query: token ? { token } : undefined,
     });
-  }
-};
+
+    socket.value.on('connect', () => {
+      connected.value = true;
+    });
+
+    socket.value.on('disconnect', () => {
+      connected.value = false;
+    });
+
+    socket.value.on('message', (message) => {
+      messages.value.push(message);
+    });
+  });
+
+  onUnmounted(() => {
+    if (socket.value) {
+      socket.value.close();
+    }
+  });
+
+  const sendMessage = (content) => {
+    if (socket.value && connected.value) {
+      socket.value.emit('message', {
+        content,
+        timestamp: Date.now(),
+      });
+    }
+  };
 </script>
 ```
 
@@ -401,18 +422,18 @@ const sendMessage = (content) => {
 
 ### 系统事件
 
-| 事件名             | 描述         | 参数                    | 响应                                   |
-| ------------------ | ------------ | ----------------------- | -------------------------------------- |
-| `ping`             | 心跳检测     | `{ timestamp: number }` | `{ success: true, timestamp: number }` |
-| `join-room`        | 加入房间     | `{ room: string }`      | `{ success: true, room: string }`      |
-| `leave-room`       | 离开房间     | `{ room: string }`      | `{ success: true, room: string }`      |
+| 事件名                | 描述     | 参数                      | 响应                                     |
+|--------------------|--------|-------------------------|----------------------------------------|
+| `ping`             | 心跳检测   | `{ timestamp: number }` | `{ success: true, timestamp: number }` |
+| `join-room`        | 加入房间   | `{ room: string }`      | `{ success: true, room: string }`      |
+| `leave-room`       | 离开房间   | `{ room: string }`      | `{ success: true, room: string }`      |
 | `get-online-users` | 获取在线用户 | -                       | `{ users: User[] }`                    |
 | `get-room-members` | 获取房间成员 | `{ room: string }`      | `{ members: User[] }`                  |
 
 ### 消息事件
 
-| 事件名      | 描述     | 参数                                   | 响应                                   |
-| ----------- | -------- | -------------------------------------- | -------------------------------------- |
+| 事件名         | 描述   | 参数                                     | 响应                                     |
+|-------------|------|----------------------------------------|----------------------------------------|
 | `message`   | 发送消息 | `{ content: string, target?: string }` | `{ success: true, messageId: string }` |
 | `broadcast` | 广播消息 | `{ content: string, room?: string }`   | `{ success: true }`                    |
 
@@ -466,19 +487,19 @@ LOG_LEVEL=debug
 ### 常见问题排查
 
 1. **连接失败**
-   - 检查端口是否正确 (默认 8848)
-   - 确认 CORS 配置
-   - 验证网络连接
+  - 检查端口是否正确 (默认 8848)
+  - 确认 CORS 配置
+  - 验证网络连接
 
 2. **认证失败**
-   - 检查 JWT Token 是否有效
-   - 确认 Token 格式正确
-   - 验证用户权限
+  - 检查 JWT Token 是否有效
+  - 确认 Token 格式正确
+  - 验证用户权限
 
 3. **消息丢失**
-   - 检查网络稳定性
-   - 确认事件名称正确
-   - 验证消息格式
+  - 检查网络稳定性
+  - 确认事件名称正确
+  - 验证消息格式
 
 ## 📚 更多资源
 

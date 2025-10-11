@@ -11,7 +11,7 @@
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
-import { ICacheService, CacheOptions, CacheStats } from '../interfaces';
+import { CacheOptions, CacheStats, ICacheService } from '../interfaces';
 
 @Injectable()
 export class RedisCacheService implements ICacheService, OnModuleDestroy {
@@ -88,35 +88,6 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
       this.logger.error(`Failed to initialize Redis: ${(error as Error).message}`);
       this.redis = null;
       throw error; // 抛出错误让调用者知道初始化失败
-    }
-  }
-
-  /**
-   * 获取带前缀的键名
-   */
-  private getKey(key: string, prefix?: string): string {
-    const keyPrefix = prefix ?? this.configService.get('app.redis.cache.keyPrefix', 'nestjs:');
-    return `${keyPrefix}${key}`;
-  }
-
-  /**
-   * 安全执行 Redis 操作
-   */
-  private async safeExecute<T>(
-    operation: () => Promise<T>,
-    fallback: T,
-    operationName: string,
-  ): Promise<T> {
-    if (!this.redis || !this.isConnected) {
-      this.logger.warn(`Redis not available for ${operationName}, using fallback`);
-      return fallback;
-    }
-
-    try {
-      return await operation();
-    } catch (error) {
-      this.logger.error(`Redis ${operationName} failed: ${(error as Error).message}`);
-      return fallback;
     }
   }
 
@@ -340,5 +311,34 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
    */
   async onModuleDestroy(): Promise<void> {
     await this.close();
+  }
+
+  /**
+   * 获取带前缀的键名
+   */
+  private getKey(key: string, prefix?: string): string {
+    const keyPrefix = prefix ?? this.configService.get('app.redis.cache.keyPrefix', 'nestjs:');
+    return `${keyPrefix}${key}`;
+  }
+
+  /**
+   * 安全执行 Redis 操作
+   */
+  private async safeExecute<T>(
+    operation: () => Promise<T>,
+    fallback: T,
+    operationName: string,
+  ): Promise<T> {
+    if (!this.redis || !this.isConnected) {
+      this.logger.warn(`Redis not available for ${operationName}, using fallback`);
+      return fallback;
+    }
+
+    try {
+      return await operation();
+    } catch (error) {
+      this.logger.error(`Redis ${operationName} failed: ${(error as Error).message}`);
+      return fallback;
+    }
   }
 }

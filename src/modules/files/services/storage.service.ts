@@ -23,16 +23,6 @@ export class StorageService implements StorageAdapter {
     void this.ensureUploadDirectory();
   }
 
-  private async ensureUploadDirectory(): Promise<void> {
-    try {
-      await fs.access(this.config.basePath);
-      this.logger.debug(`📁 上传目录已存在: ${this.config.basePath}`);
-    } catch {
-      await fs.mkdir(this.config.basePath, { recursive: true });
-      this.logger.log(`📁 创建上传目录: ${this.config.basePath}`);
-    }
-  }
-
   async upload(file: Express.Multer.File, relativePath: string): Promise<string> {
     const fullPath = path.join(this.config.basePath, relativePath);
     const directory = path.dirname(fullPath);
@@ -108,5 +98,15 @@ export class StorageService implements StorageAdapter {
   async createDirectory(relativePath: string): Promise<void> {
     const fullPath = path.join(this.config.basePath, relativePath);
     await fs.mkdir(fullPath, { recursive: true });
+  }
+
+  private async ensureUploadDirectory(): Promise<void> {
+    try {
+      await fs.access(this.config.basePath);
+      this.logger.debug(`📁 上传目录已存在: ${this.config.basePath}`);
+    } catch {
+      await fs.mkdir(this.config.basePath, { recursive: true });
+      this.logger.log(`📁 创建上传目录: ${this.config.basePath}`);
+    }
   }
 }

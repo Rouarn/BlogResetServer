@@ -223,99 +223,6 @@ export class WebSocketService {
   }
 
   /**
-   * 内部加入房间方法
-   * @param socket WebSocket 连接
-   * @param data 房间数据
-   */
-  private async joinRoomInternal(
-    socket: AuthenticatedSocket,
-    data: JoinRoomData,
-  ): Promise<{ memberCount: number }> {
-    try {
-      const { roomId, userId, userInfo } = data;
-      const socketId = socket.id;
-
-      // 验证参数
-      if (!roomId || !userId) {
-        throw new Error('房间ID和用户ID不能为空');
-      }
-
-      // 创建或获取房间
-      let room = this.rooms.get(roomId);
-      if (!room) {
-        room = {
-          id: roomId,
-          name: `房间-${roomId}`,
-          type: 'public',
-          creatorId: userId,
-          members: [],
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        this.rooms.set(roomId, room);
-        this.roomMembers.set(roomId, new Set());
-      }
-
-      // 加入房间
-      await socket.join(roomId);
-      if (!socket.rooms) {
-        socket.rooms = new Set();
-      }
-      socket.rooms.add(roomId);
-
-      // 添加房间成员
-      const roomMemberSet = this.roomMembers.get(roomId)!;
-      roomMemberSet.add(socketId);
-
-      // 更新房间成员信息
-      const existingMember = room.members.find((m) => m.userId === userId);
-      if (existingMember) {
-        existingMember.isOnline = true;
-        existingMember.socketId = socketId;
-      } else {
-        const member: RoomMember = {
-          userId,
-          userName: userInfo?.name ?? `用户-${userId}`,
-          userAvatar: userInfo?.avatar,
-          role: room.members.length === 0 ? 'owner' : 'member',
-          joinedAt: new Date(),
-          isOnline: true,
-          socketId,
-        };
-        room.members.push(member);
-      }
-
-      room.updatedAt = new Date();
-
-      // 通知房间其他成员
-      const joinMessage = this.createMessage(
-        WebSocketMessageType.NOTIFICATION,
-        {
-          title: '成员加入',
-          content: `${userInfo?.name ?? userId} 加入了房间`,
-          notificationType: 'info',
-        } as NotificationData,
-        { roomId, senderId: userId },
-      );
-
-      socket.to(roomId).emit('message', joinMessage);
-
-      // 发送房间信息给新成员
-      const roomInfoMessage = this.createMessage(WebSocketMessageType.JOIN_ROOM, room, { roomId });
-      socket.emit('message', roomInfoMessage);
-
-      this.logger.log(`用户 ${userId} 加入房间 ${roomId}`);
-
-      return { memberCount: room.members.length };
-    } catch (error) {
-      this.logger.error(`加入房间失败: ${(error as Error).message}`, (error as Error).stack);
-      const errorMessage = this.createErrorMessage('JOIN_ROOM_FAILED', (error as Error).message);
-      socket.emit('error', errorMessage);
-      throw error;
-    }
-  }
-
-  /**
    * 离开房间
    * @param socketId Socket ID 或 WebSocket 连接
    * @param roomIdOrData 房间ID 或离开房间数据
@@ -346,87 +253,6 @@ export class WebSocketService {
     }
 
     return this.leaveRoomInternal(socket, data);
-  }
-
-  /**
-   * 内部离开房间方法
-   * @param socket WebSocket 连接
-   * @param data 离开房间数据
-   */
-  private async leaveRoomInternal(
-    socket: AuthenticatedSocket,
-    data: LeaveRoomData,
-  ): Promise<{ memberCount: number }> {
-    try {
-      const { roomId, userId } = data;
-      const socketId = socket.id;
-
-      await this.leaveRoomInternalById(socketId, roomId);
-
-      // 获取房间信息以返回成员数量
-      const room = this.rooms.get(roomId);
-      const memberCount = room ? room.members.length : 0;
-
-      // 通知房间其他成员
-      const leaveMessage = this.createMessage(
-        WebSocketMessageType.NOTIFICATION,
-        {
-          title: '成员离开',
-          content: `${userId} 离开了房间`,
-          notificationType: 'info',
-        } as NotificationData,
-        { roomId, senderId: userId },
-      );
-
-      socket.to(roomId).emit('message', leaveMessage);
-
-      this.logger.log(`用户 ${userId} 离开房间 ${roomId}`);
-
-      return { memberCount };
-    } catch (error) {
-      this.logger.error(`离开房间失败: ${(error as Error).message}`, (error as Error).stack);
-      const errorMessage = this.createErrorMessage('LEAVE_ROOM_FAILED', (error as Error).message);
-      socket.emit('error', errorMessage);
-      throw error;
-    }
-  }
-
-  /**
-   * 内部离开房间方法（通过ID）
-   * @param socketId Socket ID
-   * @param roomId 房间ID
-   */
-  private async leaveRoomInternalById(socketId: string, roomId: string): Promise<void> {
-    const socket = this.connections.get(socketId);
-    if (!socket) return;
-
-    // 离开房间
-    await socket.leave(roomId);
-    if (socket.rooms) {
-      socket.rooms.delete(roomId);
-    }
-
-    // 移除房间成员
-    const roomMemberSet = this.roomMembers.get(roomId);
-    if (roomMemberSet) {
-      roomMemberSet.delete(socketId);
-
-      // 更新房间成员状态
-      const room = this.rooms.get(roomId);
-      if (room) {
-        const member = room.members.find((m) => m.socketId === socketId);
-        if (member) {
-          member.isOnline = false;
-          member.socketId = undefined;
-        }
-
-        // 如果房间为空，清理房间
-        if (roomMemberSet.size === 0) {
-          this.rooms.delete(roomId);
-          this.roomMembers.delete(roomId);
-        }
-      }
-    }
   }
 
   /**
@@ -591,22 +417,6 @@ export class WebSocketService {
   }
 
   /**
-   * 创建错误消息
-   * @param code 错误代码
-   * @param message 错误消息
-   * @param details 错误详情
-   * @returns WebSocket 错误
-   */
-  private createErrorMessage(code: string, message: string, details?: unknown): WebSocketError {
-    return {
-      code,
-      message,
-      details,
-      timestamp: Date.now(),
-    };
-  }
-
-  /**
    * 设置 Socket.IO 服务器实例
    * @param server Socket.IO 服务器
    */
@@ -748,5 +558,195 @@ export class WebSocketService {
       roomId.startsWith('public_') ||
       (this.rooms.has(roomId) && this.rooms.get(roomId)?.type === 'public')
     );
+  }
+
+  /**
+   * 内部加入房间方法
+   * @param socket WebSocket 连接
+   * @param data 房间数据
+   */
+  private async joinRoomInternal(
+    socket: AuthenticatedSocket,
+    data: JoinRoomData,
+  ): Promise<{ memberCount: number }> {
+    try {
+      const { roomId, userId, userInfo } = data;
+      const socketId = socket.id;
+
+      // 验证参数
+      if (!roomId || !userId) {
+        throw new Error('房间ID和用户ID不能为空');
+      }
+
+      // 创建或获取房间
+      let room = this.rooms.get(roomId);
+      if (!room) {
+        room = {
+          id: roomId,
+          name: `房间-${roomId}`,
+          type: 'public',
+          creatorId: userId,
+          members: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        this.rooms.set(roomId, room);
+        this.roomMembers.set(roomId, new Set());
+      }
+
+      // 加入房间
+      await socket.join(roomId);
+      if (!socket.rooms) {
+        socket.rooms = new Set();
+      }
+      socket.rooms.add(roomId);
+
+      // 添加房间成员
+      const roomMemberSet = this.roomMembers.get(roomId)!;
+      roomMemberSet.add(socketId);
+
+      // 更新房间成员信息
+      const existingMember = room.members.find((m) => m.userId === userId);
+      if (existingMember) {
+        existingMember.isOnline = true;
+        existingMember.socketId = socketId;
+      } else {
+        const member: RoomMember = {
+          userId,
+          userName: userInfo?.name ?? `用户-${userId}`,
+          userAvatar: userInfo?.avatar,
+          role: room.members.length === 0 ? 'owner' : 'member',
+          joinedAt: new Date(),
+          isOnline: true,
+          socketId,
+        };
+        room.members.push(member);
+      }
+
+      room.updatedAt = new Date();
+
+      // 通知房间其他成员
+      const joinMessage = this.createMessage(
+        WebSocketMessageType.NOTIFICATION,
+        {
+          title: '成员加入',
+          content: `${userInfo?.name ?? userId} 加入了房间`,
+          notificationType: 'info',
+        } as NotificationData,
+        { roomId, senderId: userId },
+      );
+
+      socket.to(roomId).emit('message', joinMessage);
+
+      // 发送房间信息给新成员
+      const roomInfoMessage = this.createMessage(WebSocketMessageType.JOIN_ROOM, room, { roomId });
+      socket.emit('message', roomInfoMessage);
+
+      this.logger.log(`用户 ${userId} 加入房间 ${roomId}`);
+
+      return { memberCount: room.members.length };
+    } catch (error) {
+      this.logger.error(`加入房间失败: ${(error as Error).message}`, (error as Error).stack);
+      const errorMessage = this.createErrorMessage('JOIN_ROOM_FAILED', (error as Error).message);
+      socket.emit('error', errorMessage);
+      throw error;
+    }
+  }
+
+  /**
+   * 内部离开房间方法
+   * @param socket WebSocket 连接
+   * @param data 离开房间数据
+   */
+  private async leaveRoomInternal(
+    socket: AuthenticatedSocket,
+    data: LeaveRoomData,
+  ): Promise<{ memberCount: number }> {
+    try {
+      const { roomId, userId } = data;
+      const socketId = socket.id;
+
+      await this.leaveRoomInternalById(socketId, roomId);
+
+      // 获取房间信息以返回成员数量
+      const room = this.rooms.get(roomId);
+      const memberCount = room ? room.members.length : 0;
+
+      // 通知房间其他成员
+      const leaveMessage = this.createMessage(
+        WebSocketMessageType.NOTIFICATION,
+        {
+          title: '成员离开',
+          content: `${userId} 离开了房间`,
+          notificationType: 'info',
+        } as NotificationData,
+        { roomId, senderId: userId },
+      );
+
+      socket.to(roomId).emit('message', leaveMessage);
+
+      this.logger.log(`用户 ${userId} 离开房间 ${roomId}`);
+
+      return { memberCount };
+    } catch (error) {
+      this.logger.error(`离开房间失败: ${(error as Error).message}`, (error as Error).stack);
+      const errorMessage = this.createErrorMessage('LEAVE_ROOM_FAILED', (error as Error).message);
+      socket.emit('error', errorMessage);
+      throw error;
+    }
+  }
+
+  /**
+   * 内部离开房间方法（通过ID）
+   * @param socketId Socket ID
+   * @param roomId 房间ID
+   */
+  private async leaveRoomInternalById(socketId: string, roomId: string): Promise<void> {
+    const socket = this.connections.get(socketId);
+    if (!socket) return;
+
+    // 离开房间
+    await socket.leave(roomId);
+    if (socket.rooms) {
+      socket.rooms.delete(roomId);
+    }
+
+    // 移除房间成员
+    const roomMemberSet = this.roomMembers.get(roomId);
+    if (roomMemberSet) {
+      roomMemberSet.delete(socketId);
+
+      // 更新房间成员状态
+      const room = this.rooms.get(roomId);
+      if (room) {
+        const member = room.members.find((m) => m.socketId === socketId);
+        if (member) {
+          member.isOnline = false;
+          member.socketId = undefined;
+        }
+
+        // 如果房间为空，清理房间
+        if (roomMemberSet.size === 0) {
+          this.rooms.delete(roomId);
+          this.roomMembers.delete(roomId);
+        }
+      }
+    }
+  }
+
+  /**
+   * 创建错误消息
+   * @param code 错误代码
+   * @param message 错误消息
+   * @param details 错误详情
+   * @returns WebSocket 错误
+   */
+  private createErrorMessage(code: string, message: string, details?: unknown): WebSocketError {
+    return {
+      code,
+      message,
+      details,
+      timestamp: Date.now(),
+    };
   }
 }

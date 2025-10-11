@@ -157,34 +157,35 @@ import { ICacheService } from '@/shared/cache';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly cacheService: ICacheService) {}
+  constructor(private readonly cacheService: ICacheService) {
+  }
 
   async getUserById(id: string): Promise<User> {
     const cacheKey = `user:${id}`;
-    
+
     // 尝试从缓存获取
     let user = await this.cacheService.get<User>(cacheKey);
-    
+
     if (!user) {
       // 缓存未命中，从数据库查询
       user = await this.userRepository.findById(id);
-      
+
       if (user) {
         // 存储到缓存，过期时间1小时
         await this.cacheService.set(cacheKey, user, { ttl: 3600 });
       }
     }
-    
+
     return user;
   }
 
   async updateUser(id: string, data: UpdateUserDto): Promise<User> {
     const user = await this.userRepository.update(id, data);
-    
+
     // 更新后清除相关缓存
     await this.cacheService.del(`user:${id}`);
     await this.cacheService.del(`user:profile:${id}`);
-    
+
     return user;
   }
 }
@@ -349,15 +350,16 @@ import { CacheFactoryService } from '@/shared/cache';
 
 @Injectable()
 export class MyService {
-  constructor(private readonly cacheFactory: CacheFactoryService) {}
+  constructor(private readonly cacheFactory: CacheFactoryService) {
+  }
 
   async checkCacheType(): Promise<void> {
     const type = this.cacheFactory.getCurrentCacheType();
     console.log(`当前缓存类型: ${type}`);
-    
+
     const config = this.cacheFactory.getCacheConfig();
     console.log('缓存配置:', config);
-    
+
     const health = await this.cacheFactory.getHealthStatus();
     console.log('健康状态:', health);
   }
@@ -486,14 +488,14 @@ async getUsersByIds(ids: string[]): Promise<User[]> {
    ```
 
 2. **缓存未生效**
-   - 检查装饰器是否正确应用
-   - 确认 CacheInterceptor 已全局注册
-   - 验证缓存键是否正确生成
+  - 检查装饰器是否正确应用
+  - 确认 CacheInterceptor 已全局注册
+  - 验证缓存键是否正确生成
 
 3. **内存使用过高**
-   - 调整 `NEST_REDIS_CACHE_MAX_SIZE` 参数
-   - 检查缓存过期时间设置
-   - 监控缓存命中率
+  - 调整 `NEST_REDIS_CACHE_MAX_SIZE` 参数
+  - 检查缓存过期时间设置
+  - 监控缓存命中率
 
 ### 调试模式
 
@@ -506,6 +508,7 @@ logger.debug('Cache operation details...');
 ## 📝 更新日志
 
 ### v1.1.0
+
 - ✅ 新增动态缓存键支持，支持 `${0}`, `${1}` 等参数占位符
 - ✅ 增强 `@Cache` 装饰器，支持多种缓存键生成模式
 - ✅ 增强 `@CacheEvict` 装饰器，支持模式匹配和条件清除
@@ -513,6 +516,7 @@ logger.debug('Cache operation details...');
 - ✅ 新增占位符工作原理详细说明
 
 ### v1.0.0
+
 - ✅ 初始版本发布
 - ✅ Redis 和内存缓存支持
 - ✅ 装饰器语法支持

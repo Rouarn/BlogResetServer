@@ -241,14 +241,6 @@ export class CacheUsageExampleService {
   // =============================================================================
 
   /**
-   * 模拟数据库查询延迟
-   */
-  private async simulateDbDelay(): Promise<void> {
-    const delay = Math.random() * 100 + 50; // 50-150ms 随机延迟
-    await new Promise((resolve) => setTimeout(resolve, delay));
-  }
-
-  /**
    * 清理所有示例缓存
    */
   async cleanupExampleCache(): Promise<void> {
@@ -261,5 +253,13 @@ export class CacheUsageExampleService {
         this.logger.log(`Cleaned up ${keys.length} cache entries matching ${pattern}`);
       }
     }
+  }
+
+  /**
+   * 模拟数据库查询延迟
+   */
+  private async simulateDbDelay(): Promise<void> {
+    const delay = Math.random() * 100 + 50; // 50-150ms 随机延迟
+    await new Promise((resolve) => setTimeout(resolve, delay));
   }
 }

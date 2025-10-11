@@ -31,15 +31,15 @@ import { ResponseInterceptor } from './common/interceptors';
 import { CustomValidationPipe } from './common/pipes';
 import { JwtAuthStrategy } from './common/strategies';
 // 配置模块导入
-import { ConfigModule as AppConfigModule, AppConfigService } from './config';
+import { AppConfigService, ConfigModule as AppConfigModule } from './config';
 // 时间戳管理模块
 import { DatabaseModule } from './database';
 // 业务模块导入
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { FilesModule } from './modules/files/files.module';
-import { WebSocketModule } from './shared/websocket/websocket.module';
-import { CacheModule } from './shared/cache/cache.module';
+import { WebSocketModule } from '@/shared/websocket';
+import { CacheModule } from '@/shared/cache';
 
 /**
  * 应用根模块配置

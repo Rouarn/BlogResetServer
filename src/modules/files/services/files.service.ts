@@ -175,20 +175,6 @@ export class FilesService {
     return file;
   }
 
-  private canAccessFile(file: File, userId?: string): boolean {
-    // 公开文件任何人都可以访问
-    if (file.isPublic) {
-      return true;
-    }
-
-    // 私有文件只有所有者可以访问
-    if (userId && file.userId === userId) {
-      return true;
-    }
-
-    return false;
-  }
-
   async deleteFile(id: string, userId?: string): Promise<boolean> {
     const file = await this.fileRepository.findOne({ where: { id } });
 
@@ -218,6 +204,20 @@ export class FilesService {
     const file = await this.findFileById(id, userId);
     const buffer = await this.storageService.download(file.path);
     return { file, buffer };
+  }
+
+  private canAccessFile(file: File, userId?: string): boolean {
+    // 公开文件任何人都可以访问
+    if (file.isPublic) {
+      return true;
+    }
+
+    // 私有文件只有所有者可以访问
+    if (userId && file.userId === userId) {
+      return true;
+    }
+
+    return false;
   }
 
   private mapToUploadResult(file: File): FileUploadResult {

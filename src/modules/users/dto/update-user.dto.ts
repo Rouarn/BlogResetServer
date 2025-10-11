@@ -1,15 +1,15 @@
-import { ApiProperty, ApiPropertyOptional, PartialType, OmitType } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
 import {
+  ArrayNotEmpty,
   IsArray,
+  IsDateString,
   IsEmail,
   IsEnum,
   IsOptional,
   IsString,
-  IsDateString,
+  IsUUID,
   Length,
   Matches,
-  ArrayNotEmpty,
-  IsUUID,
 } from 'class-validator';
 import { Gender, Status } from 'src/common/enums';
 import { CreateUserDto } from './create-user.dto';

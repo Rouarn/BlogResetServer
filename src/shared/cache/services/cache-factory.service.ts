@@ -26,44 +26,6 @@ export class CacheFactoryService implements OnModuleDestroy {
   }
 
   /**
-   * 输出缓存配置信息
-   */
-  private logCacheConfiguration(): void {
-    this.logger.log('');
-    this.logger.log('╔═══════════════════════════════════════════════════════════════════╗');
-    this.logger.log('║                      ⚙️   缓存服务配置 ⚙️                           ║');
-    this.logger.log('╚═══════════════════════════════════════════════════════════════════╝');
-    this.logger.log('');
-    this.logger.log('┌─ 📋 配置详情 ───────────────────────────────────────────────────┐');
-    this.logger.log(
-      `│ 📦 缓存类型: ${this.cacheConfig.type === CacheServiceType.REDIS ? '💎 Redis' : '💾 内存缓存'}`,
-    );
-    this.logger.log(`│ ⚡ 服务状态: ${this.cacheConfig.enabled ? '✅ 已启用' : '❌ 已禁用'}`);
-    this.logger.log(`│ ⏰ 默认TTL: ${this.cacheConfig.defaultTtl}秒`);
-    this.logger.log(`│ 🏷️  键前缀: ${this.cacheConfig.keyPrefix}`);
-    if (this.cacheConfig.type === CacheServiceType.MEMORY) {
-      this.logger.log(`│ 📊 最大容量: ${this.cacheConfig.maxSize}个键`);
-    }
-    this.logger.log('└─────────────────────────────────────────────────────────────────┘');
-    this.logger.log('');
-  }
-
-  /**
-   * 构建缓存配置
-   */
-  private buildCacheConfig(): CacheConfig {
-    const redisEnabled = this.configService.get<boolean>('app.redis.enabled', false);
-
-    return {
-      type: redisEnabled ? CacheServiceType.REDIS : CacheServiceType.MEMORY,
-      enabled: this.configService.get<boolean>('app.redis.cache.enabled', true),
-      defaultTtl: this.configService.get<number>('app.redis.cache.defaultTtl', 3600),
-      keyPrefix: this.configService.get<string>('app.redis.cache.keyPrefix', 'app:cache:'),
-      maxSize: this.configService.get<number>('app.redis.cache.maxSize', 1000),
-    };
-  }
-
-  /**
    * 获取缓存服务实例
    */
   async getCacheService(): Promise<ICacheService> {
@@ -88,41 +50,6 @@ export class CacheFactoryService implements OnModuleDestroy {
       }
 
       throw error;
-    }
-  }
-
-  /**
-   * 创建缓存服务实例
-   */
-  private async createCacheService(): Promise<ICacheService> {
-    switch (this.cacheConfig.type) {
-      case CacheServiceType.REDIS:
-        this.logger.log('⚙️  正在创建 Redis 缓存服务...');
-        const redisService = new RedisCacheService(this.configService);
-
-        try {
-          // 先初始化 Redis 连接
-          await redisService.initializeRedis();
-
-          // 测试 Redis 连接
-          const isHealthy = await redisService.isHealthy();
-          if (!isHealthy) {
-            await redisService.close();
-            throw new Error('Redis connection health check failed');
-          }
-
-          return redisService;
-        } catch (error) {
-          await redisService.close();
-          throw error;
-        }
-
-      case CacheServiceType.MEMORY:
-        this.logger.log('💾 正在创建内存缓存服务...');
-        return new MemoryCacheService(this.configService);
-
-      default:
-        throw new Error(`Unsupported cache service type: ${this.cacheConfig.type}`);
     }
   }
 
@@ -210,5 +137,78 @@ export class CacheFactoryService implements OnModuleDestroy {
    */
   async onModuleDestroy(): Promise<void> {
     await this.close();
+  }
+
+  /**
+   * 输出缓存配置信息
+   */
+  private logCacheConfiguration(): void {
+    this.logger.log('');
+    this.logger.log('╔═══════════════════════════════════════════════════════════════════╗');
+    this.logger.log('║                      ⚙️   缓存服务配置 ⚙️                           ║');
+    this.logger.log('╚═══════════════════════════════════════════════════════════════════╝');
+    this.logger.log('');
+    this.logger.log('┌─ 📋 配置详情 ───────────────────────────────────────────────────┐');
+    this.logger.log(
+      `│ 📦 缓存类型: ${this.cacheConfig.type === CacheServiceType.REDIS ? '💎 Redis' : '💾 内存缓存'}`,
+    );
+    this.logger.log(`│ ⚡ 服务状态: ${this.cacheConfig.enabled ? '✅ 已启用' : '❌ 已禁用'}`);
+    this.logger.log(`│ ⏰ 默认TTL: ${this.cacheConfig.defaultTtl}秒`);
+    this.logger.log(`│ 🏷️  键前缀: ${this.cacheConfig.keyPrefix}`);
+    if (this.cacheConfig.type === CacheServiceType.MEMORY) {
+      this.logger.log(`│ 📊 最大容量: ${this.cacheConfig.maxSize}个键`);
+    }
+    this.logger.log('└─────────────────────────────────────────────────────────────────┘');
+    this.logger.log('');
+  }
+
+  /**
+   * 构建缓存配置
+   */
+  private buildCacheConfig(): CacheConfig {
+    const redisEnabled = this.configService.get<boolean>('app.redis.enabled', false);
+
+    return {
+      type: redisEnabled ? CacheServiceType.REDIS : CacheServiceType.MEMORY,
+      enabled: this.configService.get<boolean>('app.redis.cache.enabled', true),
+      defaultTtl: this.configService.get<number>('app.redis.cache.defaultTtl', 3600),
+      keyPrefix: this.configService.get<string>('app.redis.cache.keyPrefix', 'app:cache:'),
+      maxSize: this.configService.get<number>('app.redis.cache.maxSize', 1000),
+    };
+  }
+
+  /**
+   * 创建缓存服务实例
+   */
+  private async createCacheService(): Promise<ICacheService> {
+    switch (this.cacheConfig.type) {
+      case CacheServiceType.REDIS:
+        this.logger.log('⚙️  正在创建 Redis 缓存服务...');
+        const redisService = new RedisCacheService(this.configService);
+
+        try {
+          // 先初始化 Redis 连接
+          await redisService.initializeRedis();
+
+          // 测试 Redis 连接
+          const isHealthy = await redisService.isHealthy();
+          if (!isHealthy) {
+            await redisService.close();
+            throw new Error('Redis connection health check failed');
+          }
+
+          return redisService;
+        } catch (error) {
+          await redisService.close();
+          throw error;
+        }
+
+      case CacheServiceType.MEMORY:
+        this.logger.log('💾 正在创建内存缓存服务...');
+        return new MemoryCacheService(this.configService);
+
+      default:
+        throw new Error(`Unsupported cache service type: ${this.cacheConfig.type}`);
+    }
   }
 }

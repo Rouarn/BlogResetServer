@@ -260,23 +260,6 @@ export class UUIDUtil {
   }
 
   /**
-   * 将数字转换为 base62 字符串
-   * @param num 数字
-   * @returns base62 字符串
-   */
-  private static toBase62(num: bigint): string {
-    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-    let result = '';
-
-    while (num > 0) {
-      result = chars[Number(num % 62n)] + result;
-      num = num / 62n;
-    }
-
-    return result || '0';
-  }
-
-  /**
    * 批量生成 UUID
    * @param count 生成数量
    * @param version UUID 版本
@@ -311,6 +294,23 @@ export class UUIDUtil {
     });
 
     return { valid, invalid };
+  }
+
+  /**
+   * 将数字转换为 base62 字符串
+   * @param num 数字
+   * @returns base62 字符串
+   */
+  private static toBase62(num: bigint): string {
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    let result = '';
+
+    while (num > 0) {
+      result = chars[Number(num % 62n)] + result;
+      num = num / 62n;
+    }
+
+    return result || '0';
   }
 }
 
