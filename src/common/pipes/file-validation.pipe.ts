@@ -114,7 +114,7 @@ export class FilesValidationPipe implements PipeTransform {
    * @throws BadRequestException 验证失败时抛出异常
    */
   transform(files: Express.Multer.File[]): Express.Multer.File[] {
-    if (!files || files.length === 0) {
+    if (files?.length === 0) {
       throw BusinessExceptionFactory.invalidParameter('文件列表', { reason: '文件列表不能为空' });
     }
 
