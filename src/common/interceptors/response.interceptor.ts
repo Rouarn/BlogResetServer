@@ -3,7 +3,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import type { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { formatTimestamp } from 'src/utils';
-
 import { DEFAULT_PAGINATION, SUCCESS_RESPONSE } from '@/common/constants';
 import {
   DeveloperPaginatedResponse,

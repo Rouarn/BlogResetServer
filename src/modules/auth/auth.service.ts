@@ -11,7 +11,6 @@ import * as crypto from 'crypto';
 import { isEnabled } from 'src/common/enums';
 import * as svgCaptcha from 'svg-captcha';
 import { Repository } from 'typeorm';
-import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import type {
   CaptchaResponseDto,
@@ -75,8 +74,6 @@ export class AuthService {
   constructor(
     @InjectRepository(Auth)
     private readonly authRepository: Repository<Auth>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
     @Inject(CACHE_TOKENS.I_CACHE_SERVICE)

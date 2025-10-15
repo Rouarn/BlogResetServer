@@ -74,7 +74,7 @@
  * @returns 是否为空
  */
 export const isEmpty = (str: string): boolean => {
-  return !str || str.trim().length === 0;
+  return str?.trim().length === 0;
 };
 
 /**

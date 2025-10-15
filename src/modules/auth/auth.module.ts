@@ -5,7 +5,6 @@ import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { Auth } from './entities/auth.entity';
-import { User } from '../users/entities/user.entity';
 
 /**
  * 认证模块（AuthModule）
@@ -37,7 +36,7 @@ import { User } from '../users/entities/user.entity';
  * - 完整的安全控制机制
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([Auth, User]), CacheModule, forwardRef(() => UsersModule)],
+  imports: [TypeOrmModule.forFeature([Auth]), CacheModule, forwardRef(() => UsersModule)],
   controllers: [AuthController],
   providers: [AuthService],
   exports: [AuthService, TypeOrmModule],
