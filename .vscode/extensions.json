@@ -6,10 +6,7 @@
     "mikestead.dotenv",
     "formulahendry.auto-rename-tag",
     "christian-kohler.path-intellisense",
-    "ms-vscode.vscode-todo-highlight",
-    "gruntfuggly.todo-tree"
+    "ms-vscode.vscode-todo-highlight"
   ],
-  "unwantedRecommendations": [
-    "ms-vscode.vscode-typescript"
-  ]
+  "unwantedRecommendations": ["ms-vscode.vscode-typescript"]
 }

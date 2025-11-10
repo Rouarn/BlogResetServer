@@ -7,6 +7,7 @@
  * @version 1.0.0
  */
 
+import type { WebSocketAdapter } from '@nestjs/common';
 import { VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -37,7 +38,7 @@ function resolveStaticPath(staticConfig: { root: string }): string {
  */
 function configureApp(app: NestExpressApplication): void {
   // 配置WebSocket适配器
-  app.useWebSocketAdapter(new IoAdapter(app));
+  app.useWebSocketAdapter(new IoAdapter(app) as unknown as WebSocketAdapter);
 
   // 配置CORS跨域策略
   app.use(cors(appConfig.corsOptions));
