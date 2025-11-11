@@ -29,31 +29,9 @@
 
 const fs = require('fs');
 const path = require('path');
+const { log, showBanner, separator, showSuccess, handleError } = require('@vakao-ui/scripts-utils');
 
-/**
- * 终端颜色配置
- * 使用 ANSI 转义序列为终端输出添加颜色
- */
-const colors = {
-  reset: '\x1b[0m', // 重置颜色
-  red: '\x1b[31m', // 红色（错误）
-  green: '\x1b[32m', // 绿色（成功）
-  yellow: '\x1b[33m', // 黄色（警告）
-  blue: '\x1b[34m', // 蓝色（信息）
-  magenta: '\x1b[35m', // 洋红色
-  cyan: '\x1b[36m', // 青色（标题）
-  white: '\x1b[37m', // 白色（默认）
-};
-
-/**
- * 彩色日志输出函数
- *
- * @param {string} message - 要输出的消息
- * @param {string} color - 颜色名称，默认为白色
- */
-function log(message, color = 'white') {
-  console.log(`${colors[color]}${message}${colors.reset}`);
-}
+// 使用统一日志库替代自定义颜色输出
 
 function checkFileExists(filePath) {
   return fs.existsSync(filePath);
@@ -81,8 +59,8 @@ function loadEnvFile(filePath) {
 }
 
 function main() {
-  log('🔍 NestJS 环境配置检查工具', 'cyan');
-  log('='.repeat(50), 'blue');
+  showBanner('NestJS 环境配置检查工具');
+  separator('─', 50);
 
   const rootDir = path.resolve(__dirname, '..');
   const envFiles = [
@@ -92,15 +70,14 @@ function main() {
   ];
 
   // 检查环境文件存在性
-  log('\n📁 环境文件检查:', 'yellow');
+  log('\n📁 环境文件检查:', 'check');
   let allFilesOk = true;
 
   envFiles.forEach((file) => {
     const exists = checkFileExists(file.path);
     const status = exists ? '✅' : file.required ? '❌' : '⚠️';
-    const color = exists ? 'green' : file.required ? 'red' : 'yellow';
-
-    log(`  ${status} ${file.name}`, color);
+    const type = exists ? 'success' : file.required ? 'error' : 'warning';
+    log(`  ${status} ${file.name}`, type);
 
     if (file.required && !exists) {
       allFilesOk = false;
@@ -108,7 +85,7 @@ function main() {
   });
 
   // 加载并分析环境变量
-  log('\n🔧 环境变量分析:', 'yellow');
+  log('\n🔧 环境变量分析:', 'check');
 
   const envData = {};
   envFiles.forEach((file) => {
@@ -131,18 +108,18 @@ function main() {
 
   const developmentEnv = envData['.env.development'] || {};
 
-  log('\n📋 必需变量检查 (.env.development):', 'yellow');
+  log('\n📋 必需变量检查 (.env.development):', 'check');
   requiredVars.forEach((varName) => {
     const exists = varName in developmentEnv;
     const status = exists ? '✅' : '❌';
-    const color = exists ? 'green' : 'red';
+    const type = exists ? 'success' : 'error';
     const value = exists
       ? varName.includes('PASSWORD') || varName.includes('SECRET')
         ? '***'
         : developmentEnv[varName]
       : '未设置';
 
-    log(`  ${status} ${varName}: ${value}`, color);
+    log(`  ${status} ${varName}: ${value}`, type);
 
     if (!exists) {
       allFilesOk = false;
@@ -151,7 +128,7 @@ function main() {
 
   // 检查变量一致性
   if (envData['.env'] && envData['.env.development']) {
-    log('\n🔄 变量冲突检查:', 'yellow');
+    log('\n🔄 变量冲突检查:', 'warning');
     const commonEnv = envData['.env'];
     const devEnv = envData['.env.development'];
 
@@ -164,26 +141,30 @@ function main() {
 
   // 检查端口配置
   if (developmentEnv.NEST_PORT) {
-    log('\n🌐 端口配置:', 'yellow');
-    log(`  📍 开发端口: ${developmentEnv.NEST_PORT}`, 'green');
+    log('\n🌐 端口配置:', 'check');
+    log(`  📍 开发端口: ${developmentEnv.NEST_PORT}`, 'success');
 
     if (envData['.env.production']?.NEST_PORT) {
-      log(`  📍 生产端口: ${envData['.env.production'].NEST_PORT}`, 'green');
+      log(`  📍 生产端口: ${envData['.env.production'].NEST_PORT}`, 'success');
     }
   }
 
   // 总结
-  log('\n' + '='.repeat(50), 'blue');
+  separator('─', 50);
   if (allFilesOk) {
-    log('🎉 环境配置检查通过！', 'green');
+    showSuccess('🎉 环境配置检查通过！');
   } else {
-    log('❌ 环境配置存在问题，请检查上述错误', 'red');
+    log('❌ 环境配置存在问题，请检查上述错误', 'error');
     process.exit(1);
   }
 }
 
 if (require.main === module) {
-  main();
+  try {
+    main();
+  } catch (err) {
+    handleError('环境检查脚本执行失败', err);
+  }
 }
 
 module.exports = { checkFileExists, loadEnvFile };

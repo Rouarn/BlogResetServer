@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
+const { log, showBanner, separator, showSuccess, handleError } = require('@vakao-ui/scripts-utils');
 
 /**
  * 环境变量设置工具
@@ -10,20 +11,7 @@ const readline = require('readline');
  * 适配pnpm项目
  */
 
-const colors = {
-  reset: '\x1b[0m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  magenta: '\x1b[35m',
-  cyan: '\x1b[36m',
-  white: '\x1b[37m',
-};
-
-function log(message, color = 'white') {
-  console.log(`${colors[color]}${message}${colors.reset}`);
-}
+// 统一使用脚本工具库的日志与样式
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -82,40 +70,40 @@ function createEnvFile(filePath, config) {
 }
 
 async function setupEnvironment() {
-  log('🚀 NestJS 环境配置向导 (PNPM项目)', 'cyan');
-  log('='.repeat(50), 'blue');
+  showBanner('NestJS 环境配置向导 (PNPM)');
+  separator('─', 50);
 
   const rootDir = path.resolve(__dirname, '..');
 
   // 检查现有文件
   const envFiles = ['.env', '.env.development', '.env.production'];
 
-  log('\n📁 检查现有环境文件:', 'yellow');
+  log('\n📁 检查现有环境文件:', 'check');
   const existingFiles = [];
   envFiles.forEach((file) => {
     const filePath = path.join(rootDir, file);
     const exists = fs.existsSync(filePath);
     if (exists) {
       existingFiles.push(file);
-      log(`  ⚠️  ${file} 已存在`, 'yellow');
+      log(`  ⚠️  ${file} 已存在`, 'warning');
     } else {
-      log(`  ✅ ${file} 不存在，可以创建`, 'green');
+      log(`  ✅ ${file} 不存在，可以创建`, 'success');
     }
   });
 
   if (existingFiles.length > 0) {
     const overwrite = await question('\n是否覆盖现有文件? (y/N): ');
     if (overwrite.toLowerCase() !== 'y') {
-      log('❌ 操作已取消', 'red');
+      log('❌ 操作已取消', 'error');
       rl.close();
       return;
     }
   }
 
-  log('\n🔧 配置环境变量:', 'yellow');
+  log('\n🔧 配置环境变量:', 'check');
 
   // 配置开发环境
-  log('\n📝 开发环境配置:', 'cyan');
+  log('\n📝 开发环境配置:', 'info');
   const devConfig = { ...envTemplates.development };
 
   const dbPassword = await question(`数据库密码 (默认: 空): `);
@@ -141,31 +129,32 @@ async function setupEnvironment() {
   const useRandomSecret = await question(`使用随机生成的JWT密钥? (Y/n): `);
   if (useRandomSecret.toLowerCase() !== 'n') {
     commonConfig.NEST_JWT_SECRET = generateRandomSecret();
-    log(`  🔑 已生成JWT密钥: ${commonConfig.NEST_JWT_SECRET.substring(0, 8)}...`, 'green');
+    log(`  🔑 已生成JWT密钥: ${commonConfig.NEST_JWT_SECRET.substring(0, 8)}...`, 'success');
   } else {
     const jwtSecret = await question(`请输入JWT密钥: `);
     commonConfig.NEST_JWT_SECRET = jwtSecret;
   }
 
   // 创建文件
-  log('\n📄 创建环境文件:', 'yellow');
+  log('\n📄 创建环境文件:', 'build');
 
   createEnvFile(path.join(rootDir, '.env'), commonConfig);
   createEnvFile(path.join(rootDir, '.env.development'), devConfig);
   createEnvFile(path.join(rootDir, '.env.production'), prodConfig);
 
-  log('\n🎉 环境配置完成！', 'green');
-  log('\n📋 下一步操作 (PNPM):', 'cyan');
-  log('  1. 运行 pnpm run env:check 检查配置', 'white');
-  log('  2. 运行 pnpm run start:dev 启动开发服务器', 'white');
-  log('  3. 确保数据库服务已启动', 'white');
-  log('  4. 如需安装依赖: pnpm install', 'white');
+  showSuccess('\n🎉 环境配置完成！');
+  separator('─', 50);
+  log('📋 下一步操作 (PNPM):', 'check');
+  log('  1. 运行 pnpm run env:check 检查配置', 'check');
+  log('  2. 运行 pnpm run start:dev 启动开发服务器', 'check');
+  log('  3. 确保数据库服务已启动', 'check');
+  log('  4. 如需安装依赖: pnpm install', 'check');
 
   rl.close();
 }
 
 if (require.main === module) {
-  setupEnvironment().catch(console.error);
+  setupEnvironment().catch((err) => handleError('环境配置脚本执行失败', err));
 }
 
 module.exports = { setupEnvironment };

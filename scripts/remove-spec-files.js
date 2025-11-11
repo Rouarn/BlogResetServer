@@ -27,6 +27,13 @@
 
 const fs = require('fs');
 const path = require('path');
+const {
+  log,
+  showBanner,
+  showSuccess,
+  separator,
+  handleError,
+} = require('@vakao-ui/scripts-utils');
 
 /**
  * 递归删除所有 .spec.ts 文件
@@ -57,19 +64,19 @@ function removeSpecFiles(dir) {
           // 如果是 .spec.ts 测试文件，删除它
           try {
             fs.unlinkSync(filePath);
-            console.log(`✅ 已删除: ${filePath}`);
+            log(`已删除: ${filePath}`, 'clean');
           } catch (error) {
-            console.error(`❌ 删除失败 ${filePath}:`, error.message);
+            log(`删除失败 ${filePath}: ${error.message}`, 'error');
           }
         }
       } catch (error) {
         // 处理单个文件状态检查失败的情况
-        console.error(`⚠️  无法访问 ${filePath}:`, error.message);
+        log(`无法访问 ${filePath}: ${error.message}`, 'warning');
       }
     });
   } catch (error) {
     // 处理目录读取失败的情况
-    console.error(`❌ 读取目录失败 ${dir}:`, error.message);
+    log(`读取目录失败 ${dir}: ${error.message}`, 'error');
   }
 }
 
@@ -80,29 +87,27 @@ function removeSpecFiles(dir) {
 // 获取项目根目录的绝对路径
 const projectRoot = path.resolve(__dirname, '..');
 
-console.log('🧹 NestJS 测试文件清理工具');
-console.log('='.repeat(50));
-console.log(`📁 项目根目录: ${projectRoot}`);
-console.log('🔍 开始搜索并删除所有 .spec.ts 文件...');
-console.log('');
+showBanner('NestJS 测试文件清理工具');
+separator('─', 50);
+log(`项目根目录: ${projectRoot}`, 'info');
+log('开始搜索并删除所有 .spec.ts 文件...', 'clean');
+separator('─', 50);
 
 // 检查项目根目录是否存在
 if (!fs.existsSync(projectRoot)) {
-  console.error('❌ 项目根目录不存在');
-  process.exit(1);
+  handleError('项目根目录不存在', new Error('Project root missing'));
 }
 
 // 执行测试文件删除
 try {
   removeSpecFiles(projectRoot);
 
-  console.log('');
-  console.log('🎉 删除操作完成！');
-  console.log('💡 提示：');
-  console.log('   - 此操作不可逆，如需恢复请从版本控制系统还原');
-  console.log('   - 建议在删除前先提交代码到 Git');
-  console.log('   - 如需重新生成测试文件，可使用 NestJS CLI');
+  separator('─', 50);
+  showSuccess('删除操作完成！');
+  log('提示：', 'check');
+  log(' - 此操作不可逆，如需恢复请从版本控制系统还原', 'check');
+  log(' - 建议在删除前先提交代码到 Git', 'check');
+  log(' - 如需重新生成测试文件，可使用 NestJS CLI', 'check');
 } catch (error) {
-  console.error('❌ 执行过程中发生未预期的错误:', error.message);
-  process.exit(1);
+  handleError('执行过程中发生未预期的错误', error);
 }

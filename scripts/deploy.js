@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const { log, showBanner, showSuccess, separator, handleError } = require('@vakao-ui/scripts-utils');
 
 /**
  * 部署脚本 - 准备生产环境部署文件
@@ -12,106 +13,108 @@ const projectRoot = path.resolve(__dirname, '..');
 const distPath = path.join(projectRoot, 'dist');
 const deployPath = path.join(projectRoot, 'deploy');
 
-console.log('🚀 开始准备部署文件...');
+try {
+  showBanner('NestJS 部署工具');
+  log('开始准备部署文件...', 'deploy');
+  separator('─', 50);
 
-// 检查 dist 目录是否存在
-if (!fs.existsSync(distPath)) {
-  console.error('❌ dist 目录不存在，请先运行 npm run build:prod');
-  process.exit(1);
-}
-
-// 创建部署目录
-if (fs.existsSync(deployPath)) {
-  console.log('🧹 清理旧的部署目录...');
-  fs.rmSync(deployPath, { recursive: true, force: true });
-}
-
-fs.mkdirSync(deployPath, { recursive: true });
-console.log('📁 创建部署目录:', deployPath);
-
-// 复制 dist 目录
-console.log('📦 复制 dist 目录...');
-execSync(`xcopy "${distPath}" "${path.join(deployPath, 'dist')}" /E /I /H /Y`, {
-  stdio: 'inherit',
-});
-
-// 动态生成生产环境 package.json
-console.log('📄 生成生产环境 package.json...');
-const originalPackageJson = JSON.parse(
-  fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'),
-);
-
-// 创建生产环境 package.json
-const productionPackageJson = {
-  name: originalPackageJson.name,
-  version: originalPackageJson.version,
-  description: originalPackageJson.description,
-  author: originalPackageJson.author,
-  private: originalPackageJson.private,
-  license: originalPackageJson.license,
-  scripts: {
-    start: 'cross-env NODE_ENV=production node dist/main.js',
-    'start:simple': 'node dist/main.js',
-  },
-  dependencies: {
-    // 从原始 package.json 复制所有生产依赖
-    ...originalPackageJson.dependencies,
-    // 确保包含一些可能在 devDependencies 中但生产环境需要的包
-    ...(originalPackageJson.devDependencies?.cors && {
-      cors: originalPackageJson.devDependencies.cors,
-    }),
-    ...(originalPackageJson.devDependencies?.['cross-env'] && {
-      'cross-env': originalPackageJson.devDependencies['cross-env'],
-    }),
-    ...(originalPackageJson.devDependencies?.['@nestjs/swagger'] && {
-      '@nestjs/swagger': originalPackageJson.devDependencies['@nestjs/swagger'],
-    }),
-  },
-  engines: originalPackageJson.engines,
-};
-
-// 写入生产环境 package.json
-const deployPackageJson = path.join(deployPath, 'package.json');
-fs.writeFileSync(deployPackageJson, JSON.stringify(productionPackageJson, null, 2));
-
-// 复制环境配置文件
-const envFiles = ['.env.production', '.env'];
-for (const envFile of envFiles) {
-  const srcEnv = path.join(projectRoot, envFile);
-  const destEnv = path.join(deployPath, envFile);
-
-  if (fs.existsSync(srcEnv)) {
-    console.log(`📄 复制环境文件: ${envFile}`);
-    fs.copyFileSync(srcEnv, destEnv);
+  // 检查 dist 目录是否存在
+  if (!fs.existsSync(distPath)) {
+    throw new Error('dist 目录不存在，请先运行 npm run build:prod');
   }
-}
 
-// 创建启动脚本 (Windows)
-const startScriptWin = `@echo off
+  // 创建部署目录
+  if (fs.existsSync(deployPath)) {
+    log('清理旧的部署目录...', 'clean');
+    fs.rmSync(deployPath, { recursive: true, force: true });
+  }
+
+  fs.mkdirSync(deployPath, { recursive: true });
+  log(`创建部署目录: ${deployPath}`, 'deploy');
+
+  // 复制 dist 目录
+  log('复制 dist 目录...', 'copy');
+  execSync(`xcopy "${distPath}" "${path.join(deployPath, 'dist')}" /E /I /H /Y`, {
+    stdio: 'inherit',
+  });
+
+  // 动态生成生产环境 package.json
+  log('生成生产环境 package.json...', 'build');
+  const originalPackageJson = JSON.parse(
+    fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'),
+  );
+
+  // 创建生产环境 package.json
+  const productionPackageJson = {
+    name: originalPackageJson.name,
+    version: originalPackageJson.version,
+    description: originalPackageJson.description,
+    author: originalPackageJson.author,
+    private: originalPackageJson.private,
+    license: originalPackageJson.license,
+    scripts: {
+      start: 'cross-env NODE_ENV=production node dist/main.js',
+      'start:simple': 'node dist/main.js',
+    },
+    dependencies: {
+      // 从原始 package.json 复制所有生产依赖
+      ...originalPackageJson.dependencies,
+      // 确保包含一些可能在 devDependencies 中但生产环境需要的包
+      ...(originalPackageJson.devDependencies?.cors && {
+        cors: originalPackageJson.devDependencies.cors,
+      }),
+      ...(originalPackageJson.devDependencies?.['cross-env'] && {
+        'cross-env': originalPackageJson.devDependencies['cross-env'],
+      }),
+      ...(originalPackageJson.devDependencies?.['@nestjs/swagger'] && {
+        '@nestjs/swagger': originalPackageJson.devDependencies['@nestjs/swagger'],
+      }),
+    },
+    engines: originalPackageJson.engines,
+  };
+
+  // 写入生产环境 package.json
+  const deployPackageJson = path.join(deployPath, 'package.json');
+  fs.writeFileSync(deployPackageJson, JSON.stringify(productionPackageJson, null, 2));
+
+  // 复制环境配置文件
+  const envFiles = ['.env.production', '.env'];
+  for (const envFile of envFiles) {
+    const srcEnv = path.join(projectRoot, envFile);
+    const destEnv = path.join(deployPath, envFile);
+
+    if (fs.existsSync(srcEnv)) {
+      log(`复制环境文件: ${envFile}`, 'copy');
+      fs.copyFileSync(srcEnv, destEnv);
+    }
+  }
+
+  // 创建启动脚本 (Windows)
+  const startScriptWin = `@echo off
 echo 正在启动 NestJS 应用...
 set NODE_ENV=production
 node dist/main.js
 pause
 `;
 
-const startWinFilename = 'start-windows.bat';
-fs.writeFileSync(path.join(deployPath, startWinFilename), startScriptWin);
-console.log(`📄 创建Windows启动脚本: ${startWinFilename}`);
+  const startWinFilename = 'start-windows.bat';
+  fs.writeFileSync(path.join(deployPath, startWinFilename), startScriptWin);
+  log(`创建Windows启动脚本: ${startWinFilename}`, 'deploy');
 
-// 创建启动脚本 (Linux)
-const startScriptLinux = `#!/bin/bash
+  // 创建启动脚本 (Linux)
+  const startScriptLinux = `#!/bin/bash
 echo "正在启动 NestJS 应用..."
 export NODE_ENV=production
 node dist/main.js
 `;
 
-const startLinuxFilename = 'start-linux.sh';
-fs.writeFileSync(path.join(deployPath, startLinuxFilename), startScriptLinux);
-fs.chmodSync(path.join(deployPath, startLinuxFilename), '755');
-console.log(`📄 创建Linux启动脚本: ${startLinuxFilename}`);
+  const startLinuxFilename = 'start-linux.sh';
+  fs.writeFileSync(path.join(deployPath, startLinuxFilename), startScriptLinux);
+  fs.chmodSync(path.join(deployPath, startLinuxFilename), '755');
+  log(`创建Linux启动脚本: ${startLinuxFilename}`, 'deploy');
 
-// 创建宝塔面板专用启动文件
-const btPanelStartScript = `#!/usr/bin/env node
+  // 创建宝塔面板专用启动文件
+  const btPanelStartScript = `#!/usr/bin/env node
 
 // 宝塔面板专用启动文件
 // 设置生产环境变量
@@ -122,38 +125,38 @@ console.log('正在启动 NestJS 应用...');
 require('./dist/main.js');
 `;
 
-// 写入宝塔面板专用启动文件
-const startBtPanelFilename = 'app-start-BT.js';
-fs.writeFileSync(path.join(deployPath, startBtPanelFilename), btPanelStartScript);
-fs.chmodSync(path.join(deployPath, startBtPanelFilename), '755');
-console.log(`📄 创建宝塔面板启动文件: ${startBtPanelFilename}`);
+  // 写入宝塔面板专用启动文件
+  const startBtPanelFilename = 'app-start-BT.js';
+  fs.writeFileSync(path.join(deployPath, startBtPanelFilename), btPanelStartScript);
+  fs.chmodSync(path.join(deployPath, startBtPanelFilename), '755');
+  log(`创建宝塔面板启动文件: ${startBtPanelFilename}`, 'deploy');
 
-// 创建安装依赖脚本 (Windows)
-const installScriptWin = `@echo off
+  // 创建安装依赖脚本 (Windows)
+  const installScriptWin = `@echo off
 echo 正在安装生产依赖...
 npm install --omit=dev
 echo 依赖安装完成！
 pause
 `;
 
-const installWinFilename = 'install-windows.bat';
-fs.writeFileSync(path.join(deployPath, installWinFilename), installScriptWin);
-console.log(`📄 创建Windows安装脚本: ${installWinFilename}`);
+  const installWinFilename = 'install-windows.bat';
+  fs.writeFileSync(path.join(deployPath, installWinFilename), installScriptWin);
+  log(`创建Windows安装脚本: ${installWinFilename}`, 'deploy');
 
-// 创建安装依赖脚本 (Linux)
-const installScriptLinux = `#!/bin/bash
+  // 创建安装依赖脚本 (Linux)
+  const installScriptLinux = `#!/bin/bash
 echo "正在安装生产依赖..."
 npm install --omit=dev
 echo "依赖安装完成！"
 `;
 
-const installLinuxFilename = 'install-linux.sh';
-fs.writeFileSync(path.join(deployPath, installLinuxFilename), installScriptLinux);
-fs.chmodSync(path.join(deployPath, installLinuxFilename), '755');
-console.log(`📄 创建Linux安装脚本: ${installLinuxFilename}`);
+  const installLinuxFilename = 'install-linux.sh';
+  fs.writeFileSync(path.join(deployPath, installLinuxFilename), installScriptLinux);
+  fs.chmodSync(path.join(deployPath, installLinuxFilename), '755');
+  log(`创建Linux安装脚本: ${installLinuxFilename}`, 'deploy');
 
-// 创建部署说明文件
-const deployReadme = `# NestJS 应用部署指南
+  // 创建部署说明文件
+  const deployReadme = `# NestJS 应用部署指南
 
 这是一个 NestJS 应用的完整部署包，包含了在不同环境下部署所需的所有文件和脚本。
 
@@ -415,13 +418,17 @@ journalctl -u your-service-name
 **部署成功后，您的 NestJS 应用将在指定端口运行，可通过浏览器访问应用接口。**
 `;
 
-fs.writeFileSync(path.join(deployPath, 'README.md'), deployReadme);
-console.log('📄 创建部署说明: README.md');
+  fs.writeFileSync(path.join(deployPath, 'README.md'), deployReadme);
+  log('创建部署说明: README.md', 'deploy');
 
-console.log('\n✅ 部署文件准备完成！');
-console.log(`📁 部署目录: ${deployPath}`);
-console.log('\n📋 接下来的步骤:');
-console.log('1. 将 deploy 目录上传到服务器');
-console.log('2. 在服务器运行: npm install --production');
-console.log('3. 配置环境变量并启动应用');
-console.log('\n🎉 祝您部署顺利！');
+  separator('─', 50);
+  showSuccess('部署文件准备完成！');
+  log(`部署目录: ${deployPath}`, 'info');
+  log('接下来的步骤:', 'check');
+  log('1. 将 deploy 目录上传到服务器', 'check');
+  log('2. 在服务器运行: npm install --production', 'check');
+  log('3. 配置环境变量并启动应用', 'check');
+  separator('═', 50);
+} catch (err) {
+  handleError('部署脚本执行失败', err);
+}
