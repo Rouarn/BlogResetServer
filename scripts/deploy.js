@@ -94,8 +94,9 @@ node dist/main.js
 pause
 `;
 
-fs.writeFileSync(path.join(deployPath, 'start.bat'), startScriptWin);
-console.log('📄 创建Windows启动脚本: start.bat');
+const startWinFilename = 'start-windows.bat';
+fs.writeFileSync(path.join(deployPath, startWinFilename), startScriptWin);
+console.log(`📄 创建Windows启动脚本: ${startWinFilename}`);
 
 // 创建启动脚本 (Linux)
 const startScriptLinux = `#!/bin/bash
@@ -104,9 +105,10 @@ export NODE_ENV=production
 node dist/main.js
 `;
 
-fs.writeFileSync(path.join(deployPath, 'start.sh'), startScriptLinux);
-fs.chmodSync(path.join(deployPath, 'start.sh'), '755');
-console.log('📄 创建Linux启动脚本: start.sh');
+const startLinuxFilename = 'start-linux.sh';
+fs.writeFileSync(path.join(deployPath, startLinuxFilename), startScriptLinux);
+fs.chmodSync(path.join(deployPath, startLinuxFilename), '755');
+console.log(`📄 创建Linux启动脚本: ${startLinuxFilename}`);
 
 // 创建宝塔面板专用启动文件
 const btPanelStartScript = `#!/usr/bin/env node
@@ -120,9 +122,11 @@ console.log('正在启动 NestJS 应用...');
 require('./dist/main.js');
 `;
 
-fs.writeFileSync(path.join(deployPath, 'app.js'), btPanelStartScript);
-fs.chmodSync(path.join(deployPath, 'app.js'), '755');
-console.log('📄 创建宝塔面板启动文件: app.js');
+// 写入宝塔面板专用启动文件
+const startBtPanelFilename = 'app-start-BT.js';
+fs.writeFileSync(path.join(deployPath, startBtPanelFilename), btPanelStartScript);
+fs.chmodSync(path.join(deployPath, startBtPanelFilename), '755');
+console.log(`📄 创建宝塔面板启动文件: ${startBtPanelFilename}`);
 
 // 创建安装依赖脚本 (Windows)
 const installScriptWin = `@echo off
@@ -132,8 +136,9 @@ echo 依赖安装完成！
 pause
 `;
 
-fs.writeFileSync(path.join(deployPath, 'install.bat'), installScriptWin);
-console.log('📄 创建Windows安装脚本: install.bat');
+const installWinFilename = 'install-windows.bat';
+fs.writeFileSync(path.join(deployPath, installWinFilename), installScriptWin);
+console.log(`📄 创建Windows安装脚本: ${installWinFilename}`);
 
 // 创建安装依赖脚本 (Linux)
 const installScriptLinux = `#!/bin/bash
@@ -142,9 +147,10 @@ npm install --omit=dev
 echo "依赖安装完成！"
 `;
 
-fs.writeFileSync(path.join(deployPath, 'install.sh'), installScriptLinux);
-fs.chmodSync(path.join(deployPath, 'install.sh'), '755');
-console.log('📄 创建Linux安装脚本: install.sh');
+const installLinuxFilename = 'install-linux.sh';
+fs.writeFileSync(path.join(deployPath, installLinuxFilename), installScriptLinux);
+fs.chmodSync(path.join(deployPath, installLinuxFilename), '755');
+console.log(`📄 创建Linux安装脚本: ${installLinuxFilename}`);
 
 // 创建部署说明文件
 const deployReadme = `# NestJS 应用部署指南
@@ -164,7 +170,7 @@ const deployReadme = `# NestJS 应用部署指南
 
 1. **安装依赖**
    \`\`\`
-   双击运行 install.bat
+   双击运行 install-windows.bat
    \`\`\`
    或在命令行中执行：
    \`\`\`
@@ -173,7 +179,7 @@ const deployReadme = `# NestJS 应用部署指南
 
 2. **启动应用**
    \`\`\`
-   双击运行 start.bat
+   双击运行 start-windows.bat
    \`\`\`
    或在命令行中执行：
    \`\`\`
@@ -184,14 +190,14 @@ const deployReadme = `# NestJS 应用部署指南
 
 1. **安装依赖**
    \`\`\`bash
-   chmod +x install.sh
-   ./install.sh
+   chmod +x install-linux.sh
+   ./install-linux.sh
    \`\`\`
 
 2. **启动应用**
    \`\`\`bash
-   chmod +x start.sh
-   ./start.sh
+   chmod +x start-linux.sh
+   ./start-linux.sh
    \`\`\`
 
 ### 宝塔面板部署
