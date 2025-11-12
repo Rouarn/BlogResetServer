@@ -1,3 +1,4 @@
+import { AppException, BusinessException } from '@/common/exceptions';
 import {
   ArgumentsHost,
   Catch,
@@ -46,20 +47,21 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     const { status, messages } = this.extractMessages(exception);
+    const contextMessages = this.extractContextMessages(exception);
     const finalMessage = messages.length === 1 ? messages[0] : messages;
 
     const errorResponse: ErrorResponse = {
       success: false,
       code: status,
       message: finalMessage,
-      data: null,
+      data: contextMessages,
       timestamp: formatTimestamp(),
       url: request.url,
     };
 
     const context = this.extractContext(request);
     const logLevel = this.getLogLevel(status, request.url);
-    this.logError(logLevel, context, status, messages.join(', '));
+    this.logError(logLevel, context, status, contextMessages?.join(', ') ?? '');
 
     response.status(status).json(errorResponse);
   }
@@ -155,6 +157,21 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
 
     return { status, messages };
+  }
+
+  /**
+   * 提取异常中的上下文消息
+   */
+  private extractContextMessages(exception: unknown): string[] | null {
+    let ctx: Record<string, unknown> | undefined;
+    if (exception instanceof BusinessException) ctx = exception.context;
+    else if (exception instanceof AppException) ctx = exception.context;
+    if (!ctx) return null;
+    const ve = ctx['validationErrors'];
+    if (Array.isArray(ve)) return ve.map((v) => String(v));
+    const reason = ctx['reason'];
+    if (typeof reason === 'string' && reason.trim()) return [reason];
+    return null;
   }
 
   /**

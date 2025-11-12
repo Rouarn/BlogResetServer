@@ -20,7 +20,7 @@ export interface SuccessResponse<T = unknown> extends IResponse<T> {
 /**
  * 错误响应接口
  */
-export interface ErrorResponse extends IResponse<null> {
+export interface ErrorResponse extends IResponse<unknown> {
   success: false;
   error?: string;
   stack?: string;
