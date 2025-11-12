@@ -71,6 +71,7 @@
     "@types/passport-jwt": "^4.0.1",
     "@typescript-eslint/eslint-plugin": "^8.46.3",
     "@typescript-eslint/parser": "^8.46.3",
+    "@vakao-ui/scripts-utils": "0.0.1",
     "cors": "^2.8.5",
     "cross-env": "^10.1.0",
     "eslint": "^9.39.1",

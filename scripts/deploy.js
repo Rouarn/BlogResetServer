@@ -126,7 +126,7 @@ require('./dist/main.js');
 `;
 
   // 写入宝塔面板专用启动文件
-  const startBtPanelFilename = 'app-start-BT.js';
+  const startBtPanelFilename = 'start-app-BT.js';
   fs.writeFileSync(path.join(deployPath, startBtPanelFilename), btPanelStartScript);
   fs.chmodSync(path.join(deployPath, startBtPanelFilename), '755');
   log(`创建宝塔面板启动文件: ${startBtPanelFilename}`, 'deploy');
