@@ -3,7 +3,7 @@ import { BusinessExceptionFactory } from '@/common/exceptions';
 import { Cache, CacheEvict, ICacheService } from '@/shared/cache';
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { isEnabled, Role, Status, toggleStatus } from 'src/common/enums';
+import { Role, Status, isEnabled, toggleStatus } from 'src/common/enums';
 import { Repository } from 'typeorm';
 import type { CreateUserDto } from './dto/create-user.dto';
 import type { BatchDeleteUserDto, UpdateUserDto } from './dto/update-user.dto';
@@ -151,7 +151,7 @@ export class UsersService {
       `${CACHE_PREFIXES.USERS}:*`,
     ],
   })
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<undefined> {
     const user = await this.findById(id);
 
     // 检查邮箱唯一性
@@ -168,7 +168,10 @@ export class UsersService {
     }
 
     Object.assign(user, updateUserDto);
-    return await this.userRepository.save(user);
+
+    await this.userRepository.save(user);
+
+    return;
   }
 
   /**

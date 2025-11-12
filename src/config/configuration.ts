@@ -45,7 +45,7 @@ export default registerAs('app', () => ({
   // 应用基础配置
   title: process.env.NEST_GLOB_APP_TITLE ?? 'NestJS Application',
   port: process.env.NEST_PORT ? parseInt(process.env.NEST_PORT, 10) : 3000,
-  baseurl: process.env.NEST_BASE_URL ?? 'http://localhost:3000',
+  baseUrl: process.env.NEST_BASE_URL ?? 'http://localhost:3000',
   environment: process.env.NODE_ENV ?? 'development',
 
   // JWT 认证配置

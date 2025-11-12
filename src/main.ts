@@ -110,7 +110,7 @@ function configureSwagger(
 
   logger.logApiDocumentSaved(
     apiDocPath,
-    appConfig.baseurl,
+    appConfig.baseUrl,
     appConfig.staticAssetsOptions.options.prefix,
   );
 }

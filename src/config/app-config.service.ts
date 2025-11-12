@@ -78,7 +78,7 @@ export class AppConfigService {
    * 获取应用基础URL
    * @returns 基础URL，默认 http://localhost:3000
    */
-  get baseurl(): string {
+  get baseUrl(): string {
     return this.configService.get<string>('NEST_BASE_URL', `http://localhost:${this.port}`);
   }
 
@@ -126,7 +126,7 @@ export class AppConfigService {
       } as ServeStaticOptions,
       uploads: {
         path: this.configService.get<string>('NEST_UPLOAD_PATH', './static/uploads'),
-        prefix: this.configService.get<string>('NEST_UPLOAD_PREFIX', '/uploads'),
+        prefix: this.configService.get<string>('NEST_UPLOAD_PREFIX', '/static/uploads'),
         maxSize: this.configService.get<number>('NEST_UPLOAD_MAX_SIZE', 10485760),
         allowedTypes: this.configService.get<string[]>('NEST_UPLOAD_ALLOWED_TYPES', []),
         maxFiles: this.configService.get<number>('NEST_UPLOAD_MAX_FILES', 10),

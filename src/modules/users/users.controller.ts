@@ -156,7 +156,7 @@ export class UsersController {
     status: HttpStatus.CONFLICT,
     description: '邮箱已被使用',
   })
-  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<User> {
+  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<void> {
     return await this.usersService.update(id, updateUserDto);
   }
 
