@@ -2,7 +2,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 const { log, showBanner, showSuccess, separator, handleError } = require('@vakao-ui/scripts-utils');
 
 /**
@@ -32,11 +31,9 @@ try {
   fs.mkdirSync(deployPath, { recursive: true });
   log(`创建部署目录: ${deployPath}`, 'deploy');
 
-  // 复制 dist 目录
-  log('复制 dist 目录...', 'copy');
-  execSync(`xcopy "${distPath}" "${path.join(deployPath, 'dist')}" /E /I /H /Y`, {
-    stdio: 'inherit',
-  });
+  // 移动 dist 目录
+  log('移动 dist 目录...', 'move');
+  fs.renameSync(distPath, path.join(deployPath, 'dist'));
 
   // 动态生成生产环境 package.json
   log('生成生产环境 package.json...', 'build');
