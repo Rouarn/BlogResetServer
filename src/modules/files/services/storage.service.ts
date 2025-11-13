@@ -76,6 +76,7 @@ export class StorageService implements StorageAdapter {
 
   getUrl(relativePath: string): string {
     const baseUrl = appConfig.baseUrl;
+    console.log('baseUrl: ', baseUrl);
 
     const staticConfig = appConfig.staticAssetsOptions;
     // 使用静态资源URL前缀构建访问地址，添加uploads子目录

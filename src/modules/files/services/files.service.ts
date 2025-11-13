@@ -221,6 +221,7 @@ export class FilesService {
   }
 
   private mapToUploadResult(file: File): FileUploadResult {
+    console.log('file: ', file);
     return {
       fileId: file.id,
       filename: file.filename,
