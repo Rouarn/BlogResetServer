@@ -1,3 +1,4 @@
+import type { AuthUserInfo } from '@/shared/types/auth.types';
 import {
   Body,
   ClassSerializerInterceptor,
@@ -243,23 +244,7 @@ export class AuthController {
   })
   @ApiBearerAuth()
   @Get('getUserInfo')
-  async getUserInfo(@GetCurrentUser() user: Auth): Promise<{
-    userId: string;
-    username: string;
-    nickname: string;
-    avatar: string;
-    roles: string;
-    email: string;
-    gender: string;
-    mobile: string;
-    bio: string;
-    birthday: Date;
-    city: string;
-    profession: string;
-    authId: string;
-    lastLoginAt: Date;
-    lastLoginIp: string;
-  }> {
+  async getUserInfo(@GetCurrentUser() user: Auth): Promise<AuthUserInfo> {
     return await this.authService.getAuthInfo(user);
   }
 

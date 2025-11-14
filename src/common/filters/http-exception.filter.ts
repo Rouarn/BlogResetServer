@@ -53,8 +53,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const errorResponse: ErrorResponse = {
       success: false,
       code: status,
-      message: finalMessage,
-      data: contextMessages,
+      message: contextMessages?.join(', ') ?? finalMessage,
+      data: finalMessage,
       timestamp: formatTimestamp(),
       url: request.url,
     };

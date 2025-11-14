@@ -3,6 +3,7 @@ import { GENDER_LABELS } from '@/common/enums/gender.enum';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { jwtOptions } from '@/config';
 import { Cache, ICacheService } from '@/shared/cache';
+import { AuthUserInfo } from '@/shared/types/auth.types';
 import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -89,23 +90,7 @@ export class AuthService {
    * @returns 包含用户ID、用户名、昵称、头像、角色、邮箱、性别、手机号等信息
    */
   @Cache({ key: `${CACHE_PREFIXES.USER_INFO}:\${0.id}`, ttl: CACHE_TTL.USER_INFO })
-  async getAuthInfo(auth: Auth): Promise<{
-    userId: string;
-    username: string;
-    nickname: string;
-    avatar: string;
-    roles: string;
-    email: string;
-    gender: string;
-    mobile: string;
-    bio: string;
-    birthday: Date;
-    city: string;
-    profession: string;
-    authId: string;
-    lastLoginAt: Date;
-    lastLoginIp: string;
-  }> {
+  async getAuthInfo(auth: Auth): Promise<AuthUserInfo> {
     // 从数据库查询完整的认证和用户信息
     const authWithUser = await this.authRepository.findOne({
       where: { id: auth.id },

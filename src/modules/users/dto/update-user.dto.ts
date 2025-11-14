@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   ArrayNotEmpty,
   IsArray,
@@ -92,6 +93,7 @@ export class UpdateUserDto extends PartialType(
     format: 'date',
   })
   @IsOptional()
+  @Transform(({ value }: { value: string }) => (value === '' ? null : value))
   @IsDateString({}, { message: '生日格式不正确' })
   birthday?: string;
 
