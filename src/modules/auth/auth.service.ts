@@ -2,8 +2,8 @@ import { CACHE_PREFIXES, CACHE_TOKENS, CACHE_TTL } from '@/common/constants';
 import { GENDER_LABELS } from '@/common/enums/gender.enum';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { jwtOptions } from '@/config';
+import { AuthMessageResponse, AuthUserInfo } from '@/modules/auth/auth.types';
 import { Cache, ICacheService } from '@/shared/cache';
-import { AuthUserInfo } from '@/shared/types/auth.types';
 import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -391,7 +391,7 @@ export class AuthService {
   async changePassword(
     changePasswordDto: ChangePasswordDto,
     authId: string,
-  ): Promise<{ message: string }> {
+  ): Promise<AuthMessageResponse> {
     const auth = await this.authRepository.findOne({ where: { id: authId } });
     if (!auth) {
       throw BusinessExceptionFactory.notFound('认证记录', { authId });
@@ -434,7 +434,7 @@ export class AuthService {
    * @param resetPasswordDto 重置密码数据
    * @returns 重置结果
    */
-  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
+  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<AuthMessageResponse> {
     // 验证重置令牌
     const tokenData = await this.cacheService.get<{
       authId: string;

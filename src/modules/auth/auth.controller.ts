@@ -1,4 +1,11 @@
-import type { AuthUserInfo } from '@/shared/types/auth.types';
+import type {
+  AuthCaptchaResponse,
+  AuthCaptchaVerifyRequest,
+  AuthCaptchaVerifyResponse,
+  AuthCreateUserResponse,
+  AuthMessageResponse,
+  AuthUserInfo,
+} from '@/modules/auth/auth.types';
 import {
   Body,
   ClassSerializerInterceptor,
@@ -71,12 +78,7 @@ export class AuthController {
   async getCaptcha(
     @Ip() clientIp: string,
     @Headers('user-agent') userAgent: string,
-  ): Promise<{
-    image: string;
-    token: string;
-    expiresIn: number;
-    nonce: string;
-  }> {
+  ): Promise<AuthCaptchaResponse> {
     const clientInfo = { ip: clientIp, userAgent };
     const result = await this.authService.generateCaptcha(clientInfo);
 
@@ -128,10 +130,10 @@ export class AuthController {
   @Public()
   @Post('captcha/verify')
   async verifyCaptcha(
-    @Body() body: { token: string; code: string },
+    @Body() body: AuthCaptchaVerifyRequest,
     @Ip() _clientIp: string,
     @Headers('user-agent') _userAgent: string,
-  ): Promise<{ success: boolean; message: string; timestamp?: string }> {
+  ): Promise<AuthCaptchaVerifyResponse> {
     const { token, code } = body;
 
     if (!token || !code) {
@@ -336,11 +338,7 @@ export class AuthController {
   async createUser(
     @Body() body: RegisterDto,
     @Req() _req: Request,
-  ): Promise<{
-    success: boolean;
-    message: string;
-    record?: Partial<Auth>;
-  }> {
+  ): Promise<AuthCreateUserResponse> {
     const { captchaToken, captchaCode, ...userData } = body;
 
     // 验证必要参数
@@ -432,7 +430,7 @@ export class AuthController {
   async changePassword(
     @Body() changePasswordDto: ChangePasswordDto,
     @GetCurrentUser() user: { authId: string },
-  ): Promise<{ message: string }> {
+  ): Promise<AuthMessageResponse> {
     try {
       return this.authService.changePassword(changePasswordDto, user.authId);
     } catch (_) {

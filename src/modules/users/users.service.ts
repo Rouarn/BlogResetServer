@@ -4,7 +4,7 @@ import { Cache, CacheEvict, ICacheService } from '@/shared/cache';
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role, Status, isEnabled, toggleStatus } from 'src/common/enums';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import type { CreateUserDto } from './dto/create-user.dto';
 import type { BatchDeleteUserDto, UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -151,7 +151,7 @@ export class UsersService {
       `${CACHE_PREFIXES.USERS}:*`,
     ],
   })
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<undefined> {
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<void> {
     const user = await this.findById(id);
 
     // 检查邮箱唯一性
@@ -209,7 +209,7 @@ export class UsersService {
   ): Promise<{ message: string; deletedCount: number }> {
     const { ids } = batchDeleteDto;
 
-    const users = await this.userRepository.findByIds(ids);
+    const users = await this.userRepository.findBy({ id: In(ids) });
     if (users.length === 0) {
       throw BusinessExceptionFactory.notFound('要删除的用户', { ids });
     }
