@@ -439,4 +439,34 @@ export class AuthController {
       };
     }
   }
+
+  /**
+   * 退出登录
+   */
+  @ApiOperation({
+    summary: '退出登录',
+    description: '退出当前用户的登录状态',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '退出登录成功',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        message: { type: 'string', example: '退出登录成功' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: '未授权访问',
+  })
+  @Post('logout')
+  async logout(
+    @GetCurrentUser() user: { authId: string },
+    @Req() req: Request,
+  ): Promise<AuthMessageResponse> {
+    return this.authService.logout({ accessToken: req.headers.authorization }, user.authId);
+  }
 }
