@@ -265,8 +265,8 @@ export class AuthController {
   })
   @Public()
   @Post('login')
-  login(@Body() body: LoginDto): Promise<LoginResponseDto> {
-    return this.authService.login(body);
+  login(@Body() body: LoginDto, @Ip() clientIp: string): Promise<LoginResponseDto> {
+    return this.authService.login(body, clientIp);
   }
 
   @ApiOperation({

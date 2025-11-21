@@ -108,8 +108,7 @@ export class AuthService {
       avatar: authWithUser.user?.avatar || '',
       roles: authWithUser.user?.roles || 'USER',
       email: authWithUser.user?.email || '',
-      gender:
-        authWithUser.user?.gender !== undefined ? GENDER_LABELS[authWithUser.user.gender] : '',
+      gender: authWithUser.user?.gender !== undefined ? String(authWithUser.user.gender) : '',
       mobile: authWithUser.user?.mobile || '',
       bio: authWithUser.user?.bio || '',
       birthday: authWithUser.user?.birthday,
@@ -131,7 +130,7 @@ export class AuthService {
    * @throws UnauthorizedException 认证失败
    * @throws BadRequestException 账号被锁定或其他业务错误
    */
-  async login(loginDto: LoginDto): Promise<LoginResponseDto> {
+  async login(loginDto: LoginDto, clientIp?: string): Promise<LoginResponseDto> {
     // 查找认证记录，包含关联的用户信息
     const auth = await this.authRepository.findOne({
       where: { username: loginDto.username },
@@ -194,7 +193,7 @@ export class AuthService {
     await this.resetLoginAttempts(auth.id);
 
     // 更新最后登录时间
-    await this.updateLastLogin(auth.id);
+    await this.updateLastLogin(auth.id, clientIp);
 
     // 生成JWT令牌
     const payload = {
@@ -805,9 +804,13 @@ export class AuthService {
    *
    * @param authId 认证ID
    */
-  private async updateLastLogin(authId: string): Promise<void> {
-    await this.authRepository.update(authId, {
+  private async updateLastLogin(authId: string, clientIp?: string): Promise<void> {
+    const updateData: Partial<Auth> = {
       lastLoginAt: new Date(),
-    });
+    };
+    if (clientIp) {
+      updateData.lastLoginIp = clientIp;
+    }
+    await this.authRepository.update(authId, updateData);
   }
 }
