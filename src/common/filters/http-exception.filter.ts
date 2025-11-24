@@ -49,6 +49,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const { status, messages } = this.extractMessages(exception);
     const contextMessages = this.extractContextMessages(exception);
     const finalMessage = messages.length === 1 ? messages[0] : messages;
+    const logMessage = contextMessages?.join(', ') ?? messages.join(', ');
 
     const errorResponse: ErrorResponse = {
       success: false,
@@ -61,7 +62,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     const context = this.extractContext(request);
     const logLevel = this.getLogLevel(status, request.url);
-    this.logError(logLevel, context, status, contextMessages?.join(', ') ?? '');
+    this.logError(logLevel, context, status, logMessage);
 
     response.status(status).json(errorResponse);
   }
@@ -98,6 +99,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       url: request.url,
       query: request.query,
       body: this.sanitizeBody(request.body),
+      contentType: request.headers['content-type'] ?? '',
     };
   }
 
@@ -106,12 +108,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
    */
   private sanitizeBody(body: unknown): unknown {
     if (!body || typeof body !== 'object' || body === null) return body;
-
-    const sanitized = { ...(body as Record<string, unknown>) };
-    for (const field of SENSITIVE_FIELDS) {
-      if (field in sanitized) sanitized[field] = '***REDACTED***';
-    }
-    return sanitized;
+    return this.sanitizeDeep(body, 0);
   }
 
   /**
@@ -138,25 +135,46 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }
     } else if (exception instanceof Error) {
       messages = [exception.message];
-
-      // 文件相关错误处理
-      const map: Record<string, number> = {
-        文件大小超出限制: HttpStatus.PAYLOAD_TOO_LARGE,
-        不支持的文件类型: HttpStatus.UNSUPPORTED_MEDIA_TYPE,
-        文件不存在: HttpStatus.NOT_FOUND,
-        无权限访问: HttpStatus.FORBIDDEN,
-        文件上传失败: HttpStatus.BAD_REQUEST,
-        存储空间不足: 507,
-      };
-      for (const [key, code] of Object.entries(map)) {
-        if (exception.message.includes(key)) {
-          status = code as HttpStatus;
-          break;
-        }
-      }
+      const resolved = this.resolveStatusFromError(exception);
+      if (resolved) status = resolved as HttpStatus;
     }
 
     return { status, messages };
+  }
+
+  private resolveStatusFromError(err: Error): number | null {
+    const anyErr = err as unknown as { code?: string; name?: string };
+    const codeOrName = (anyErr.code ?? anyErr.name ?? '').toUpperCase();
+    const msg = (err.message || '').toLowerCase();
+
+    if (codeOrName === 'ENOENT') return HttpStatus.NOT_FOUND;
+    if (codeOrName === 'EACCES' || codeOrName === 'EPERM') return HttpStatus.FORBIDDEN;
+    if (codeOrName === 'ENOSPC') return HttpStatus.INSUFFICIENT_STORAGE;
+
+    const checks: { status: number; keywords: string[] }[] = [
+      {
+        status: HttpStatus.PAYLOAD_TOO_LARGE,
+        keywords: ['file size', 'size limit', 'payload too large', '文件大小超出限制'],
+      },
+      {
+        status: HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+        keywords: ['unsupported media type', 'unsupported file type', '不支持的文件类型'],
+      },
+      { status: HttpStatus.NOT_FOUND, keywords: ['file not found', 'not found', '文件不存在'] },
+      { status: HttpStatus.FORBIDDEN, keywords: ['forbidden', 'permission denied', '无权限访问'] },
+      {
+        status: HttpStatus.BAD_REQUEST,
+        keywords: ['upload failed', 'invalid upload', '文件上传失败'],
+      },
+      {
+        status: HttpStatus.INSUFFICIENT_STORAGE,
+        keywords: ['no space', 'insufficient storage', '存储空间不足'],
+      },
+    ];
+    for (const { status, keywords } of checks) {
+      if (keywords.some((k) => msg.includes(k))) return status;
+    }
+    return null;
   }
 
   /**
@@ -201,7 +219,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       userId: String(context.userId ?? 'anonymous'),
       ip: this.formatIp(context.ip as string),
       query: this.formatKeyValue(context.query as Record<string, unknown>),
-      body: ['POST', 'PUT', 'PATCH'].includes(String(context.method))
+      body: this.shouldLogBody(String(context.method), String(context['contentType']))
         ? this.formatJson(context.body)
         : 'N/A',
       client: this.detectClient(context.userAgent as string),
@@ -209,49 +227,58 @@ export class HttpExceptionFilter implements ExceptionFilter {
     };
 
     if (process.env.NODE_ENV === 'production') {
-      // 生产环境 → 输出 JSON，方便日志收集
       logMethod(JSON.stringify(fields));
     } else {
-      // 开发环境 → 美观的表格日志
-      this.printTable(logMethod, fields);
+      const urlStr = String(context.url);
+      const isCommon = COMMON_BROWSER_REQUESTS.some((p) => urlStr.includes(p));
+      if (isCommon && status === HttpStatus.NOT_FOUND) return;
+      logMethod(this.formatCompactLine(fields));
     }
   }
 
-  /**
-   * 打印表格日志
-   */
-  private printTable(log: (msg: string) => void, fields: Record<string, string>): void {
-    const maxContentLength = Math.min(
-      Math.max(...Object.values(fields).map((v) => v.length), 40),
-      100,
+  private formatCompactLine(fields: Record<string, string>): string {
+    const parts: string[] = [];
+    const msg = fields.message.length > 120 ? fields.message.slice(0, 120) + '…' : fields.message;
+    parts.push(
+      `[${fields.level}] ${fields.method} ${fields.url} ${fields.status} ${msg}`,
+      `req=${fields.requestId}`,
+      `uid=${fields.userId}`,
+      `ip=${fields.ip}`,
+      `ua=${fields.client}`,
+      `t=${fields.timestamp}`,
     );
-    const labelWidth = 15;
-    const tableWidth = labelWidth + maxContentLength + 5;
-    const separator = '─'.repeat(tableWidth);
-
-    log('');
-    log(`┌${separator}`);
-    for (const [label, value] of Object.entries(fields)) {
-      this.formatRow(label, value, labelWidth, maxContentLength).forEach((line) => log(line));
+    if (fields.query && fields.query !== 'N/A') parts.push(`q=${fields.query}`);
+    if (fields.body && fields.body !== 'N/A') {
+      const body = fields.body.length > 120 ? fields.body.slice(0, 120) + '…' : fields.body;
+      parts.push(`body=${body}`);
     }
-    log(`└${separator}`);
-    log('');
+    return parts.join(' | ');
   }
 
-  private formatRow(label: string, value: string, labelWidth: number, maxLen: number): string[] {
-    const paddedLabel = label.padEnd(labelWidth);
-    if (value.length <= maxLen) return [`│ ${paddedLabel}  ${value}`];
+  private isSensitiveKey(key: string): boolean {
+    const lower = key.toLowerCase();
+    return SENSITIVE_FIELDS.some((f) => lower.includes(f));
+  }
 
-    const lines: string[] = [];
-    let remaining = value;
-    while (remaining.length > 0) {
-      const chunk = remaining.slice(0, maxLen);
-      remaining = remaining.slice(maxLen);
-      lines.push(
-        lines.length === 0 ? `│ ${paddedLabel}  ${chunk}` : `│ ${' '.repeat(labelWidth)}  ${chunk}`,
-      );
+  private sanitizeDeep(input: unknown, depth: number): unknown {
+    if (depth > 3) return '[redacted]';
+    if (Array.isArray(input)) return input.map((v) => this.sanitizeDeep(v, depth + 1));
+    if (input && typeof input === 'object') {
+      const obj = input as Record<string, unknown>;
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(obj)) {
+        out[k] = this.isSensitiveKey(k) ? '***REDACTED***' : this.sanitizeDeep(v, depth + 1);
+      }
+      return out;
     }
-    return lines;
+    return input;
+  }
+
+  private shouldLogBody(method: string, contentType: string): boolean {
+    if (!['POST', 'PUT', 'PATCH'].includes(method)) return false;
+    const ct = (contentType || '').toLowerCase();
+    if (ct.includes('application/json')) return true;
+    return false;
   }
 
   private formatIp(ip: string): string {
@@ -260,16 +287,36 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
   private formatKeyValue(obj: Record<string, unknown>): string {
     if (!obj || Object.keys(obj).length === 0) return 'N/A';
-    return Object.entries(obj)
-      .map(([k, v]) => `${k}=${v ?? '<empty>'}`)
-      .join(', ');
+    const parts: string[] = [];
+    for (const [k, v] of Object.entries(obj)) {
+      if (this.isSensitiveKey(k)) {
+        parts.push(`${k}=***REDACTED***`);
+        continue;
+      }
+      if (v === undefined || v === null) {
+        parts.push(`${k}=<empty>`);
+        continue;
+      }
+      if (typeof v === 'object') {
+        try {
+          const s = JSON.stringify(v);
+          parts.push(`${k}=${s.length > 120 ? s.slice(0, 120) + '…' : s}`);
+        } catch {
+          parts.push(`${k}=[object]`);
+        }
+      } else {
+        const s = String(v);
+        parts.push(`${k}=${s.length > 120 ? s.slice(0, 120) + '…' : s}`);
+      }
+    }
+    return parts.join(', ');
   }
 
   private formatJson(body: unknown): string {
     if (!body || typeof body !== 'object') return 'N/A';
     try {
-      const str = JSON.stringify(body, null, 2);
-      return str.length > 300 ? str.slice(0, 300) + '...' : str;
+      const str = JSON.stringify(body);
+      return str.length > 300 ? str.slice(0, 300) + '…' : str;
     } catch {
       return String(body).slice(0, 300);
     }
