@@ -21,7 +21,7 @@ import {
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { GetCurrentUser, Public } from 'src/common/decorators';
-import { formatISOString } from 'src/utils';
+import { BusinessExceptionFactory } from '../../common/exceptions';
 import { AuthService } from './auth.service';
 import { CaptchaVerifyDto } from './dto/captcha-verify.dto';
 import { CreateAuthDto } from './dto/create-auth.dto';
@@ -137,11 +137,7 @@ export class AuthController {
     const { token, code } = body;
 
     if (!token || !code) {
-      return {
-        success: false,
-        message: '验证码token和code不能为空',
-        timestamp: formatISOString(),
-      };
+      throw BusinessExceptionFactory.invalidParameter('验证码token和code不能为空');
     }
 
     const result = await this.authService.verifyCaptcha({
@@ -149,10 +145,12 @@ export class AuthController {
       code,
     });
 
+    if (!result.success) {
+      throw BusinessExceptionFactory.validation(`验证码验证失败: ${result.message}`);
+    }
+
     return {
-      success: result.success ?? false,
-      message: result.success ? '验证码验证成功' : `验证码验证失败: ${result.message}`,
-      timestamp: formatISOString(),
+      message: '验证码验证成功',
     };
   }
 

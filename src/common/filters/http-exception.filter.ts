@@ -54,7 +54,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       success: false,
       code: status,
       message: contextMessages?.join(', ') ?? finalMessage,
-      data: finalMessage,
+      data: {},
       timestamp: formatTimestamp(),
       url: request.url,
     };

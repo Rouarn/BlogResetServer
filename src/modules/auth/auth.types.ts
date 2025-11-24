@@ -65,9 +65,7 @@ export interface AuthCaptchaVerifyRequest {
  * 用于描述向认证模块校验验证码的响应结构，包含校验结果、消息和可选的时间戳。
  */
 export interface AuthCaptchaVerifyResponse {
-  success: boolean;
   message: string;
-  timestamp?: string;
 }
 
 /**
