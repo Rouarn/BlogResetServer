@@ -14,7 +14,6 @@ export abstract class BaseEntity {
     value instanceof Date ? value.toISOString() : value,
   )
   @CreateDateColumn({
-    name: 'create_time',
     type: 'timestamp',
     comment: '创建时间',
   })
@@ -28,7 +27,6 @@ export abstract class BaseEntity {
     value instanceof Date ? value.toISOString() : value,
   )
   @UpdateDateColumn({
-    name: 'update_time',
     type: 'timestamp',
     comment: '更新时间',
   })

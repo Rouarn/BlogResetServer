@@ -102,12 +102,12 @@
 ### 字段命名说明与修改
 
 - 默认属性与列名：
-  - 属性名固定为 `createTime`、`updateTime`（`src/database/entities/base.entity.ts:21`、`src/database/entities/base.entity.ts:35`）。
-  - 数据库列名固定为 `create_time`、`update_time`（同上装饰器 `name` 字段）。
-- 在 `src/app.module.ts:86-95` 可看到 `DatabaseModule.forRoot({ fieldNames })` 的示例配置，但当前版本该配置项用于预留扩展，未覆盖 `BaseEntity` 固定字段。
-- 如需修改命名：
-  - 直接在 `src/database/entities/base.entity.ts` 修改装饰器的 `name`（例如改为 `created_at`、`updated_at`），并根据需要重命名属性（例如 `createdAt`、`updatedAt`）。
-  - 或复制一份自定义基类（例如 `CustomBaseEntity`）并让你的实体继承该基类，保持审计订阅者对时间戳字段的处理逻辑一致。
+  - 列名由命名策略决定：默认使用 snake_case 生成 `create_time`、`update_time`；可通过配置覆盖为自定义列名。
+- 配置项已生效：
+  - 通过 `DatabaseModule.forRoot({ fieldNames: { createTime: 'createdAt', updateTime: 'updatedAt' } })` 可将列名改为 `createdAt`、`updatedAt`（`src/app.module.ts:76`、`src/database/naming-strategy/database-naming.strategy.ts:1`）。
+- 修改方式：
+  - 推荐使用 `fieldNames` 配置覆盖列名，无需改动实体。
+  - 如需更改属性名（例如 `createdAt`、`updatedAt`），请同步调整审计订阅者处理逻辑或保持兼容的属性，以免影响时间戳自动更新（`src/database/subscribers/audit.subscriber.ts:49`、`src/database/subscribers/audit.subscriber.ts:69`）。
 
 ## 工具层（src/utils）
 

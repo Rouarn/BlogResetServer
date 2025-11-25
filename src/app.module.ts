@@ -31,15 +31,17 @@ import { ResponseInterceptor } from './common/interceptors';
 import { CustomValidationPipe } from './common/pipes';
 import { JwtAuthStrategy } from './common/strategies';
 // 配置模块导入
-import { AppConfigService, ConfigModule as AppConfigModule } from './config';
+import { ConfigModule as AppConfigModule, AppConfigService } from './config';
 // 时间戳管理模块
 import { DatabaseModule } from './database';
+import { DatabaseNamingStrategy } from './database/naming-strategy/database-naming.strategy';
+import { DATABASE_CONFIG, DatabaseConfig } from './database/types';
 // 业务模块导入
-import { AuthModule } from './modules/auth/auth.module';
-import { UsersModule } from './modules/users/users.module';
-import { FilesModule } from './modules/files/files.module';
-import { WebSocketModule } from '@/shared/websocket';
 import { CacheModule } from '@/shared/cache';
+import { WebSocketModule } from '@/shared/websocket';
+import { AuthModule } from './modules/auth/auth.module';
+import { FilesModule } from './modules/files/files.module';
+import { UsersModule } from './modules/users/users.module';
 
 /**
  * 应用根模块配置
@@ -74,12 +76,13 @@ import { CacheModule } from '@/shared/cache';
     // 数据库模块 - TypeORM 配置
     // =============================================================================
     TypeOrmModule.forRootAsync({
-      inject: [AppConfigService], // 注入应用配置服务
-      useFactory: (configService: AppConfigService) => ({
-        ...configService.databaseConfig, // 使用配置服务中的数据库配置
-        autoLoadEntities: true, // 自动加载实体类
-        retryDelay: 500, // 连接重试延迟 (毫秒)
-        retryAttempts: 10, // 最大重试次数
+      inject: [AppConfigService, DATABASE_CONFIG],
+      useFactory: (configService: AppConfigService, dbConfig: DatabaseConfig) => ({
+        ...configService.databaseConfig,
+        namingStrategy: new DatabaseNamingStrategy(dbConfig.fieldNames),
+        autoLoadEntities: true,
+        retryDelay: 500,
+        retryAttempts: 10,
       }),
     }),
 
