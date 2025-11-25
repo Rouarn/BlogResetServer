@@ -30,7 +30,8 @@
     "clean:tests": "node scripts/remove-spec-files.js",
     "deploy:prepare": "node scripts/deploy.js",
     "deploy:build": "pnpm run build:prod && pnpm run deploy:prepare",
-    "deploy": "pnpm run code:check && pnpm run deploy:build"
+    "deploy": "pnpm run code:check && pnpm run deploy:build",
+    "g:res": "node scripts/generate-resource.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.9",
