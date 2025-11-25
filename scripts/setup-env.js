@@ -25,29 +25,147 @@ function question(prompt) {
 }
 
 const envTemplates = {
+  common: {
+    NEST_JWT_ACCESS_TOKEN_TTL: 3600,
+    NEST_JWT_REFRESH_TOKEN_TTL: 604800,
+    NEST_SWAGGER_PREFIX: '/api-docs',
+    WS_LOG_LEVEL: 'info',
+    WS_INCLUDE_METADATA: false,
+    WS_INCLUDE_STACK: false,
+    WS_PERFORMANCE_THRESHOLD: 1000,
+    WS_SLOW_REQUEST_THRESHOLD: 1000,
+  },
   development: {
-    NEST_PORT: '8848',
-    NEST_DATABASE_HOST: 'localhost',
+    NODE_ENV: 'development',
+    NEST_PORT: '8898',
+    NEST_BASE_URL: 'http://localhost:8898',
+    NEST_JWT_SECRET: '',
+    NEST_DATABASE_HOST: '127.0.0.1',
     NEST_DATABASE_PORT: '3306',
     NEST_DATABASE_USER: 'root',
     NEST_DATABASE_PASSWORD: '',
     NEST_DATABASE_NAME: 'nestjs_dev',
-    NEST_DATABASE_SYNCHRONIZE: 'true',
     NEST_DATABASE_LOGGING: 'false',
+    NEST_DATABASE_SYNCHRONIZE: 'true',
+    NEST_STATIC_ASSETS_MAXAGE: 0,
+    NEST_CORS_ORIGINS:
+      'http://localhost:8848,http://127.0.0.1:8848,http://localhost:8849,http://127.0.0.1:8849,http://localhost:8898,http://127.0.0.1:8898',
+    NEST_ENABLE_DEBUG: 'true',
+    NEST_LOG_LEVEL: 'debug',
+    NEST_PERFORMANCE_MONITORING: 'true',
+    NEST_REQUEST_TRACKING: 'true',
+    NEST_DETAILED_ERRORS: 'true',
+    NEST_DEBUG_PANEL: 'true',
+    NEST_STATIC_ASSETS_DIR: './static',
+    NEST_STATIC_ASSETS_PREFIX: '/static',
+    NEST_UPLOAD_PATH: './dist/static/uploads',
+    NEST_UPLOAD_PREFIX: '/static/uploads',
+    NEST_UPLOAD_MAX_SIZE: 10485760,
+    NEST_UPLOAD_ALLOWED_TYPES: 'image/jpeg,image/png,image/gif,application/pdf',
+    NEST_UPLOAD_MAX_FILES: 10,
+    API_PREFIX: 'api',
+    API_DEFAULT_VERSION: 1,
+    NEST_REDIS_ENABLED: 'true',
+    NEST_REDIS_HOST: '127.0.0.1',
+    NEST_REDIS_PORT: 6379,
+    NEST_REDIS_PASSWORD: '',
+    NEST_REDIS_DB: 0,
+    NEST_REDIS_CONNECT_TIMEOUT: 10000,
+    NEST_REDIS_COMMAND_TIMEOUT: 5000,
+    NEST_REDIS_RETRIES: 3,
+    NEST_REDIS_RETRY_DELAY: 1000,
+    NEST_REDIS_MAX_CONNECTIONS: 10,
+    NEST_REDIS_MIN_CONNECTIONS: 2,
+    NEST_REDIS_IDLE_TIMEOUT: 30000,
+    NEST_REDIS_KEY_PREFIX: 'nestjs:dev:',
+    NEST_REDIS_DEFAULT_TTL: 3600,
   },
   production: {
-    NEST_PORT: '3000',
-    NEST_DATABASE_HOST: 'localhost',
-    NEST_DATABASE_PORT: '3306',
+    NODE_ENV: 'production',
+    NEST_PORT: '8848',
+    NEST_BASE_URL: 'http://localhost:8848',
+    NEST_JWT_SECRET: '',
+    NEST_DATABASE_HOST: '127.0.0.1',
+    NEST_DATABASE_PORT: 13306,
     NEST_DATABASE_USER: 'prod_user',
     NEST_DATABASE_PASSWORD: '',
     NEST_DATABASE_NAME: 'nestjs_prod',
-    NEST_DATABASE_SYNCHRONIZE: 'false',
     NEST_DATABASE_LOGGING: 'false',
+    NEST_DATABASE_SYNCHRONIZE: 'false',
+    NEST_CORS_ORIGINS: '*',
+    NEST_ENABLE_DEBUG: 'false',
+    NEST_LOG_LEVEL: 'error',
+    NEST_PERFORMANCE_MONITORING: 'false',
+    NEST_REQUEST_TRACKING: 'false',
+    NEST_DETAILED_ERRORS: 'false',
+    NEST_DEBUG_PANEL: 'false',
+    NEST_STATIC_ASSETS_DIR: './static',
+    NEST_STATIC_ASSETS_PREFIX: '/static',
+    NEST_STATIC_ASSETS_MAXAGE: 86400,
+    NEST_UPLOAD_PATH: './static/uploads',
+    NEST_UPLOAD_MAX_SIZE: 10485760,
+    NEST_UPLOAD_ALLOWED_TYPES: 'image/jpeg,image/png,image/gif,application/pdf',
+    API_PREFIX: 'api',
+    API_DEFAULT_VERSION: 1,
+    NEST_REDIS_ENABLED: 'true',
+    NEST_REDIS_HOST: '127.0.0.1',
+    NEST_REDIS_PORT: 16379,
+    NEST_REDIS_PASSWORD: '',
+    NEST_REDIS_DB: 0,
+    NEST_REDIS_CONNECT_TIMEOUT: 5000,
+    NEST_REDIS_COMMAND_TIMEOUT: 3000,
+    NEST_REDIS_RETRIES: 5,
+    NEST_REDIS_RETRY_DELAY: 2000,
+    NEST_REDIS_MAX_CONNECTIONS: 50,
+    NEST_REDIS_MIN_CONNECTIONS: 10,
+    NEST_REDIS_IDLE_TIMEOUT: 60000,
+    NEST_REDIS_KEY_PREFIX: 'nestjs:prod:',
+    NEST_REDIS_DEFAULT_TTL: 7200,
   },
-  common: {
+  test: {
+    NODE_ENV: 'test',
+    NEST_PORT: '8898',
+    NEST_BASE_URL: 'http://localhost:8898',
     NEST_JWT_SECRET: '',
-    NEST_JWT_ACCESS_TOKEN_TTL: 3600,
+    NEST_DATABASE_HOST: '127.0.0.1',
+    NEST_DATABASE_PORT: 3306,
+    NEST_DATABASE_USER: 'root',
+    NEST_DATABASE_PASSWORD: '',
+    NEST_DATABASE_NAME: 'nestjs_test',
+    NEST_DATABASE_LOGGING: 'false',
+    NEST_DATABASE_SYNCHRONIZE: 'true',
+    NEST_STATIC_ASSETS_MAXAGE: 0,
+    NEST_CORS_ORIGINS: 'http://localhost:8849,http://localhost:3000,http://localhost:8898',
+    NEST_ENABLE_DEBUG: 'true',
+    NEST_LOG_LEVEL: 'debug',
+    NEST_PERFORMANCE_MONITORING: 'true',
+    NEST_REQUEST_TRACKING: 'true',
+    NEST_DETAILED_ERRORS: 'true',
+    NEST_DEBUG_PANEL: 'true',
+    NEST_STATIC_ASSETS_DIR: './dist/static',
+    NEST_STATIC_ASSETS_PREFIX: '/static',
+    NEST_STATIC_ASSETS_MAXAGE_TEST: 0,
+    NEST_UPLOAD_PATH: './dist/static/uploads',
+    NEST_UPLOAD_PREFIX: '/static/uploads',
+    NEST_UPLOAD_MAX_SIZE: 10485760,
+    NEST_UPLOAD_ALLOWED_TYPES: 'image/jpeg,image/png,image/gif,application/pdf',
+    NEST_UPLOAD_MAX_FILES: 10,
+    API_PREFIX: 'api',
+    API_DEFAULT_VERSION: 1,
+    NEST_REDIS_ENABLED: 'true',
+    NEST_REDIS_HOST: '127.0.0.1',
+    NEST_REDIS_PORT: 6379,
+    NEST_REDIS_PASSWORD: '',
+    NEST_REDIS_DB: 0,
+    NEST_REDIS_CONNECT_TIMEOUT: 10000,
+    NEST_REDIS_COMMAND_TIMEOUT: 5000,
+    NEST_REDIS_RETRIES: 3,
+    NEST_REDIS_RETRY_DELAY: 1000,
+    NEST_REDIS_MAX_CONNECTIONS: 10,
+    NEST_REDIS_MIN_CONNECTIONS: 2,
+    NEST_REDIS_IDLE_TIMEOUT: 30000,
+    NEST_REDIS_KEY_PREFIX: 'nestjs:test:',
+    NEST_REDIS_DEFAULT_TTL: 3600,
   },
 };
 
@@ -76,7 +194,7 @@ async function setupEnvironment() {
   const rootDir = path.resolve(__dirname, '..');
 
   // 检查现有文件
-  const envFiles = ['.env', '.env.development', '.env.production'];
+  const envFiles = ['.env', '.env.development', '.env.production', '.env.test'];
 
   log('\n📁 检查现有环境文件:', 'check');
   const existingFiles = [];
@@ -102,38 +220,47 @@ async function setupEnvironment() {
 
   log('\n🔧 配置环境变量:', 'check');
 
-  // 配置开发环境
-  log('\n📝 开发环境配置:', 'info');
-  const devConfig = { ...envTemplates.development };
-
-  const dbPassword = await question(`数据库密码 (默认: 空): `);
-  if (dbPassword) devConfig.NEST_DATABASE_PASSWORD = dbPassword;
-
-  const dbName = await question(`数据库名称 (默认: ${devConfig.NEST_DATABASE_NAME}): `);
-  if (dbName) devConfig.NEST_DATABASE_NAME = dbName;
-
-  // 配置生产环境
-  log('\n📝 生产环境配置:', 'cyan');
-  const prodConfig = { ...envTemplates.production };
-
-  const prodDbPassword = await question(`生产数据库密码: `);
-  prodConfig.NEST_DATABASE_PASSWORD = prodDbPassword;
-
-  const prodDbName = await question(`生产数据库名称 (默认: ${prodConfig.NEST_DATABASE_NAME}): `);
-  if (prodDbName) prodConfig.NEST_DATABASE_NAME = prodDbName;
-
-  // 配置公共变量
-  log('\n📝 公共配置:', 'cyan');
+  log('\n📝 公共配置:', 'info');
   const commonConfig = { ...envTemplates.common };
 
-  const useRandomSecret = await question(`使用随机生成的JWT密钥? (Y/n): `);
-  if (useRandomSecret.toLowerCase() !== 'n') {
-    commonConfig.NEST_JWT_SECRET = generateRandomSecret();
-    log(`  🔑 已生成JWT密钥: ${commonConfig.NEST_JWT_SECRET.substring(0, 8)}...`, 'success');
-  } else {
-    const jwtSecret = await question(`请输入JWT密钥: `);
-    commonConfig.NEST_JWT_SECRET = jwtSecret;
-  }
+  log('\n📝 开发环境配置:', 'info');
+  const devConfig = { ...envTemplates.development };
+  const devPort = await question(`开发端口 (默认: ${devConfig.NEST_PORT}): `);
+  if (devPort) devConfig.NEST_PORT = devPort;
+  const devBase = await question(`开发基址 (默认: ${devConfig.NEST_BASE_URL}): `);
+  if (devBase) devConfig.NEST_BASE_URL = devBase;
+  const devDbPassword = await question(`开发数据库密码 (默认: 空): `);
+  if (devDbPassword) devConfig.NEST_DATABASE_PASSWORD = devDbPassword;
+  const devDbName = await question(`开发数据库名称 (默认: ${devConfig.NEST_DATABASE_NAME}): `);
+  if (devDbName) devConfig.NEST_DATABASE_NAME = devDbName;
+  devConfig.NEST_JWT_SECRET = generateRandomSecret();
+  log(`  🔑 开发JWT密钥: ${devConfig.NEST_JWT_SECRET.substring(0, 8)}...`, 'success');
+
+  log('\n📝 生产环境配置:', 'cyan');
+  const prodConfig = { ...envTemplates.production };
+  const prodPort = await question(`生产端口 (默认: ${prodConfig.NEST_PORT}): `);
+  if (prodPort) prodConfig.NEST_PORT = prodPort;
+  const prodBase = await question(`生产基址 (默认: ${prodConfig.NEST_BASE_URL}): `);
+  if (prodBase) prodConfig.NEST_BASE_URL = prodBase;
+  const prodDbPassword = await question(`生产数据库密码: `);
+  if (prodDbPassword) prodConfig.NEST_DATABASE_PASSWORD = prodDbPassword;
+  const prodDbName = await question(`生产数据库名称 (默认: ${prodConfig.NEST_DATABASE_NAME}): `);
+  if (prodDbName) prodConfig.NEST_DATABASE_NAME = prodDbName;
+  prodConfig.NEST_JWT_SECRET = generateRandomSecret(48);
+  log(`  🔑 生产JWT密钥: ${prodConfig.NEST_JWT_SECRET.substring(0, 8)}...`, 'success');
+
+  log('\n📝 测试环境配置:', 'cyan');
+  const testConfig = { ...envTemplates.test };
+  const testPort = await question(`测试端口 (默认: ${testConfig.NEST_PORT}): `);
+  if (testPort) testConfig.NEST_PORT = testPort;
+  const testBase = await question(`测试基址 (默认: ${testConfig.NEST_BASE_URL}): `);
+  if (testBase) testConfig.NEST_BASE_URL = testBase;
+  const testDbPassword = await question(`测试数据库密码 (默认: 空): `);
+  if (testDbPassword) testConfig.NEST_DATABASE_PASSWORD = testDbPassword;
+  const testDbName = await question(`测试数据库名称 (默认: ${testConfig.NEST_DATABASE_NAME}): `);
+  if (testDbName) testConfig.NEST_DATABASE_NAME = testDbName;
+  testConfig.NEST_JWT_SECRET = generateRandomSecret();
+  log(`  🔑 测试JWT密钥: ${testConfig.NEST_JWT_SECRET.substring(0, 8)}...`, 'success');
 
   // 创建文件
   log('\n📄 创建环境文件:', 'build');
@@ -141,6 +268,7 @@ async function setupEnvironment() {
   createEnvFile(path.join(rootDir, '.env'), commonConfig);
   createEnvFile(path.join(rootDir, '.env.development'), devConfig);
   createEnvFile(path.join(rootDir, '.env.production'), prodConfig);
+  createEnvFile(path.join(rootDir, '.env.test'), testConfig);
 
   showSuccess('\n🎉 环境配置完成！');
   separator('─', 50);

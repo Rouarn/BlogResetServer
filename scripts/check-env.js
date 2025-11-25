@@ -64,9 +64,10 @@ function main() {
 
   const rootDir = path.resolve(__dirname, '..');
   const envFiles = [
-    { name: '.env', path: path.join(rootDir, '.env'), required: false },
+    { name: '.env', path: path.join(rootDir, '.env'), required: true },
     { name: '.env.development', path: path.join(rootDir, '.env.development'), required: true },
-    { name: '.env.production', path: path.join(rootDir, '.env.production'), required: false },
+    { name: '.env.production', path: path.join(rootDir, '.env.production'), required: true },
+    { name: '.env.test', path: path.join(rootDir, '.env.test'), required: true },
   ];
 
   // 检查环境文件存在性
@@ -96,35 +97,162 @@ function main() {
   });
 
   // 检查必需的环境变量
-  const requiredVars = [
+  const commonRequired = [
+    'NEST_JWT_ACCESS_TOKEN_TTL',
+    'NEST_JWT_REFRESH_TOKEN_TTL',
+    'NEST_SWAGGER_PREFIX',
+    'WS_LOG_LEVEL',
+    'WS_INCLUDE_METADATA',
+    'WS_INCLUDE_STACK',
+    'WS_PERFORMANCE_THRESHOLD',
+    'WS_SLOW_REQUEST_THRESHOLD',
+  ];
+  const devRequired = [
+    'NODE_ENV',
+    'NEST_PORT',
+    'NEST_BASE_URL',
+    'NEST_JWT_SECRET',
     'NEST_DATABASE_HOST',
     'NEST_DATABASE_PORT',
     'NEST_DATABASE_USER',
     'NEST_DATABASE_PASSWORD',
     'NEST_DATABASE_NAME',
-    'NEST_JWT_SECRET',
+    'NEST_DATABASE_LOGGING',
+    'NEST_DATABASE_SYNCHRONIZE',
+    'NEST_STATIC_ASSETS_MAXAGE',
+    'NEST_CORS_ORIGINS',
+    'NEST_ENABLE_DEBUG',
+    'NEST_LOG_LEVEL',
+    'NEST_PERFORMANCE_MONITORING',
+    'NEST_REQUEST_TRACKING',
+    'NEST_DETAILED_ERRORS',
+    'NEST_DEBUG_PANEL',
+    'NEST_STATIC_ASSETS_DIR',
+    'NEST_STATIC_ASSETS_PREFIX',
+    'NEST_UPLOAD_PATH',
+    'NEST_UPLOAD_PREFIX',
+    'NEST_UPLOAD_MAX_SIZE',
+    'NEST_UPLOAD_ALLOWED_TYPES',
+    'NEST_UPLOAD_MAX_FILES',
+    'API_PREFIX',
+    'API_DEFAULT_VERSION',
+    'NEST_REDIS_ENABLED',
+    'NEST_REDIS_HOST',
+    'NEST_REDIS_PORT',
+    'NEST_REDIS_PASSWORD',
+    'NEST_REDIS_DB',
+    'NEST_REDIS_CONNECT_TIMEOUT',
+    'NEST_REDIS_COMMAND_TIMEOUT',
+    'NEST_REDIS_RETRIES',
+    'NEST_REDIS_RETRY_DELAY',
+    'NEST_REDIS_MAX_CONNECTIONS',
+    'NEST_REDIS_MIN_CONNECTIONS',
+    'NEST_REDIS_IDLE_TIMEOUT',
+    'NEST_REDIS_KEY_PREFIX',
+    'NEST_REDIS_DEFAULT_TTL',
+  ];
+  const prodRequired = [
+    'NODE_ENV',
     'NEST_PORT',
+    'NEST_BASE_URL',
+    'NEST_JWT_SECRET',
+    'NEST_DATABASE_HOST',
+    'NEST_DATABASE_PORT',
+    'NEST_DATABASE_USER',
+    'NEST_DATABASE_PASSWORD',
+    'NEST_DATABASE_NAME',
+    'NEST_DATABASE_LOGGING',
+    'NEST_DATABASE_SYNCHRONIZE',
+    'NEST_CORS_ORIGINS',
+    'NEST_ENABLE_DEBUG',
+    'NEST_LOG_LEVEL',
+    'NEST_PERFORMANCE_MONITORING',
+    'NEST_REQUEST_TRACKING',
+    'NEST_DETAILED_ERRORS',
+    'NEST_DEBUG_PANEL',
+    'NEST_STATIC_ASSETS_DIR',
+    'NEST_STATIC_ASSETS_PREFIX',
+    'NEST_STATIC_ASSETS_MAXAGE',
+    'NEST_UPLOAD_PATH',
+    'NEST_UPLOAD_MAX_SIZE',
+    'NEST_UPLOAD_ALLOWED_TYPES',
+    'API_PREFIX',
+    'API_DEFAULT_VERSION',
+    'NEST_REDIS_ENABLED',
+    'NEST_REDIS_HOST',
+    'NEST_REDIS_PORT',
+    'NEST_REDIS_PASSWORD',
+    'NEST_REDIS_DB',
+    'NEST_REDIS_CONNECT_TIMEOUT',
+    'NEST_REDIS_COMMAND_TIMEOUT',
+    'NEST_REDIS_RETRIES',
+    'NEST_REDIS_RETRY_DELAY',
+    'NEST_REDIS_MAX_CONNECTIONS',
+    'NEST_REDIS_MIN_CONNECTIONS',
+    'NEST_REDIS_IDLE_TIMEOUT',
+    'NEST_REDIS_KEY_PREFIX',
+    'NEST_REDIS_DEFAULT_TTL',
+  ];
+  const testRequired = [
+    'NODE_ENV',
+    'NEST_PORT',
+    'NEST_BASE_URL',
+    'NEST_JWT_SECRET',
+    'NEST_CORS_ORIGINS',
+    'NEST_DATABASE_HOST',
+    'NEST_DATABASE_PORT',
+    'NEST_DATABASE_USER',
+    'NEST_DATABASE_PASSWORD',
+    'NEST_DATABASE_NAME',
+    'NEST_DATABASE_LOGGING',
+    'NEST_DATABASE_SYNCHRONIZE',
+    'NEST_STATIC_ASSETS_MAXAGE',
+    'NEST_STATIC_ASSETS_DIR',
+    'NEST_STATIC_ASSETS_PREFIX',
+    'NEST_UPLOAD_PATH',
+    'NEST_UPLOAD_PREFIX',
+    'NEST_UPLOAD_MAX_SIZE',
+    'NEST_UPLOAD_ALLOWED_TYPES',
+    'NEST_UPLOAD_MAX_FILES',
+    'API_PREFIX',
+    'API_DEFAULT_VERSION',
+    'NEST_REDIS_ENABLED',
+    'NEST_REDIS_HOST',
+    'NEST_REDIS_PORT',
+    'NEST_REDIS_PASSWORD',
+    'NEST_REDIS_DB',
+    'NEST_REDIS_CONNECT_TIMEOUT',
+    'NEST_REDIS_COMMAND_TIMEOUT',
+    'NEST_REDIS_RETRIES',
+    'NEST_REDIS_RETRY_DELAY',
+    'NEST_REDIS_MAX_CONNECTIONS',
+    'NEST_REDIS_MIN_CONNECTIONS',
+    'NEST_REDIS_IDLE_TIMEOUT',
+    'NEST_REDIS_KEY_PREFIX',
+    'NEST_REDIS_DEFAULT_TTL',
   ];
 
-  const developmentEnv = envData['.env.development'] || {};
+  function checkGroup(envName, requiredList) {
+    const vars = envData[envName] || {};
+    log(`\n📋 必需变量检查 (${envName}):`, 'check');
+    requiredList.forEach((varName) => {
+      const exists = varName in vars;
+      const status = exists ? '✅' : '❌';
+      const type = exists ? 'success' : 'error';
+      const value = exists
+        ? varName.includes('PASSWORD') || varName.includes('SECRET')
+          ? '***'
+          : vars[varName]
+        : '未设置';
+      log(`  ${status} ${varName}: ${value}`, type);
+      if (!exists) allFilesOk = false;
+    });
+  }
 
-  log('\n📋 必需变量检查 (.env.development):', 'check');
-  requiredVars.forEach((varName) => {
-    const exists = varName in developmentEnv;
-    const status = exists ? '✅' : '❌';
-    const type = exists ? 'success' : 'error';
-    const value = exists
-      ? varName.includes('PASSWORD') || varName.includes('SECRET')
-        ? '***'
-        : developmentEnv[varName]
-      : '未设置';
-
-    log(`  ${status} ${varName}: ${value}`, type);
-
-    if (!exists) {
-      allFilesOk = false;
-    }
-  });
+  checkGroup('.env', commonRequired);
+  checkGroup('.env.development', devRequired);
+  checkGroup('.env.production', prodRequired);
+  checkGroup('.env.test', testRequired);
 
   // 检查变量一致性
   if (envData['.env'] && envData['.env.development']) {
@@ -140,13 +268,13 @@ function main() {
   }
 
   // 检查端口配置
-  if (developmentEnv.NEST_PORT) {
+  if (envData['.env.development']?.NEST_PORT) {
     log('\n🌐 端口配置:', 'check');
-    log(`  📍 开发端口: ${developmentEnv.NEST_PORT}`, 'success');
-
-    if (envData['.env.production']?.NEST_PORT) {
+    log(`  📍 开发端口: ${envData['.env.development'].NEST_PORT}`, 'success');
+    if (envData['.env.production']?.NEST_PORT)
       log(`  📍 生产端口: ${envData['.env.production'].NEST_PORT}`, 'success');
-    }
+    if (envData['.env.test']?.NEST_PORT)
+      log(`  📍 测试端口: ${envData['.env.test'].NEST_PORT}`, 'success');
   }
 
   // 总结
