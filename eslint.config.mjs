@@ -8,14 +8,13 @@
  *
  * @author NestJS Template Team
  * @since 1.0.0
-  */
+ */
 
 import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
 import importPlugin from 'eslint-plugin-import';
-import prettierPlugin from 'eslint-plugin-prettier';
-import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -59,7 +58,6 @@ export default [
     plugins: {
       '@typescript-eslint': tseslint,
       import: importPlugin,
-      prettier: prettierPlugin,
     },
     rules: {
       // TypeScript 规则
@@ -117,9 +115,6 @@ export default [
       '@typescript-eslint/no-unnecessary-type-assertion': 'error',
       '@typescript-eslint/array-type': ['error', { default: 'array' }],
       '@typescript-eslint/prefer-literal-enum-member': 'error',
-
-      // Prettier 集成
-      'prettier/prettier': 'error',
     },
   },
 ];

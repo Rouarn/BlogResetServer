@@ -13,9 +13,9 @@
  * @author NestJS Template
  * @version 1.0.0
  */
+import { Injectable } from '@nestjs/common';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { Injectable } from '@nestjs/common';
 
 // Package.json 类型定义
 interface PackageJson {
