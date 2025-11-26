@@ -40,7 +40,7 @@ import { DATABASE_CONFIG, DatabaseConfig } from './database/types';
 import { CacheModule } from '@/shared/cache';
 import { WebSocketModule } from '@/shared/websocket';
 import { AuthModule } from './modules/auth/auth.module';
-import { FilesModule } from './modules/files/files.module';
+import { FilesModule } from '@/shared/files/files.module';
 import { UsersModule } from './modules/users/users.module';
 
 /**
