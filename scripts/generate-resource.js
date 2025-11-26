@@ -276,7 +276,6 @@ function main() {
       log('❌ 资源名称不能为空', 'error');
       rl.close();
       process.exit(1);
-      return;
     }
     rl.close();
     generate(name);
