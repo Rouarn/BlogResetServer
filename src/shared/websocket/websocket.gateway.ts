@@ -49,6 +49,7 @@ import type {
   ConnectionStatus,
   JoinRoomData,
   LeaveRoomData,
+  RoomMember,
   SendMessageData,
   WebSocketResponse,
 } from './interfaces';
@@ -252,6 +253,15 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
         });
       }
 
+      const maxMembers = this.configService.get<number>('app.websocket.roomMaxMembers', 200);
+      const currentMembers = await this.webSocketService.getRoomMemberCount(data.roomId);
+      if (currentMembers >= maxMembers) {
+        throw new WsException({
+          code: 'ROOM_CAPACITY_REACHED',
+          message: '房间成员已满',
+        });
+      }
+
       // 加入房间
       const result = await this.webSocketService.joinRoom(socket.id, data.roomId, data.userInfo);
 
@@ -312,37 +322,64 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
     @MessageBody() data: SendMessageData,
   ): Promise<WebSocketResponse<{ messageId: string }>> {
     try {
-      this.logger.log(`客户端 ${socket.id} 发送消息到房间: ${data.room}`);
-
-      // 验证用户是否在房间中
-      const isInRoom = await this.webSocketService.isSocketInRoom(socket.id, data.room);
-
-      if (!isInRoom) {
+      if (!data?.content || (!data.room && !data.targetUserId)) {
         throw new WsException({
-          code: 'NOT_IN_ROOM',
-          message: '您不在该房间中',
+          code: 'INVALID_MESSAGE_DATA',
+          message: '消息内容或目标无效',
         });
       }
 
-      // 创建消息
+      if (data.room) {
+        this.logger.log(`客户端 ${socket.id} 发送消息到房间: ${data.room}`);
+        const isInRoom = await this.webSocketService.isSocketInRoom(socket.id, data.room);
+        if (!isInRoom) {
+          throw new WsException({
+            code: 'NOT_IN_ROOM',
+            message: '您不在该房间中',
+          });
+        }
+        const message = this.webSocketService.createMessage(
+          WebSocketMessageType.MESSAGE,
+          {
+            content: data.content,
+            room: data.room,
+            userId: socket.user?.id,
+            username: socket.user?.name,
+            timestamp: Date.now(),
+            metadata: data.metadata,
+          },
+          { senderId: socket.user?.id, roomId: data.room },
+        );
+        await this.webSocketService.sendMessageToRoom(data.room, message, socket.id);
+        this.server.to(data.room).emit('message', message);
+        return {
+          success: true,
+          data: {
+            messageId: message.messageId!,
+          },
+          timestamp: Date.now(),
+        };
+      }
+
+      this.logger.log(`客户端 ${socket.id} 发送点对点消息到用户: ${data.targetUserId}`);
       const message = this.webSocketService.createMessage(
         WebSocketMessageType.MESSAGE,
         {
           content: data.content,
-          room: data.room,
           userId: socket.user?.id,
           username: socket.user?.name,
           timestamp: Date.now(),
           metadata: data.metadata,
         },
-        { senderId: socket.user?.id, roomId: data.room },
+        { senderId: socket.user?.id },
       );
-
-      // 发送消息到房间
-      await this.webSocketService.sendMessageToRoom(data.room, message, socket.id);
-
-      // 使用 Socket.IO 广播消息
-      this.server.to(data.room).emit('message', message);
+      const targetUserId = data.targetUserId;
+      if (!targetUserId) {
+        throw new WsException({ code: 'INVALID_MESSAGE_DATA', message: '缺少目标用户' });
+      }
+      const targets = this.webSocketService.getUserConnections(targetUserId);
+      for (const ts of targets) ts.emit('message', message);
+      socket.emit('message', message);
 
       return {
         success: true,
@@ -471,11 +508,20 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
   @SubscribeMessage('get-rooms')
   @UseGuards(WebSocketAuthGuard)
   async handleGetRooms(
-    @ConnectedSocket() socket: AuthenticatedSocket,
-  ): Promise<WebSocketResponse<{ rooms: string[] }>> {
+    @ConnectedSocket() _socket: AuthenticatedSocket,
+  ): Promise<
+    WebSocketResponse<{ rooms: { id: string; name: string; type: string; members: number }[] }>
+  > {
     try {
-      const rooms = await this.webSocketService.getUserRooms(socket.id);
-
+      const roomInfos = this.webSocketService.getRoomList();
+      const rooms = await Promise.all(
+        roomInfos.map(async (r) => ({
+          id: r.id,
+          name: r.name,
+          type: r.type,
+          members: await this.webSocketService.getRoomMemberCount(r.id),
+        })),
+      );
       return {
         success: true,
         data: {
@@ -485,6 +531,29 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
       };
     } catch (error) {
       this.logger.error(`获取房间列表失败: ${(error as Error).message}`, (error as Error).stack);
+      throw error;
+    }
+  }
+
+  @SubscribeMessage('get-room-members')
+  @UseGuards(WebSocketAuthGuard)
+  async handleGetRoomMembers(
+    @ConnectedSocket() _socket: AuthenticatedSocket,
+    @MessageBody() data: { room?: string; roomId?: string },
+  ): Promise<WebSocketResponse<{ members: RoomMember[] }>> {
+    try {
+      const room = data.room ?? data.roomId;
+      if (!room) {
+        throw new WsException({ code: 'INVALID_ROOM_NAME', message: '房间名称无效' });
+      }
+      const members = this.webSocketService.getRoomMembers(room);
+      return {
+        success: true,
+        data: { members },
+        timestamp: Date.now(),
+      };
+    } catch (error) {
+      this.logger.error(`获取房间成员失败: ${(error as Error).message}`);
       throw error;
     }
   }
@@ -653,6 +722,66 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
         message: '加入公共房间失败',
         timestamp: Date.now(),
       });
+    }
+  }
+
+  @SubscribeMessage('leave-public-room')
+  @UseGuards(WebSocketOptionalAuthGuard)
+  async handleLeavePublicRoom(
+    @ConnectedSocket() socket: AuthenticatedSocket,
+    @MessageBody() data: { room: string },
+  ): Promise<WebSocketResponse<{ room: string; members: number }>> {
+    try {
+      const { room } = data;
+      if (!room || !this.isValidRoomName(room)) {
+        throw new WsException({ code: 'INVALID_ROOM_NAME', message: '房间名称无效' });
+      }
+      const publicRooms = await this.webSocketService.getPublicRooms();
+      if (!publicRooms.includes(room)) {
+        throw new WsException({ code: 'ROOM_NOT_PUBLIC', message: '该房间不是公共房间' });
+      }
+      await socket.leave(room);
+      const members = await this.webSocketService.getRoomMemberCount(room);
+      socket.to(room).emit('user-left', {
+        type: WebSocketMessageType.NOTIFICATION,
+        data: { room, userId: socket.userId },
+        timestamp: Date.now(),
+      });
+      return {
+        success: true,
+        data: { room, members },
+        timestamp: Date.now(),
+      };
+    } catch (error) {
+      this.logger.error(`离开公共房间失败: ${(error as Error).message}`);
+      throw error;
+    }
+  }
+
+  @SubscribeMessage('get-public-room-members')
+  @UseGuards(WebSocketOptionalAuthGuard)
+  async handleGetPublicRoomMembers(
+    @ConnectedSocket() _socket: AuthenticatedSocket,
+    @MessageBody() data: { room: string },
+  ): Promise<WebSocketResponse<{ members: RoomMember[] }>> {
+    try {
+      const { room } = data;
+      if (!room || !this.isValidRoomName(room)) {
+        throw new WsException({ code: 'INVALID_ROOM_NAME', message: '房间名称无效' });
+      }
+      const publicRooms = await this.webSocketService.getPublicRooms();
+      if (!publicRooms.includes(room)) {
+        throw new WsException({ code: 'ROOM_NOT_PUBLIC', message: '该房间不是公共房间' });
+      }
+      const members = this.webSocketService.getRoomMembers(room);
+      return {
+        success: true,
+        data: { members },
+        timestamp: Date.now(),
+      };
+    } catch (error) {
+      this.logger.error(`获取公共房间成员失败: ${(error as Error).message}`);
+      throw error;
     }
   }
 

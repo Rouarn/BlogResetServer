@@ -57,7 +57,24 @@ export class WebSocketAuthGuard implements CanActivate {
       }
 
       // 验证 JWT Token
-      const payload = await this.validateToken(token);
+      let payload: Record<string, unknown> | null = null;
+      try {
+        payload = await this.validateToken(token);
+      } catch (err) {
+        const e = err as Error;
+        if (e.name === 'TokenExpiredError') {
+          throw new WsException({
+            code: 'TOKEN_EXPIRED',
+            message: '认证令牌已过期',
+            timestamp: Date.now(),
+          });
+        }
+        throw new WsException({
+          code: 'INVALID_TOKEN',
+          message: '认证令牌无效',
+          timestamp: Date.now(),
+        });
+      }
 
       if (!payload) {
         this.logger.warn(`WebSocket 连接令牌无效: ${client.id}`);
@@ -83,13 +100,9 @@ export class WebSocketAuthGuard implements CanActivate {
       return true;
     } catch (error) {
       this.logger.error(`WebSocket 认证失败: ${(error as Error).message}`, (error as Error).stack);
-
-      // 如果是 WsException，直接抛出
       if (error instanceof WsException) {
         throw error;
       }
-
-      // 其他异常转换为 WsException
       throw new WsException({
         code: 'AUTH_ERROR',
         message: '认证过程中发生错误',

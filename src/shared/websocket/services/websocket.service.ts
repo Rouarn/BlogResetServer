@@ -354,6 +354,15 @@ export class WebSocketService {
     return Array.from(this.rooms.values());
   }
 
+  getRoomMembers(roomId: string): RoomMember[] {
+    const room = this.rooms.get(roomId);
+    return room ? room.members : [];
+  }
+
+  roomExists(roomId: string): boolean {
+    return this.rooms.has(roomId);
+  }
+
   /**
    * 获取连接统计信息
    * @returns 统计信息

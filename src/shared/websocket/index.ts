@@ -46,6 +46,7 @@ export { WebSocketService } from './services/websocket.service';
 
 /** WebSocket 认证守卫 */
 export { WebSocketAuthGuard } from './guards/websocket-auth.guard';
+export { WebSocketOptionalAuthGuard } from './guards/websocket-optional-auth.guard';
 
 /** WebSocket 异常过滤器 */
 export { WebSocketExceptionFilter } from './filters/websocket-exception.filter';

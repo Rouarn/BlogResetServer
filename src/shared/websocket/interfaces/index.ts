@@ -110,6 +110,8 @@ export interface SendMessageData {
   messageType?: 'text' | 'image' | 'file' | 'system';
   /** 元数据 */
   metadata?: Record<string, unknown>;
+  /** 目标用户ID */
+  targetUserId?: string;
 }
 
 /**
