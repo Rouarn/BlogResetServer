@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 import { extname } from 'path';
 import type { FieldMapping, FileLike, SupportedFormat } from './types';
+import { BusinessException } from '@/common/exceptions';
 
 export function detectFormat(file: FileLike, fallback?: SupportedFormat): SupportedFormat {
   if (typeof file === 'string') {
@@ -19,7 +20,7 @@ export function ensureBuffer(file: FileLike): Buffer {
     const fb = file as { buffer: Buffer };
     return fb.buffer;
   }
-  throw new Error('Unsupported file input');
+  throw new BusinessException('Unsupported file input');
 }
 
 export function chunkArray<T>(arr: T[], size: number): T[][] {
@@ -40,9 +41,9 @@ export function applyMapping(
   for (const internal of Object.keys(mapping)) {
     const m = mapping[internal];
     if (typeof m === 'string') {
-      out[internal] = (record)[m];
+      out[internal] = record[m];
     } else if (typeof m === 'function') {
-      const v = (record)[internal];
+      const v = record[internal];
       out[internal] = m(v, record);
     }
   }

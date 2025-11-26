@@ -17,15 +17,15 @@ export interface JsonOptions {
 }
 
 export interface ImportConfig<T = unknown> {
-  format?: SupportedFormat
-  mapping?: FieldMapping
-  transform?: (raw: Record<string, unknown>) => T
-  schema?: ObjectSchema<T>
-  chunkSize?: number
-  sheetName?: string
-  csv?: CsvOptions
-  json?: JsonOptions
-  onChunk?: (chunk: T[]) => Promise<void> | void
+  format?: SupportedFormat;
+  mapping?: FieldMapping;
+  transform?: (raw: Record<string, unknown>) => T;
+  schema?: ObjectSchema<T>;
+  chunkSize?: number;
+  sheetName?: string;
+  csv?: CsvOptions;
+  json?: JsonOptions;
+  onChunk?: (chunk: T[]) => Promise<void> | void;
 }
 
 export interface ExportConfig {
@@ -56,8 +56,8 @@ export interface ImportError {
 }
 
 export interface ImportResult<T = unknown> {
-  data: T[]
-  errors?: ImportError[]
+  data: T[];
+  errors?: ImportError[];
 }
 
 export interface ExportResult {
