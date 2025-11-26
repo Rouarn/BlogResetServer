@@ -16,16 +16,16 @@ export interface JsonOptions {
   ndjson?: boolean;
 }
 
-export interface ImportConfig<T extends Record<string, unknown> = Record<string, unknown>> {
-  format?: SupportedFormat;
-  mapping?: FieldMapping;
-  transform?: (raw: Record<string, unknown>) => T;
-  schema?: ObjectSchema<T>;
-  chunkSize?: number;
-  sheetName?: string;
-  csv?: CsvOptions;
-  json?: JsonOptions;
-  onChunk?: (chunk: T[]) => Promise<void> | void;
+export interface ImportConfig<T = unknown> {
+  format?: SupportedFormat
+  mapping?: FieldMapping
+  transform?: (raw: Record<string, unknown>) => T
+  schema?: ObjectSchema<T>
+  chunkSize?: number
+  sheetName?: string
+  csv?: CsvOptions
+  json?: JsonOptions
+  onChunk?: (chunk: T[]) => Promise<void> | void
 }
 
 export interface ExportConfig {
@@ -55,9 +55,9 @@ export interface ImportError {
   original?: unknown;
 }
 
-export interface ImportResult<T extends Record<string, unknown> = Record<string, unknown>> {
-  data: T[];
-  errors?: ImportError[];
+export interface ImportResult<T = unknown> {
+  data: T[]
+  errors?: ImportError[]
 }
 
 export interface ExportResult {

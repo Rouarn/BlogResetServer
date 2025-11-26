@@ -22,10 +22,7 @@ export class ImportExportService {
   /**
    * 导出数据到指定格式文件
    */
-  async exportToFile<T extends Record<string, unknown>>(
-    data: T[],
-    config: ExportConfig,
-  ): Promise<ExportResult> {
+  async exportToFile<T>(data: T[], config: ExportConfig): Promise<ExportResult> {
     const format = config.format;
     const headers = config.headers?.length
       ? config.headers
@@ -67,7 +64,11 @@ export class ImportExportService {
         const mapped = chunk.map((r) =>
           reverseMapping(r as Record<string, unknown>, config.mapping),
         );
-        XLSX.utils.sheet_add_json(ws, mapped, { origin: -1, header: headers });
+        XLSX.utils.sheet_add_json(ws, mapped, {
+          origin: -1,
+          header: headers,
+          skipHeader: true,
+        });
       }
       XLSX.utils.book_append_sheet(wb, ws, config.sheetName ?? 'Sheet1');
       const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
@@ -84,10 +85,7 @@ export class ImportExportService {
   /**
    * 从文件导入数据并进行映射与校验
    */
-  async importFromFile<T extends Record<string, unknown>>(
-    file: FileLike,
-    config: ImportConfig<T>,
-  ): Promise<ImportResult<T>> {
+  async importFromFile<T>(file: FileLike, config: ImportConfig<T>): Promise<ImportResult<T>> {
     const format = config.format ?? detectFormat(file);
     const buffer = ensureBuffer(file);
     const chunkSize = config.chunkSize && config.chunkSize > 0 ? config.chunkSize : 0;
@@ -144,7 +142,7 @@ export class ImportExportService {
     return { code, message, original: error };
   }
 
-  private async processRecords<T extends Record<string, unknown>>(
+  private async processRecords<T>(
     records: Record<string, unknown>[],
     config: ImportConfig<T>,
     out: T[],
@@ -185,8 +183,8 @@ export class ImportExportService {
     }
   }
 
-  private inferHeadersForExport<T extends Record<string, unknown>>(
-    data: T[],
+  private inferHeadersForExport(
+    data: readonly unknown[],
     mapping?: Record<string, unknown>,
   ): string[] {
     if (mapping && Object.keys(mapping).length) {
@@ -199,7 +197,8 @@ export class ImportExportService {
       return headers;
     }
     const set = new Set<string>();
-    for (const r of data) Object.keys(r ?? {}).forEach((k) => set.add(k));
+    for (const r of data)
+      Object.keys((r ?? {}) as Record<string, unknown>).forEach((k) => set.add(k));
     return Array.from(set);
   }
 
