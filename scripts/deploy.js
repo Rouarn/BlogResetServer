@@ -12,6 +12,45 @@ const projectRoot = path.resolve(__dirname, '..');
 const distPath = path.join(projectRoot, 'dist');
 const deployPath = path.join(projectRoot, 'deploy');
 
+function sleep(ms) {
+  try {
+    const sab = new SharedArrayBuffer(4);
+    const ia = new Int32Array(sab);
+    Atomics.wait(ia, 0, 0, ms);
+  } catch (_) {
+    const end = Date.now() + ms;
+    while (Date.now() < end) {}
+  }
+}
+
+function removeDirRobust(targetPath, maxRetries = 5) {
+  if (!fs.existsSync(targetPath)) return;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      fs.rmSync(targetPath, { recursive: true, force: true });
+      if (!fs.existsSync(targetPath)) return;
+    } catch (err) {
+      // 尝试解锁只读/占用文件并逐个清理
+      try {
+        const entries = fs.readdirSync(targetPath, { withFileTypes: true });
+        for (const entry of entries) {
+          const p = path.join(targetPath, entry.name);
+          try { fs.chmodSync(p, 0o666); } catch (_) {}
+          try {
+            if (entry.isDirectory()) {
+              removeDirRobust(p, 0);
+            } else {
+              fs.unlinkSync(p);
+            }
+          } catch (_) {}
+        }
+      } catch (_) {}
+      if (attempt === maxRetries) throw err;
+      sleep(200 * (attempt + 1));
+    }
+  }
+}
+
 try {
   showBanner('NestJS 部署工具');
   log('开始准备部署文件...', 'deploy');
@@ -25,7 +64,7 @@ try {
   // 创建部署目录
   if (fs.existsSync(deployPath)) {
     log('清理旧的部署目录...', 'clean');
-    fs.rmSync(deployPath, { recursive: true, force: true });
+    removeDirRobust(deployPath);
   }
 
   fs.mkdirSync(deployPath, { recursive: true });
