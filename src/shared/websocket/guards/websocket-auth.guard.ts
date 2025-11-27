@@ -1,0 +1,185 @@
+/**
+ * WebSocket 认证守卫
+ *
+ * 功能说明:
+ * - 验证 WebSocket 连接的身份认证
+ * - 从 token 中提取用户信息
+ * - 阻止未认证的连接
+ * - 支持多种认证方式
+ *
+ * 特点:
+ * - 支持 JWT Token 认证
+ * - 支持查询参数和 Header 认证
+ * - 异常安全处理
+ * - 详细的日志记录
+ *
+ * @author NestJS Template
+ * @version 1.0.0
+ */
+
+import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { WsException } from '@nestjs/websockets';
+import type { Socket } from 'socket.io';
+import type { AuthenticatedSocket } from '../interfaces';
+
+/**
+ * WebSocket 认证守卫
+ *
+ * 在 WebSocket 连接建立时验证用户身份
+ */
+@Injectable()
+export class WebSocketAuthGuard implements CanActivate {
+  private readonly logger = new Logger(WebSocketAuthGuard.name);
+
+  constructor(private readonly jwtService: JwtService) {}
+
+  /**
+   * 验证 WebSocket 连接权限
+   * @param context 执行上下文
+   * @returns 是否允许连接
+   */
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    try {
+      const client = context.switchToWs().getClient<Socket>();
+      const _data = context.switchToWs().getData();
+
+      // 提取认证信息
+      const token = this.extractToken(client);
+
+      if (!token) {
+        this.logger.warn(`WebSocket 连接缺少认证令牌: ${client.id}`);
+        throw new WsException({
+          code: 'UNAUTHORIZED',
+          message: '缺少认证令牌',
+          timestamp: Date.now(),
+        });
+      }
+
+      // 验证 JWT Token
+      let payload: Record<string, unknown> | null = null;
+      try {
+        payload = await this.validateToken(token);
+      } catch (err) {
+        const e = err as Error;
+        if (e.name === 'TokenExpiredError') {
+          throw new WsException({
+            code: 'TOKEN_EXPIRED',
+            message: '认证令牌已过期',
+            timestamp: Date.now(),
+          });
+        }
+        throw new WsException({
+          code: 'INVALID_TOKEN',
+          message: '认证令牌无效',
+          timestamp: Date.now(),
+        });
+      }
+
+      if (!payload) {
+        this.logger.warn(`WebSocket 连接令牌无效: ${client.id}`);
+        throw new WsException({
+          code: 'INVALID_TOKEN',
+          message: '认证令牌无效',
+          timestamp: Date.now(),
+        });
+      }
+
+      // 将用户信息附加到 socket
+      const authenticatedSocket = client as AuthenticatedSocket;
+      authenticatedSocket.userId = (payload.sub ?? payload.userId) as string;
+      authenticatedSocket.user = {
+        id: (payload.sub ?? payload.userId) as string,
+        name: (payload.name ?? payload.username) as string,
+        email: payload.email as string | undefined,
+        role: payload.role as string | undefined,
+        avatar: payload.avatar as string | undefined,
+      };
+
+      this.logger.log(`WebSocket 连接认证成功: ${client.id} (用户: ${authenticatedSocket.userId})`);
+      return true;
+    } catch (error) {
+      this.logger.error(`WebSocket 认证失败: ${(error as Error).message}`, (error as Error).stack);
+      if (error instanceof WsException) {
+        throw error;
+      }
+      throw new WsException({
+        code: 'AUTH_ERROR',
+        message: '认证过程中发生错误',
+        details: (error as Error).message,
+        timestamp: Date.now(),
+      });
+    }
+  }
+
+  /**
+   * 从 WebSocket 连接中提取认证令牌
+   * @param client WebSocket 客户端
+   * @returns JWT Token 或 null
+   */
+  private extractToken(client: Socket): string | null {
+    try {
+      // 方式1: 从查询参数中获取 token
+      const queryToken = client.handshake.query?.token as string;
+      if (queryToken) {
+        return queryToken;
+      }
+
+      // 方式2: 从 auth 查询参数中获取
+      const authQuery = client.handshake.query?.auth as string;
+      if (authQuery) {
+        return authQuery;
+      }
+
+      // 方式3: 从 Authorization header 中获取
+      const authHeader = client.handshake.headers?.authorization;
+      if (authHeader) {
+        const [type, token] = authHeader.split(' ');
+        if (type === 'Bearer' && token) {
+          return token;
+        }
+      }
+
+      // 方式4: 从自定义 header 中获取
+      const customToken = client.handshake.headers?.['x-auth-token'] as string;
+      if (customToken) {
+        return customToken;
+      }
+
+      return null;
+    } catch (error) {
+      this.logger.error(`提取认证令牌失败: ${(error as Error).message}`, (error as Error).stack);
+      return null;
+    }
+  }
+
+  /**
+   * 验证 JWT Token
+   * @param token JWT Token
+   * @returns Token 载荷或 null
+   */
+  private async validateToken(token: string): Promise<Record<string, unknown> | null> {
+    try {
+      // 验证并解码 JWT Token
+      const payload = await this.jwtService.verifyAsync(token);
+
+      // 检查必要字段
+      const typedPayload = payload as { sub?: string; userId?: string; exp?: number };
+      if (!typedPayload.sub && !typedPayload.userId) {
+        this.logger.warn('JWT Token 缺少用户ID字段');
+        return null;
+      }
+
+      // 检查 Token 是否过期
+      if (typedPayload.exp && typedPayload.exp < Math.floor(Date.now() / 1000)) {
+        this.logger.warn('JWT Token 已过期');
+        return null;
+      }
+
+      return payload as Record<string, unknown>;
+    } catch (error) {
+      this.logger.error(`验证 JWT Token 失败: ${(error as Error).message}`);
+      return null;
+    }
+  }
+}

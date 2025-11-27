@@ -18,11 +18,14 @@
  */
 
 import { Logger, Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { AuthModule } from '@/modules/auth/auth.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+// WebSocket 核心组件
 import { WebSocketService } from './services/websocket.service';
 import { WebSocketGateway } from './websocket.gateway';
+// 守卫、过滤器和拦截器
 import { WebSocketExceptionFilter } from './filters/websocket-exception.filter';
+import { WebSocketAuthGuard } from './guards/websocket-auth.guard';
 import { WebSocketInterceptor } from './interceptors/websocket.interceptor';
 
 /**
@@ -31,9 +34,53 @@ import { WebSocketInterceptor } from './interceptors/websocket.interceptor';
  * 提供完整的 WebSocket 功能支持
  */
 @Module({
-  imports: [ConfigModule, AuthModule],
-  providers: [WebSocketService, WebSocketGateway, WebSocketExceptionFilter, WebSocketInterceptor],
-  exports: [WebSocketService, WebSocketExceptionFilter, WebSocketInterceptor],
+  imports: [
+    // 配置模块
+    ConfigModule,
+
+    // JWT 模块 - 用于 WebSocket 认证
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('NEST_JWT_SECRET'),
+        signOptions: {
+          expiresIn: configService.get<number>('NEST_JWT_ACCESS_TOKEN_TTL', 3600),
+        },
+      }),
+      inject: [ConfigService],
+    }),
+  ],
+
+  providers: [
+    // 核心服务
+    WebSocketService,
+
+    // 网关
+    WebSocketGateway,
+
+    // 守卫
+    WebSocketAuthGuard,
+
+    // 过滤器
+    WebSocketExceptionFilter,
+
+    // 拦截器
+    WebSocketInterceptor,
+  ],
+
+  exports: [
+    // 导出服务供其他模块使用
+    WebSocketService,
+
+    // 导出守卫供其他模块使用
+    WebSocketAuthGuard,
+
+    // 导出过滤器供其他模块使用
+    WebSocketExceptionFilter,
+
+    // 导出拦截器供其他模块使用
+    WebSocketInterceptor,
+  ],
 })
 export class WebSocketModule {
   private readonly logger = new Logger(WebSocketModule.name);

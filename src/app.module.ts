@@ -25,8 +25,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HttpExceptionFilter } from './common/filters';
-import { GlobalGuard, RolesGuard } from './common/guards';
-import { UnifiedAuthGuard } from '@/shared/auth';
+import { GlobalGuard, JwtAuthGuard, RolesGuard } from './common/guards';
 // 公共组件导入
 import { ResponseInterceptor } from './common/interceptors';
 import { CustomValidationPipe } from './common/pipes';
@@ -133,7 +132,7 @@ import { UsersModule } from './modules/users/users.module';
     },
     {
       provide: APP_GUARD,
-      useClass: UnifiedAuthGuard, // 统一认证守卫 (HTTP/WS)
+      useClass: JwtAuthGuard, // JWT 认证守卫 (验证访问令牌)
     },
     {
       provide: APP_GUARD,

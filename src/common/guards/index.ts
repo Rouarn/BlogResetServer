@@ -12,4 +12,5 @@
  * import { JwtAuthGuard, RolesGuard } from '@/common/guards';
  */
 export * from './global.guard';
+export * from './jwt-auth.guard';
 export * from './roles.guard';

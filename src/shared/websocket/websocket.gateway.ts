@@ -17,8 +17,6 @@
  * @version 1.0.0
  */
 
-import { AuthService } from '@/modules/auth/auth.service';
-import { UnifiedAuthGuard, attachHandshakeAuth } from '@/shared/auth';
 import {
   Injectable,
   Logger,
@@ -29,7 +27,6 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
 import {
   ConnectedSocket,
   MessageBody,
@@ -43,6 +40,8 @@ import {
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 import { WebSocketExceptionFilter } from './filters/websocket-exception.filter';
+import { WebSocketAuthGuard } from './guards/websocket-auth.guard';
+import { WebSocketOptionalAuthGuard } from './guards/websocket-optional-auth.guard';
 import { WebSocketInterceptor } from './interceptors/websocket.interceptor';
 import type {
   AuthenticatedSocket,
@@ -89,8 +88,6 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
   constructor(
     private readonly webSocketService: WebSocketService,
     private readonly configService: ConfigService,
-    private readonly jwtService: JwtService,
-    private readonly authService: AuthService,
   ) {
     // 从配置服务获取 CORS 源
     this.corsOrigins = this.configService.get<string[]>('app.websocket.corsOrigins', [
@@ -108,6 +105,7 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
     // 设置服务器实例到服务中
     this.webSocketService.setServer(server);
 
+    // 配置服务器级别的中间件
     this.setupServerMiddleware();
 
     // 输出详细的网关初始化信息
@@ -140,7 +138,7 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
     this.logger.log('│ 🛡️  异常过滤: WebSocketExceptionFilter');
     this.logger.log('│ 📊 请求拦截: WebSocketInterceptor');
     this.logger.log('│ ✅ 数据验证: ValidationPipe');
-    this.logger.log('│ 🔒 路由守卫: UnifiedAuthGuard');
+    this.logger.log('│ 🔒 路由守卫: WebSocketAuthGuard');
     this.logger.log('└──────────────────────────────────────────────────────────────────┘');
     this.logger.log('');
     this.logger.log('┌─ 📡 可用事件 ────────────────────────────────────────────────────┐');
@@ -239,7 +237,7 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
    * @returns 响应结果
    */
   @SubscribeMessage('join-room')
-  @UseGuards(UnifiedAuthGuard)
+  @UseGuards(WebSocketAuthGuard)
   async handleJoinRoom(
     @ConnectedSocket() socket: AuthenticatedSocket,
     @MessageBody() data: JoinRoomData,
@@ -287,7 +285,7 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
    * @returns 响应结果
    */
   @SubscribeMessage('leave-room')
-  @UseGuards(UnifiedAuthGuard)
+  @UseGuards(WebSocketAuthGuard)
   async handleLeaveRoom(
     @ConnectedSocket() socket: AuthenticatedSocket,
     @MessageBody() data: LeaveRoomData,
@@ -318,7 +316,7 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
    * @returns 响应结果
    */
   @SubscribeMessage('send-message')
-  @UseGuards(UnifiedAuthGuard)
+  @UseGuards(WebSocketAuthGuard)
   async handleSendMessage(
     @ConnectedSocket() socket: AuthenticatedSocket,
     @MessageBody() data: SendMessageData,
@@ -403,7 +401,7 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
    * @returns 响应结果
    */
   @SubscribeMessage('broadcast')
-  @UseGuards(UnifiedAuthGuard)
+  @UseGuards(WebSocketAuthGuard)
   async handleBroadcast(
     @ConnectedSocket() socket: AuthenticatedSocket,
     @MessageBody() data: BroadcastData,
@@ -508,7 +506,7 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
    * @returns 房间列表
    */
   @SubscribeMessage('get-rooms')
-  @UseGuards(UnifiedAuthGuard)
+  @UseGuards(WebSocketAuthGuard)
   async handleGetRooms(
     @ConnectedSocket() _socket: AuthenticatedSocket,
   ): Promise<
@@ -538,7 +536,7 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
   }
 
   @SubscribeMessage('get-room-members')
-  @UseGuards(UnifiedAuthGuard)
+  @UseGuards(WebSocketAuthGuard)
   async handleGetRoomMembers(
     @ConnectedSocket() _socket: AuthenticatedSocket,
     @MessageBody() data: { room?: string; roomId?: string },
@@ -566,7 +564,7 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
    * @returns 连接状态
    */
   @SubscribeMessage('get-status')
-  @UseGuards(UnifiedAuthGuard)
+  @UseGuards(WebSocketAuthGuard)
   async handleGetStatus(
     @ConnectedSocket() socket: AuthenticatedSocket,
   ): Promise<WebSocketResponse<ConnectionStatus>> {
@@ -608,7 +606,7 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
    * @returns 公共房间列表
    */
   @SubscribeMessage('get-public-rooms')
-  @UseGuards(UnifiedAuthGuard)
+  @UseGuards(WebSocketOptionalAuthGuard)
   async handleGetPublicRooms(@ConnectedSocket() socket: AuthenticatedSocket): Promise<
     WebSocketResponse<{
       rooms: { id: string; memberCount: number }[];
@@ -661,7 +659,7 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
    * @returns 加入结果
    */
   @SubscribeMessage('join-public-room')
-  @UseGuards(UnifiedAuthGuard)
+  @UseGuards(WebSocketOptionalAuthGuard)
   async handleJoinPublicRoom(
     @ConnectedSocket() socket: AuthenticatedSocket,
     @MessageBody() data: { room: string },
@@ -728,7 +726,7 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
   }
 
   @SubscribeMessage('leave-public-room')
-  @UseGuards(UnifiedAuthGuard)
+  @UseGuards(WebSocketOptionalAuthGuard)
   async handleLeavePublicRoom(
     @ConnectedSocket() socket: AuthenticatedSocket,
     @MessageBody() data: { room: string },
@@ -761,7 +759,7 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
   }
 
   @SubscribeMessage('get-public-room-members')
-  @UseGuards(UnifiedAuthGuard)
+  @UseGuards(WebSocketOptionalAuthGuard)
   async handleGetPublicRoomMembers(
     @ConnectedSocket() _socket: AuthenticatedSocket,
     @MessageBody() data: { room: string },
@@ -794,7 +792,7 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
    * @returns 发送结果
    */
   @SubscribeMessage('send-public-message')
-  @UseGuards(UnifiedAuthGuard)
+  @UseGuards(WebSocketOptionalAuthGuard)
   async handleSendPublicMessage(
     @ConnectedSocket() socket: AuthenticatedSocket,
     @MessageBody() data: { room: string; content: string; messageType?: string },
@@ -877,7 +875,17 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
       };
     }
 
-    attachHandshakeAuth(this.server, this.jwtService, this.authService);
+    // 连接验证中间件
+    this.server.use(async (socket, next) => {
+      try {
+        // 这里可以添加额外的连接验证逻辑
+        // 例如：IP 白名单、连接数限制等
+
+        next();
+      } catch {
+        next(new Error('连接验证失败'));
+      }
+    });
   }
 
   /**

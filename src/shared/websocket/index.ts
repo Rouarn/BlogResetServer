@@ -44,6 +44,10 @@ export { WebSocketService } from './services/websocket.service';
 // 守卫、过滤器和拦截器
 // =============================================================================
 
+/** WebSocket 认证守卫 */
+export { WebSocketAuthGuard } from './guards/websocket-auth.guard';
+export { WebSocketOptionalAuthGuard } from './guards/websocket-optional-auth.guard';
+
 /** WebSocket 异常过滤器 */
 export { WebSocketExceptionFilter } from './filters/websocket-exception.filter';
 
@@ -56,31 +60,35 @@ export { WebSocketInterceptor } from './interceptors/websocket.interceptor';
 
 /** 导出所有接口和类型定义 */
 export type {
+  // 基础类型
+  WebSocketMessage,
+  WebSocketResponse,
+  WebSocketError,
   AuthenticatedSocket,
-  BroadcastData,
-  ConnectionInfo,
-  // 连接状态
-  ConnectionStatus,
+
   // 房间管理
   JoinRoomData,
   LeaveRoomData,
-  MessageData,
-  NotificationData,
-  RoomConfig,
   RoomInfo,
   RoomMember,
 
   // 消息相关
   SendMessageData,
-  // 配置
-  WebSocketConfig,
-  WebSocketError,
+  MessageData,
+  NotificationData,
+  BroadcastData,
+
+  // 连接状态
+  ConnectionStatus,
+  ConnectionInfo,
+
   // 事件处理
   WebSocketEventHandler,
   WebSocketEventMap,
-  // 基础类型
-  WebSocketMessage,
-  WebSocketResponse,
+
+  // 配置
+  WebSocketConfig,
+  RoomConfig,
 } from './interfaces';
 
 // =============================================================================
