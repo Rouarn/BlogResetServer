@@ -35,6 +35,7 @@ function resolveStaticPath(staticConfig: { root: string }): string {
  * 配置应用基础设置
  */
 function configureApp(app: NestExpressApplication): void {
+  // 配置CORS跨域策略
   app.use(cors(appConfig.corsOptions));
 }
 

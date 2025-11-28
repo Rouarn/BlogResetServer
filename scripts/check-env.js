@@ -101,11 +101,6 @@ function main() {
     'NEST_JWT_ACCESS_TOKEN_TTL',
     'NEST_JWT_REFRESH_TOKEN_TTL',
     'NEST_SWAGGER_PREFIX',
-    'WS_LOG_LEVEL',
-    'WS_INCLUDE_METADATA',
-    'WS_INCLUDE_STACK',
-    'WS_PERFORMANCE_THRESHOLD',
-    'WS_SLOW_REQUEST_THRESHOLD',
   ];
   const devRequired = [
     'NODE_ENV',

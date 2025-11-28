@@ -29,11 +29,6 @@ const envTemplates = {
     NEST_JWT_ACCESS_TOKEN_TTL: 3600,
     NEST_JWT_REFRESH_TOKEN_TTL: 604800,
     NEST_SWAGGER_PREFIX: '/api-docs',
-    WS_LOG_LEVEL: 'info',
-    WS_INCLUDE_METADATA: false,
-    WS_INCLUDE_STACK: false,
-    WS_PERFORMANCE_THRESHOLD: 1000,
-    WS_SLOW_REQUEST_THRESHOLD: 1000,
   },
   development: {
     NODE_ENV: 'development',
