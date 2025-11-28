@@ -26,6 +26,7 @@ import { AuthService } from './auth.service';
 import { CaptchaVerifyDto } from './dto/captcha-verify.dto';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { LoginDto, LoginResponseDto } from './dto/login.dto';
+import { RefreshTokenDto, TokenResponseDto } from './dto/token.dto';
 import { ChangePasswordDto, RegisterDto, RegisterResponseDto } from './dto/register.dto';
 import { Auth } from './entities/auth.entity';
 
@@ -265,6 +266,25 @@ export class AuthController {
   @Post('login')
   login(@Body() body: LoginDto, @Ip() clientIp: string): Promise<LoginResponseDto> {
     return this.authService.login(body, clientIp);
+  }
+
+  @ApiOperation({
+    summary: '刷新令牌',
+    description: '使用刷新令牌获取新的访问令牌，并进行刷新令牌轮换',
+  })
+  @ApiBody({
+    description: '刷新令牌请求',
+    type: RefreshTokenDto,
+  })
+  @ApiResponse({
+    status: 200,
+    description: '刷新成功',
+    type: TokenResponseDto,
+  })
+  @Public()
+  @Post('refresh')
+  refresh(@Body() body: RefreshTokenDto): Promise<TokenResponseDto> {
+    return this.authService.refreshToken(body);
   }
 
   @ApiOperation({
