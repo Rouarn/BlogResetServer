@@ -35,6 +35,7 @@ export class CacheFactoryService implements OnModuleDestroy {
 
     try {
       this.cacheService = await this.createCacheService();
+      this.logCacheConfiguration();
       return this.cacheService;
     } catch (error) {
       this.logger.error(
@@ -46,6 +47,8 @@ export class CacheFactoryService implements OnModuleDestroy {
       if (this.cacheConfig.type === CacheServiceType.REDIS) {
         this.logger.warn('⚠️  Redis 连接失败，正在回退到内存缓存...');
         this.cacheService = new MemoryCacheService(this.configService);
+        this.cacheConfig.type = CacheServiceType.MEMORY;
+        this.logCacheConfiguration();
         return this.cacheService;
       }
 
@@ -64,6 +67,11 @@ export class CacheFactoryService implements OnModuleDestroy {
    * 获取当前缓存服务类型
    */
   getCurrentCacheType(): CacheServiceType {
+    if (this.cacheService) {
+      return this.cacheService instanceof RedisCacheService
+        ? CacheServiceType.REDIS
+        : CacheServiceType.MEMORY;
+    }
     return this.cacheConfig.type;
   }
 
@@ -149,9 +157,15 @@ export class CacheFactoryService implements OnModuleDestroy {
     this.logger.log('╚═══════════════════════════════════════════════════════════════════╝');
     this.logger.log('');
     this.logger.log('┌─ 📋 配置详情 ───────────────────────────────────────────────────┐');
-    this.logger.log(
-      `│ 📦 缓存类型: ${this.cacheConfig.type === CacheServiceType.REDIS ? '💎 Redis' : '💾 内存缓存'}`,
-    );
+    const actualTypeLabel = this.cacheService
+      ? this.cacheService instanceof RedisCacheService
+        ? '💎 Redis'
+        : '💾 内存缓存'
+      : '⏳ 未初始化';
+    const preferredTypeLabel =
+      this.cacheConfig.type === CacheServiceType.REDIS ? '💎 Redis' : '💾 内存缓存';
+    this.logger.log(`│ 📦 缓存类型: ${actualTypeLabel}`);
+    this.logger.log(`│ 🎯 优先类型: ${preferredTypeLabel}`);
     this.logger.log(`│ ⚡ 服务状态: ${this.cacheConfig.enabled ? '✅ 已启用' : '❌ 已禁用'}`);
     this.logger.log(`│ ⏰ 默认TTL: ${this.cacheConfig.defaultTtl}秒`);
     this.logger.log(`│ 🏷️  键前缀: ${this.cacheConfig.keyPrefix}`);

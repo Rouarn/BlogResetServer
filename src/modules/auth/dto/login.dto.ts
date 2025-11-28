@@ -56,6 +56,7 @@ export class LoginDto {
  * - refreshToken: 刷新令牌（可选）
  * - expiresIn: 令牌过期时间（秒）
  * - tokenType: 令牌类型
+ * - refreshExpiresIn: 刷新令牌过期时间（秒，可选）
  * - user: 用户基本信息
  */
 export class LoginResponseDto {
@@ -76,6 +77,12 @@ export class LoginResponseDto {
     example: 3600,
   })
   expiresIn: number;
+
+  @ApiPropertyOptional({
+    description: '刷新令牌过期时间（秒）',
+    example: 604800,
+  })
+  refreshExpiresIn?: number;
 
   @ApiProperty({
     description: '令牌类型',

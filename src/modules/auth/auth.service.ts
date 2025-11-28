@@ -216,6 +216,7 @@ export class AuthService {
       refreshToken,
       tokenType: 'Bearer',
       expiresIn: jwtOptions.expiresIn,
+      refreshExpiresIn: CACHE_TTL.REFRESH_TOKEN,
     };
   }
 
@@ -535,8 +536,8 @@ export class AuthService {
       accessToken,
       refreshToken: newRefreshToken,
       tokenType: 'Bearer',
-      expiresIn: 24 * 60 * 60,
-      refreshExpiresIn: 7 * 24 * 60 * 60,
+      expiresIn: jwtOptions.expiresIn,
+      refreshExpiresIn: CACHE_TTL.REFRESH_TOKEN,
     };
   }
 

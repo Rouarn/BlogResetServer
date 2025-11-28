@@ -2,7 +2,7 @@ import { CanActivate, ExecutionContext, Inject, Injectable, Logger } from '@nest
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import type { Request } from 'express';
 import { CACHE_TOKENS } from 'src/common/constants';
-import { ICacheService } from '@/shared/cache';
+import { CacheFactoryService, ICacheService } from '@/shared/cache';
 import { getCurrentTimestamp, WhitelistAuth } from 'src/utils';
 
 /**
@@ -79,6 +79,7 @@ export class GlobalGuard implements CanActivate {
   constructor(
     @Inject(CACHE_TOKENS.I_CACHE_SERVICE)
     private readonly cacheService: ICacheService,
+    private readonly cacheFactory: CacheFactoryService,
   ) {
     this.logger.log('');
     this.logger.log('╔═══════════════════════════════════════════════════════════════════╗');
@@ -90,7 +91,8 @@ export class GlobalGuard implements CanActivate {
     this.logger.log(`│ ⭐ 白名单限制: ${this.config.whitelistLimit}/分钟`);
     this.logger.log(`│ ⏱️  时间窗口: ${this.config.windowSeconds}秒`);
     this.logger.log(`│ 💾 缓存TTL: ${CACHE_TTL_SECONDS}秒`);
-    this.logger.log(`│ 🔧 缓存类型: Redis缓存版`);
+    const cacheType = this.cacheFactory.getCurrentCacheType();
+    this.logger.log(`│ 🔧 缓存类型: ${cacheType === 'redis' ? 'Redis缓存版' : '内存缓存版'}`);
     this.logger.log('└──────────────────────────────────────────────────────────────────┘');
     this.logger.log('');
   }

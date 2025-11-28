@@ -86,7 +86,14 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
       this.logger.log('✅ Redis 初始化完成');
     } catch (error) {
       this.logger.error(`Failed to initialize Redis: ${(error as Error).message}`);
+      try {
+        if (this.redis) {
+          this.redis.disconnect();
+          this.redis.removeAllListeners();
+        }
+      } catch (_) {}
       this.redis = null;
+      this.isConnected = false;
       throw error; // 抛出错误让调用者知道初始化失败
     }
   }
@@ -299,7 +306,12 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
    */
   async close(): Promise<void> {
     if (this.redis) {
-      await this.redis.quit();
+      try {
+        await this.redis.quit();
+      } catch (_) {
+        this.redis.disconnect();
+      }
+      this.redis.removeAllListeners();
       this.redis = null;
       this.isConnected = false;
       this.logger.log('⚪ Redis 连接已关闭');
