@@ -129,26 +129,6 @@ export default registerAs('app', () => ({
     },
   },
 
-  // WebSocket 配置
-  websocket: {
-    // CORS 配置
-    corsOrigins: process.env.NEST_CORS_ORIGINS
-      ? process.env.NEST_CORS_ORIGINS.split(',').map((origin) => origin.trim())
-      : ['http://localhost:3000'],
-
-    // 日志配置
-    logLevel: process.env.WS_LOG_LEVEL ?? 'info',
-    includeMetadata: process.env.WS_INCLUDE_METADATA === 'true',
-    includeStack: process.env.WS_INCLUDE_STACK === 'true',
-
-    // 性能配置
-    performanceThreshold: process.env.WS_PERFORMANCE_THRESHOLD
-      ? parseInt(process.env.WS_PERFORMANCE_THRESHOLD, 10)
-      : 1000,
-    slowRequestThreshold: process.env.WS_SLOW_REQUEST_THRESHOLD
-      ? parseInt(process.env.WS_SLOW_REQUEST_THRESHOLD, 10)
-      : 1000,
-  },
 
   // 数据库连接配置
   database: {

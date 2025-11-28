@@ -38,7 +38,6 @@ import { DatabaseNamingStrategy } from './database/naming-strategy/database-nami
 import { DATABASE_CONFIG, DatabaseConfig } from './database/types';
 // 业务模块导入
 import { CacheModule } from '@/shared/cache';
-import { WebSocketModule } from '@/shared/websocket';
 import { AuthModule } from './modules/auth/auth.module';
 import { FilesModule } from '@/shared/files/files.module';
 import { UsersModule } from './modules/users/users.module';
@@ -104,7 +103,6 @@ import { UsersModule } from './modules/users/users.module';
     AuthModule, // 用户认证模块 (登录、注册、验证码)
     UsersModule, // 用户管理模块 (用户资料、状态管理、CRUD)
     FilesModule, // 文件管理模块 (上传、下载、存储)
-    WebSocketModule, // WebSocket 模块 (实时通信、房间管理)
     CacheModule, // 缓存模块 (Redis/内存缓存，支持装饰器)
   ],
 

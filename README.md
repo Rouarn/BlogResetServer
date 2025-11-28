@@ -1,6 +1,6 @@
 # NestJS Template
 
-一个模块化的 NestJS 后端模板，内置认证、用户资料、文件管理、缓存、WebSocket、统一响应与完整脚本工具，开箱即用并可按需扩展。
+一个模块化的 NestJS 后端模板，内置认证、用户资料、文件管理、缓存、统一响应与完整脚本工具，开箱即用并可按需扩展。
 
 **核心特性**
 
@@ -9,7 +9,6 @@
 - JWT 认证与 RBAC 权限
 - 文件分块上传与断点续传
 - 双重缓存（Redis/内存）与装饰器集成
-- WebSocket 通讯与房间管理
 - Swagger API 文档与统一响应格式
 - 完整脚本工具（环境、生成器、部署）
 
@@ -34,7 +33,7 @@
 - 全局守卫链：限流/安全 → JWT 认证 → 角色权限（`src/app.module.ts:126`）。
 - 全局拦截器：统一响应格式（`src/app.module.ts:144`）。
 - 全局管道与异常过滤器：验证管道与 HTTP 异常过滤（`src/app.module.ts:152`、`src/app.module.ts:161`）。
-- 启动入口配置 CORS、WebSocket 适配、API 版本、静态资源与 Swagger 输出（`src/main.ts:41`、`src/main.ts:50`、`src/main.ts:63`、`src/main.ts:79`）。
+- 启动入口配置 CORS、API 版本、静态资源与 Swagger 输出。
 
 ## 模块详解（src/modules）
 
@@ -60,8 +59,7 @@
   - 装饰器：`@Cache`、`@CacheEvict`（键模板占位 `${0}` 等；键生成器与条件控制），见 `src/shared/cache/decorators/cache.decorator.ts`。
   - 服务实现：内存与 Redis，工厂统一创建；常量前缀与 TTL 在 `src/common/constants/cache.constant.ts`。
   - 使用示例：用户服务列表与单条缓存、更新与删除失效（参考 UsersService）。
-- WebSocket（实时通信）
-  - 网关、守卫与拦截器；异常过滤器与服务；在启动入口设置 `IoAdapter`。
+ 
 
 ## 公共层（src/common）
 
@@ -121,7 +119,7 @@
 nestjs-template/
 ├── src/
 │   ├── modules/            # 业务模块（auth/users/files 等）
-│   ├── shared/             # 共享模块（cache/websocket）
+│   ├── shared/             # 共享模块（cache）
 │   ├── common/             # 公共组件（守卫/拦截器/异常/装饰器等）
 │   ├── config/             # 配置模块
 │   ├── database/           # 数据库与基础实体
