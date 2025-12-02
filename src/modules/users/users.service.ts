@@ -52,7 +52,9 @@ export class UsersService {
         where: { email: createUserDto.email },
       });
       if (existingUser) {
-        throw BusinessExceptionFactory.conflict('邮箱已被使用', { email: createUserDto.email });
+        throw BusinessExceptionFactory.conflict('邮箱已被使用', {
+          reason: `邮箱 ${createUserDto.email} 已被使用`,
+        });
       }
     }
 
@@ -104,7 +106,7 @@ export class UsersService {
       relations: ['auth'],
     });
     if (!user) {
-      throw BusinessExceptionFactory.notFound('用户', { id });
+      throw BusinessExceptionFactory.notFound('用户', { reason: `用户ID ${id} 不存在` });
     }
     return user;
   }
@@ -161,8 +163,7 @@ export class UsersService {
       });
       if (existingUser && existingUser.id !== id) {
         throw BusinessExceptionFactory.conflict('邮箱已被使用', {
-          email: updateUserDto.email,
-          userId: id,
+          reason: `邮箱 ${updateUserDto.email} 已被使用`,
         });
       }
     }
@@ -211,7 +212,7 @@ export class UsersService {
 
     const users = await this.userRepository.findBy({ id: In(ids) });
     if (users.length === 0) {
-      throw BusinessExceptionFactory.notFound('要删除的用户', { ids });
+      throw BusinessExceptionFactory.notFound('要删除的用户', { reason: `用户 ${ids} 不存在` });
     }
 
     await this.userRepository.remove(users);
@@ -233,7 +234,9 @@ export class UsersService {
     const user = await this.findById(id);
 
     if (!user.auth) {
-      throw BusinessExceptionFactory.notFound('用户认证信息', { userId: id });
+      throw BusinessExceptionFactory.notFound('用户认证信息', {
+        reason: `用户 ${id} 不存在认证信息`,
+      });
     }
 
     // 更新认证状态
