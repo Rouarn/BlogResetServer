@@ -139,7 +139,9 @@ export class AuthService {
 
     if (!auth) {
       // 记录登录失败尝试（可选：防止用户名枚举攻击）
-      throw BusinessExceptionFactory.forbidden('登录', { username: loginDto.username });
+      throw BusinessExceptionFactory.forbidden('登录', {
+        reason: `用户${loginDto.username}不存在`,
+      });
     }
 
     // 检查账号是否被锁定
@@ -178,14 +180,13 @@ export class AuthService {
         });
       }
 
-      throw BusinessExceptionFactory.forbidden('登录', { username: loginDto.username });
+      throw BusinessExceptionFactory.forbidden('登录', { reason: loginDto.username });
     }
 
     // 检查认证状态
     if (!isEnabled(auth.status)) {
       throw BusinessExceptionFactory.forbidden('访问', {
-        reason: '用户已被禁用',
-        username: loginDto.username,
+        reason: `用户已被禁用${loginDto.username}`,
       });
     }
 
@@ -503,16 +504,20 @@ export class AuthService {
     });
 
     if (!auth) {
-      throw BusinessExceptionFactory.notFound('认证记录', { authId });
+      throw BusinessExceptionFactory.notFound('认证记录', { reason: `认证ID ${authId} 不存在` });
     }
 
     // 检查账号状态
     if (auth.isLocked()) {
-      throw BusinessExceptionFactory.forbidden('访问', { reason: '账号已被锁定', authId });
+      throw BusinessExceptionFactory.forbidden('访问', {
+        reason: `账号已被锁定，认证ID ${authId}`,
+      });
     }
 
     if (!isEnabled(auth.status)) {
-      throw BusinessExceptionFactory.forbidden('访问', { reason: '用户已被禁用', authId });
+      throw BusinessExceptionFactory.forbidden('访问', {
+        reason: `用户已被禁用，认证ID ${authId}`,
+      });
     }
 
     // 生成新的访问令牌

@@ -59,7 +59,7 @@ export enum LogLevel {
  */
 export class BusinessException extends HttpException {
   /** 异常上下文信息，用于调试和日志记录 */
-  public readonly context?: Record<string, unknown>;
+  public readonly context?: { reason?: string; [key: string]: unknown };
 
   /** 日志级别，用于日志系统分级处理 */
   public readonly logLevel: LogLevel;
@@ -81,7 +81,7 @@ export class BusinessException extends HttpException {
   constructor(
     message: string,
     status: HttpStatus = HttpStatus.BAD_REQUEST,
-    context?: Record<string, unknown>,
+    context?: { reason?: string; [key: string]: unknown },
     logLevel: LogLevel = LogLevel.ERROR,
     category: string = 'BUSINESS_ERROR',
   ) {
@@ -110,7 +110,7 @@ export class BusinessException extends HttpException {
     message: string;
     status: number;
     category: string;
-    context?: Record<string, unknown>;
+    context?: { reason?: string; [key: string]: unknown };
     logLevel: LogLevel;
     timestamp: number;
   } {
@@ -151,8 +151,12 @@ export class BusinessExceptionFactory {
    * 创建验证失败异常
    * @param message 错误信息
    * @param context 上下文信息
+   * @param context.reason 错误原因
    */
-  static validation(message: string, context?: Record<string, unknown>): BusinessException {
+  static validation(
+    message: string,
+    context?: { reason?: string; [key: string]: unknown },
+  ): BusinessException {
     return new BusinessException(
       message,
       HttpStatus.UNPROCESSABLE_ENTITY,
@@ -166,8 +170,12 @@ export class BusinessExceptionFactory {
    * 创建资源不存在异常
    * @param resource 资源名称
    * @param context 上下文信息
+   * @param context.reason 错误原因
    */
-  static notFound(resource: string, context?: Record<string, unknown>): BusinessException {
+  static notFound(
+    resource: string,
+    context?: { reason?: string; [key: string]: unknown },
+  ): BusinessException {
     return new BusinessException(
       `${resource}不存在`,
       HttpStatus.NOT_FOUND,
@@ -181,10 +189,14 @@ export class BusinessExceptionFactory {
    * 创建权限不足异常
    * @param action 操作名称
    * @param context 上下文信息
+   * @param context.reason 错误原因
    */
-  static forbidden(action: string, context?: Record<string, unknown>): BusinessException {
+  static forbidden(
+    action: string,
+    context?: { reason?: string; [key: string]: unknown },
+  ): BusinessException {
     return new BusinessException(
-      `无权限执行操作：${action}  ${context?.reason ?? ''}`,
+      `无权限执行操作：${action}`,
       HttpStatus.FORBIDDEN,
       context,
       LogLevel.WARNING,
@@ -196,8 +208,12 @@ export class BusinessExceptionFactory {
    * 创建资源冲突异常
    * @param message 错误信息
    * @param context 上下文信息
+   * @param context.reason 错误原因
    */
-  static conflict(message: string, context?: Record<string, unknown>): BusinessException {
+  static conflict(
+    message: string,
+    context?: { reason?: string; [key: string]: unknown },
+  ): BusinessException {
     return new BusinessException(
       message,
       HttpStatus.CONFLICT,
@@ -210,8 +226,9 @@ export class BusinessExceptionFactory {
   /**
    * 创建系统繁忙异常
    * @param context 上下文信息
+   * @param context.reason 错误原因
    */
-  static systemBusy(context?: Record<string, unknown>): BusinessException {
+  static systemBusy(context?: { reason?: string; [key: string]: unknown }): BusinessException {
     return new BusinessException(
       '系统繁忙，请稍后重试',
       HttpStatus.SERVICE_UNAVAILABLE,
@@ -225,8 +242,12 @@ export class BusinessExceptionFactory {
    * 创建参数错误异常
    * @param parameter 参数名称
    * @param context 上下文信息
+   * @param context.reason 错误原因
    */
-  static invalidParameter(parameter: string, context?: Record<string, unknown>): BusinessException {
+  static invalidParameter(
+    parameter: string,
+    context?: { reason?: string; [key: string]: unknown },
+  ): BusinessException {
     return new BusinessException(
       `参数错误：${parameter}`,
       HttpStatus.BAD_REQUEST,

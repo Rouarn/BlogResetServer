@@ -197,11 +197,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const { status, messages } = this.extractMessages(exception);
     const ctxMsgs = this.extractContextMessages(exception);
     const responseMessage = ctxMsgs?.length
-      ? ctxMsgs
+      ? `${messages.join(', ')}: ${ctxMsgs.join(', ')}`
       : messages.length === 1
         ? messages[0]
-        : messages;
-    const logMessage = ctxMsgs?.length ? ctxMsgs.join(', ') : messages.join(', ');
+        : messages.join(', ');
+    const logMessage = ctxMsgs?.length ? ctxMsgs.join(', ') : (messages.join(', ') ?? '');
     return { status, responseMessage, logMessage };
   }
 
