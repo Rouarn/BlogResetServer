@@ -56,21 +56,20 @@ export default registerAs('app', () => ({
 
   // 静态资源和文件上传统一配置
   static: {
-    root: process.env.NEST_STATIC_ASSETS_PATH ?? './static',
+    root: process.env.NEST_STATIC_ASSETS_DIR ?? './static',
     prefix: process.env.NEST_STATIC_ASSETS_PREFIX ?? '/static',
     maxAge: process.env.NEST_STATIC_ASSETS_MAXAGE ?? 86400, // 24小时缓存
-
     // 文件上传配置
-    upload: {
-      path: process.env.NEST_UPLOAD_PATH ?? './uploads', // 上传文件存储路径
-      maxFileSize: process.env.NEST_UPLOAD_MAX_SIZE
-        ? parseInt(process.env.NEST_UPLOAD_MAX_SIZE, 10)
-        : 10 * 1024 * 1024, // 10MB
-      allowedTypes: process.env.NEST_UPLOAD_ALLOWED_TYPES
-        ? process.env.NEST_UPLOAD_ALLOWED_TYPES.split(',').map((type) => type.trim())
-        : [], // 空数组表示允许所有类型
-      maxBatchFiles: 10, // 批量上传最大文件数
-    },
+    uploadsPath: process.env.NEST_STATIC_UPLOAD_PATH ?? './uploads', // 上传文件存储路径
+    uploadsMaxSize: process.env.NEST_UPLOAD_MAX_SIZE
+      ? parseInt(process.env.NEST_UPLOAD_MAX_SIZE, 10)
+      : 10 * 1024 * 1024, // 10MB
+    uploadsAllowedTypes: process.env.NEST_UPLOAD_ALLOWED_TYPES
+      ? process.env.NEST_UPLOAD_ALLOWED_TYPES.split(',').map((type) => type.trim())
+      : [], // 空数组表示允许所有类型
+    uploadsMaxBatchFiles: process.env.NEST_UPLOAD_MAX_BATCH_FILES
+      ? parseInt(process.env.NEST_UPLOAD_MAX_BATCH_FILES, 10)
+      : 10, // 批量上传最大文件数
   },
 
   // CORS 跨域配置
@@ -128,7 +127,6 @@ export default registerAs('app', () => ({
         : 1000,
     },
   },
-
 
   // 数据库连接配置
   database: {

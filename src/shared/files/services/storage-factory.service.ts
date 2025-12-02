@@ -1,14 +1,14 @@
-import * as path from 'path';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { StaticConfig } from 'src/common/interfaces';
-import { StorageService } from './storage.service';
+import * as path from 'path';
+import { staticAssetsOptions } from '../../../config';
 import type {
   StorageAdapter,
   StorageFactory,
   StorageFactoryConfig,
 } from '../interfaces/storage-factory.interface';
 import { StorageType } from '../interfaces/storage-factory.interface';
+import { StorageService } from './storage.service';
 
 @Injectable()
 export class StorageFactoryService implements StorageFactory {
@@ -41,20 +41,17 @@ export class StorageFactoryService implements StorageFactory {
   private getStorageConfig(type: StorageType): Record<string, unknown> {
     switch (type) {
       case StorageType.LOCAL:
-        // 使用静态资源配置中的上传设置
-        const staticConfig = this.configService.get('app.static') as StaticConfig;
-
         // 上传文件保存在静态资源目录下的 uploads 子目录
         const uploadPath: string = path.join(
           process.cwd(),
-          staticConfig.root,
-          staticConfig.upload.path,
+          staticAssetsOptions.root,
+          staticAssetsOptions.options.uploadsPath,
         );
 
         return {
           basePath: uploadPath,
-          maxFileSize: staticConfig.upload.maxFileSize,
-          allowedTypes: staticConfig.upload.allowedTypes,
+          maxFileSize: staticAssetsOptions.options.uploadsMaxSize,
+          allowedTypes: staticAssetsOptions.options.uploadsAllowedTypes,
         };
 
       default:

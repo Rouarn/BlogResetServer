@@ -1,92 +1,13 @@
+import type { ServeStaticOptions } from '@nestjs/platform-express/interfaces/serve-static-options.interface';
+import type { FileUploadOptions } from '../../shared/files/interfaces';
+
 /**
  * 静态配置接口（StaticConfig）
  *
  * 定义了静态资源和文件上传相关的配置项。
- *
- * 功能说明：
- * - 包含静态资源根目录、URL前缀、缓存设置等。
- * - 包含上传文件的最大批量数量、最大文件大小和允许的文件类型。
- *
- * 接口说明：
- * - `root`：静态资源根目录路径。
- * - `prefix`：静态资源URL前缀。
- * - `maxAge`：静态资源缓存时间（秒）。
- * - `upload.maxBatchFiles`：最大批量上传文件数量。
- * - `upload.maxFileSize`：最大文件大小（单位：字节）。
- * - `upload.allowedTypes`：允许的文件类型数组。
  */
 export interface StaticConfig {
-  /**
-   * 静态资源根目录路径
-   *
-   * 说明：
-   * - 配置静态资源的根目录，所有静态文件将从该目录提供服务。
-   *
-   * 示例：
-   * - 配置为 './static' 表示静态资源位于项目根目录的 static 文件夹。
-   * - 配置为 './dist/static' 表示静态资源位于 dist/static 文件夹。
-   */
   root: string;
-  /**
-   * 静态资源URL前缀
-   *
-   * 说明：
-   * - 配置静态资源的URL访问前缀。
-   *
-   * 示例：
-   * - 配置为 '/static' 表示通过 /static/xxx 访问静态资源。
-   */
-  prefix: string;
-  /**
-   * 静态资源缓存时间（秒）
-   *
-   * 说明：
-   * - 配置静态资源的浏览器缓存时间。
-   *
-   * 示例：
-   * - 配置为 86400 表示缓存24小时。
-   */
-  maxAge: number;
-  upload: {
-    /**
-     * 上传文件保存路径
-     *
-     * 说明：
-     * - 配置上传文件的保存路径，相对于静态资源根目录。
-     *
-     * 示例：
-     * - 配置为 'uploads' 表示上传文件将保存到 static/uploads 目录。
-     */
-    path: string;
-    /**
-     * 最大批量上传文件数量
-     *
-     * 说明：
-     * - 配置上传文件的最大批量数量，超过该数量将抛出异常。
-     *
-     * 示例：
-     * - 配置为 5 表示最多同时上传 5 个文件。
-     */
-    maxBatchFiles: number;
-    /**
-     * 最大文件大小（单位：字节）
-     *
-     * 说明：
-     * - 配置上传文件的最大大小，超过该大小将抛出异常。
-     *
-     * 示例：
-     * - 配置为 1048576 表示最大文件大小为 1MB。
-     */
-    maxFileSize: number;
-    /**
-     * 允许的文件类型数组
-     *
-     * 说明：
-     * - 配置上传文件的允许类型，超过该类型将抛出异常。
-     *
-     * 示例：
-     * - 配置为 ['image/jpeg', 'image/png'] 表示只允许上传 JPEG 和 PNG 格式的文件。
-     */
-    allowedTypes: string[];
-  };
+  options: ServeStaticOptions & FileUploadOptions;
 }
+export type StaticOptions = StaticConfig['options'];

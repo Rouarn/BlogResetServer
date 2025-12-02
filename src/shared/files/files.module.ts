@@ -20,11 +20,14 @@ import { ValidationService } from './services/validation.service';
       useFactory: async (configService: ConfigService) => ({
         storage: multer.memoryStorage(),
         limits: {
-          fileSize: configService.get('app.static.upload.maxFileSize', 10 * 1024 * 1024), // 10MB
-          files: configService.get('app.static.upload.maxBatchFiles', 10),
+          fileSize: configService.get('app.static.options.uploadsMaxSize', 10 * 1024 * 1024), // 10MB
+          files: configService.get('app.static.options.uploadsMaxFiles', 10), // 同时上传文件数量
         },
         fileFilter: (req, file, cb) => {
-          const allowedTypes = configService.get<string[]>('app.static.upload.allowedTypes', []);
+          const allowedTypes = configService.get<string[]>(
+            'app.static.options.uploadsAllowedTypes',
+            [],
+          );
           if (allowedTypes.length === 0 || allowedTypes.includes(file.mimetype)) {
             cb(null, true);
           } else {

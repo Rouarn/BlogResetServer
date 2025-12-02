@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import type { ServeStaticOptions } from '@nestjs/platform-express/interfaces/serve-static-options.interface';
 import { AppConfigService } from 'src/config/app-config.service';
-import type { FileUploadOptions } from '@/shared/files/interfaces';
 
 @Injectable()
 export class BootstrapLoggerService {
@@ -12,7 +11,7 @@ export class BootstrapLoggerService {
    * 输出静态资源配置信息
    */
   logStaticResourceConfig(
-    staticConfig: { root: string; options: ServeStaticOptions; uploads: FileUploadOptions },
+    staticConfig: { root: string; options: ServeStaticOptions },
     staticPath: string,
   ): void {
     this.logger.log('');
@@ -55,7 +54,7 @@ export class BootstrapLoggerService {
     app: NestExpressApplication,
     appConfig: AppConfigService,
     versionConfig: { prefix: string; defaultVersion: string },
-    staticConfig: { root: string; options: ServeStaticOptions; uploads?: FileUploadOptions },
+    staticConfig: { root: string; options: ServeStaticOptions },
   ): Promise<void> {
     const appUrl = await app.getUrl();
 

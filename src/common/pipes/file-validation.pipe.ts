@@ -1,7 +1,7 @@
 import { Injectable, PipeTransform } from '@nestjs/common';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { ConfigService } from '@nestjs/config';
-import type { StaticConfig } from '../interfaces';
+import type { StaticOptions } from '../interfaces';
 
 /**
  * 单文件验证管道（FileValidationPipe）
@@ -47,13 +47,13 @@ export class FileValidationPipe implements PipeTransform {
     }
 
     // 验证文件大小
-    const staticConfig = this.configService.get<StaticConfig>('app.static');
+    const staticConfig = this.configService.get<StaticOptions>('app.static');
 
-    if (!staticConfig?.upload) {
+    if (!staticConfig) {
       throw BusinessExceptionFactory.systemBusy({ reason: '文件上传配置未找到' });
     }
 
-    const maxSize = staticConfig.upload.maxFileSize;
+    const maxSize = staticConfig.uploadsMaxSize;
     if (file.size > maxSize) {
       throw BusinessExceptionFactory.invalidParameter('文件大小', {
         fileSize: file.size,
@@ -63,7 +63,7 @@ export class FileValidationPipe implements PipeTransform {
     }
 
     // 验证文件类型
-    const allowedTypes = staticConfig.upload.allowedTypes;
+    const allowedTypes = staticConfig.uploadsAllowedTypes;
     if (allowedTypes.length > 0 && !allowedTypes.includes(file.mimetype)) {
       throw BusinessExceptionFactory.invalidParameter('文件类型', {
         fileType: file.mimetype,
@@ -118,13 +118,13 @@ export class FilesValidationPipe implements PipeTransform {
       throw BusinessExceptionFactory.invalidParameter('文件列表', { reason: '文件列表不能为空' });
     }
 
-    const staticConfig = this.configService.get<StaticConfig>('app.static');
+    const staticConfig = this.configService.get<StaticOptions>('app.static');
 
-    if (!staticConfig?.upload) {
+    if (!staticConfig) {
       throw BusinessExceptionFactory.systemBusy({ reason: '文件上传配置未找到' });
     }
 
-    const maxFiles = staticConfig.upload.maxBatchFiles;
+    const maxFiles = staticConfig.uploadsMaxFiles;
     if (files.length > maxFiles) {
       throw BusinessExceptionFactory.invalidParameter('文件数量', {
         fileCount: files.length,

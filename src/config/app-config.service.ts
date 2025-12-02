@@ -1,7 +1,7 @@
+import type { FileUploadOptions } from '@/shared/files/interfaces';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { ServeStaticOptions } from '@nestjs/platform-express/interfaces/serve-static-options.interface';
-import type { FileUploadOptions } from '@/shared/files/interfaces';
 
 /**
  * 应用配置服务（AppConfigService）
@@ -115,22 +115,18 @@ export class AppConfigService {
    */
   get staticAssetsOptions(): {
     root: string;
-    options: ServeStaticOptions;
-    uploads: FileUploadOptions;
+    options: ServeStaticOptions & FileUploadOptions;
   } {
     return {
       root: this.configService.get<string>('NEST_STATIC_ASSETS_DIR', './static'),
       options: {
         prefix: this.configService.get<string>('NEST_STATIC_ASSETS_PREFIX', '/static'),
         maxAge: this.configService.get<string>('NEST_STATIC_ASSETS_MAXAGE', '86400'),
-      } as ServeStaticOptions,
-      uploads: {
-        path: this.configService.get<string>('NEST_UPLOAD_PATH', './static/uploads'),
-        prefix: this.configService.get<string>('NEST_UPLOAD_PREFIX', '/static/uploads'),
-        maxSize: this.configService.get<number>('NEST_UPLOAD_MAX_SIZE', 10485760),
-        allowedTypes: this.configService.get<string[]>('NEST_UPLOAD_ALLOWED_TYPES', []),
-        maxFiles: this.configService.get<number>('NEST_UPLOAD_MAX_FILES', 10),
-      },
+        uploadsPath: this.configService.get<string>('NEST_STATIC_UPLOAD_PATH', './static/uploads'),
+        uploadsMaxSize: this.configService.get<number>('NEST_UPLOAD_MAX_SIZE', 10485760),
+        uploadsAllowedTypes: this.configService.get<string[]>('NEST_UPLOAD_ALLOWED_TYPES', []),
+        uploadsMaxFiles: this.configService.get<number>('NEST_UPLOAD_MAX_FILES', 10),
+      } as ServeStaticOptions & FileUploadOptions,
     };
   }
 
@@ -178,7 +174,7 @@ export class AppConfigService {
     return {
       title: `我与夏季 Ra API${envSuffix}`,
       description: `我与夏季 Ra 系统API文档${this.isDevelopment ? ' - 开发环境' : ''}`,
-      version: '1.0.0',
+      version: `V${this.configService.get<string>('API_DEFAULT_VERSION', '1.0.0')}`,
       prefix: this.configService.get<string>('NEST_SWAGGER_PREFIX', '/api-docs'),
       enabled: this.environment !== 'production', // 生产环境关闭
     };

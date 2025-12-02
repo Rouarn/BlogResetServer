@@ -2,8 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import type { StaticConfig } from 'src/common/interfaces';
 import { appConfig } from 'src/config';
+import { BusinessExceptionFactory } from '../../../common/exceptions';
+import { StaticOptions } from '../../../common/interfaces';
 import type { StorageAdapter, StorageConfig } from '../interfaces';
 
 @Injectable()
@@ -12,13 +13,17 @@ export class StorageService implements StorageAdapter {
   private readonly config: StorageConfig;
 
   constructor(private configService: ConfigService) {
+    const staticConfig = this.configService.get<StaticOptions>('app.static');
+
     // 使用静态资源配置中的上传设置
-    const staticConfig = this.configService.get('app.static') as StaticConfig;
+    if (!staticConfig) {
+      throw BusinessExceptionFactory.invalidParameter('文件上传配置未找到');
+    }
     this.config = {
       type: 'local',
-      basePath: staticConfig.upload.path,
-      maxFileSize: staticConfig.upload.maxFileSize,
-      allowedTypes: staticConfig.upload.allowedTypes,
+      basePath: staticConfig.uploadsPath,
+      maxFileSize: staticConfig.uploadsMaxSize,
+      allowedTypes: staticConfig.uploadsAllowedTypes,
     };
     void this.ensureUploadDirectory();
   }
@@ -78,8 +83,14 @@ export class StorageService implements StorageAdapter {
     const baseUrl = appConfig.baseUrl;
 
     const staticConfig = appConfig.staticAssetsOptions;
+
+    // 获取 staticConfig.options.uploadsPath 与 staticConfig.options.prefix 不同的部分
+    const uploadsPath = staticConfig.options.uploadsPath;
+    const root = staticConfig.root;
+    const relativeUploadsPath = uploadsPath.replace(root ?? '', '');
+
     // 使用静态资源URL前缀构建访问地址，添加uploads子目录
-    return `${baseUrl}${staticConfig.uploads.prefix}/${relativePath}`;
+    return `${baseUrl}${staticConfig.options.prefix}${relativeUploadsPath}/${relativePath}`;
   }
 
   async getFileStats(relativePath: string): Promise<{ size: number; mtime: Date } | null> {

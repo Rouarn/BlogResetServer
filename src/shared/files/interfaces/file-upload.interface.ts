@@ -8,27 +8,27 @@ export interface FileUploadOptions {
    * 上传文件的存储路径
    * @default './static/uploads'
    */
-  path: string;
+  uploadsPath: string;
   /**
    * 上传文件的URL前缀
    * @default '/static/uploads'
    */
-  prefix: string;
+  uploadsPrefix: string;
   /**
    * 上传文件的最大大小（字节）
    * @default 10485760（10MB）
    */
-  maxSize?: number;
+  uploadsMaxSize: number;
   /**
    * 允许上传的文件类型列表
    * @default []（不限制）
    */
-  allowedTypes?: string[];
+  uploadsAllowedTypes: string[];
   /**
    * 上传文件的最大数量
    * @default 10
    */
-  maxFiles?: number;
+  uploadsMaxFiles: number;
 }
 
 /**

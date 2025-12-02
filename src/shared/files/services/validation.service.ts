@@ -1,9 +1,10 @@
-import * as crypto from 'crypto';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as crypto from 'crypto';
 import { fileTypeFromBuffer } from 'file-type';
-import type { StaticConfig as StaticConfigType } from 'src/common/interfaces';
+import type { StaticOptions } from 'src/common/interfaces';
 import { getCurrentTimestamp, randomString } from 'src/utils';
+import { BusinessExceptionFactory } from '../../../common/exceptions';
 import { FileType } from '../enums';
 
 @Injectable()
@@ -35,33 +36,50 @@ export class ValidationService {
 
   async validateFile(file: Express.Multer.File): Promise<void> {
     // 验证文件大小 - 使用静态资源配置中的限制
-    const staticConfig = this.configService.get('app.static') as StaticConfigType;
-    const maxSize = staticConfig.upload.maxFileSize;
+    const staticConfig = this.configService.get('app.static') as StaticOptions;
+    if (!staticConfig) {
+      throw BusinessExceptionFactory.systemBusy({ reason: '文件上传配置未找到' });
+    }
+    const maxSize = staticConfig.uploadsMaxSize;
 
     if (file.size > maxSize) {
-      throw new BadRequestException(`文件大小超出限制，最大允许 ${maxSize / 1024 / 1024}MB`);
+      throw BusinessExceptionFactory.invalidParameter('文件大小', {
+        fileSize: file.size,
+        maxSize,
+      });
     }
 
     // 验证文件类型
     const detectedType = await fileTypeFromBuffer(file.buffer);
     if (detectedType && detectedType.mime !== file.mimetype) {
-      throw new BadRequestException('文件类型与实际内容不匹配');
+      throw BusinessExceptionFactory.invalidParameter('文件类型', {
+        detectedType: detectedType.mime,
+        expectedType: file.mimetype,
+      });
     }
 
     // 验证MIME类型是否被允许
-    const allowedTypes = staticConfig.upload.allowedTypes;
+    const allowedTypes = staticConfig.uploadsAllowedTypes;
     if (allowedTypes.length > 0 && !allowedTypes.includes(file.mimetype)) {
-      throw new BadRequestException(`不支持的文件类型: ${file.mimetype}`);
+      throw BusinessExceptionFactory.invalidParameter('文件类型', {
+        fileType: file.mimetype,
+        allowedTypes,
+      });
     }
   }
 
   async validateFiles(files: Express.Multer.File[]): Promise<void> {
-    const staticConfig = this.configService.get('app.static') as {
-      upload: { maxFileSize: number; allowedTypes: string[]; maxBatchFiles: number };
-    };
-    const maxFiles = staticConfig.upload.maxBatchFiles;
+    const staticConfig = this.configService.get('app.static') as StaticOptions;
+    if (!staticConfig) {
+      throw BusinessExceptionFactory.systemBusy({ reason: '文件上传配置未找到' });
+    }
+
+    const maxFiles = staticConfig.uploadsMaxFiles ?? 10;
     if (files.length > maxFiles) {
-      throw new BadRequestException(`批量上传文件数量超出限制，最大允许 ${maxFiles} 个文件`);
+      throw BusinessExceptionFactory.invalidParameter('批量上传文件数量', {
+        fileCount: files.length,
+        maxFiles,
+      });
     }
 
     for (const file of files) {
