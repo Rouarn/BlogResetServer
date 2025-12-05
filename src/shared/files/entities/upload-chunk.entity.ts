@@ -2,7 +2,7 @@ import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 't
 import { BaseEntity } from 'src/database';
 import { File } from './file.entity';
 
-@Entity('ra_upload_chunks')
+@Entity('upload_chunks')
 export class UploadChunk extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;

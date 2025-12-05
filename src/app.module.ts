@@ -33,9 +33,12 @@ import { JwtAuthStrategy } from './common/strategies';
 // 配置模块导入
 import { ConfigModule as AppConfigModule, AppConfigService } from './config';
 // 时间戳管理模块
-import { DatabaseModule } from './database';
-import { DatabaseNamingStrategy } from './database/naming-strategy/database-naming.strategy';
-import { DATABASE_CONFIG, DatabaseConfig } from './database/types';
+import {
+  DATABASE_CONFIG,
+  DatabaseConfig,
+  DatabaseModule,
+  DatabaseNamingStrategy,
+} from './database';
 // 业务模块导入
 import { CacheInterceptor, CacheModule } from '@/shared/cache';
 import { FilesModule } from '@/shared/files/files.module';

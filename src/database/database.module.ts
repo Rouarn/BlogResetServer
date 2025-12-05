@@ -2,7 +2,7 @@ import { DynamicModule, Global, Module, Provider, Type } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AuditInterceptor } from './interceptors';
 import { AuditSubscriber } from './subscribers';
-import { DATABASE_CONFIG, DatabaseConfig } from './types';
+import { DATABASE_CONFIG, DatabaseConfig } from './interfaces';
 
 // 类型定义
 interface AsyncModuleOptions {

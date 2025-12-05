@@ -3,7 +3,7 @@ import { BaseEntity } from 'src/database';
 import { FileStatus, FileType } from '../enums';
 import { UploadChunk } from './upload-chunk.entity';
 
-@Entity('ra_files')
+@Entity('files')
 export class File extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;

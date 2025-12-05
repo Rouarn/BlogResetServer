@@ -1,12 +1,9 @@
 import type { NamingStrategyInterface } from 'typeorm';
 import { DefaultNamingStrategy } from 'typeorm';
 import { snakeCase } from 'typeorm/util/StringUtils';
-import type { DatabaseConfig } from '../types';
+import type { DatabaseConfig } from '../interfaces';
 
-export class DatabaseNamingStrategy
-  extends DefaultNamingStrategy
-  implements NamingStrategyInterface
-{
+export class DatabaseNamingStrategy extends DefaultNamingStrategy implements NamingStrategyInterface {
   constructor(
     private readonly fieldNames?: DatabaseConfig['fieldNames'],
     private readonly tablePrefix?: DatabaseConfig['tablePrefix'],
@@ -23,11 +20,8 @@ export class DatabaseNamingStrategy
           : undefined;
 
     const baseName = customName ?? configuredName ?? propertyName;
-    const withPrefix = embeddedPrefixes.length
-      ? `${embeddedPrefixes.join('_')}${baseName}`
-      : baseName;
+    const withPrefix = embeddedPrefixes.length ? `${embeddedPrefixes.join('_')}${baseName}` : baseName;
 
-    // 保持配置提供的自定义名称原样，其余按 snake_case 处理以与默认策略一致
     const isCustom = !!(customName || configuredName);
     return isCustom ? withPrefix : snakeCase(withPrefix);
   }
