@@ -6,6 +6,8 @@ export interface DatabaseConfig {
     createTime?: string;
     updateTime?: string;
   };
+  /** 表名前缀（来自环境变量），例如：ra_ */
+  tablePrefix?: string;
   /** 时间戳字段配置 */
   timestampFields?: {
     createTime?: string;

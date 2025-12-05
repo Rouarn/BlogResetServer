@@ -10,7 +10,7 @@ import { BeforeInsert, Column, Entity, OneToOne, PrimaryGeneratedColumn } from '
  * 专门负责用户认证相关的信息
  * 包括用户名、密码、状态等认证必需的字段
  */
-@Entity('ra_auth')
+@Entity('auth')
 export class Auth extends BaseEntity {
   @PrimaryGeneratedColumn('uuid', { comment: '认证ID' })
   id: string;

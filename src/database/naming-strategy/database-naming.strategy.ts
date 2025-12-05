@@ -7,7 +7,10 @@ export class DatabaseNamingStrategy
   extends DefaultNamingStrategy
   implements NamingStrategyInterface
 {
-  constructor(private readonly fieldNames?: DatabaseConfig['fieldNames']) {
+  constructor(
+    private readonly fieldNames?: DatabaseConfig['fieldNames'],
+    private readonly tablePrefix?: DatabaseConfig['tablePrefix'],
+  ) {
     super();
   }
 
@@ -27,5 +30,13 @@ export class DatabaseNamingStrategy
     // 保持配置提供的自定义名称原样，其余按 snake_case 处理以与默认策略一致
     const isCustom = !!(customName || configuredName);
     return isCustom ? withPrefix : snakeCase(withPrefix);
+  }
+
+  tableName(className: string, customName?: string): string {
+    const base = customName ?? snakeCase(className);
+    const prefix = this.tablePrefix?.trim();
+    if (!prefix) return base;
+    const normalized = prefix.endsWith('_') ? prefix : `${prefix}_`;
+    return base.startsWith(normalized) ? base : `${normalized}${base}`;
   }
 }

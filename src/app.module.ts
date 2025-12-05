@@ -78,7 +78,7 @@ import { UsersModule } from './modules/users/users.module';
       inject: [AppConfigService, DATABASE_CONFIG],
       useFactory: (configService: AppConfigService, dbConfig: DatabaseConfig) => ({
         ...configService.databaseConfig,
-        namingStrategy: new DatabaseNamingStrategy(dbConfig.fieldNames),
+        namingStrategy: new DatabaseNamingStrategy(dbConfig.fieldNames, dbConfig.tablePrefix),
         autoLoadEntities: true,
         retryDelay: 500,
         retryAttempts: 10,
@@ -94,6 +94,7 @@ import { UsersModule } from './modules/users/users.module';
         createTime: 'createTime',
         updateTime: 'updateTime',
       },
+      tablePrefix: process.env.NEST_DATABASE_TABLE_PREFIX ?? '',
     }),
 
     // =============================================================================

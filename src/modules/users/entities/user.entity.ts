@@ -1,14 +1,14 @@
-import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { BaseEntity } from 'src/database';
-import { Gender, Role } from 'src/common/enums';
 import { Auth } from '@/modules/auth/entities/auth.entity';
+import { Gender, Role } from 'src/common/enums';
+import { BaseEntity } from 'src/database';
+import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 /**
  * 用户信息实体
  * 专门负责存储用户的个人资料信息
  * 与认证信息分离，职责单一
  */
-@Entity('ra_users')
+@Entity('users')
 export class User extends BaseEntity {
   @PrimaryGeneratedColumn('uuid', { comment: '用户ID' })
   id: string;

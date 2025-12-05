@@ -136,6 +136,7 @@ export default registerAs('app', () => ({
     username: process.env.NEST_DATABASE_USER ?? 'root',
     password: process.env.NEST_DATABASE_PASSWORD ?? '',
     database: process.env.NEST_DATABASE_NAME ?? 'nestjs_app',
+    tablePrefix: process.env.NEST_DATABASE_TABLE_PREFIX ?? '',
     synchronize:
       process.env.NEST_DATABASE_SYNCHRONIZE === 'true' || process.env.NODE_ENV === 'development',
     // 精细化日志控制 - 默认关闭所有查询日志
