@@ -15,6 +15,7 @@ import {
   Logger,
   NestInterceptor,
 } from '@nestjs/common';
+import { CACHE_TOKENS } from 'src/common/constants';
 import { Reflector } from '@nestjs/core';
 import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -35,7 +36,7 @@ export class CacheInterceptor implements NestInterceptor {
   private readonly logger = new Logger(CacheInterceptor.name);
 
   constructor(
-    @Inject('I_CACHE_SERVICE') private readonly cacheService: ICacheService,
+    @Inject(CACHE_TOKENS.I_CACHE_SERVICE) private readonly cacheService: ICacheService,
     private readonly reflector: Reflector,
   ) {}
 
