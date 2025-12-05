@@ -15,37 +15,82 @@ export class Comment extends BaseEntity {
   @PrimaryGeneratedColumn('uuid', { comment: 'ID' })
   id: string;
 
-  @Column({ name: 'article_id', type: 'uuid', comment: '文章ID（ra_articles.id）' })
+  @Column({ name: 'article_id', type: 'uuid', comment: '文章ID（articles.id）' })
   articleId: string;
 
-  @Column({ name: 'parent_id', type: 'uuid', nullable: true, comment: '父评论ID（ra_comments.id）' })
+  @Column({ name: 'parent_id', type: 'uuid', nullable: true, comment: '父评论ID（comments.id）' })
   parentId: string | null;
 
-  @Column({ name: 'user_id', type: 'uuid', nullable: true, comment: '评论用户ID（登录用户可为空表示游客）' })
+  @Column({
+    name: 'user_id',
+    type: 'uuid',
+    nullable: true,
+    comment: '评论用户ID（登录用户可为空表示游客）',
+  })
   userId: string | null;
 
-  @Column({ name: 'author_nickname', type: 'varchar', length: 100, nullable: true, comment: '游客昵称' })
+  @Column({
+    name: 'author_nickname',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+    comment: '游客昵称',
+  })
   authorNickname: string | null;
 
-  @Column({ name: 'author_email', type: 'varchar', length: 255, nullable: true, comment: '游客邮箱' })
+  @Column({
+    name: 'author_email',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    comment: '游客邮箱',
+  })
   authorEmail: string | null;
 
-  @Column({ name: 'author_website', type: 'varchar', length: 255, nullable: true, comment: '游客网站' })
+  @Column({
+    name: 'author_website',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    comment: '游客网站',
+  })
   authorWebsite: string | null;
 
   @Column({ type: 'text', comment: '评论内容' })
   content: string;
 
-  @Column({ type: 'enum', enum: CommentStatus, default: CommentStatus.PENDING, comment: '审核状态' })
+  @Column({
+    type: 'enum',
+    enum: CommentStatus,
+    default: CommentStatus.PENDING,
+    comment: '审核状态',
+  })
   status: CommentStatus;
 
-  @Column({ name: 'ip_hash', type: 'varchar', length: 64, nullable: true, comment: 'IP 哈希（去重/风控）' })
+  @Column({
+    name: 'ip_hash',
+    type: 'varchar',
+    length: 64,
+    nullable: true,
+    comment: 'IP 哈希（去重/风控）',
+  })
   ipHash: string | null;
 
-  @Column({ name: 'user_agent', type: 'varchar', length: 255, nullable: true, comment: '客户端 UA' })
+  @Column({
+    name: 'user_agent',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    comment: '客户端 UA',
+  })
   userAgent: string | null;
 
-  @Column({ name: 'moderated_by_id', type: 'uuid', nullable: true, comment: '审核人用户ID（ra_users.id）' })
+  @Column({
+    name: 'moderated_by_id',
+    type: 'uuid',
+    nullable: true,
+    comment: '审核人用户ID（users.id）',
+  })
   moderatedById: string | null;
 
   @Column({ name: 'moderated_at', type: 'timestamp', nullable: true, comment: '审核时间' })

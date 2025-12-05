@@ -8,10 +8,10 @@ export class ArticleRevision extends BaseEntity {
   @PrimaryGeneratedColumn('uuid', { comment: 'ID' })
   id: string;
 
-  @Column({ name: 'article_id', type: 'uuid', comment: '文章ID（ra_articles.id）' })
+  @Column({ name: 'article_id', type: 'uuid', comment: '文章ID（articles.id）' })
   articleId: string;
 
-  @Column({ name: 'editor_id', type: 'uuid', comment: '编辑者ID（ra_users.id）' })
+  @Column({ name: 'editor_id', type: 'uuid', comment: '编辑者ID（users.id）' })
   editorId: string;
 
   @Column({ length: 255, comment: '修订标题' })

@@ -16,7 +16,7 @@ export class Category extends BaseEntity {
   @Column({ type: 'text', nullable: true, comment: '分类描述' })
   description: string | null;
 
-  @Column({ name: 'parent_id', type: 'uuid', nullable: true, comment: '父分类ID（ra_categories.id）' })
+  @Column({ name: 'parent_id', type: 'uuid', nullable: true, comment: '父分类ID（categories.id）' })
   parentId: string | null;
 
   @Column({ name: 'is_public', type: 'boolean', default: true, comment: '是否公开' })

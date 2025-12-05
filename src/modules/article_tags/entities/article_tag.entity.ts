@@ -5,10 +5,10 @@ import { Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 
 @Entity('article_tags')
 export class ArticleTag extends BaseEntity {
-  @PrimaryColumn({ name: 'article_id', type: 'uuid', comment: '文章ID（ra_articles.id）' })
+  @PrimaryColumn({ name: 'article_id', type: 'uuid', comment: '文章ID（articles.id）' })
   articleId: string;
 
-  @PrimaryColumn({ name: 'tag_id', type: 'uuid', comment: '标签ID（ra_tags.id）' })
+  @PrimaryColumn({ name: 'tag_id', type: 'uuid', comment: '标签ID（tags.id）' })
   tagId: string;
 
   @ManyToOne(() => Article, { onDelete: 'CASCADE' })

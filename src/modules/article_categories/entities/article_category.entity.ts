@@ -5,10 +5,10 @@ import { Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 
 @Entity('article_categories')
 export class ArticleCategory extends BaseEntity {
-  @PrimaryColumn({ name: 'article_id', type: 'uuid', comment: '文章ID（ra_articles.id）' })
+  @PrimaryColumn({ name: 'article_id', type: 'uuid', comment: '文章ID（articles.id）' })
   articleId: string;
 
-  @PrimaryColumn({ name: 'category_id', type: 'uuid', comment: '分类ID（ra_categories.id）' })
+  @PrimaryColumn({ name: 'category_id', type: 'uuid', comment: '分类ID（categories.id）' })
   categoryId: string;
 
   @ManyToOne(() => Article, { onDelete: 'CASCADE' })

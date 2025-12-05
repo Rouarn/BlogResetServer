@@ -19,14 +19,14 @@ export class Article extends BaseEntity {
   @PrimaryGeneratedColumn('uuid', { comment: 'ID' })
   id: string;
 
-  @Column({ name: 'author_id', type: 'uuid', comment: '作者用户ID（ra_users.id）' })
+  @Column({ name: 'author_id', type: 'uuid', comment: '作者用户ID（users.id）' })
   authorId: string;
 
   @Column({
     name: 'editor_id',
     type: 'uuid',
     nullable: true,
-    comment: '最近编辑者用户ID（ra_users.id）',
+    comment: '最近编辑者用户ID（users.id）',
   })
   editorId: string | null;
 
@@ -71,27 +71,12 @@ export class Article extends BaseEntity {
     name: 'cover_file_id',
     type: 'uuid',
     nullable: true,
-    comment: '封面文件ID（ra_files.id）',
+    comment: '封面文件ID（files.id）',
   })
   coverFileId: string | null;
 
-  @Column({ name: 'seo_title', type: 'varchar', length: 255, nullable: true, comment: 'SEO 标题' })
-  seoTitle: string | null;
-
-  @Column({
-    name: 'seo_description',
-    type: 'varchar',
-    length: 500,
-    nullable: true,
-    comment: 'SEO 描述',
-  })
-  seoDescription: string | null;
-
   @Column({ name: 'allow_comments', type: 'boolean', default: true, comment: '是否允许评论' })
   allowComments: boolean;
-
-  @Column({ length: 10, default: 'zh-CN', comment: '内容语言代码' })
-  language: string;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'author_id' })
