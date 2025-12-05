@@ -42,7 +42,16 @@ import {
 // 业务模块导入
 import { CacheInterceptor, CacheModule } from '@/shared/cache';
 import { FilesModule } from '@/shared/files/files.module';
+import { ArticleCategoriesModule } from './modules/article_categories/article_categories.module';
+import { ArticleFilesModule } from './modules/article_files/article_files.module';
+import { ArticleLikesModule } from './modules/article_likes/article_likes.module';
+import { ArticleRevisionsModule } from './modules/article_revisions/article_revisions.module';
+import { ArticleTagsModule } from './modules/article_tags/article_tags.module';
+import { ArticlesModule } from './modules/articles/articles.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CategoriesModule } from './modules/categories/categories.module';
+import { CommentsModule } from './modules/comments/comments.module';
+import { TagsModule } from './modules/tags/tags.module';
 import { UsersModule } from './modules/users/users.module';
 
 /**
@@ -108,6 +117,15 @@ import { UsersModule } from './modules/users/users.module';
     UsersModule, // 用户管理模块 (用户资料、状态管理、CRUD)
     FilesModule, // 文件管理模块 (上传、下载、存储)
     CacheModule, // 缓存模块 (Redis/内存缓存，支持装饰器)
+    ArticlesModule, // 文章模块 (文章 CRUD、发布、状态管理)
+    TagsModule, // 标签模块 (标签 CRUD、关联管理)
+    CategoriesModule, // 分类模块 (分类 CRUD、层级关系)
+    ArticleTagsModule, // 文章标签关联模块 (文章与标签多对多关系)
+    ArticleCategoriesModule, // 文章分类关联模块 (文章与分类多对多关系)
+    CommentsModule, // 评论模块 (评论 CRUD、状态管理)
+    ArticleLikesModule, // 文章点赞模块 (用户点赞、匿名点赞)
+    ArticleRevisionsModule, // 文章修订模块 (文章内容历史记录)
+    ArticleFilesModule, // 文章文件关联模块 (文章与文件多对多关系)
   ],
 
   // =============================================================================
