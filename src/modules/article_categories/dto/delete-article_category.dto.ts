@@ -1,12 +1,24 @@
-import { IsOptional, IsUUID, IsArray, ArrayNotEmpty } from 'class-validator';
+import { Type } from 'class-transformer';
+import { ArrayNotEmpty, IsArray, IsOptional, IsUUID, ValidateNested } from 'class-validator';
+
+export class ArticleCategoryKeyDto {
+  @IsUUID()
+  articleId: string;
+
+  @IsUUID()
+  categoryId: string;
+}
 
 export class DeleteArticleCategoryDto {
   @IsOptional()
-  @IsUUID()
-  id?: string;
+  @ValidateNested()
+  @Type(() => ArticleCategoryKeyDto)
+  key?: ArticleCategoryKeyDto;
 
   @IsOptional()
   @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ArticleCategoryKeyDto)
   @ArrayNotEmpty()
-  ids?: string[];
+  keys?: ArticleCategoryKeyDto[];
 }

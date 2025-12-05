@@ -27,16 +27,23 @@ export class ArticleCategoriesController {
     return await this.service.findAll(current, size);
   }
 
-  @Get(':id')
+  @Get(':articleId/:categoryId')
   @ApiOperation({ summary: '查询单条' })
-  async findOne(@Param('id') id: string): Promise<ArticleCategory> {
-    return await this.service.findById(id);
+  async findOne(
+    @Param('articleId') articleId: string,
+    @Param('categoryId') categoryId: string,
+  ): Promise<ArticleCategory> {
+    return await this.service.findById(articleId, categoryId);
   }
 
-  @Patch(':id')
+  @Patch(':articleId/:categoryId')
   @ApiOperation({ summary: '修改单条' })
-  async update(@Param('id') id: string, @Body() dto: UpdateArticleCategoryDto): Promise<void> {
-    return await this.service.update(id, dto);
+  async update(
+    @Param('articleId') articleId: string,
+    @Param('categoryId') categoryId: string,
+    @Body() dto: UpdateArticleCategoryDto,
+  ): Promise<void> {
+    return await this.service.update(articleId, categoryId, dto);
   }
 
   @Delete()

@@ -27,16 +27,23 @@ export class ArticleFilesController {
     return await this.service.findAll(current, size);
   }
 
-  @Get(':id')
+  @Get(':articleId/:fileId')
   @ApiOperation({ summary: '查询单条' })
-  async findOne(@Param('id') id: string): Promise<ArticleFile> {
-    return await this.service.findById(id);
+  async findOne(
+    @Param('articleId') articleId: string,
+    @Param('fileId') fileId: string,
+  ): Promise<ArticleFile> {
+    return await this.service.findById(articleId, fileId);
   }
 
-  @Patch(':id')
+  @Patch(':articleId/:fileId')
   @ApiOperation({ summary: '修改单条' })
-  async update(@Param('id') id: string, @Body() dto: UpdateArticleFileDto): Promise<void> {
-    return await this.service.update(id, dto);
+  async update(
+    @Param('articleId') articleId: string,
+    @Param('fileId') fileId: string,
+    @Body() dto: UpdateArticleFileDto,
+  ): Promise<void> {
+    return await this.service.update(articleId, fileId, dto);
   }
 
   @Delete()

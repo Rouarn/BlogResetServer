@@ -1,7 +1,13 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateArticleFileDto {
+  @IsUUID()
+  articleId: string;
+
+  @IsUUID()
+  fileId: string;
+
   @IsOptional()
   @IsString()
-  name?: string;
+  description?: string;
 }

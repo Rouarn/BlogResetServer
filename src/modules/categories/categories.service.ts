@@ -19,7 +19,7 @@ export class CategoriesService {
   ) {}
 
   async create(dto: CreateCategoryDto): Promise<void> {
-    const entity = this.repo.create(dto as Category);
+    const entity = this.repo.create(dto as Partial<Category>);
     await this.repo.save(entity);
     return;
   }

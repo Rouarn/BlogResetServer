@@ -19,7 +19,7 @@ export class CommentsService {
   ) {}
 
   async create(dto: CreateCommentDto): Promise<void> {
-    const entity = this.repo.create(dto as Comment);
+    const entity = this.repo.create(dto as Partial<Comment>);
     await this.repo.save(entity);
     return;
   }

@@ -19,7 +19,7 @@ export class ArticlesService {
   ) {}
 
   async create(dto: CreateArticleDto): Promise<void> {
-    const entity = this.repo.create(dto as Article);
+    const entity = this.repo.create(dto as Partial<Article>);
     await this.repo.save(entity);
     return;
   }

@@ -19,7 +19,7 @@ export class ArticleRevisionsService {
   ) {}
 
   async create(dto: CreateArticleRevisionDto): Promise<void> {
-    const entity = this.repo.create(dto as ArticleRevision);
+    const entity = this.repo.create(dto as Partial<ArticleRevision>);
     await this.repo.save(entity);
     return;
   }

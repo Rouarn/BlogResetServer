@@ -1,12 +1,24 @@
-import { IsOptional, IsUUID, IsArray, ArrayNotEmpty } from 'class-validator';
+import { Type } from 'class-transformer';
+import { ArrayNotEmpty, IsArray, IsOptional, IsUUID, ValidateNested } from 'class-validator';
+
+export class ArticleTagKeyDto {
+  @IsUUID()
+  articleId: string;
+
+  @IsUUID()
+  tagId: string;
+}
 
 export class DeleteArticleTagDto {
   @IsOptional()
-  @IsUUID()
-  id?: string;
+  @ValidateNested()
+  @Type(() => ArticleTagKeyDto)
+  key?: ArticleTagKeyDto;
 
   @IsOptional()
   @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ArticleTagKeyDto)
   @ArrayNotEmpty()
-  ids?: string[];
+  keys?: ArticleTagKeyDto[];
 }

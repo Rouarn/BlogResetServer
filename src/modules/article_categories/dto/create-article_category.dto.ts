@@ -1,7 +1,9 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsUUID } from 'class-validator';
 
 export class CreateArticleCategoryDto {
-  @IsOptional()
-  @IsString()
-  name?: string;
+  @IsUUID()
+  articleId: string;
+
+  @IsUUID()
+  categoryId: string;
 }

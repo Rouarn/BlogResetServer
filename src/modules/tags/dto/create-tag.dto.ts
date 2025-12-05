@@ -1,7 +1,17 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class CreateTagDto {
+  @IsString()
+  name: string;
+
+  @IsString()
+  slug: string;
+
   @IsOptional()
   @IsString()
-  name?: string;
+  description?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isPublic?: boolean;
 }

@@ -1,7 +1,20 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUUID, Length } from 'class-validator';
+import { LikeBy } from '../entities/article_like.entity';
 
 export class CreateArticleLikeDto {
+  @IsUUID()
+  articleId: string;
+
+  @IsOptional()
+  @IsEnum(LikeBy)
+  likedBy?: LikeBy;
+
+  @IsOptional()
+  @IsUUID()
+  userId?: string;
+
   @IsOptional()
   @IsString()
-  name?: string;
+  @Length(1, 64)
+  ipHash?: string;
 }

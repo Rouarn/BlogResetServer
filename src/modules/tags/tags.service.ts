@@ -19,7 +19,7 @@ export class TagsService {
   ) {}
 
   async create(dto: CreateTagDto): Promise<void> {
-    const entity = this.repo.create(dto as Tag);
+    const entity = this.repo.create(dto as Partial<Tag>);
     await this.repo.save(entity);
     return;
   }

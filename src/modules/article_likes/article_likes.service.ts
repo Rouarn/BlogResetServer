@@ -19,7 +19,7 @@ export class ArticleLikesService {
   ) {}
 
   async create(dto: CreateArticleLikeDto): Promise<void> {
-    const entity = this.repo.create(dto as ArticleLike);
+    const entity = this.repo.create(dto as Partial<ArticleLike>);
     await this.repo.save(entity);
     return;
   }
