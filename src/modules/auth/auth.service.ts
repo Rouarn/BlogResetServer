@@ -665,7 +665,7 @@ export class AuthService {
       relations: ['user'],
     });
     if (!auth) {
-      throw BusinessExceptionFactory.notFound('认证记录', { authId });
+      throw BusinessExceptionFactory.notFound('认证记录', { reason: `认证ID ${authId} 不存在` });
     }
     return auth;
   }
