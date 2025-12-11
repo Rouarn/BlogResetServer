@@ -206,8 +206,8 @@ export class ${PascalPlural}Controller {
 
   @Delete()
   @ApiOperation({ summary: '删除记录' })
-  async delete(@Body() dto: Delete${PascalSingular}Dto): Promise<{ message: string; deletedCount: number }> {
-    return await this.service.remove(dto);
+  async delete(@Query() query: Delete${PascalSingular}Dto): Promise<{ message: string; deletedCount: number }> {
+    return await this.service.remove(query);
   }
 }
 `;

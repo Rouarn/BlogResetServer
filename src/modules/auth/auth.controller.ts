@@ -21,7 +21,7 @@ import {
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { GetCurrentUser, Public } from 'src/common/decorators';
-import { BusinessExceptionFactory } from '../../common/exceptions';
+import { BusinessExceptionFactory } from '@/common/exceptions';
 import { AuthService } from './auth.service';
 import { CaptchaVerifyDto } from './dto/captcha-verify.dto';
 import { CreateAuthDto } from './dto/create-auth.dto';
