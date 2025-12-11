@@ -1,8 +1,178 @@
-# Files Module 文件管理模块
+# 文件上传系统（src/shared/files）
 
-## 📋 模块概述
+本系统提供单文件上传、批量上传、下载、预览、删除与列表查询等能力，采用本地存储，支持灵活的大小与类型限制，并具备权限与安全验证。
 
-Files 模块是一个功能完整的文件管理系统，提供文件上传、下载、预览、删除等核心功能。支持单文件上传、批量上传和分块上传，具备完善的权限控制和安全验证机制。
+## 目录
+
+- 概述
+- 目录结构
+- 功能分析
+- 接口与实现
+- 存储位置与命名规则
+- 配置参数
+- 注意事项
+- 性能优化与最佳实践
+- 示例代码
+
+## 目录结构
+
+```
+src/shared/files/
+├── decorators/
+│   └── file-permissions.decorator.ts
+├── dto/
+│   ├── file-query.dto.ts
+│   ├── file-upload.dto.ts
+│   └── swagger-responses.dto.ts
+├── entities/
+│   ├── file.entity.ts
+│   └── upload-chunk.entity.ts
+├── enums/
+│   ├── file-status.enum.ts
+│   └── file-type.enum.ts
+├── guards/
+│   └── file-access.guard.ts
+├── interfaces/
+│   ├── file-upload.interface.ts
+│   ├── storage-factory.interface.ts
+│   └── storage.interface.ts
+├── services/
+│   ├── chunk.service.ts
+│   ├── files.service.ts
+│   ├── storage-factory.service.ts
+│   ├── storage.service.ts
+│   └── validation.service.ts
+├── files.controller.ts
+├── files.module.ts
+└── README.md
+```
+
+## 功能分析
+
+- 单文件上传：`POST /files/upload`，内存存储接收，验证大小与类型，去重保存
+- 批量上传：`POST /files/upload/batch`，并发处理，统计成功/失败与总数
+- 文件列表：分页、搜索、类型/状态筛选、公开/私有过滤与排序
+- 文件详情：权限校验后返回单条记录
+- 下载与预览：按权限输出二进制流，设置 `Content-Type` 与 `Disposition`
+- 删除文件：仅所有者允许删除，同时删除物理文件与数据库记录
+
+实现入口与接口：
+
+- 控制器：`files.controller.ts:58-149,227-334`
+- 服务：
+  - 单/批量上传与列表/删除：`services/files.service.ts:24-74,76-110,112-161,163-201,203-207,223-235`
+  - 存储适配与 URL 生成：`services/storage.service.ts:15-29,31-53,55-79,82-95,96-113,114-122`
+  - 验证与命名：`services/validation.service.ts:37-69,71-88,90-116`
+
+## 接口与实现
+
+- 单文件上传：`POST /files/upload`
+  - 入参：`multipart/form-data`，字段 `file`、可选 `description`、`isPublic`、`protocol`
+  - 拦截器：`FileInterceptor('file')`
+  - 处理：`FilesService.uploadSingleFile`
+
+- 批量上传：`POST /files/upload/batch`
+  - 入参：`multipart/form-data`，字段 `files[]`，可选 `description`、`isPublic`
+  - 拦截器：`FilesInterceptor('files', 10)`（数量受配置）
+  - 处理：`FilesService.uploadMultipleFiles`
+
+
+- 文件列表：`GET /files`
+  - 查询：`size/current/type/status/search/publicOnly/sortBy/sortOrder`（DTO 校验与默认值）
+
+- 文件详情：`GET /files/:id`（`FileAccessGuard` 校验）
+
+- 下载：`GET /files/:id/download`（按权限设置响应头并输出 Buffer）
+
+- 预览：`GET /files/:id/preview`（与下载一致，`Disposition: inline`）
+
+- 删除：`DELETE /files/:id`（仅所有者；同时删除物理文件与记录）
+
+## 存储位置与命名规则
+
+- 存储类型：本地（`StorageService`）
+- 根路径：来自配置 `app.static.uploadsPath`（见“配置参数”）
+- 相对路径：`YYYY-MM/<生成文件名>`（日期路径由 `formatDatePath()` 生成）
+- 文件名规则：`<timestamp>_<random8>.<ext>`（原始扩展名保留）
+- 哈希：`sha256(buffer)`，用于去重与校验
+
+## 配置参数
+
+- 读取位置
+  - Multer 接收与过滤：`files.module.ts` 使用 `app.static.options.*`
+  - 存储服务：`storage.service.ts` 使用 `app.static.*`（直接读取上传配置）
+  - 访问 URL：使用应用配置服务 `appConfig.staticAssetsOptions` 与 `appConfig.baseUrl`
+
+- 环境变量（默认值）
+  - `NEST_STATIC_ASSETS_DIR`（`./static`）：静态资源根目录
+  - `NEST_STATIC_ASSETS_PREFIX`（`/static`）：静态资源 URL 前缀
+  - `NEST_STATIC_ASSETS_MAXAGE`（`86400`）：缓存时长秒
+  - `NEST_STATIC_UPLOAD_PATH`（`./static/uploads`）：上传文件物理根路径（URL 计算用）
+  - `NEST_UPLOAD_MAX_SIZE`（`10485760`，10MB）：单文件大小上限
+  - `NEST_UPLOAD_ALLOWED_TYPES`（`[]`）：允许的 MIME 类型列表，为空表示不限制
+  - `NEST_UPLOAD_MAX_FILES`（`10`）：批量上传最大数量
+  - `NEST_BASE_URL`（`http://localhost:<port>`）：基础 URL（用于拼接访问地址）
+
+- 运行时配置键
+  - `app.static.uploadsPath`：上传文件物理存储根路径
+  - `app.static.uploadsMaxSize`：大小限制（字节）
+  - `app.static.uploadsAllowedTypes`：允许 MIME 列表
+  - `app.static.options.uploadsMaxFiles`：批量上传最大数量
+
+- 可选值范围与说明
+  - 大小限制：建议 `1MB–1GB` 之间，过大需采用分块上传
+  - 类型限制：为空表示不限制；非空时必须与上传的 `file.mimetype` 一致（会进行内容类型探测）
+  - 批量数量：建议 `1–100`，默认 `10`
+
+- 关键配置项与必填参数
+  - 必填：`NEST_UPLOAD_MAX_SIZE`（生产环境强烈建议设置）
+  - 关键：`NEST_UPLOAD_ALLOWED_TYPES`（安全白名单）、`NEST_STATIC_UPLOAD_PATH`（存储根路径）
+
+## 注意事项
+
+- 注意事项
+- 认证与权限：所有接口标注 `ApiBearerAuth`；详情/下载/预览通过 `FileAccessGuard` 检查公开/私有与所有者关系
+- 删除权限：仅所有者可以删除；公共文件可被任何人访问但不可被他人删除
+- 去重规则：同内容（哈希一致）直接返回已存在记录，不重复写入
+- 存储类型：`StorageFactoryService` 仅支持本地类型，若需云存储需扩展适配器
+- URL 生成：依赖 `appConfig.baseUrl` 与静态前缀；部署时需确保静态目录挂载与前缀一致
+
+## 性能优化与最佳实践
+
+- 列表查询仅选择必要字段与建立索引（如 `status/createTime`）
+- 上传路径分月归档（`YYYY-MM`）便于清理与容量管理
+- 统一 MIME 白名单与大小限制，避免不一致导致的隐患
+ 
+
+## 示例代码
+
+单文件上传（curl）：
+
+```bash
+curl -X POST "http://localhost:3000/files/upload" \
+  -H "Authorization: Bearer <token>" \
+  -F "file=@/path/to/file.jpg" \
+  -F "description=示例文件" \
+  -F "isPublic=false"
+```
+
+服务内调用：
+
+```ts
+import { FilesService } from 'src/shared/files/services/files.service';
+
+const result = await filesService.uploadSingleFile(file, {
+  description: '用户上传',
+  isPublic: false,
+  protocol: 'HTTP'
+});
+```
+
+ 
+
+---
+
+维护者提示：如需扩展至云存储，请在 `interfaces/storage.interface.ts` 基础上实现新适配器，并在 `StorageFactoryService` 中添加类型支持。
 
 ## 🏗️ 模块结构
 

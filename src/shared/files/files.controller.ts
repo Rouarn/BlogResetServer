@@ -26,34 +26,19 @@ import {
 } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { GetCurrentUser } from 'src/common/decorators';
-import { FilesValidationPipe, FileValidationPipe } from 'src/common/pipes';
+import { FileValidationPipe, FilesValidationPipe } from 'src/common/pipes';
 import type { Auth as CurrentUser } from 'src/modules/auth/entities/auth.entity';
-import {
-  ChunkUploadCompleteDto,
-  ChunkUploadDto,
-  ChunkUploadInitDto,
-  FileQueryDto,
-  FileUploadDto,
-} from './dto';
+import { FileQueryDto, FileUploadDto } from './dto';
 import { FileListResponseDto, FileUploadResponseDto } from './dto/swagger-responses.dto';
 import { FileAccessGuard } from './guards/file-access.guard';
-import {
-  BatchUploadResult,
-  ChunkUploadResult,
-  FileUploadResult,
-  UploadProgress,
-} from './interfaces';
-import { ChunkService } from './services/chunk.service';
+import { BatchUploadResult, FileUploadResult } from './interfaces';
 import { FilesService } from './services/files.service';
 
 @ApiTags('文件管理')
 @ApiBearerAuth()
 @Controller('files')
 export class FilesController {
-  constructor(
-    private readonly filesService: FilesService,
-    private readonly chunkService: ChunkService,
-  ) {}
+  constructor(private readonly filesService: FilesService) {}
 
   @Post('upload')
   @ApiOperation({ summary: '单文件上传' })
@@ -148,90 +133,14 @@ export class FilesController {
     return result;
   }
 
-  @Post('upload/chunk/init')
-  @ApiOperation({ summary: '初始化分块上传' })
-  @ApiResponse({ status: 201, description: '分块上传初始化成功' })
-  async initChunkUpload(
-    @Body() initDto: ChunkUploadInitDto,
-    @GetCurrentUser() user?: CurrentUser,
-  ): Promise<{
-    success: boolean;
-    data: unknown;
-    message: string;
-  }> {
-    const result = await this.chunkService.initChunkUpload(initDto, user?.id);
-    return {
-      success: true,
-      data: result,
-      message: '分块上传初始化成功',
-    };
-  }
-
-  @Post('upload/chunk')
-  @ApiOperation({ summary: '上传文件分块' })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        chunk: {
-          type: 'string',
-          format: 'binary',
-        },
-        uploadId: {
-          type: 'string',
-        },
-        chunkNumber: {
-          type: 'number',
-        },
-        chunkHash: {
-          type: 'string',
-        },
-      },
-    },
-  })
-  @ApiResponse({ status: 201, description: '分块上传成功' })
-  @UseInterceptors(FileInterceptor('chunk'))
-  async uploadChunk(
-    @UploadedFile() chunk: Express.Multer.File,
-    @Body() chunkDto: ChunkUploadDto,
-  ): Promise<ChunkUploadResult> {
-    const result = await this.chunkService.uploadChunk(chunk, chunkDto);
-    return result;
-  }
-
-  @Post('upload/chunk/complete')
-  @ApiOperation({ summary: '完成分块上传' })
-  @ApiResponse({ status: 201, description: '分块上传完成' })
-  async completeChunkUpload(@Body() completeDto: ChunkUploadCompleteDto): Promise<{
-    success: boolean;
-    data: unknown;
-    message: string;
-  }> {
-    const result = await this.chunkService.completeChunkUpload(completeDto);
-    return {
-      success: true,
-      data: result,
-      message: '分块上传完成',
-    };
-  }
-
-  @Get('upload/progress/:uploadId')
-  @ApiOperation({ summary: '获取上传进度' })
-  @ApiResponse({ status: 200, description: '获取上传进度成功' })
-  async getUploadProgress(@Param('uploadId') uploadId: string): Promise<UploadProgress> {
-    const result = await this.chunkService.getUploadProgress(uploadId);
-    return result;
-  }
-
   @Get()
   @ApiOperation({ summary: '获取文件列表' })
-  @ApiQuery({ name: 'size', required: false, description: '页码', example: 1 })
+  @ApiQuery({ name: 'size', required: false, description: '每页数量', example: 10 })
   @ApiQuery({
     name: 'current',
     required: false,
-    description: '每页数量',
-    example: 10,
+    description: '页码',
+    example: 1,
   })
   @ApiQuery({
     name: 'type',
