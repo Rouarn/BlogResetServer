@@ -1,5 +1,3 @@
-import type { FileStatus, FileType } from '../enums';
-
 /**
  * 文件上传配置
  */

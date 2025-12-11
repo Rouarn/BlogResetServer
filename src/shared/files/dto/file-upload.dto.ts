@@ -1,15 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import {
-  IsArray,
-  IsBoolean,
-  IsEnum,
-  IsNumber,
-  IsOptional,
-  IsString,
-  ValidateNested,
-} from 'class-validator';
-import { FileType } from '../enums';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class FileUploadDto {
   @ApiProperty({ description: '文件描述' })

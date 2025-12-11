@@ -50,11 +50,9 @@ export class File extends BaseEntity {
   })
   fileType: FileType;
 
-
   @Column({ type: 'text', nullable: true })
   description: string;
 
   @Column({ name: 'is_public', default: false })
   isPublic: boolean;
-
 }
