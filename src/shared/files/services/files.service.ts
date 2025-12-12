@@ -129,8 +129,6 @@ export class FilesService {
       queryBuilder.andWhere('file.fileType = :type', { type });
     }
 
-    
-
     // 搜索过滤
     if (search) {
       queryBuilder.andWhere('(file.originalName ILIKE :search OR file.filename ILIKE :search)', {

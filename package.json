@@ -88,12 +88,5 @@
     "node": ">=22.18.0",
     "npm": ">=10.9.0",
     "pnpm": ">=10.15.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "ajv": "8.12.0",
-      "@eslint/eslintrc>ajv": "6.12.6",
-      "eslint>ajv": "6.12.6"
-    }
   }
 }
