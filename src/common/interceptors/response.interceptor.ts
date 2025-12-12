@@ -1,8 +1,3 @@
-import type { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
-import { Injectable, Logger } from '@nestjs/common';
-import type { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { formatTimestamp } from 'src/utils';
 import { DEFAULT_PAGINATION, SUCCESS_RESPONSE } from '@/common/constants';
 import {
   DeveloperPaginatedResponse,
@@ -12,6 +7,12 @@ import {
   PaginatedResponse,
   PaginationParams,
 } from '@/common/interfaces';
+import type { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import type { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { formatTimestamp } from 'src/utils';
+import { extractRootMessage, isPaginatedPayload, normalizePaginatedData } from './pagination.utils';
 
 /**
  * 响应数据格式化拦截器（ResponseInterceptor）
@@ -22,12 +23,16 @@ import {
  * - 将开发者接口返回的格式转换为统一的前端响应格式
  * - 普通接口支持两种返回格式：
  *   1. 直接返回数据：T -> {data: T, message: 'success', code: 200, timestamp: string}
- *   2. 包装格式：{data: T, message?: string} -> {data: T, message: string, code: 200, timestamp: string}
- * - 分页接口支持两种返回格式：
- *   1. 直接返回分页数据：{list: T[], total: number} -> 标准分页响应格式
- *   2. 包装格式：{data: {list: T[], total: number}, message?: string} -> 标准分页响应格式
+ *   2. 包装格式：{data: T, message?: R} -> {data: T, message: R, code: 200, timestamp: string}
+ * - 分页接口支持多种返回格式（自动识别并归一化为标准分页响应）：
+ *   1. 直接返回：{list: T[], total: number}
+ *   2. 直接返回：{records: T[], total: number}
+ *   3. 直接返回：{data: T[], total: number}
+ *   4. 包装返回：{data: {list: T[], total: number}, message?: string}
+ *   5. 包装返回：{data: {records: T[], total: number}, message?: string}
+ *   6. 包装返回：{data: {data: T[], total: number}, message?: string}
  * - 通过请求参数中的 current 和 size 字段判断是否为分页请求
- * - 如果开发者未提供 message，则使用默认的成功消息
+ * - 如根对象包含 message 字段，则透传为响应消息；否则使用默认成功消息
  *
  * 响应格式：
  * - 普通响应：{ code: 200, message: string, data: T, timestamp: string }
@@ -81,6 +86,10 @@ export class ResponseInterceptor<T = unknown> implements NestInterceptor {
    * 从请求中提取分页参数
    * @param request 请求对象
    * @returns 分页参数对象，如果不存在则返回 null
+   *
+   * 说明：
+   * - 合并 query/body/params 三处的参数
+   * - 仅当同时存在 current/size 时才视为分页请求
    */
   private extractPaginationParams(request: {
     query?: Record<string, unknown>;
@@ -113,6 +122,11 @@ export class ResponseInterceptor<T = unknown> implements NestInterceptor {
    * 提取普通响应的数据和消息
    * @param rawData 原始响应数据
    * @returns 提取的数据和消息
+   *
+   * 支持：
+   * - 直接返回数据：T
+   * - 包装格式：{data: T, message?: string}
+   * - 仅消息：{message: string}（此时 data 为空对象）
    */
   private extractDataAndMessage<T>(rawData: DeveloperResponse<T>): { data: T; message?: string } {
     // 检查是否为包装格式 {data: T, message?: string}
@@ -155,36 +169,24 @@ export class ResponseInterceptor<T = unknown> implements NestInterceptor {
    * 提取分页响应的数据和消息
    * @param rawData 原始分页响应数据
    * @returns 提取的分页数据和消息
+   *
+   * 识别路径：
+   * - 根或包装结构中的 list/records/data 三种数组键与 total
+   * - 若根包含 message（string 或 string[]），作为响应消息返回
+   *
+   * 返回：
+   * - data: 统一归一化后的 { list, total }
+   * - message: string | string[] | undefined
    */
   private extractPaginatedDataAndMessage<T>(rawData: DeveloperPaginatedResponse<T>): {
     data: { list: T[]; total: number };
-    message?: string;
+    message?: string | string[];
   } {
-    // 检查是否为包装格式 {data: {list: T[], total: number}, message?: string}
-    if (
-      typeof rawData === 'object' &&
-      rawData !== null &&
-      'data' in rawData &&
-      typeof rawData.data === 'object' &&
-      rawData.data !== null &&
-      'list' in rawData.data &&
-      'total' in rawData.data
-    ) {
-      const wrappedData = rawData as {
-        data: { list: T[]; total: number };
-        message?: string;
-      };
-      return {
-        data: wrappedData.data,
-        message: wrappedData.message,
-      };
-    }
-
-    // 直接返回的分页数据格式 {list: T[], total: number}
-    const directData = rawData as { list: T[]; total: number };
+    const rootMessage = extractRootMessage(rawData);
+    const normalized = normalizePaginatedData<T>(rawData);
     return {
-      data: directData,
-      message: undefined,
+      data: normalized,
+      message: rootMessage,
     };
   }
 
@@ -192,28 +194,15 @@ export class ResponseInterceptor<T = unknown> implements NestInterceptor {
    * 检查是否为开发者分页响应格式
    * @param data 响应数据
    * @returns 如果是分页响应则返回 true
+   *
+   * 规则：
+   * - 兼容根或包装结构
+   * - 识别 list/records/data 三种数组键，与 total 搭配
    */
   private isDeveloperPaginatedResponse<T>(
     data: DeveloperResponse<T> | DeveloperPaginatedResponse<T>,
   ): data is DeveloperPaginatedResponse<T> {
-    if (typeof data !== 'object' || data === null) {
-      return false;
-    }
-
-    // 检查直接分页格式 {list: T[], total: number}
-    if ('list' in data && 'total' in data && Array.isArray(data.list)) {
-      return true;
-    }
-
-    // 检查包装分页格式 {data: {list: T[], total: number}, message?: string}
-    return !!(
-      'data' in data &&
-      typeof data.data === 'object' &&
-      data.data !== null &&
-      'list' in data.data &&
-      'total' in data.data &&
-      Array.isArray((data.data as { list: unknown; total: unknown }).list)
-    );
+    return isPaginatedPayload<T>(data);
   }
 
   /**
@@ -221,6 +210,11 @@ export class ResponseInterceptor<T = unknown> implements NestInterceptor {
    * @param data 提取后的分页数据 {list: T[], total: number}
    * @param paginationParams 分页参数
    * @returns 标准化的分页数据结构
+   *
+   * 输出：
+   * - records: 直接映射为 list
+   * - totalPages: 由 total 与 size 计算
+   * - current/size: 来自请求参数
    */
   private formatDeveloperPaginatedData<T>(
     data: { list: T[]; total: number },
