@@ -31,7 +31,8 @@
     "deploy:prepare": "node scripts/deploy.js",
     "deploy:build": "pnpm run build:prod && pnpm run deploy:prepare",
     "deploy": "pnpm run code:check && pnpm run deploy:build",
-    "g:res": "node scripts/generate-resource.js"
+    "g:res": "node scripts/generate-resource.js",
+    "prepare": "husky"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.9",
@@ -59,6 +60,8 @@
     "xlsx": "0.18.5"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.2.0",
+    "@commitlint/config-conventional": "^20.2.0",
     "@nestjs/cli": "^11.0.14",
     "@nestjs/schematics": "^11.0.9",
     "@nestjs/swagger": "^11.2.3",
@@ -77,6 +80,8 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.32.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "prettier": "^3.7.4",
     "source-map-support": "^0.5.21",
     "ts-loader": "^9.5.4",
@@ -88,5 +93,14 @@
     "node": ">=22.18.0",
     "npm": ">=10.9.0",
     "pnpm": ">=10.15.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js}": [
+      "eslint --fix --max-warnings=0",
+      "prettier --write"
+    ],
+    "*.{json,md,css,scss,html,yaml,yml}": [
+      "prettier --write"
+    ]
   }
 }
