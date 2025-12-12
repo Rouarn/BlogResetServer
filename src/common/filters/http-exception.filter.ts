@@ -1,3 +1,9 @@
+/**
+ * 全局 HTTP 异常过滤器
+ * 统一将所有 `HttpException` 转换为规范的错误响应体，并在非生产环境附带 `stack`。
+ * 建议在 `main.ts` 中通过 `app.useGlobalFilters(new HttpExceptionFilter())` 注册。
+ */
+import type { ErrorResponse } from '@/common/interfaces';
 import {
   ArgumentsHost,
   Catch,
@@ -8,11 +14,20 @@ import {
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { formatTimestamp } from 'src/utils/helpers';
-import type { ErrorResponse } from '@/common/interfaces';
 
 @Injectable()
 @Catch(HttpException)
+/**
+ * 捕获并格式化 `HttpException`：
+ * - 兼容 `string` 或对象形式的异常响应
+ * - 自动填充 `code/message/data/success/timestamp/error/stack/url/path`
+ */
 export class HttpExceptionFilter implements ExceptionFilter {
+  /**
+   * 处理异常并写入响应
+   * @param exception 抛出的 `HttpException`
+   * @param host Nest 调用上下文
+   */
   catch(exception: HttpException, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -24,6 +39,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let message: string | string[] = '请求失败';
     let data: unknown = {};
 
+    // 兼容不同类型的异常响应：`string` 或对象
     if (typeof raw === 'string') {
       message = raw;
     } else if (typeof raw === 'object' && raw) {
@@ -33,9 +49,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
       if (typeof maybeMsg === 'string' || Array.isArray(maybeMsg)) {
         message = maybeMsg as string | string[];
       }
+      // 优先使用自带的 `data` 字段，否则回退为原始对象（便于调试）
       data = maybeData ?? resObj;
     }
 
+    // 统一的错误响应体；生产环境不返回堆栈信息
     const body: ErrorResponse = {
       code: status,
       message,
@@ -44,20 +62,23 @@ export class HttpExceptionFilter implements ExceptionFilter {
       timestamp: formatTimestamp(),
       error: exception.name,
       stack: process.env.NODE_ENV === 'production' ? undefined : exception.stack,
-      url: (() => {
-        const host =
-          (request.headers['x-forwarded-host'] as string) ??
-          (request.headers['host'] as string) ??
-          '';
-        const proto =
-          (request.headers['x-forwarded-proto'] as string) ??
-          (request.protocol as string) ??
-          'http';
-        return host ? `${proto}://${host}${request.originalUrl}` : request.originalUrl;
-      })(),
+      url: getUrl(request),
       path: request.path,
     };
 
     response.status(status).json(body);
   }
+}
+
+/**
+ * 根据请求头与协议生成完整访问 URL
+ * 优先使用反向代理头（`x-forwarded-host`/`x-forwarded-proto`）
+ * @param request Express 请求对象
+ * @returns 完整 URL 或原始路径
+ */
+function getUrl(request: Request): string {
+  const host =
+    (request.headers['x-forwarded-host'] as string) ?? (request.headers['host'] as string) ?? '';
+  const proto = (request.headers['x-forwarded-proto'] as string) ?? request.protocol ?? 'http';
+  return host ? `${proto}://${host}${request.originalUrl}` : request.originalUrl;
 }
