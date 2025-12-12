@@ -158,7 +158,7 @@ import { UsersModule } from './modules/users/users.module';
     // =============================================================================
     {
       provide: APP_PIPE,
-      useClass: CustomValidationPipe,
+      useClass: CustomValidationPipe, // 自定义验证管道 (全局验证)
     },
 
     // =============================================================================
