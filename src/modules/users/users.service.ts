@@ -4,7 +4,7 @@ import { Cache, CacheEvict, ICacheService } from '@/shared/cache';
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role, Status, isEnabled, toggleStatus } from 'src/common/enums';
-import { Repository, In } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import type { CreateUserDto } from './dto/create-user.dto';
 import type { BatchDeleteUserDto, UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -130,14 +130,14 @@ export class UsersService {
    * @returns 用户列表和总数
    */
   @Cache({ key: `${CACHE_PREFIXES.USERS}:page:\${0}:size:\${1}`, ttl: CACHE_TTL.USER_LIST })
-  async findAll(current: number = 1, size: number = 10): Promise<{ data: User[]; total: number }> {
+  async findAll(current: number = 1, size: number = 10): Promise<{ list: User[]; total: number }> {
     const [data, total] = await this.userRepository.findAndCount({
       skip: (current - 1) * size,
       take: size,
       relations: ['auth'],
       order: { createTime: 'DESC' },
     });
-    return { data, total };
+    return { list: data, total };
   }
 
   /**

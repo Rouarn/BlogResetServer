@@ -5,7 +5,6 @@ import type { Repository } from 'typeorm';
 import { formatDatePath } from 'src/utils';
 import type { FileQueryDto, FileUploadDto } from '../dto';
 import { File } from '../entities';
-import { FileStatus } from '../enums';
 import type { BatchUploadResult, FileUploadResult } from '../interfaces';
 import { StorageService } from './storage.service';
 import { ValidationService } from './validation.service';
@@ -59,7 +58,6 @@ export class FilesService {
       hash: fileHash,
       userId,
       fileType,
-      status: FileStatus.COMPLETED,
       description: uploadDto.description,
       isPublic: uploadDto.isPublic ?? false,
       uploadProtocol: uploadDto.protocol,
@@ -113,7 +111,7 @@ export class FilesService {
     queryDto: FileQueryDto,
     userId?: string,
   ): Promise<{ data: File[]; total: number }> {
-    const { size, current, type, status, search, publicOnly, sortBy, sortOrder } = queryDto;
+    const { size, current, type, search, publicOnly, sortBy, sortOrder } = queryDto;
 
     const queryBuilder = this.fileRepository.createQueryBuilder('file');
 
@@ -131,10 +129,7 @@ export class FilesService {
       queryBuilder.andWhere('file.fileType = :type', { type });
     }
 
-    // 状态过滤
-    if (status) {
-      queryBuilder.andWhere('file.status = :status', { status });
-    }
+    
 
     // 搜索过滤
     if (search) {

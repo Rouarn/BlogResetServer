@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntity } from 'src/database';
-import { FileStatus, FileType } from '../enums';
+import { FileType } from '../enums';
 
 @Entity('files')
 export class File extends BaseEntity {
@@ -34,13 +34,6 @@ export class File extends BaseEntity {
     default: 'HTTP',
   })
   uploadProtocol: string;
-
-  @Column({
-    type: 'enum',
-    enum: FileStatus,
-    default: FileStatus.COMPLETED,
-  })
-  status: FileStatus;
 
   @Column({
     name: 'file_type',

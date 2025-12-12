@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
-import { FileStatus, FileType } from '../enums';
+import { FileType } from '../enums';
 
 export class FileQueryDto {
   @ApiPropertyOptional({ description: '页码', default: 1, minimum: 1 })
@@ -28,11 +28,6 @@ export class FileQueryDto {
   @IsOptional()
   @IsEnum(FileType)
   type?: FileType;
-
-  @ApiPropertyOptional({ enum: FileStatus, description: '文件状态筛选' })
-  @IsOptional()
-  @IsEnum(FileStatus)
-  status?: FileStatus;
 
   @ApiPropertyOptional({ description: '文件名搜索' })
   @IsOptional()

@@ -112,7 +112,7 @@ export class UsersController {
       },
     },
   })
-  async findAll(@Query() queryDto: QueryUserDto): Promise<{ data: User[]; total: number }> {
+  async findAll(@Query() queryDto: QueryUserDto): Promise<{ list: User[]; total: number }> {
     const { current, size } = queryDto;
     return await this.usersService.findAll(current, size);
   }
