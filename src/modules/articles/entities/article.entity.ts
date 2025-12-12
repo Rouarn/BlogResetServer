@@ -33,10 +33,6 @@ export class Article extends BaseEntity {
   @Column({ length: 255, comment: '文章标题' })
   title: string;
 
-  @Index('UQ_articles_slug', { unique: true })
-  @Column({ length: 255, comment: '文章唯一别名（用于路由）' })
-  slug: string;
-
   @Column({ type: 'text', nullable: true, comment: '文章摘要/描述' })
   summary: string | null;
 

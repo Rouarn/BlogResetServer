@@ -1,11 +1,20 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { Public } from '../../common/decorators';
 import { ArticlesService } from './articles.service';
-import { Article } from './entities/article.entity';
 import { CreateArticleDto } from './dto/create-article.dto';
-import { UpdateArticleDto } from './dto/update-article.dto';
-import { QueryArticleDto } from './dto/query-article.dto';
 import { DeleteArticleDto } from './dto/delete-article.dto';
+import { QueryArticleDto } from './dto/query-article.dto';
+import { UpdateArticleDto } from './dto/update-article.dto';
+import { Article } from './entities/article.entity';
 
 @ApiTags('Articles管理')
 @ApiBearerAuth()
@@ -22,6 +31,7 @@ export class ArticlesController {
   }
 
   @Get()
+  @Public()
   @ApiOperation({ summary: '查询全表' })
   @ApiQuery({ name: 'current', required: false, description: '当前页码', example: 1 })
   @ApiQuery({ name: 'size', required: false, description: '每页数量', example: 10 })
@@ -36,12 +46,13 @@ export class ArticlesController {
       },
     },
   })
-  async findAll(@Query() query: QueryArticleDto): Promise<{ data: Article[]; total: number }> {
+  async findAll(@Query() query: QueryArticleDto): Promise<{ list: Article[]; total: number }> {
     const { current, size } = query;
     return await this.service.findAll(current, size);
   }
 
   @Get(':id')
+  @Public()
   @ApiOperation({ summary: '查询单条' })
   @ApiParam({ name: 'id', description: '记录ID' })
   @ApiResponse({ status: 200, type: Article })
@@ -72,7 +83,10 @@ export class ArticlesController {
       },
     },
   })
-  async delete(@Body() dto: DeleteArticleDto): Promise<{ message: string; deletedCount: number }> {
-    return await this.service.remove(dto);
+  async delete(
+    @Query() query: DeleteArticleDto,
+  ): Promise<{ message: string; deletedCount: number }> {
+    console.log('query: ', query);
+    return await this.service.remove(query);
   }
 }
