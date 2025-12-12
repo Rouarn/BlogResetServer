@@ -3,7 +3,10 @@ import { DefaultNamingStrategy } from 'typeorm';
 import { snakeCase } from 'typeorm/util/StringUtils';
 import type { DatabaseConfig } from '../interfaces';
 
-export class DatabaseNamingStrategy extends DefaultNamingStrategy implements NamingStrategyInterface {
+export class DatabaseNamingStrategy
+  extends DefaultNamingStrategy
+  implements NamingStrategyInterface
+{
   constructor(
     private readonly fieldNames?: DatabaseConfig['fieldNames'],
     private readonly tablePrefix?: DatabaseConfig['tablePrefix'],
@@ -20,7 +23,9 @@ export class DatabaseNamingStrategy extends DefaultNamingStrategy implements Nam
           : undefined;
 
     const baseName = customName ?? configuredName ?? propertyName;
-    const withPrefix = embeddedPrefixes.length ? `${embeddedPrefixes.join('_')}${baseName}` : baseName;
+    const withPrefix = embeddedPrefixes.length
+      ? `${embeddedPrefixes.join('_')}${baseName}`
+      : baseName;
 
     const isCustom = !!(customName || configuredName);
     return isCustom ? withPrefix : snakeCase(withPrefix);

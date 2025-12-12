@@ -50,48 +50,6 @@ export class FileUploadResponseDto {
 }
 
 /**
- * 分块上传初始化响应 DTO
- */
-export class ChunkUploadInitResponseDto {
-  @ApiProperty({ description: '上传ID' })
-  uploadId: string;
-
-  @ApiProperty({ description: '分块大小' })
-  chunkSize: number;
-
-  @ApiProperty({ description: '总分块数' })
-  totalChunks: number;
-
-  @ApiProperty({ description: '初始化消息' })
-  message: string;
-}
-
-/**
- * 分块上传响应 DTO
- */
-export class ChunkUploadResponseDto {
-  @ApiProperty({ description: '分块索引' })
-  chunkIndex: number;
-
-  @ApiProperty({ description: '上传状态' })
-  uploaded: boolean;
-
-  @ApiProperty({ description: '响应消息' })
-  message: string;
-}
-
-/**
- * 分块上传完成响应 DTO
- */
-export class ChunkUploadCompleteResponseDto {
-  @ApiProperty({ description: '文件信息', type: FileInfoDto })
-  file: FileInfoDto;
-
-  @ApiProperty({ description: '完成消息' })
-  message: string;
-}
-
-/**
  * 文件列表响应 DTO
  */
 export class FileListResponseDto {

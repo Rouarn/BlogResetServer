@@ -75,8 +75,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
    * @throws BusinessException 用户不存在
    */
   handleRequest<TUser = Auth>(error: Error, user: Auth, info: unknown): TUser {
-    if (info || error)
-      throw BusinessExceptionFactory.forbidden('token校验', { error: error?.message, info });
+    if (info || error) throw BusinessExceptionFactory.validation('Token');
     if (typeof user !== 'object') throw BusinessExceptionFactory.notFound('用户', { user });
 
     return user as TUser;

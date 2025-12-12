@@ -130,7 +130,7 @@ export class ${PascalPlural}Service {
   async findById(id: string): Promise<${PascalSingular}> {
     const entity = await this.repo.findOne({ where: { id } });
     if (!entity) {
-      throw BusinessExceptionFactory.notFound('${PascalSingular}', { reason: \`${PascalSingular} \${id} 不存在\` });
+      throw BusinessExceptionFactory.notFound('${PascalSingular}', { id });
     }
     return entity;
   }
@@ -153,7 +153,7 @@ export class ${PascalPlural}Service {
     if (dto.ids?.length) {
       const list = await this.repo.findBy({ id: In(dto.ids) });
       if (list.length === 0) {
-        throw BusinessExceptionFactory.notFound('要删除的记录', { reason: \`要删除的记录 \${dto.ids.join(', ')} 不存在\` });
+        throw BusinessExceptionFactory.notFound('要删除的记录', { ids: dto.ids });
       }
       await this.repo.remove(list);
       return { message: \`成功删除 \${list.length} 条记录\`, deletedCount: list.length };

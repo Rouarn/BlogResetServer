@@ -3,10 +3,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MulterModule } from '@nestjs/platform-express';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import * as multer from 'multer';
-import { File, UploadChunk } from './entities';
+import { File } from './entities';
 import { FilesController } from './files.controller';
 import { FileAccessGuard } from './guards/file-access.guard';
-import { ChunkService } from './services/chunk.service';
 import { FilesService } from './services/files.service';
 import { StorageFactoryService } from './services/storage-factory.service';
 import { StorageService } from './services/storage.service';
@@ -14,7 +13,7 @@ import { ValidationService } from './services/validation.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([File, UploadChunk]),
+    TypeOrmModule.forFeature([File]),
     MulterModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -42,7 +41,6 @@ import { ValidationService } from './services/validation.service';
   providers: [
     FilesService,
     StorageService,
-    ChunkService,
     ValidationService,
     FileAccessGuard,
     StorageFactoryService,

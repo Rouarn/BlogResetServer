@@ -2,6 +2,12 @@ import type { HttpStatus } from '@nestjs/common';
 
 /**
  * 通用响应接口 - 返回给前端的格式
+ *
+ * 标准响应结构：
+ * - data: 业务数据
+ * - message: 提示信息，支持 string 或 string[]
+ * - code: HTTP 状态码
+ * - timestamp: 响应时间戳（字符串）
  */
 export interface IResponse<T = unknown> {
   data: T;
@@ -33,6 +39,10 @@ export interface ErrorResponse extends IResponse<unknown> {
  * Controller 中可以返回的格式:
  * 1. 直接返回数据: T (如 {token: 'xxx'} 或 string 等)
  * 2. 包装格式: {data: T, message?: string}
+ *
+ * 说明：
+ * - 普通接口无需分页字段，拦截器会自动包装为统一响应结构。
+ * - message 可选；未提供时会使用默认成功消息。
  */
 export type DeveloperResponse<T = unknown> =
   | T
@@ -45,17 +55,37 @@ export type DeveloperResponse<T = unknown> =
  * 开发者接口返回数据类型（分页接口）
  * Controller 中可以返回的格式:
  * 1. 直接返回分页数据: {list: T[], total: number}
- * 2. 包装格式: {data: {list: T[], total: number}, message?: string}
+ * 2. 直接返回分页数据: {records: T[], total: number}
+ * 3. 直接返回分页数据: {data: T[], total: number}
+ * 4. 包装格式: {data: {list: T[], total: number}, message?: string}
+ * 5. 包装格式: {data: {data: T[], total: number}, message?: string}
+ * 6. 包装格式: {data: {records: T[], total: number}, message?: string}
+ *
+ * 说明：
+ * - 数组字段名支持 list/records/data 三选一，total 为总记录数。
+ * - 如外层包含 message，则会被拦截器透传为响应消息。
  */
 export type DeveloperPaginatedResponse<T = unknown> =
-  | { list: T[]; total: number }
+  | PaginatedArrayPayload<T>
   | {
-      data: {
-        list: T[];
-        total: number;
-      };
+      data: PaginatedArrayPayload<T>;
       message?: string;
     };
+
+/**
+ * 分页数组载荷（开发者返回的数据本体）
+ *
+ * 支持以下三种数组字段名中的任意一种：
+ * - { list: T[], total: number }
+ * - { records: T[], total: number }
+ * - { data: T[], total: number }
+ *
+ * 拦截器会自动识别并归一化为标准分页响应。
+ */
+export type PaginatedArrayPayload<T = unknown> =
+  | { list: T[]; total: number }
+  | { records: T[]; total: number }
+  | { data: T[]; total: number };
 
 /**
  * 分页数据类型 - 返回给前端的格式
@@ -64,6 +94,8 @@ export type DeveloperPaginatedResponse<T = unknown> =
  * @param totalPages 总页数
  * @param current 当前页码
  * @param size 每页数量
+ *
+ * 说明：这是拦截器统一返回的标准分页结构。
  */
 export interface PaginatedData<T = unknown> {
   records: T[];

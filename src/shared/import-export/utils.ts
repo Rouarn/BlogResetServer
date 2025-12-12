@@ -1,7 +1,7 @@
+import { BusinessExceptionFactory } from '@/common/exceptions';
 import { readFileSync } from 'fs';
 import { extname } from 'path';
 import type { FieldMapping, FileLike, SupportedFormat } from './types';
-import { BusinessException } from '@/common/exceptions';
 
 export function detectFormat(file: FileLike, fallback?: SupportedFormat): SupportedFormat {
   if (typeof file === 'string') {
@@ -20,7 +20,9 @@ export function ensureBuffer(file: FileLike): Buffer {
     const fb = file as { buffer: Buffer };
     return fb.buffer;
   }
-  throw new BusinessException('Unsupported file input');
+  throw BusinessExceptionFactory.invalidParameter('文件输入', {
+    message: 'Unsupported file input',
+  });
 }
 
 export function chunkArray<T>(arr: T[], size: number): T[][] {

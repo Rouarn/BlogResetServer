@@ -1,7 +1,6 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntity } from 'src/database';
-import { FileStatus, FileType } from '../enums';
-import { UploadChunk } from './upload-chunk.entity';
+import { FileType } from '../enums';
 
 @Entity('files')
 export class File extends BaseEntity {
@@ -37,13 +36,6 @@ export class File extends BaseEntity {
   uploadProtocol: string;
 
   @Column({
-    type: 'enum',
-    enum: FileStatus,
-    default: FileStatus.COMPLETED,
-  })
-  status: FileStatus;
-
-  @Column({
     name: 'file_type',
     type: 'enum',
     enum: FileType,
@@ -51,21 +43,9 @@ export class File extends BaseEntity {
   })
   fileType: FileType;
 
-  @Column({ name: 'upload_id', nullable: true })
-  uploadId: string;
-
-  @Column({ name: 'total_chunks', nullable: true })
-  totalChunks: number;
-
-  @Column({ name: 'uploaded_chunks', nullable: true })
-  uploadedChunks: number;
-
   @Column({ type: 'text', nullable: true })
   description: string;
 
   @Column({ name: 'is_public', default: false })
   isPublic: boolean;
-
-  @OneToMany(() => UploadChunk, (chunk) => chunk.file, { cascade: true })
-  chunks: UploadChunk[];
 }

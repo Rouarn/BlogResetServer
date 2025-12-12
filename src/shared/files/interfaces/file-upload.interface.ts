@@ -1,5 +1,3 @@
-import type { FileStatus, FileType } from '../enums';
-
 /**
  * 文件上传配置
  */
@@ -29,55 +27,6 @@ export interface FileUploadOptions {
    * @default 10
    */
   uploadsMaxFiles: number;
-}
-
-/**
- * 分块上传信息
- */
-export interface ChunkUploadInfo {
-  /**
-   * 上传ID
-   */
-  uploadId: string;
-  /**
-   * 文件名
-   */
-  filename: string;
-  /**
-   * 文件大小（字节）
-   */
-  fileSize: number;
-  /**
-   * 分块大小（字节）
-   */
-  chunkSize: number;
-  /**
-   * 总分块数
-   */
-  totalChunks: number;
-  /**
-   * 文件类型
-   */
-  fileType?: FileType;
-}
-
-/**
- * 分块上传结果
- */
-export interface ChunkUploadResult {
-  /**
-   * 上传ID
-   */
-  uploadId: string;
-  /**
-   * 分块编号
-   */
-  chunkNumber: number;
-  /**
-   * 分块哈希值
-   */
-  chunkHash: string;
-  uploaded: boolean;
 }
 
 export interface FileUploadResult {
@@ -145,27 +94,4 @@ export interface BatchUploadResult {
    * 失败上传文件数
    */
   failureCount: number;
-}
-
-export interface UploadProgress {
-  /**
-   * 上传ID
-   */
-  uploadId: string;
-  /**
-   * 总分块数
-   */
-  totalChunks: number;
-  /**
-   * 已上传分块数
-   */
-  uploadedChunks: number;
-  /**
-   * 上传进度（%）
-   */
-  progress: number;
-  /**
-   * 上传状态
-   */
-  status: FileStatus;
 }

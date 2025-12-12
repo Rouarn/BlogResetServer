@@ -31,13 +31,14 @@
     "deploy:prepare": "node scripts/deploy.js",
     "deploy:build": "pnpm run build:prod && pnpm run deploy:prepare",
     "deploy": "pnpm run code:check && pnpm run deploy:build",
-    "g:res": "node scripts/generate-resource.js"
+    "g:res": "node scripts/generate-resource.js t",
+    "prepare": "husky"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.9",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.9",
-    "@nestjs/jwt": "^11.0.1",
+    "@nestjs/jwt": "^11.0.2",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.1.9",
     "@nestjs/typeorm": "^11.0.0",
@@ -54,22 +55,24 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "svg-captcha": "^1.4.0",
-    "typeorm": "^0.3.27",
+    "typeorm": "^0.3.28",
     "uuid": "^13.0.0",
     "xlsx": "0.18.5"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.2.0",
+    "@commitlint/config-conventional": "^20.2.0",
     "@nestjs/cli": "^11.0.14",
     "@nestjs/schematics": "^11.0.9",
     "@nestjs/swagger": "^11.2.3",
     "@trivago/prettier-plugin-sort-imports": "^6.0.0",
     "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.5",
+    "@types/express": "^5.0.6",
     "@types/multer": "^2.0.0",
-    "@types/node": "^24.10.1",
+    "@types/node": "^24.10.3",
     "@types/passport-jwt": "^4.0.1",
-    "@typescript-eslint/eslint-plugin": "^8.48.0",
-    "@typescript-eslint/parser": "^8.48.0",
+    "@typescript-eslint/eslint-plugin": "^8.49.0",
+    "@typescript-eslint/parser": "^8.49.0",
     "@vakao-ui/scripts-utils": "0.0.1",
     "cors": "^2.8.5",
     "cross-env": "^10.1.0",
@@ -77,7 +80,9 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.32.0",
-    "prettier": "^3.7.3",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.7.4",
     "source-map-support": "^0.5.21",
     "ts-loader": "^9.5.4",
     "ts-node": "^10.9.2",
@@ -89,9 +94,13 @@
     "npm": ">=10.9.0",
     "pnpm": ">=10.15.0"
   },
-  "pnpm": {
-    "overrides": {
-      "ajv": "8.12.0"
-    }
+  "lint-staged": {
+    "*.{ts,tsx,js}": [
+      "eslint --fix --max-warnings=0 --no-warn-ignored",
+      "prettier --write"
+    ],
+    "*.{json,md,css,scss,html,yaml,yml}": [
+      "prettier --write"
+    ]
   }
 }
