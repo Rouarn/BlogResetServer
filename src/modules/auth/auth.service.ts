@@ -304,13 +304,11 @@ export class AuthService {
     });
 
     const captchaCode = captcha.text; // 验证码文本
-    const nonce = Math.random().toString(36).substring(2, 15);
-    const captchaToken = `captcha_${nonce}_${Date.now()}`;
+    const captchaToken = `captcha_${crypto.randomBytes(16).toString('hex')}`;
 
     // 使用缓存存储验证码信息，替代 JWT token 方式
     const captchaData = {
       code: captchaCode.toLowerCase(),
-      nonce,
       clientInfo,
       timestamp: Date.now(),
     };
@@ -343,7 +341,6 @@ export class AuthService {
       // 从缓存中获取验证码信息
       const captchaData = await this.cacheService.get<{
         code: string;
-        nonce: string;
         clientInfo: Record<string, unknown>;
         timestamp: number;
       }>(`${CACHE_PREFIXES.CAPTCHA}:${captchaVerifyDto.token}`);

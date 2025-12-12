@@ -66,11 +66,6 @@ export class AuthController {
           description: '过期时间（秒）',
           example: 300,
         },
-        nonce: {
-          type: 'string',
-          description: '防重放攻击的随机数',
-          example: 'abc123def456',
-        },
       },
     },
   })
@@ -87,7 +82,6 @@ export class AuthController {
       image: result.image,
       token: result.token,
       expiresIn: result.expiresIn,
-      nonce: Math.random().toString(36).substring(2, 15),
     };
   }
 
