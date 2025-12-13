@@ -1,1164 +1,142 @@
-# 文件上传系统（src/shared/files）
+# 文件上传与管理模块（src/shared/files）
 
-本系统提供单文件上传、批量上传、下载、预览、删除与列表查询等能力，采用本地存储，支持灵活的大小与类型限制，并具备权限与安全验证。
+本模块提供通用的文件上传、存储、访问控制与列表查询功能，开箱即用地支持本地文件系统存储、Multer 内存上传、Swagger 文档集成与权限校验。
 
-## 目录
+## 功能概览
 
-- 概述
-- 目录结构
-- 功能分析
-- 接口与实现
-- 存储位置与命名规则
-- 配置参数
-- 注意事项
-- 性能优化与最佳实践
-- 示例代码
+- 支持单文件与批量上传（`multipart/form-data`）
+- 本地存储，自动按年月路径分组（`YYYY-MM/`），文件名唯一且可溯源
+- 自动校验大小、类型，使用 `file-type` 做内容一致性验证
+- 通过 SHA-256 去重：同内容文件只存一份，直接返回已有记录
+- 公开/私有文件访问控制：公开可任意访问，私有仅所有者可读删
+- 列表分页、类型筛选、关键词搜索、排序（创建时间/大小/文件名）
+- Swagger 注解完善；所有上传/下载接口可在文档中直接调试
 
 ## 目录结构
 
-```
-src/shared/files/
-├── decorators/
-│   └── file-permissions.decorator.ts
-├── dto/
-│   ├── file-query.dto.ts
-│   ├── file-upload.dto.ts
-│   └── swagger-responses.dto.ts
-├── entities/
-│   ├── file.entity.ts
-│   └── upload-chunk.entity.ts
-├── enums/
-│   ├── file-status.enum.ts
-│   └── file-type.enum.ts
-├── guards/
-│   └── file-access.guard.ts
-├── interfaces/
-│   ├── file-upload.interface.ts
-│   ├── storage-factory.interface.ts
-│   └── storage.interface.ts
-├── services/
-│   ├── chunk.service.ts
-│   ├── files.service.ts
-│   ├── storage-factory.service.ts
-│   ├── storage.service.ts
-│   └── validation.service.ts
-├── files.controller.ts
-├── files.module.ts
-└── README.md
-```
+- `files.module.ts` 模块注册：Multer、TypeORM、Providers
+- `files.controller.ts` 路由控制器：上传、查询、下载、预览、删除
+- `services/` 核心服务：
+  - `files.service.ts` 业务流程与权限
+  - `storage.service.ts` 本地存储适配器（读/写/删/URL 构造）
+  - `validation.service.ts` 大小/类型校验、哈希/文件名生成
+  - `storage-factory.service.ts` 存储工厂（当前仅本地）
+- `guards/file-access.guard.ts` 文件访问权限校验
+- `entities/file.entity.ts` 文件表结构
+- `dto/` 上传与查询参数、Swagger响应模型
+- `interfaces/` 上传结果、存储适配器等接口定义
+
+## 快速集成
+
+- 引入模块：在需要的模块中 `imports: [FilesModule]`（或直接在全局 `AppModule` 中引入）
+- 数据库：`entities/file.entity.ts` 使用 TypeORM，表名 `files`
+- 静态资源：应用需启用静态资源服务以暴露上传目录
+- 认证：接口标注 `ApiBearerAuth`，默认通过 `Authorization: Bearer <token>` 传递用户身份
+
+## 关键配置
+
+模块读取两种配置来源，建议按环境变量统一配置：
+
+- 静态资源与上传相关（`AppConfigService.staticAssetsOptions`）：
+  - `NEST_STATIC_ASSETS_DIR` 静态资源根目录，默认 `./static`
+  - `NEST_STATIC_ASSETS_PREFIX` 静态资源前缀，默认 `/static`
+  - `NEST_STATIC_UPLOAD_PATH` 上传目录（相对静态根），默认 `./static/uploads`
+  - `NEST_UPLOAD_MAX_SIZE` 最大文件大小，默认 `10485760`（10MB）
+  - `NEST_UPLOAD_ALLOWED_TYPES` 允许类型，逗号分隔，默认空（不限制）
+  - `NEST_UPLOAD_MAX_FILES` 批量上传最大文件数，默认 `10`
+- 配置工厂（`configuration.ts` 的 `app.static` 命名空间）：
+  - `uploadsPath`、`uploadsMaxSize`、`uploadsAllowedTypes`
+  - `uploadsMaxBatchFiles`（批量上传最大文件数）
+
+说明：
+
+- `files.module.ts` 使用 Multer 内存存储，并读取 `uploadsMaxSize`、`uploadsMaxFiles` 与 `uploadsAllowedTypes`
+- `storage.service.ts` 自动创建上传目录；所有文件写入 `staticAssetsOptions.options.uploadsPath`
+- `storage.service.ts#getUrl` 根据 `baseUrl + prefix + uploadsPath + relativePath` 生成下载地址
+
+## API 设计
+
+- `POST /files/upload` 单文件上传
+  - 表单字段：`file`（二进制）、`description?: string`、`isPublic?: boolean`、`protocol?: string=HTTP`
+  - 响应：`{ fileId, filename, originalName, size, mimeType, path, hash, downloadUrl }`
+  - 错误：`400` 参数错误，`413` 超出大小，`415` 不支持类型
+- `POST /files/upload/batch` 批量上传（最多 10 个，受配置约束）
+  - 表单字段：`files[]`、`description?`、`isPublic?`
+  - 响应：`{ successful: FileUploadResult[], failed: { filename, error }[], totalFiles, successCount, failureCount }`
+- `GET /files` 文件列表
+  - 查询：`size?=10`、`current?=1`、`type?`（IMAGE/VIDEO/AUDIO/DOCUMENT/ARCHIVE/OTHER）、`search?`、`publicOnly?`、`sortBy?`、`sortOrder?`
+  - 响应：`{ data: File[], total }`
+- `GET /files/:id` 文件详情（权限校验）
+- `GET /files/:id/download` 下载（权限校验，`Content-Disposition: attachment`）
+- `GET /files/:id/preview` 预览（权限校验，`Content-Disposition: inline`）
+- `DELETE /files/:id` 删除（仅文件所有者可删）
+
+## 访问控制
+
+- `guards/file-access.guard.ts`：
+  - 若文件为公开（`isPublic=true`），任何人可访问
+  - 若文件为私有，仅 `userId === 当前用户ID` 可访问
+- 删除操作：仅所有者可删除；删除包括物理文件与数据库记录（物理文件失败不会阻断记录删除）
+
+## 校验与去重
+
+- 大小与类型：`validation.service.ts#validateFile` 会校验大小、MIME 与允许列表
+- 内容一致性：使用 `file-type` 检测二进制内容类型与上传的 `mimetype` 是否一致
+- 去重策略：`sha256(buffer)` 比对数据库 `hash` 字段，命中直接返回已有记录，避免重复存储
+- 文件名生成：`<timestamp>_<random>.ext`，并按 `YYYY-MM/` 子目录归档
+
+## 存储策略与路径
+
+- 相对路径：`formatDatePath() + uniqueFilename`，例如 `2025-12/1734040000_abcd1234.png`
+- 物理存储：拼接静态根与上传子目录后写入磁盘
+- URL 构造：`baseUrl + staticPrefix + uploadsPathRelative + '/' + relativePath`
+  - 例如：`http://localhost:3000/static/uploads/2025-12/1734040000_abcd1234.png`
+
+## 数据库结构（`entities/file.entity.ts`）
+
+- 核心字段：`id(uuid)`、`filename`、`originalName`、`mimeType`、`size(bigint)`、`path`、`hash(unique)`、`userId`、`uploadProtocol`、`fileType(enum)`、`description`、`isPublic`
+- 继承：`BaseEntity`（包含 `createTime/updateTime/deleteTime` 等通用字段）
+
+## 典型用例
+
+- 单文件上传示例（需要 Bearer token）：
+  - `curl -X POST http://localhost:3000/api/v1/files/upload -H "Authorization: Bearer <token>" -F "file=@./avatar.png" -F "description=头像" -F "isPublic=true"`
+- 批量上传示例：
+  - `curl -X POST http://localhost:3000/api/v1/files/upload/batch -H "Authorization: Bearer <token>" -F "files=@./a.png" -F "files=@./b.pdf" -F "description=批量"`
+- 下载示例：
+  - `curl -L -H "Authorization: Bearer <token>" http://localhost:3000/api/v1/files/<id>/download -o output.bin`
+- 列表查询示例（公开文件）：
+  - `curl "http://localhost:3000/api/v1/files?publicOnly=true&size=20&current=1&sortBy=createTime&sortOrder=DESC"`
+
+## 错误与返回
+
+- 典型错误码：`400` 参数错误、`403` 无权限、`404` 不存在、`413` 过大、`415` 类型不支持
+- 错误来源：`BusinessExceptionFactory.*` 统一创建业务异常与消息体
+
+## Swagger 文档
+
+- 所有接口已用 `@ApiOperation/@ApiResponse/@ApiConsumes/@ApiBody` 注解
+- 开发环境默认启用 Swagger；访问前缀由 `NEST_SWAGGER_PREFIX` 控制（默认 `/api-docs`）
+- 在文档页面可直接上传测试并查看返回的下载地址
 
-## 功能分析
+## 扩展指南
 
-- 单文件上传：`POST /files/upload`，内存存储接收，验证大小与类型，去重保存
-- 批量上传：`POST /files/upload/batch`，并发处理，统计成功/失败与总数
-- 文件列表：分页、搜索、类型/状态筛选、公开/私有过滤与排序
-- 文件详情：权限校验后返回单条记录
-- 下载与预览：按权限输出二进制流，设置 `Content-Type` 与 `Disposition`
-- 删除文件：仅所有者允许删除，同时删除物理文件与数据库记录
+- 新增存储类型：实现 `StorageAdapter` 接口并在 `storage-factory.service.ts` 注册
+- 增强类型识别：调整 `validation.service.ts#allowedMimeTypes` 或结合内容指纹策略
+- 增加病毒扫描/内容审核：在 `files.service.ts#uploadSingleFile` 生成哈希后插入安全扫描流程
 
-实现入口与接口：
+## 常见问题
 
-- 控制器：`files.controller.ts:58-149,227-334`
-- 服务：
-  - 单/批量上传与列表/删除：`services/files.service.ts:24-74,76-110,112-161,163-201,203-207,223-235`
-  - 存储适配与 URL 生成：`services/storage.service.ts:15-29,31-53,55-79,82-95,96-113,114-122`
-  - 验证与命名：`services/validation.service.ts:37-69,71-88,90-116`
+- “为什么上传失败/类型不支持？”
+  - 检查 `NEST_UPLOAD_ALLOWED_TYPES` 是否包含该 `mimetype`（逗号分隔）
+  - 如需不限制类型，留空或删除该环境变量
+- “批量上传提示数量超限？”
+  - 调整 `NEST_UPLOAD_MAX_FILES`（或 `NEST_UPLOAD_MAX_BATCH_FILES`）至合适数值
+- “下载地址不正确或 404？”
+  - 检查静态资源服务是否对 `uploadsPath` 做了正确映射，确认 `baseUrl/prefix/uploadsPath` 与实际磁盘路径一致
 
-## 接口与实现
+## 维护建议
 
-- 单文件上传：`POST /files/upload`
-  - 入参：`multipart/form-data`，字段 `file`、可选 `description`、`isPublic`、`protocol`
-  - 拦截器：`FileInterceptor('file')`
-  - 处理：`FilesService.uploadSingleFile`
-
-- 批量上传：`POST /files/upload/batch`
-  - 入参：`multipart/form-data`，字段 `files[]`，可选 `description`、`isPublic`
-  - 拦截器：`FilesInterceptor('files', 10)`（数量受配置）
-  - 处理：`FilesService.uploadMultipleFiles`
-
-
-- 文件列表：`GET /files`
-  - 查询：`size/current/type/status/search/publicOnly/sortBy/sortOrder`（DTO 校验与默认值）
-
-- 文件详情：`GET /files/:id`（`FileAccessGuard` 校验）
-
-- 下载：`GET /files/:id/download`（按权限设置响应头并输出 Buffer）
-
-- 预览：`GET /files/:id/preview`（与下载一致，`Disposition: inline`）
-
-- 删除：`DELETE /files/:id`（仅所有者；同时删除物理文件与记录）
-
-## 存储位置与命名规则
-
-- 存储类型：本地（`StorageService`）
-- 根路径：来自配置 `app.static.uploadsPath`（见“配置参数”）
-- 相对路径：`YYYY-MM/<生成文件名>`（日期路径由 `formatDatePath()` 生成）
-- 文件名规则：`<timestamp>_<random8>.<ext>`（原始扩展名保留）
-- 哈希：`sha256(buffer)`，用于去重与校验
-
-## 配置参数
-
-- 读取位置
-  - Multer 接收与过滤：`files.module.ts` 使用 `app.static.options.*`
-  - 存储服务：`storage.service.ts` 使用 `app.static.*`（直接读取上传配置）
-  - 访问 URL：使用应用配置服务 `appConfig.staticAssetsOptions` 与 `appConfig.baseUrl`
-
-- 环境变量（默认值）
-  - `NEST_STATIC_ASSETS_DIR`（`./static`）：静态资源根目录
-  - `NEST_STATIC_ASSETS_PREFIX`（`/static`）：静态资源 URL 前缀
-  - `NEST_STATIC_ASSETS_MAXAGE`（`86400`）：缓存时长秒
-  - `NEST_STATIC_UPLOAD_PATH`（`./static/uploads`）：上传文件物理根路径（URL 计算用）
-  - `NEST_UPLOAD_MAX_SIZE`（`10485760`，10MB）：单文件大小上限
-  - `NEST_UPLOAD_ALLOWED_TYPES`（`[]`）：允许的 MIME 类型列表，为空表示不限制
-  - `NEST_UPLOAD_MAX_FILES`（`10`）：批量上传最大数量
-  - `NEST_BASE_URL`（`http://localhost:<port>`）：基础 URL（用于拼接访问地址）
-
-- 运行时配置键
-  - `app.static.uploadsPath`：上传文件物理存储根路径
-  - `app.static.uploadsMaxSize`：大小限制（字节）
-  - `app.static.uploadsAllowedTypes`：允许 MIME 列表
-  - `app.static.options.uploadsMaxFiles`：批量上传最大数量
-
-- 可选值范围与说明
-  - 大小限制：建议 `1MB–1GB` 之间，过大需采用分块上传
-  - 类型限制：为空表示不限制；非空时必须与上传的 `file.mimetype` 一致（会进行内容类型探测）
-  - 批量数量：建议 `1–100`，默认 `10`
-
-- 关键配置项与必填参数
-  - 必填：`NEST_UPLOAD_MAX_SIZE`（生产环境强烈建议设置）
-  - 关键：`NEST_UPLOAD_ALLOWED_TYPES`（安全白名单）、`NEST_STATIC_UPLOAD_PATH`（存储根路径）
-
-## 注意事项
-
-- 注意事项
-- 认证与权限：所有接口标注 `ApiBearerAuth`；详情/下载/预览通过 `FileAccessGuard` 检查公开/私有与所有者关系
-- 删除权限：仅所有者可以删除；公共文件可被任何人访问但不可被他人删除
-- 去重规则：同内容（哈希一致）直接返回已存在记录，不重复写入
-- 存储类型：`StorageFactoryService` 仅支持本地类型，若需云存储需扩展适配器
-- URL 生成：依赖 `appConfig.baseUrl` 与静态前缀；部署时需确保静态目录挂载与前缀一致
-
-## 性能优化与最佳实践
-
-- 列表查询仅选择必要字段与建立索引（如 `status/createTime`）
-- 上传路径分月归档（`YYYY-MM`）便于清理与容量管理
-- 统一 MIME 白名单与大小限制，避免不一致导致的隐患
- 
-
-## 示例代码
-
-单文件上传（curl）：
-
-```bash
-curl -X POST "http://localhost:3000/files/upload" \
-  -H "Authorization: Bearer <token>" \
-  -F "file=@/path/to/file.jpg" \
-  -F "description=示例文件" \
-  -F "isPublic=false"
-```
-
-服务内调用：
-
-```ts
-import { FilesService } from 'src/shared/files/services/files.service';
-
-const result = await filesService.uploadSingleFile(file, {
-  description: '用户上传',
-  isPublic: false,
-  protocol: 'HTTP'
-});
-```
-
- 
-
----
-
-维护者提示：如需扩展至云存储，请在 `interfaces/storage.interface.ts` 基础上实现新适配器，并在 `StorageFactoryService` 中添加类型支持。
-
-## 🏗️ 模块结构
-
-```
-src/modules/files/
-├── decorators/           # 装饰器
-│   ├── file-permissions.decorator.ts  # 文件权限装饰器
-│   └── index.ts
-├── dto/                  # 数据传输对象
-│   ├── file-query.dto.ts        # 文件查询 DTO
-│   ├── file-upload.dto.ts       # 文件上传 DTO
-│   ├── swagger-responses.dto.ts # Swagger 响应 DTO
-│   └── index.ts
-├── entities/             # 数据库实体
-│   ├── file.entity.ts           # 文件实体
-│   ├── upload-chunk.entity.ts   # 上传分块实体
-│   └── index.ts
-├── enums/                # 枚举定义
-│   ├── file-status.enum.ts      # 文件状态枚举
-│   ├── file-type.enum.ts        # 文件类型枚举
-│   └── index.ts
-├── guards/               # 守卫
-│   └── file-access.guard.ts     # 文件访问守卫
-├── interfaces/           # 接口定义
-│   ├── file-upload.interface.ts # 文件上传接口
-│   ├── storage.interface.ts     # 存储接口
-│   └── index.ts
-├── services/             # 服务层
-│   ├── chunk.service.ts         # 分块上传服务
-│   ├── files.service.ts         # 文件服务
-│   ├── storage.service.ts       # 存储服务
-│   ├── validation.service.ts    # 验证服务
-│   └── storage-factory.service.ts # 存储工厂服务
-├── files.controller.ts   # 控制器
-├── files.module.ts       # 模块定义
-└── README.md            # 本文档
-```
-
-## ✨ 功能特性
-
-### 🔄 上传方式
-
-- **单文件上传**: 支持单个文件直接上传
-- **批量上传**: 支持多文件同时上传（最多10个）
-- **分块上传**: 支持大文件分块上传，提高上传稳定性
-
-### 🔒 安全特性
-
-- **文件类型验证**: 支持 MIME 类型白名单控制
-- **文件大小限制**: 可配置单文件和总文件大小限制
-- **权限控制**: 支持公开/私有文件访问控制
-- **哈希去重**: 基于文件哈希值避免重复存储
-
-### 📁 文件管理
-
-- **文件预览**: 支持在线预览（图片、文档等）
-- **文件下载**: 支持文件下载功能
-- **文件删除**: 支持文件删除（仅所有者）
-- **文件查询**: 支持分页、搜索、筛选
-
-## 🚀 快速开始
-
-### 1. 模块导入
-
-```typescript
-import { Module } from '@nestjs/common';
-import { FilesModule } from './modules/files/files.module';
-
-@Module({
-  imports: [
-    FilesModule,
-    // 其他模块...
-  ],
-})
-export class AppModule {}
-```
-
-### 2. 环境配置
-
-在 `.env` 文件中配置文件上传相关参数：
-
-```env
-# 静态资源配置
-STATIC_ROOT_PATH=./static
-STATIC_URL_PREFIX=/static
-
-# 上传配置
-UPLOAD_MAX_FILE_SIZE=10485760  # 10MB
-UPLOAD_MAX_BATCH_FILES=10
-UPLOAD_ALLOWED_TYPES=image/jpeg,image/png,image/gif,application/pdf
-```
-
-## 📚 API 接口
-
-### 文件上传
-
-#### 单文件上传
-
-```http
-POST /files/upload
-Content-Type: multipart/form-data
-Authorization: Bearer <token>
-
-{
-  "file": <binary>,
-  "description": "文件描述",
-  "isPublic": false
-}
-```
-
-#### 批量文件上传
-
-```http
-POST /files/upload/batch
-Content-Type: multipart/form-data
-Authorization: Bearer <token>
-
-{
-  "files": [<binary>, <binary>],
-  "description": "批量上传",
-  "isPublic": false
-}
-```
-
-#### 分块上传初始化
-
-```http
-POST /files/upload/chunk/init
-Content-Type: application/json
-Authorization: Bearer <token>
-
-{
-  "filename": "large-file.zip",
-  "fileSize": 104857600,
-  "chunkSize": 1048576,
-  "totalChunks": 100,
-  "fileType": "ARCHIVE",
-  "description": "大文件上传",
-  "isPublic": false
-}
-```
-
-#### 分块上传
-
-```http
-POST /files/upload/chunk
-Content-Type: multipart/form-data
-Authorization: Bearer <token>
-
-{
-  "chunk": <binary>,
-  "uploadId": "uuid",
-  "chunkNumber": 1,
-  "chunkHash": "hash-value"
-}
-```
-
-#### 完成分块上传
-
-```http
-POST /files/upload/chunk/complete
-Content-Type: application/json
-Authorization: Bearer <token>
-
-{
-  "uploadId": "uuid",
-  "chunks": [1, 2, 3, 4, 5]
-}
-```
-
-### 文件查询
-
-#### 获取文件列表
-
-```http
-GET /files?size=10&current=1&type=IMAGE&search=keyword
-Authorization: Bearer <token>
-```
-
-#### 获取文件详情
-
-```http
-GET /files/:id
-Authorization: Bearer <token>
-```
-
-### 文件操作
-
-#### 下载文件
-
-```http
-GET /files/:id/download
-Authorization: Bearer <token>
-```
-
-#### 预览文件
-
-```http
-GET /files/:id/preview
-Authorization: Bearer <token>
-```
-
-#### 删除文件
-
-```http
-DELETE /files/:id
-Authorization: Bearer <token>
-```
-
-## 💻 后端开发指南
-
-### 1. 使用文件服务
-
-```typescript
-import { Injectable } from '@nestjs/common';
-import { FilesService } from '../files/services/files.service';
-
-@Injectable()
-export class MyService {
-  constructor(private readonly filesService: FilesService) {}
-
-  async handleFileUpload(file: Express.Multer.File, userId: string) {
-    const uploadDto = {
-      description: '用户上传的文件',
-      isPublic: false,
-      protocol: 'HTTP'
-    };
-    
-    const result = await this.filesService.uploadSingleFile(file, uploadDto, userId);
-    return result;
-  }
-
-  async getUserFiles(userId: string) {
-    const queryDto = {
-      size: 10,
-      current: 1,
-      publicOnly: false
-    };
-    
-    const files = await this.filesService.findFiles(queryDto, userId);
-    return files;
-  }
-}
-```
-
-### 2. 自定义文件权限
-
-```typescript
-import { Controller, Get, UseGuards } from '@nestjs/common';
-import { RequirePermissions, FilePermission } from '../files/decorators';
-import { FileAccessGuard } from '../files/guards/file-access.guard';
-
-@Controller('admin/files')
-@UseGuards(FileAccessGuard)
-export class AdminFilesController {
-  @Get()
-  @RequirePermissions(FilePermission.ADMIN)
-  async getAllFiles() {
-    // 管理员查看所有文件
-  }
-
-  @Delete(':id')
-  @RequirePermissions(FilePermission.DELETE)
-  async deleteAnyFile() {
-    // 管理员删除任意文件
-  }
-}
-```
-
-### 3. 扩展存储适配器
-
-```typescript
-import { Injectable } from '@nestjs/common';
-import { StorageAdapter } from '../files/interfaces';
-
-@Injectable()
-export class S3StorageAdapter implements StorageAdapter {
-  async upload(file: Express.Multer.File, path: string): Promise<string> {
-    // 实现 S3 上传逻辑
-    return 's3://bucket/path/to/file';
-  }
-
-  async download(path: string): Promise<Buffer> {
-    // 实现 S3 下载逻辑
-    return Buffer.from('file content');
-  }
-
-  async delete(path: string): Promise<boolean> {
-    // 实现 S3 删除逻辑
-    return true;
-  }
-
-  async exists(path: string): Promise<boolean> {
-    // 检查文件是否存在
-    return true;
-  }
-}
-```
-
-## 🌐 前端集成指南
-
-### 1. 单文件上传
-
-```typescript
-// React 示例
-import React, { useState } from 'react';
-import axios from 'axios';
-
-const FileUpload: React.FC = () => {
-  const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-
-  const handleUpload = async () => {
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('description', '用户上传');
-    formData.append('isPublic', 'false');
-
-    setUploading(true);
-    try {
-      const response = await axios.post('/api/files/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      console.log('上传成功:', response.data);
-    } catch (error) {
-      console.error('上传失败:', error);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  return (
-    <div>
-      <input
-        type="file"
-        onChange={(e) => setFile(e.target.files?.[0] || null)}
-      />
-      <button onClick={handleUpload} disabled={!file || uploading}>
-        {uploading ? '上传中...' : '上传文件'}
-      </button>
-    </div>
-  );
-};
-```
-
-### 2. 分块上传
-
-```typescript
-// 大文件分块上传示例
-class ChunkUploader {
-  private chunkSize = 1024 * 1024; // 1MB
-
-  async uploadLargeFile(file: File, onProgress?: (progress: number) => void) {
-    const totalChunks = Math.ceil(file.size / this.chunkSize);
-    
-    // 1. 初始化分块上传
-    const initResponse = await axios.post('/api/files/upload/chunk/init', {
-      filename: file.name,
-      fileSize: file.size,
-      chunkSize: this.chunkSize,
-      totalChunks,
-      description: '大文件上传'
-    }, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-
-    const { uploadId } = initResponse.data;
-    const uploadedChunks: number[] = [];
-
-    // 2. 上传分块
-    for (let i = 0; i < totalChunks; i++) {
-      const start = i * this.chunkSize;
-      const end = Math.min(start + this.chunkSize, file.size);
-      const chunk = file.slice(start, end);
-
-      const formData = new FormData();
-      formData.append('chunk', chunk);
-      formData.append('uploadId', uploadId);
-      formData.append('chunkNumber', (i + 1).toString());
-
-      try {
-        await axios.post('/api/files/upload/chunk', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        
-        uploadedChunks.push(i + 1);
-        onProgress?.(uploadedChunks.length / totalChunks * 100);
-      } catch (error) {
-        console.error(`分块 ${i + 1} 上传失败:`, error);
-        throw error;
-      }
-    }
-
-    // 3. 完成上传
-    const completeResponse = await axios.post('/api/files/upload/chunk/complete', {
-      uploadId,
-      chunks: uploadedChunks
-    }, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-
-    return completeResponse.data;
-  }
-}
-```
-
-### 3. 文件列表展示
-
-```typescript
-// Vue 3 示例
-<template>
-  <div>
-    <div class="file-filters">
-      <select v-model="filters.type">
-        <option value="">所有类型</option>
-        <option value="IMAGE">图片</option>
-        <option value="VIDEO">视频</option>
-        <option value="DOCUMENT">文档</option>
-      </select>
-      <input v-model="filters.search" placeholder="搜索文件..." />
-    </div>
-    
-    <div class="file-list">
-      <div v-for="file in files" :key="file.id" class="file-item">
-        <img v-if="file.fileType === 'IMAGE'" :src="getPreviewUrl(file.id)" />
-        <div class="file-info">
-          <h4>{{ file.originalName }}</h4>
-          <p>{{ formatFileSize(file.size) }}</p>
-          <p>{{ formatDate(file.createTime) }}</p>
-        </div>
-        <div class="file-actions">
-          <button @click="downloadFile(file.id)">下载</button>
-          <button @click="deleteFile(file.id)" v-if="canDelete(file)">删除</button>
-        </div>
-      </div>
-    </div>
-    
-    <div class="pagination">
-      <button @click="prevPage" :disabled="pagination.current <= 1">上一页</button>
-      <span>{{ pagination.current }} / {{ totalPages }}</span>
-      <button @click="nextPage" :disabled="pagination.current >= totalPages">下一页</button>
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { ref, reactive, computed, onMounted, watch } from 'vue';
-import axios from 'axios';
-
-interface FileItem {
-  id: string;
-  filename: string;
-  originalName: string;
-  size: number;
-  fileType: string;
-  createTime: string;
-  userId: string;
-}
-
-const files = ref<FileItem[]>([]);
-const pagination = reactive({
-  current: 1,
-  size: 10,
-  total: 0
-});
-
-const filters = reactive({
-  type: '',
-  search: ''
-});
-
-const totalPages = computed(() => Math.ceil(pagination.total / pagination.size));
-
-const loadFiles = async () => {
-  try {
-    const params = {
-      current: pagination.current,
-      size: pagination.size,
-      type: filters.type || undefined,
-      search: filters.search || undefined
-    };
-    
-    const response = await axios.get('/api/files', {
-      params,
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    
-    files.value = response.data.data;
-    pagination.total = response.data.total;
-  } catch (error) {
-    console.error('加载文件列表失败:', error);
-  }
-};
-
-const downloadFile = async (fileId: string) => {
-  try {
-    const response = await axios.get(`/api/files/${fileId}/download`, {
-      responseType: 'blob',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'file';
-    link.click();
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    console.error('下载失败:', error);
-  }
-};
-
-const deleteFile = async (fileId: string) => {
-  if (!confirm('确定要删除这个文件吗？')) return;
-  
-  try {
-    await axios.delete(`/api/files/${fileId}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    
-    await loadFiles(); // 重新加载列表
-  } catch (error) {
-    console.error('删除失败:', error);
-  }
-};
-
-const getPreviewUrl = (fileId: string) => `/api/files/${fileId}/preview`;
-
-const formatFileSize = (bytes: number) => {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-};
-
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleString();
-};
-
-const canDelete = (file: FileItem) => {
-  // 检查是否为文件所有者
-  const currentUserId = localStorage.getItem('userId');
-  return file.userId === currentUserId;
-};
-
-const prevPage = () => {
-  if (pagination.current > 1) {
-    pagination.current--;
-  }
-};
-
-const nextPage = () => {
-  if (pagination.current < totalPages.value) {
-    pagination.current++;
-  }
-};
-
-// 监听分页和筛选条件变化
-watch([() => pagination.current, filters], loadFiles);
-
-onMounted(loadFiles);
-</script>
-```
-
-## 📊 数据模型
-
-### 文件实体 (File Entity)
-
-```typescript
-export class File {
-  id: string;                    // 文件ID (UUID)
-  filename: string;              // 存储文件名
-  originalName: string;          // 原始文件名
-  mimeType: string;             // MIME类型
-  size: number;                 // 文件大小（字节）
-  path: string;                 // 存储路径
-  hash: string;                 // 文件哈希值
-  userId: string;               // 上传用户ID
-  uploadProtocol: string;       // 上传协议
-  status: FileStatus;           // 文件状态
-  fileType: FileType;           // 文件类型
-  uploadId: string;             // 上传ID（分块上传）
-  totalChunks: number;          // 总分块数
-  uploadedChunks: number;       // 已上传分块数
-  description: string;          // 文件描述
-  isPublic: boolean;            // 是否公开
-  createTime: Date;             // 创建时间
-  updateTime: Date;             // 更新时间
-  deleteTime: Date;             // 删除时间
-}
-```
-
-### 文件状态枚举
-
-```typescript
-export enum FileStatus {
-  UPLOADING = 'UPLOADING',      // 上传中
-  COMPLETED = 'COMPLETED',      // 上传完成
-  FAILED = 'FAILED',           // 上传失败
-  PROCESSING = 'PROCESSING',    // 处理中
-  DELETED = 'DELETED'          // 已删除
-}
-```
-
-### 文件类型枚举
-
-```typescript
-export enum FileType {
-  IMAGE = 'IMAGE',             // 图片
-  VIDEO = 'VIDEO',             // 视频
-  AUDIO = 'AUDIO',             // 音频
-  DOCUMENT = 'DOCUMENT',       // 文档
-  ARCHIVE = 'ARCHIVE',         // 压缩包
-  OTHER = 'OTHER'              // 其他
-}
-```
-
-## 🔧 配置说明
-
-### 应用配置
-
-```typescript
-// config/configuration.ts
-export default () => ({
-  app: {
-    static: {
-      // 静态资源根路径
-      rootPath: process.env.STATIC_ROOT_PATH || './static',
-      // 静态资源URL前缀
-      urlPrefix: process.env.STATIC_URL_PREFIX || '/static',
-      upload: {
-        // 单文件最大大小（字节）
-        maxFileSize: parseInt(process.env.UPLOAD_MAX_FILE_SIZE) || 10 * 1024 * 1024,
-        // 批量上传最大文件数
-        maxBatchFiles: parseInt(process.env.UPLOAD_MAX_BATCH_FILES) || 10,
-        // 允许的文件类型
-        allowedTypes: process.env.UPLOAD_ALLOWED_TYPES?.split(',') || [],
-      }
-    }
-  }
-});
-```
-
-### 环境变量
-
-```env
-# 静态资源配置
-STATIC_ROOT_PATH=./static
-STATIC_URL_PREFIX=/static
-
-# 上传限制
-UPLOAD_MAX_FILE_SIZE=10485760
-UPLOAD_MAX_BATCH_FILES=10
-UPLOAD_ALLOWED_TYPES=image/jpeg,image/png,image/gif,image/webp,application/pdf,text/plain
-
-# 数据库配置
-DB_HOST=localhost
-DB_PORT=5432
-DB_USERNAME=postgres
-DB_PASSWORD=password
-DB_DATABASE=nestjs_app
-```
-
-## 🛡️ 安全考虑
-
-### 1. 文件类型验证
-
-```typescript
-// 在 ValidationService 中实现
-async validateFile(file: Express.Multer.File): Promise<void> {
-  // 1. 检查文件扩展名
-  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.pdf'];
-  const fileExtension = path.extname(file.originalname).toLowerCase();
-  if (!allowedExtensions.includes(fileExtension)) {
-    throw new BadRequestException('不支持的文件扩展名');
-  }
-
-  // 2. 验证 MIME 类型
-  const detectedType = await fileTypeFromBuffer(file.buffer);
-  if (detectedType && detectedType.mime !== file.mimetype) {
-    throw new BadRequestException('文件类型与实际内容不匹配');
-  }
-
-  // 3. 检查文件头部签名
-  const fileSignature = file.buffer.slice(0, 4).toString('hex');
-  if (!this.isValidFileSignature(fileSignature, file.mimetype)) {
-    throw new BadRequestException('无效的文件格式');
-  }
-}
-```
-
-### 2. 权限控制
-
-```typescript
-// 文件访问权限检查
-private canAccessFile(file: File, userId?: string): boolean {
-  // 公开文件任何人都可以访问
-  if (file.isPublic) {
-    return true;
-  }
-
-  // 私有文件只有所有者可以访问
-  if (userId && file.userId === userId) {
-    return true;
-  }
-
-  // 管理员可以访问所有文件
-  if (this.isAdmin(userId)) {
-    return true;
-  }
-
-  return false;
-}
-```
-
-### 3. 文件路径安全
-
-```typescript
-// 防止路径遍历攻击
-private sanitizePath(inputPath: string): string {
-  // 移除危险字符
-  const sanitized = inputPath.replace(/[<>:"|?*]/g, '');
-  
-  // 防止路径遍历
-  const normalized = path.normalize(sanitized);
-  if (normalized.includes('..')) {
-    throw new BadRequestException('无效的文件路径');
-  }
-  
-  return normalized;
-}
-```
-
-## 🧪 测试
-
-### 单元测试示例
-
-```typescript
-// files.service.spec.ts
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { FilesService } from './files.service';
-import { File } from '../entities/file.entity';
-
-describe('FilesService', () => {
-  let service: FilesService;
-  let mockRepository: any;
-
-  beforeEach(async () => {
-    mockRepository = {
-      findOne: jest.fn(),
-      save: jest.fn(),
-      create: jest.fn(),
-      remove: jest.fn(),
-    };
-
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        FilesService,
-        {
-          provide: getRepositoryToken(File),
-          useValue: mockRepository,
-        },
-        // 其他依赖...
-      ],
-    }).compile();
-
-    service = module.get<FilesService>(FilesService);
-  });
-
-  describe('uploadSingleFile', () => {
-    it('should upload file successfully', async () => {
-      const mockFile = {
-        originalname: 'test.jpg',
-        mimetype: 'image/jpeg',
-        size: 1024,
-        buffer: Buffer.from('test'),
-      } as Express.Multer.File;
-
-      const uploadDto = {
-        description: 'Test file',
-        isPublic: false,
-      };
-
-      mockRepository.findOne.mockResolvedValue(null); // 文件不存在
-      mockRepository.create.mockReturnValue({ id: 'test-id' });
-      mockRepository.save.mockResolvedValue({ id: 'test-id' });
-
-      const result = await service.uploadSingleFile(mockFile, uploadDto, 'user-id');
-      
-      expect(result).toBeDefined();
-      expect(result.fileId).toBe('test-id');
-    });
-  });
-});
-```
-
-### 集成测试示例
-
-```typescript
-// files.controller.e2e-spec.ts
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
-import { AppModule } from '../app.module';
-
-describe('FilesController (e2e)', () => {
-  let app: INestApplication;
-  let authToken: string;
-
-  beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    await app.init();
-
-    // 获取认证令牌
-    const loginResponse = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send({ username: 'test', password: 'test' });
-    
-    authToken = loginResponse.body.accessToken;
-  });
-
-  describe('/files/upload (POST)', () => {
-    it('should upload file successfully', () => {
-      return request(app.getHttpServer())
-        .post('/files/upload')
-        .set('Authorization', `Bearer ${authToken}`)
-        .attach('file', Buffer.from('test file content'), 'test.txt')
-        .field('description', 'Test file')
-        .field('isPublic', 'false')
-        .expect(201)
-        .expect((res) => {
-          expect(res.body.fileId).toBeDefined();
-          expect(res.body.filename).toBeDefined();
-        });
-    });
-  });
-
-  afterAll(async () => {
-    await app.close();
-  });
-});
-```
-
-## 🚀 性能优化
-
-### 1. 文件缓存策略
-
-```typescript
-// 实现文件缓存
-@Injectable()
-export class FileCacheService {
-  private cache = new Map<string, { buffer: Buffer; timestamp: number }>();
-  private readonly CACHE_TTL = 5 * 60 * 1000; // 5分钟
-
-  async getFile(fileId: string): Promise<Buffer | null> {
-    const cached = this.cache.get(fileId);
-    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
-      return cached.buffer;
-    }
-    return null;
-  }
-
-  setFile(fileId: string, buffer: Buffer): void {
-    this.cache.set(fileId, {
-      buffer,
-      timestamp: Date.now()
-    });
-  }
-}
-```
-
-### 2. 数据库查询优化
-
-```typescript
-// 使用索引和分页优化查询
-async findFiles(queryDto: FileQueryDto, userId?: string) {
-  const queryBuilder = this.fileRepository
-    .createQueryBuilder('file')
-    .select([
-      'file.id',
-      'file.filename', 
-      'file.originalName',
-      'file.size',
-      'file.mimeType',
-      'file.fileType',
-      'file.createTime'
-    ]) // 只选择需要的字段
-    .where('file.status = :status', { status: FileStatus.COMPLETED })
-    .orderBy('file.createTime', 'DESC')
-    .take(queryDto.size || 10)
-    .skip(((queryDto.current || 1) - 1) * (queryDto.size || 10));
-
-  // 添加索引：CREATE INDEX idx_files_status_create_time ON ra_files(status, create_time);
-  
-  return await queryBuilder.getManyAndCount();
-}
-```
-
-## 🔍 故障排除
-
-### 常见问题
-
-1. **文件上传失败**
-  - 检查文件大小是否超出限制
-  - 验证文件类型是否在允许列表中
-  - 确认存储路径是否有写入权限
-
-2. **文件访问被拒绝**
-  - 检查用户是否有访问权限
-  - 验证文件是否为公开文件
-  - 确认JWT令牌是否有效
-
-3. **分块上传失败**
-  - 检查分块顺序是否正确
-  - 验证uploadId是否有效
-  - 确认所有分块是否上传完成
-
-### 日志监控
-
-```typescript
-// 添加详细的日志记录
-@Injectable()
-export class FilesService {
-  private readonly logger = new Logger(FilesService.name);
-
-  async uploadSingleFile(file: Express.Multer.File, uploadDto: FileUploadDto, userId?: string) {
-    this.logger.log(`开始上传文件: ${file.originalname}, 大小: ${file.size} bytes, 用户: ${userId}`);
-    
-    try {
-      const result = await this.processUpload(file, uploadDto, userId);
-      this.logger.log(`文件上传成功: ${result.fileId}`);
-      return result;
-    } catch (error) {
-      this.logger.error(`文件上传失败: ${error.message}`, error.stack);
-      throw error;
-    }
-  }
-}
-```
-
-## 📈 监控指标
-
-建议监控以下指标：
-
-- **上传成功率**: 成功上传数 / 总上传数
-- **平均上传时间**: 文件上传耗时统计
-- **存储空间使用**: 已使用存储空间 / 总存储空间
-- **文件类型分布**: 各类型文件的数量统计
-- **用户活跃度**: 各用户的文件操作频率
-
-## 🤝 贡献指南
-
-1. Fork 项目
-2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 打开 Pull Request
-
-## 📄 许可证
-
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
-
----
-
-**注意**: 本文档会随着模块功能的更新而持续维护，请关注最新版本。
+- 统一通过环境变量管理大小、类型、上传目录等参数
+- 生产环境建议开启类型白名单并限制最大大小
+- 重要文件建议开启私有并配合鉴权网关与审计日志
