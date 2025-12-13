@@ -35,7 +35,9 @@ function removeDirRobust(targetPath, maxRetries = 5) {
         const entries = fs.readdirSync(targetPath, { withFileTypes: true });
         for (const entry of entries) {
           const p = path.join(targetPath, entry.name);
-          try { fs.chmodSync(p, 0o666); } catch (_) {}
+          try {
+            fs.chmodSync(p, 0o666);
+          } catch (_) {}
           try {
             if (entry.isDirectory()) {
               removeDirRobust(p, 0);

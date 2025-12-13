@@ -27,13 +27,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const {
-  log,
-  showBanner,
-  showSuccess,
-  separator,
-  handleError,
-} = require('@vakao-ui/scripts-utils');
+const { log, showBanner, showSuccess, separator, handleError } = require('@vakao-ui/scripts-utils');
 
 /**
  * 递归删除所有 .spec.ts 文件
