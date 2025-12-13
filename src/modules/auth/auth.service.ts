@@ -1,6 +1,6 @@
 import { CACHE_PREFIXES, CACHE_TOKENS, CACHE_TTL } from '@/common/constants';
 import { GENDER_LABELS } from '@/common/enums/gender.enum';
-import { BusinessExceptionFactory } from '@/common/exceptions';
+import { BusinessException, BusinessExceptionFactory } from '@/common/exceptions';
 import { jwtOptions } from '@/config';
 import { AuthMessageResponse, AuthUserInfo } from '@/modules/auth/auth.types';
 import { Cache, ICacheService } from '@/shared/cache';
@@ -148,6 +148,7 @@ export class AuthService {
         const lockTime = new Date(auth.lockedAt.getTime() + 30 * 60 * 1000); // 30分钟锁定
         if (new Date() < lockTime) {
           throw BusinessExceptionFactory.systemBusy({
+            message: '账号已被锁定，请稍后重试',
             lockTime: lockTime.toLocaleString(),
             locked: true,
           });
@@ -184,7 +185,7 @@ export class AuthService {
 
     // 检查认证状态
     if (!isEnabled(auth.status)) {
-      throw BusinessExceptionFactory.forbidden('访问', {
+      throw BusinessExceptionFactory.forbidden('访问被禁用', {
         username: loginDto.username,
         disabled: true,
       });
@@ -304,13 +305,11 @@ export class AuthService {
     });
 
     const captchaCode = captcha.text; // 验证码文本
-    const nonce = Math.random().toString(36).substring(2, 15);
-    const captchaToken = `captcha_${nonce}_${Date.now()}`;
+    const captchaToken = `captcha_${crypto.randomBytes(16).toString('hex')}`;
 
     // 使用缓存存储验证码信息，替代 JWT token 方式
     const captchaData = {
       code: captchaCode.toLowerCase(),
-      nonce,
       clientInfo,
       timestamp: Date.now(),
     };
@@ -343,21 +342,19 @@ export class AuthService {
       // 从缓存中获取验证码信息
       const captchaData = await this.cacheService.get<{
         code: string;
-        nonce: string;
         clientInfo: Record<string, unknown>;
         timestamp: number;
       }>(`${CACHE_PREFIXES.CAPTCHA}:${captchaVerifyDto.token}`);
 
       if (!captchaData) {
-        return {
-          success: false,
+        throw BusinessExceptionFactory.systemBusy({
           message: '验证码无效或已过期',
-        };
+        });
       }
 
       // 验证验证码
       if (captchaData.code !== captchaVerifyDto.code.toLowerCase()) {
-        return { success: false, message: '验证码错误' };
+        throw BusinessExceptionFactory.validation('验证码错误');
       }
 
       // 验证时间戳（防止重放攻击）
@@ -365,7 +362,7 @@ export class AuthService {
       if (now - captchaData.timestamp > CACHE_TTL.CAPTCHA * 1000) {
         // 验证码过期
         await this.cacheService.del(`${CACHE_PREFIXES.CAPTCHA}:${captchaVerifyDto.token}`);
-        return { success: false, message: '验证码已过期' };
+        throw BusinessExceptionFactory.validation('验证码已过期');
       }
 
       // 验证成功后删除缓存，防止重复使用
@@ -373,10 +370,12 @@ export class AuthService {
 
       return { success: true, message: '验证成功' };
     } catch (error) {
-      return {
-        success: false,
+      if (error instanceof BusinessException) {
+        throw error;
+      }
+      throw BusinessExceptionFactory.systemBusy({
         message: '验证码验证失败',
-      };
+      });
     }
   }
 
@@ -518,14 +517,14 @@ export class AuthService {
 
     // 检查账号状态
     if (auth.isLocked()) {
-      throw BusinessExceptionFactory.forbidden('访问', {
+      throw BusinessExceptionFactory.forbidden('账户被锁定', {
         authId,
         locked: true,
       });
     }
 
     if (!isEnabled(auth.status)) {
-      throw BusinessExceptionFactory.forbidden('访问', {
+      throw BusinessExceptionFactory.forbidden('用户已被禁用', {
         authId,
         disabled: true,
       });
@@ -577,28 +576,24 @@ export class AuthService {
       });
 
       if (!auth) {
-        return {
-          valid: false,
-          expired: false,
-          message: '认证记录不存在',
-        };
+        throw BusinessExceptionFactory.notFound('认证记录', { authId: payload.authId });
       }
 
       // 检查账号状态
       if (auth.isLocked()) {
-        return {
+        throw BusinessExceptionFactory.systemBusy({
           valid: false,
           expired: false,
           message: '账号已被锁定',
-        };
+        });
       }
 
       if (!isEnabled(auth.status)) {
-        return {
+        throw BusinessExceptionFactory.systemBusy({
           valid: false,
           expired: false,
           message: '用户已被禁用',
-        };
+        });
       }
 
       return {
@@ -613,11 +608,11 @@ export class AuthService {
         payload,
       };
     } catch (error) {
-      return {
+      throw BusinessExceptionFactory.systemBusy({
         valid: false,
         expired: true,
         message: '令牌无效或已过期',
-      };
+      });
     }
   }
 

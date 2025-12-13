@@ -31,7 +31,7 @@
     "deploy:prepare": "node scripts/deploy.js",
     "deploy:build": "pnpm run build:prod && pnpm run deploy:prepare",
     "deploy": "pnpm run code:check && pnpm run deploy:build",
-    "g:res": "node scripts/generate-resource.js t",
+    "g:res": "node scripts/generate-resource.js",
     "prepare": "husky"
   },
   "dependencies": {

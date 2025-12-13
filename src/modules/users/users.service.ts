@@ -201,9 +201,7 @@ export class UsersService {
       `${CACHE_PREFIXES.USERS}:*`,
     ],
   })
-  async batchRemove(
-    batchDeleteDto: BatchDeleteUserDto,
-  ): Promise<{ message: string; deletedCount: number }> {
+  async batchRemove(batchDeleteDto: BatchDeleteUserDto): Promise<{ message: string }> {
     const { ids } = batchDeleteDto;
 
     const users = await this.userRepository.findBy({ id: In(ids) });
@@ -215,7 +213,6 @@ export class UsersService {
 
     return {
       message: `成功删除 ${users.length} 个用户`,
-      deletedCount: users.length,
     };
   }
 

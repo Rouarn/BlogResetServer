@@ -210,9 +210,7 @@ export class UsersController {
     status: HttpStatus.NOT_FOUND,
     description: '未找到要删除的用户',
   })
-  async batchRemove(
-    @Body() batchDeleteDto: BatchDeleteUserDto,
-  ): Promise<{ message: string; deletedCount: number }> {
+  async batchRemove(@Body() batchDeleteDto: BatchDeleteUserDto): Promise<{ message: string }> {
     return await this.usersService.batchRemove(batchDeleteDto);
   }
 

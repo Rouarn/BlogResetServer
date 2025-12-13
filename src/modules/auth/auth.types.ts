@@ -46,7 +46,6 @@ export interface AuthCaptchaResponse {
   image: string;
   token: string;
   expiresIn: number;
-  nonce: string;
 }
 
 /**

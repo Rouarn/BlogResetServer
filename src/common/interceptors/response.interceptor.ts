@@ -119,6 +119,39 @@ export class ResponseInterceptor<T = unknown> implements NestInterceptor {
   }
 
   /**
+   * 基础类型守卫：判定值是否为非空对象
+   * 用于后续安全地进行键存在性判断（'in' 与 hasOwnProperty）
+   */
+  private isObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+  }
+
+  /**
+   * 类型守卫：识别包装数据格式
+   * 结构：{ data: T, message?: string }
+   * 说明：优先级最高，命中则直接返回其中的 data 与 message
+   */
+  private isWrappedData<T>(value: unknown): value is { data: T; message?: string } {
+    return (
+      this.isObject(value) && 'data' in value && Object.prototype.hasOwnProperty.call(value, 'data')
+    );
+  }
+
+  /**
+   * 类型守卫：识别仅消息格式
+   * 结构：{ message: string } 且不包含 data
+   * 说明：命中时返回空对象作为 data，并透传 message
+   */
+  private isMessageOnly(value: unknown): value is { message: string } {
+    return (
+      this.isObject(value) &&
+      'message' in value &&
+      Object.prototype.hasOwnProperty.call(value, 'message') &&
+      !('data' in value)
+    );
+  }
+
+  /**
    * 提取普通响应的数据和消息
    * @param rawData 原始响应数据
    * @returns 提取的数据和消息
@@ -129,40 +162,16 @@ export class ResponseInterceptor<T = unknown> implements NestInterceptor {
    * - 仅消息：{message: string}（此时 data 为空对象）
    */
   private extractDataAndMessage<T>(rawData: DeveloperResponse<T>): { data: T; message?: string } {
-    // 检查是否为包装格式 {data: T, message?: string}
-    if (
-      typeof rawData === 'object' &&
-      rawData !== null &&
-      'data' in rawData &&
-      Object.prototype.hasOwnProperty.call(rawData, 'data')
-    ) {
-      const wrappedData = rawData as { data: T; message?: string };
-      return {
-        data: wrappedData.data,
-        message: wrappedData.message,
-      };
+    if (this.isWrappedData<T>(rawData)) {
+      const { data, message } = rawData;
+      return { data, message };
     }
 
-    // 检查是否为只有消息的格式 {message: string}
-    if (
-      typeof rawData === 'object' &&
-      rawData !== null &&
-      'message' in rawData &&
-      Object.prototype.hasOwnProperty.call(rawData, 'message') &&
-      !('data' in rawData)
-    ) {
-      const messageData = rawData as { message: string };
-      return {
-        data: {} as T,
-        message: messageData.message,
-      };
+    if (this.isMessageOnly(rawData)) {
+      return { data: {} as T, message: rawData.message };
     }
 
-    // 直接返回的数据格式
-    return {
-      data: rawData as T,
-      message: undefined,
-    };
+    return { data: rawData, message: undefined };
   }
 
   /**

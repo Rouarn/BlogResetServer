@@ -38,7 +38,7 @@ export class ValidationService {
     // 验证文件大小 - 使用静态资源配置中的限制
     const staticConfig = this.configService.get('app.static') as StaticOptions;
     if (!staticConfig) {
-      throw BusinessExceptionFactory.systemBusy({ reason: '文件上传配置未找到' });
+      throw BusinessExceptionFactory.systemBusy({ message: '文件上传配置未找到' });
     }
     const maxSize = staticConfig.uploadsMaxSize;
 
