@@ -1,6 +1,7 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as path from 'path';
+import { BusinessExceptionFactory } from '../../../common/exceptions';
 import { staticAssetsOptions } from '../../../config';
 import type {
   StorageAdapter,
@@ -22,7 +23,9 @@ export class StorageFactoryService implements StorageFactory {
         return new StorageService(this.configService);
 
       default:
-        throw new BadRequestException(`Unsupported storage type: ${config.type}`);
+        throw BusinessExceptionFactory.systemBusy({
+          message: `不支持的存储类型: ${config.type}`,
+        });
     }
   }
 

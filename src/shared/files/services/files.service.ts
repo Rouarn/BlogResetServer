@@ -1,8 +1,9 @@
-import * as path from 'path';
-import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import type { Repository } from 'typeorm';
+import * as path from 'path';
 import { formatDatePath } from 'src/utils';
+import type { Repository } from 'typeorm';
+import { BusinessExceptionFactory } from '../../../common/exceptions';
 import type { FileQueryDto, FileUploadDto } from '../dto';
 import { File } from '../entities';
 import type { BatchUploadResult, FileUploadResult } from '../interfaces';
@@ -157,12 +158,12 @@ export class FilesService {
     const file = await this.fileRepository.findOne({ where: { id } });
 
     if (!file) {
-      throw new NotFoundException('文件不存在');
+      throw BusinessExceptionFactory.notFound('文件不存在', { id });
     }
 
     // 检查访问权限
     if (!this.canAccessFile(file, userId)) {
-      throw new ForbiddenException('无权限访问该文件');
+      throw BusinessExceptionFactory.forbidden('无权限访问该文件', { id });
     }
 
     return file;
@@ -172,12 +173,12 @@ export class FilesService {
     const file = await this.fileRepository.findOne({ where: { id } });
 
     if (!file) {
-      throw new NotFoundException('文件不存在');
+      throw BusinessExceptionFactory.notFound('文件不存在', { id });
     }
 
     // 只有文件所有者可以删除文件
     if (userId && file.userId !== userId) {
-      throw new ForbiddenException('只有文件所有者可以删除文件');
+      throw BusinessExceptionFactory.forbidden('只有文件所有者可以删除文件', { id });
     }
 
     // 删除物理文件
