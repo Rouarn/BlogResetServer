@@ -129,7 +129,7 @@ try {
 
   // 创建启动脚本 (Windows)
   const startScriptWin = `@echo off
-echo 正在启动 NestJS 应用...
+echo NestJS Application Is Being Started...
 set NODE_ENV=production
 node dist/main.js
 pause
@@ -171,9 +171,9 @@ require('./dist/main.js');
 
   // 创建安装依赖脚本 (Windows)
   const installScriptWin = `@echo off
-echo 正在安装生产依赖...
+echo Production Dependencies Are Being Installed...
 npm install --omit=dev
-echo 依赖安装完成！
+echo Production Dependencies Installation Completed!
 pause
 `;
 
