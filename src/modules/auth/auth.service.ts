@@ -2,7 +2,6 @@ import { CACHE_PREFIXES, CACHE_TOKENS, CACHE_TTL } from '@/common/constants';
 import { GENDER_LABELS } from '@/common/enums/gender.enum';
 import { BusinessException, BusinessExceptionFactory } from '@/common/exceptions';
 import { jwtOptions } from '@/config';
-import { AuthMessageResponse, AuthUserInfo } from '@/modules/auth/auth.types';
 import { ICacheService } from '@/shared/cache';
 import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -12,7 +11,7 @@ import * as crypto from 'crypto';
 import { isEnabled } from 'src/common/enums';
 import * as svgCaptcha from 'svg-captcha';
 import { Repository } from 'typeorm';
-import { CurrentUser } from '../../common/decorators';
+import { CurrentUser } from '@/common/decorators';
 import { UsersService } from '../users/users.service';
 import type {
   CaptchaResponseDto,
@@ -20,6 +19,7 @@ import type {
   CaptchaVerifyResponseDto,
 } from './dto/captcha-verify.dto';
 import type { LoginDto, LoginResponseDto } from './dto/login.dto';
+import { AuthMessageResponse } from './dto/message.dto';
 import type {
   ChangePasswordDto,
   RegisterDto,
@@ -35,6 +35,7 @@ import type {
   ValidateTokenDto,
   ValidateTokenResponseDto,
 } from './dto/token.dto';
+import { AuthUserInfoDto } from './dto/user-info.dto';
 import { Auth } from './entities/auth.entity';
 
 /**
@@ -90,9 +91,9 @@ export class AuthService {
    * @param auth 认证实体（仅用于获取ID）
    * @returns 包含用户ID、用户名、昵称、头像、角色、邮箱、性别、手机号等信息
    */
-  async getAuthInfo(auth: CurrentUser): Promise<AuthUserInfo> {
+  async getAuthInfo(auth: CurrentUser): Promise<AuthUserInfoDto> {
     const cacheKey = `${CACHE_PREFIXES.USER_INFO}:${auth.userId}`;
-    const cached = await this.cacheService.get<AuthUserInfo>(cacheKey);
+    const cached = await this.cacheService.get<AuthUserInfoDto>(cacheKey);
     if (cached) {
       return cached;
     }
@@ -106,7 +107,7 @@ export class AuthService {
       throw BusinessExceptionFactory.notFound('用户信息', { authId: auth.authId });
     }
 
-    const result: AuthUserInfo = {
+    const result: AuthUserInfoDto = {
       userId: authWithUser.user?.id || authWithUser.id,
       username: authWithUser.username,
       nickname: authWithUser.user?.nickname || authWithUser.username,
@@ -123,7 +124,7 @@ export class AuthService {
       lastLoginAt: authWithUser.lastLoginAt,
       lastLoginIp: authWithUser.lastLoginIp ?? '',
     };
-    await this.cacheService.set<AuthUserInfo>(cacheKey, result, { ttl: CACHE_TTL.USER_INFO });
+    await this.cacheService.set<AuthUserInfoDto>(cacheKey, result, { ttl: CACHE_TTL.USER_INFO });
 
     return result;
   }

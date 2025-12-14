@@ -28,8 +28,13 @@ import type { Response } from 'express';
 import { GetCurrentUser } from 'src/common/decorators';
 import { FileValidationPipe, FilesValidationPipe } from 'src/common/pipes';
 import type { Auth as CurrentUser } from 'src/modules/auth/entities/auth.entity';
-import { FileQueryDto, FileUploadDto } from './dto';
-import { FileListResponseDto, FileUploadResponseDto } from './dto/swagger-responses.dto';
+import {
+  FileQueryDto,
+  FileUploadDto,
+  FileListResponseDto,
+  BatchUploadResultDto,
+  UploadFileResultDto,
+} from './dto';
 import { FileAccessGuard } from './guards/file-access.guard';
 import { BatchUploadResult, FileUploadResult } from './interfaces';
 import { FilesService } from './services/files.service';
@@ -63,7 +68,7 @@ export class FilesController {
   @ApiResponse({
     status: 201,
     description: '文件上传成功',
-    type: FileUploadResponseDto,
+    type: UploadFileResultDto,
   })
   @ApiResponse({
     status: 400,
@@ -116,7 +121,7 @@ export class FilesController {
   @ApiResponse({
     status: 201,
     description: '批量文件上传完成',
-    type: 'object',
+    type: BatchUploadResultDto,
   })
   @ApiResponse({
     status: 400,
@@ -165,7 +170,10 @@ export class FilesController {
   @Get(':id')
   @ApiOperation({ summary: '获取文件详情' })
   @ApiParam({ name: 'id', description: '文件ID', example: 'uuid' })
-  @ApiResponse({ status: 200, description: '获取文件详情成功' })
+  @ApiResponse({
+    status: 200,
+    description: '获取文件详情成功',
+  })
   @ApiResponse({
     status: 404,
     description: '文件不存在',

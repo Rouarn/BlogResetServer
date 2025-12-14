@@ -1,9 +1,9 @@
+import { BusinessExceptionFactory } from '@/common/exceptions';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as path from 'path';
 import { formatDatePath } from 'src/utils';
 import type { Repository } from 'typeorm';
-import { BusinessExceptionFactory } from '../../../common/exceptions';
 import type { FileQueryDto, FileUploadDto } from '../dto';
 import { File } from '../entities';
 import type { BatchUploadResult, FileUploadResult } from '../interfaces';

@@ -1,12 +1,4 @@
 import { BusinessExceptionFactory } from '@/common/exceptions';
-import type {
-  AuthCaptchaResponse,
-  AuthCaptchaVerifyRequest,
-  AuthCaptchaVerifyResponse,
-  AuthCreateUserResponse,
-  AuthMessageResponse,
-  AuthUserInfo,
-} from '@/modules/auth/auth.types';
 import {
   Body,
   ClassSerializerInterceptor,
@@ -23,11 +15,18 @@ import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nes
 import type { Request } from 'express';
 import { CurrentUser, GetCurrentUser, Public } from 'src/common/decorators';
 import { AuthService } from './auth.service';
-import { CaptchaVerifyDto } from './dto/captcha-verify.dto';
+import {
+  CaptchaResponseDto,
+  CaptchaVerifyDto,
+  CaptchaVerifyResponseDto,
+} from './dto/captcha-verify.dto';
 import { CreateAuthDto } from './dto/create-auth.dto';
+import { AuthCreateUserResponse } from './dto/create-user.response';
 import { LoginDto, LoginResponseDto } from './dto/login.dto';
+import { AuthMessageResponse } from './dto/message.dto';
 import { ChangePasswordDto, RegisterDto, RegisterResponseDto } from './dto/register.dto';
 import { RefreshTokenDto, TokenResponseDto } from './dto/token.dto';
+import { AuthUserInfoDto } from './dto/user-info.dto';
 
 @ApiTags('认证管理')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -44,36 +43,13 @@ export class AuthController {
     summary: '获取验证码',
     description: '生成验证码图片和对应的token，支持防爬机制和安全增强',
   })
-  @ApiResponse({
-    status: 200,
-    description: '成功获取验证码',
-    schema: {
-      type: 'object',
-      properties: {
-        image: {
-          type: 'string',
-          description: '验证码图片的base64编码',
-          example: 'data:image/svg+xml;base64,PHN2Zy4uLg==',
-        },
-        token: {
-          type: 'string',
-          description: '验证码token，用于后续验证',
-          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-        },
-        expiresIn: {
-          type: 'number',
-          description: '过期时间（秒）',
-          example: 300,
-        },
-      },
-    },
-  })
+  @ApiResponse({ status: 200, description: '成功获取验证码', type: CaptchaResponseDto })
   @Public()
   @Get('captcha')
   async getCaptcha(
     @Ip() clientIp: string,
     @Headers('user-agent') userAgent: string,
-  ): Promise<AuthCaptchaResponse> {
+  ): Promise<CaptchaResponseDto> {
     const clientInfo = { ip: clientIp, userAgent };
     const result = await this.authService.generateCaptcha(clientInfo);
 
@@ -97,148 +73,30 @@ export class AuthController {
     description: '验证码验证请求',
     type: CaptchaVerifyDto,
   })
-  @ApiResponse({
-    status: 200,
-    description: '验证码验证结果',
-    schema: {
-      type: 'object',
-      properties: {
-        success: {
-          type: 'boolean',
-          description: '验证是否成功',
-          example: true,
-        },
-        message: {
-          type: 'string',
-          description: '验证结果消息',
-          example: '验证码验证成功',
-        },
-        timestamp: {
-          type: 'string',
-          description: '时间戳',
-          example: '2023-12-01T10:00:00.000Z',
-        },
-      },
-    },
-  })
+  @ApiResponse({ status: 200, description: '验证码验证结果', type: CaptchaVerifyResponseDto })
   @Public()
   @Post('captcha/verify')
-  async verifyCaptcha(
-    @Body() body: AuthCaptchaVerifyRequest,
-    @Ip() _clientIp: string,
-    @Headers('user-agent') _userAgent: string,
-  ): Promise<AuthCaptchaVerifyResponse> {
+  verifyCaptcha(@Body() body: CaptchaVerifyDto): Promise<CaptchaVerifyResponseDto> {
     const { token, code } = body;
 
     if (!token || !code) {
       throw BusinessExceptionFactory.invalidParameter('验证码token和code不能为空');
     }
 
-    const result = await this.authService.verifyCaptcha({
+    return this.authService.verifyCaptcha({
       token,
       code,
     });
-
-    if (!result.success) {
-      throw BusinessExceptionFactory.validation(`验证码验证失败: ${result.message}`);
-    }
-
-    return {
-      message: '验证码验证成功',
-    };
   }
 
   @ApiOperation({
     summary: '获取用户信息',
     description: '获取当前登录用户的详细信息，包括权限和角色',
   })
-  @ApiResponse({
-    status: 200,
-    description: '成功获取用户信息',
-    schema: {
-      type: 'object',
-      properties: {
-        userId: {
-          type: 'string',
-          description: '用户ID',
-          example: '1',
-        },
-        username: {
-          type: 'string',
-          description: '用户名',
-          example: 'john_doe',
-        },
-        nickname: {
-          type: 'string',
-          description: '昵称',
-          example: 'John',
-        },
-        avatar: {
-          type: 'string',
-          description: '头像',
-          example: 'https://example.com/avatar.jpg',
-        },
-        roles: {
-          type: 'string',
-          description: '角色',
-          example: 'admin',
-        },
-        email: {
-          type: 'string',
-          description: '邮箱',
-          example: 'john@example.com',
-        },
-        gender: {
-          type: 'string',
-          description: '性别',
-          example: '男',
-        },
-        mobile: {
-          type: 'string',
-          description: '手机号',
-          example: '13800138000',
-        },
-        bio: {
-          type: 'string',
-          description: '个人简介',
-          example: '这是一个简短的个人介绍',
-        },
-        birthday: {
-          type: 'string',
-          description: '生日',
-          example: '1990-01-01',
-        },
-        city: {
-          type: 'string',
-          description: '所在城市',
-          example: '北京市',
-        },
-        profession: {
-          type: 'string',
-          description: '职业',
-          example: '软件工程师',
-        },
-        authId: {
-          type: 'string',
-          description: '认证ID',
-          example: 'auth-uuid-123',
-        },
-        lastLoginAt: {
-          type: 'string',
-          description: '最后登录时间',
-          example: '2023-12-01T10:00:00.000Z',
-        },
-        lastLoginIp: {
-          type: 'string',
-          description: '最后登录IP',
-          example: '192.168.1.100',
-        },
-      },
-    },
-  })
+  @ApiResponse({ status: 200, description: '成功获取用户信息', type: AuthUserInfoDto })
   @ApiBearerAuth()
   @Get('getUserInfo')
-  async getUserInfo(@GetCurrentUser() user: CurrentUser): Promise<AuthUserInfo> {
+  async getUserInfo(@GetCurrentUser() user: CurrentUser): Promise<AuthUserInfoDto> {
     return await this.authService.getAuthInfo(user);
   }
 
@@ -288,15 +146,7 @@ export class AuthController {
     description: '注册请求',
     type: CreateAuthDto,
   })
-  @ApiResponse({
-    status: 200,
-    description: '注册结果',
-    schema: {
-      type: 'string',
-      description: '注册结果消息',
-      example: '注册成功',
-    },
-  })
+  @ApiResponse({ status: 200, description: '注册结果', type: RegisterResponseDto })
   @Public()
   @Post('register')
   register(@Body() body: CreateAuthDto): Promise<RegisterResponseDto> {
@@ -315,41 +165,10 @@ export class AuthController {
     description: '创建用户请求',
     type: RegisterDto,
   })
-  @ApiResponse({
-    status: 200,
-    description: '用户创建结果',
-    schema: {
-      type: 'object',
-      properties: {
-        success: {
-          type: 'boolean',
-          description: '操作是否成功',
-          example: true,
-        },
-        message: {
-          type: 'string',
-          description: '结果消息',
-          example: '用户创建成功',
-        },
-        data: {
-          type: 'object',
-          description: '用户数据',
-          additionalProperties: true,
-        },
-        timestamp: {
-          type: 'string',
-          description: '时间戳',
-          example: '2023-12-01T10:00:00.000Z',
-        },
-      },
-    },
-  })
+  @ApiResponse({ status: 200, description: '用户创建结果', type: AuthCreateUserResponse })
   @Public()
   @Post('create')
-  async createUser(
-    @Body() body: RegisterDto,
-    @Req() _req: Request,
-  ): Promise<AuthCreateUserResponse> {
+  async createUser(@Body() body: RegisterDto): Promise<AuthCreateUserResponse> {
     const { captchaToken, captchaCode, ...userData } = body;
 
     // 验证必要参数
@@ -412,28 +231,8 @@ export class AuthController {
     summary: '修改密码',
     description: '允许已登录用户修改自己的密码',
   })
-  @ApiResponse({
-    status: 200,
-    description: '密码修改成功',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        message: { type: 'string', example: '密码修改成功' },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 400,
-    description: '密码修改失败',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: false },
-        message: { type: 'string', example: '当前密码错误' },
-      },
-    },
-  })
+  @ApiResponse({ status: 200, description: '密码修改成功', type: AuthMessageResponse })
+  @ApiResponse({ status: 400, description: '密码修改失败' })
   @ApiResponse({
     status: 401,
     description: '未授权访问',
@@ -458,17 +257,7 @@ export class AuthController {
     summary: '退出登录',
     description: '退出当前用户的登录状态',
   })
-  @ApiResponse({
-    status: 200,
-    description: '退出登录成功',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        message: { type: 'string', example: '退出登录成功' },
-      },
-    },
-  })
+  @ApiResponse({ status: 200, description: '退出登录成功' })
   @ApiResponse({
     status: 401,
     description: '未授权访问',

@@ -3,8 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { appConfig } from 'src/config';
-import { BusinessExceptionFactory } from '../../../common/exceptions';
-import { StaticOptions } from '../../../common/interfaces';
+import { BusinessExceptionFactory } from '@/common/exceptions';
+import { StaticOptions } from '@/common/interfaces';
 import type { StorageAdapter, StorageConfig } from '../interfaces';
 
 @Injectable()

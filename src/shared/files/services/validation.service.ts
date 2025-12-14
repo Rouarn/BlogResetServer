@@ -4,7 +4,7 @@ import * as crypto from 'crypto';
 import { fileTypeFromBuffer } from 'file-type';
 import type { StaticOptions } from 'src/common/interfaces';
 import { getCurrentTimestamp, randomString } from 'src/utils';
-import { BusinessExceptionFactory } from '../../../common/exceptions';
+import { BusinessExceptionFactory } from '@/common/exceptions';
 import { FileType } from '../enums';
 
 @Injectable()

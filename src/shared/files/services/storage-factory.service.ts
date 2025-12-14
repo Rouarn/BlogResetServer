@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as path from 'path';
-import { BusinessExceptionFactory } from '../../../common/exceptions';
-import { staticAssetsOptions } from '../../../config';
+import { BusinessExceptionFactory } from '@/common/exceptions';
+import { staticAssetsOptions } from '@/config';
 import type {
   StorageAdapter,
   StorageFactory,

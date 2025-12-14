@@ -30,6 +30,11 @@ import {
 } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
+import {
+  BatchDeleteResponseDto,
+  DeleteResponseDto,
+  UserListResponseDto,
+} from './dto/users.responses.dto';
 
 /**
  * 用户控制器（UsersController）
@@ -101,18 +106,9 @@ export class UsersController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: '获取用户列表成功',
-    schema: {
-      type: 'object',
-      properties: {
-        data: {
-          type: 'array',
-          items: { $ref: '#/components/schemas/User' },
-        },
-        total: { type: 'number', description: '总数量' },
-      },
-    },
+    type: UserListResponseDto,
   })
-  async findAll(@Query() queryDto: QueryUserDto): Promise<{ list: User[]; total: number }> {
+  async findAll(@Query() queryDto: QueryUserDto): Promise<UserListResponseDto> {
     const { current, size } = queryDto;
     return await this.usersService.findAll(current, size);
   }
@@ -172,18 +168,13 @@ export class UsersController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: '用户删除成功',
-    schema: {
-      type: 'object',
-      properties: {
-        message: { type: 'string', example: '用户删除成功' },
-      },
-    },
+    type: DeleteResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: '用户不存在',
   })
-  async remove(@Param('id') id: string): Promise<{ message: string }> {
+  async remove(@Param('id') id: string): Promise<DeleteResponseDto> {
     return await this.usersService.remove(id);
   }
 
@@ -198,19 +189,13 @@ export class UsersController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: '批量删除成功',
-    schema: {
-      type: 'object',
-      properties: {
-        message: { type: 'string', example: '成功删除 3 个用户' },
-        deletedCount: { type: 'number', example: 3 },
-      },
-    },
+    type: BatchDeleteResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: '未找到要删除的用户',
   })
-  async batchRemove(@Body() batchDeleteDto: BatchDeleteUserDto): Promise<{ message: string }> {
+  async batchRemove(@Body() batchDeleteDto: BatchDeleteUserDto): Promise<BatchDeleteResponseDto> {
     return await this.usersService.batchRemove(batchDeleteDto);
   }
 

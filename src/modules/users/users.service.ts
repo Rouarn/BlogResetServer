@@ -202,7 +202,9 @@ export class UsersService {
    * @param batchDeleteDto 批量删除DTO
    * @returns 删除结果
    */
-  async batchRemove(batchDeleteDto: BatchDeleteUserDto): Promise<{ message: string }> {
+  async batchRemove(
+    batchDeleteDto: BatchDeleteUserDto,
+  ): Promise<{ message: string; deletedCount: number }> {
     const { ids } = batchDeleteDto;
 
     const users = await this.userRepository.findBy({ id: In(ids) });
@@ -225,6 +227,7 @@ export class UsersService {
     }
     return {
       message: `成功删除 ${users.length} 个用户`,
+      deletedCount: users.length,
     };
   }
 

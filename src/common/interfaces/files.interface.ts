@@ -1,5 +1,5 @@
 import type { ServeStaticOptions } from '@nestjs/platform-express/interfaces/serve-static-options.interface';
-import type { FileUploadOptions } from '../../shared/files/interfaces';
+import type { FileUploadOptions } from '@/shared/files/interfaces';
 
 /**
  * 静态配置接口（StaticConfig）

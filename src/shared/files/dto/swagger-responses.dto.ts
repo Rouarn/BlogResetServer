@@ -54,7 +54,7 @@ export class FileUploadResponseDto {
  */
 export class FileListResponseDto {
   @ApiProperty({ description: '文件列表', type: [FileInfoDto] })
-  files: FileInfoDto[];
+  data: FileInfoDto[];
 
   @ApiProperty({ description: '总数' })
   total: number;

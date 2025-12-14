@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { BusinessExceptionFactory } from '../../../common/exceptions';
+import { BusinessExceptionFactory } from '@/common/exceptions';
 import { FilesService } from '../services/files.service';
 
 @Injectable()
