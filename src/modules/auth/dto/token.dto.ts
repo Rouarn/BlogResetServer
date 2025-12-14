@@ -7,19 +7,24 @@ import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
  * JWT令牌中包含的用户信息载荷。
  *
  * 字段说明：
- * - sub: 用户ID（JWT标准字段）
+ * - authId: 认证ID
  * - username: 用户名
  * - roles: 用户角色
  * - iat: 签发时间（JWT标准字段）
  * - exp: 过期时间（JWT标准字段）
- * - authId: 认证ID
  */
 export class JwtPayloadDto {
   @ApiProperty({
-    description: '用户ID（JWT标准字段）',
+    description: '认证ID',
+    example: 'auth-uuid-456',
+  })
+  authId: string;
+
+  @ApiProperty({
+    description: '用户ID',
     example: 'user-uuid-123',
   })
-  sub: string;
+  userId: string;
 
   @ApiProperty({
     description: '用户名',
@@ -44,12 +49,6 @@ export class JwtPayloadDto {
     example: 1640998800,
   })
   exp: number;
-
-  @ApiProperty({
-    description: '认证ID',
-    example: 'auth-uuid-456',
-  })
-  authId: string;
 }
 
 /**

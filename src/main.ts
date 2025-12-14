@@ -92,9 +92,6 @@ function configureSwagger(
 
   // 导出API文档为JSON
   const apiDocPath = path.join(staticPath, appConfig.swaggerOptions.filename);
-  console.log('appConfig: ', appConfig);
-  console.log('staticPath: ', staticPath);
-  console.log('apiDocPath: ', apiDocPath);
 
   if (!fs.existsSync(staticPath)) {
     fs.mkdirSync(staticPath, { recursive: true });

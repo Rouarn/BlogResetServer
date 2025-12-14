@@ -1,3 +1,4 @@
+import { BusinessExceptionFactory } from '@/common/exceptions';
 import type {
   AuthCaptchaResponse,
   AuthCaptchaVerifyRequest,
@@ -20,15 +21,13 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
-import { GetCurrentUser, Public } from 'src/common/decorators';
-import { BusinessExceptionFactory } from '@/common/exceptions';
+import { CurrentUser, GetCurrentUser, Public } from 'src/common/decorators';
 import { AuthService } from './auth.service';
 import { CaptchaVerifyDto } from './dto/captcha-verify.dto';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { LoginDto, LoginResponseDto } from './dto/login.dto';
-import { RefreshTokenDto, TokenResponseDto } from './dto/token.dto';
 import { ChangePasswordDto, RegisterDto, RegisterResponseDto } from './dto/register.dto';
-import { Auth } from './entities/auth.entity';
+import { RefreshTokenDto, TokenResponseDto } from './dto/token.dto';
 
 @ApiTags('认证管理')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -239,7 +238,7 @@ export class AuthController {
   })
   @ApiBearerAuth()
   @Get('getUserInfo')
-  async getUserInfo(@GetCurrentUser() user: Auth): Promise<AuthUserInfo> {
+  async getUserInfo(@GetCurrentUser() user: CurrentUser): Promise<AuthUserInfo> {
     return await this.authService.getAuthInfo(user);
   }
 
@@ -476,9 +475,9 @@ export class AuthController {
   })
   @Post('logout')
   async logout(
-    @GetCurrentUser() user: { authId: string },
+    @GetCurrentUser() user: CurrentUser,
     @Req() req: Request,
   ): Promise<AuthMessageResponse> {
-    return this.authService.logout({ accessToken: req.headers.authorization }, user.authId);
+    return this.authService.logout({ accessToken: req.headers.authorization }, user);
   }
 }

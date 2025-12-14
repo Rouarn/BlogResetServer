@@ -13,9 +13,3 @@ export * from './interfaces';
 
 // 服务
 export * from './services';
-
-// 装饰器
-export * from './decorators';
-
-// 拦截器
-export * from './interceptors';

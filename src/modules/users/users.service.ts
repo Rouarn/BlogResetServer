@@ -1,6 +1,6 @@
 import { CACHE_PREFIXES, CACHE_TOKENS, CACHE_TTL } from '@/common/constants';
 import { BusinessExceptionFactory } from '@/common/exceptions';
-import { Cache, CacheEvict, ICacheService } from '@/shared/cache';
+import { ICacheService } from '@/shared/cache';
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role, Status, isEnabled, toggleStatus } from 'src/common/enums';
@@ -73,11 +73,10 @@ export class UsersService {
   }
 
   /**
-   * 获取用户信息（带缓存）
+   * 获取用户信息
    * @param user 用户对象
    * @returns 用户基本信息
    */
-  @Cache({ key: `${CACHE_PREFIXES.USER_INFO}:\${0.id}`, ttl: CACHE_TTL.USER_INFO })
   getUserInfo(user: User): {
     userId: string;
     nickname: string;
@@ -97,8 +96,12 @@ export class UsersService {
    * @param id 用户ID
    * @returns 用户信息
    */
-  @Cache({ key: `${CACHE_PREFIXES.USER}:\${0}`, ttl: CACHE_TTL.USER_INFO })
   async findById(id: string): Promise<User> {
+    const cacheKey = `${CACHE_PREFIXES.USER}:${id}`;
+    const cached = await this.cacheService.get<User>(cacheKey);
+    if (cached) {
+      return cached;
+    }
     const user = await this.userRepository.findOne({
       where: { id },
       relations: ['auth'],
@@ -106,6 +109,7 @@ export class UsersService {
     if (!user) {
       throw BusinessExceptionFactory.notFound('用户', { id });
     }
+    await this.cacheService.set<User>(cacheKey, user, { ttl: CACHE_TTL.USER_INFO });
     return user;
   }
 
@@ -127,15 +131,21 @@ export class UsersService {
    * @param size 每页数量
    * @returns 用户列表和总数
    */
-  @Cache({ key: `${CACHE_PREFIXES.USERS}:page:\${0}:size:\${1}`, ttl: CACHE_TTL.USER_LIST })
   async findAll(current: number = 1, size: number = 10): Promise<{ list: User[]; total: number }> {
+    const cacheKey = `${CACHE_PREFIXES.USERS}:page:${current}:size:${size}`;
+    const cached = await this.cacheService.get<{ list: User[]; total: number }>(cacheKey);
+    if (cached) {
+      return cached;
+    }
     const [data, total] = await this.userRepository.findAndCount({
       skip: (current - 1) * size,
       take: size,
       relations: ['auth'],
       order: { createTime: 'DESC' },
     });
-    return { list: data, total };
+    const result = { list: data, total };
+    await this.cacheService.set(cacheKey, result, { ttl: CACHE_TTL.USER_LIST });
+    return result;
   }
 
   /**
@@ -144,13 +154,6 @@ export class UsersService {
    * @param updateUserDto 更新用户DTO
    * @returns 更新后的用户信息
    */
-  @CacheEvict({
-    keys: [
-      `${CACHE_PREFIXES.USER}:\${0}`,
-      `${CACHE_PREFIXES.USER_INFO}:\${0}`,
-      `${CACHE_PREFIXES.USERS}:*`,
-    ],
-  })
   async update(id: string, updateUserDto: UpdateUserDto): Promise<void> {
     const user = await this.findById(id);
 
@@ -168,6 +171,12 @@ export class UsersService {
 
     await this.userRepository.save(user);
 
+    await this.cacheService.del(`${CACHE_PREFIXES.USER}:${id}`);
+    await this.cacheService.del(`${CACHE_PREFIXES.USER_INFO}:${id}`);
+    const keys = await this.cacheService.keys(`${CACHE_PREFIXES.USERS}:*`);
+    if (keys.length > 0) {
+      await this.cacheService.delMany(keys);
+    }
     return;
   }
 
@@ -176,16 +185,15 @@ export class UsersService {
    * @param id 用户ID
    * @returns 删除结果消息
    */
-  @CacheEvict({
-    keys: [
-      `${CACHE_PREFIXES.USER}:\${0}`,
-      `${CACHE_PREFIXES.USER_INFO}:\${0}`,
-      `${CACHE_PREFIXES.USERS}:*`,
-    ],
-  })
   async remove(id: string): Promise<{ message: string }> {
     const user = await this.findById(id);
     await this.userRepository.remove(user);
+    await this.cacheService.del(`${CACHE_PREFIXES.USER}:${id}`);
+    await this.cacheService.del(`${CACHE_PREFIXES.USER_INFO}:${id}`);
+    const keys = await this.cacheService.keys(`${CACHE_PREFIXES.USERS}:*`);
+    if (keys.length > 0) {
+      await this.cacheService.delMany(keys);
+    }
     return { message: '用户删除成功' };
   }
 
@@ -194,13 +202,6 @@ export class UsersService {
    * @param batchDeleteDto 批量删除DTO
    * @returns 删除结果
    */
-  @CacheEvict({
-    keys: [
-      `${CACHE_PREFIXES.USER}:*`,
-      `${CACHE_PREFIXES.USER_INFO}:*`,
-      `${CACHE_PREFIXES.USERS}:*`,
-    ],
-  })
   async batchRemove(batchDeleteDto: BatchDeleteUserDto): Promise<{ message: string }> {
     const { ids } = batchDeleteDto;
 
@@ -211,6 +212,17 @@ export class UsersService {
 
     await this.userRepository.remove(users);
 
+    const toClearPatterns = [
+      `${CACHE_PREFIXES.USER}:*`,
+      `${CACHE_PREFIXES.USER_INFO}:*`,
+      `${CACHE_PREFIXES.USERS}:*`,
+    ];
+    for (const pattern of toClearPatterns) {
+      const keys = await this.cacheService.keys(pattern);
+      if (keys.length > 0) {
+        await this.cacheService.delMany(keys);
+      }
+    }
     return {
       message: `成功删除 ${users.length} 个用户`,
     };

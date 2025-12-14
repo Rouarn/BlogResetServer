@@ -40,7 +40,7 @@ import {
   DatabaseNamingStrategy,
 } from './database';
 // 业务模块导入
-import { CacheInterceptor, CacheModule } from '@/shared/cache';
+import { CacheModule } from '@/shared/cache';
 import { FilesModule } from '@/shared/files/files.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -144,10 +144,6 @@ import { UsersModule } from './modules/users/users.module';
     // =============================================================================
     // 全局拦截器 - 统一响应格式化和请求追踪
     // =============================================================================
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: CacheInterceptor, // 缓存拦截器 (支持 @Cache 和 @CacheEvict 装饰器)
-    },
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseInterceptor, // 响应格式化拦截器 (统一响应格式)

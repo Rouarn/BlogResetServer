@@ -9,6 +9,7 @@ import type { Request } from 'express';
  */
 export interface CurrentUser {
   authId: string;
+  userId: string;
   username: string;
   roles: string[];
   lastLoginAt: Date;
@@ -57,15 +58,15 @@ export interface CurrentUser {
  */
 export const GetCurrentUser = createParamDecorator(
   (
-    data: keyof CurrentUser | undefined,
+    field: keyof CurrentUser | undefined,
     ctx: ExecutionContext,
   ): CurrentUser | string | string[] | Date => {
     const request = ctx.switchToHttp().getRequest<Request>();
     const user = request.user as CurrentUser;
 
     // 如果指定了特定字段，返回该字段的值
-    if (data) {
-      return user[data];
+    if (field) {
+      return user[field];
     }
 
     // 否则返回完整的用户认证信息

@@ -3,7 +3,7 @@ import { GENDER_LABELS } from '@/common/enums/gender.enum';
 import { BusinessException, BusinessExceptionFactory } from '@/common/exceptions';
 import { jwtOptions } from '@/config';
 import { AuthMessageResponse, AuthUserInfo } from '@/modules/auth/auth.types';
-import { Cache, ICacheService } from '@/shared/cache';
+import { ICacheService } from '@/shared/cache';
 import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,6 +12,7 @@ import * as crypto from 'crypto';
 import { isEnabled } from 'src/common/enums';
 import * as svgCaptcha from 'svg-captcha';
 import { Repository } from 'typeorm';
+import { CurrentUser } from '../../common/decorators';
 import { UsersService } from '../users/users.service';
 import type {
   CaptchaResponseDto,
@@ -89,19 +90,23 @@ export class AuthService {
    * @param auth 认证实体（仅用于获取ID）
    * @returns 包含用户ID、用户名、昵称、头像、角色、邮箱、性别、手机号等信息
    */
-  @Cache({ key: `${CACHE_PREFIXES.USER_INFO}:\${0.id}`, ttl: CACHE_TTL.USER_INFO })
-  async getAuthInfo(auth: Auth): Promise<AuthUserInfo> {
+  async getAuthInfo(auth: CurrentUser): Promise<AuthUserInfo> {
+    const cacheKey = `${CACHE_PREFIXES.USER_INFO}:${auth.userId}`;
+    const cached = await this.cacheService.get<AuthUserInfo>(cacheKey);
+    if (cached) {
+      return cached;
+    }
     // 从数据库查询完整的认证和用户信息
     const authWithUser = await this.authRepository.findOne({
-      where: { id: auth.id },
+      where: { id: auth.authId },
       relations: ['user'],
     });
 
     if (!authWithUser) {
-      throw BusinessExceptionFactory.notFound('用户信息', { authId: auth.id });
+      throw BusinessExceptionFactory.notFound('用户信息', { authId: auth.authId });
     }
 
-    return {
+    const result: AuthUserInfo = {
       userId: authWithUser.user?.id || authWithUser.id,
       username: authWithUser.username,
       nickname: authWithUser.user?.nickname || authWithUser.username,
@@ -118,6 +123,9 @@ export class AuthService {
       lastLoginAt: authWithUser.lastLoginAt,
       lastLoginIp: authWithUser.lastLoginIp ?? '',
     };
+    await this.cacheService.set<AuthUserInfo>(cacheKey, result, { ttl: CACHE_TTL.USER_INFO });
+
+    return result;
   }
 
   /**
@@ -199,9 +207,9 @@ export class AuthService {
 
     // 生成JWT令牌
     const payload = {
-      sub: auth.id,
       username: auth.username,
       authId: auth.id,
+      userId: auth.user?.id || auth.id,
       roles: auth.user?.roles || 'USER',
     };
 
@@ -532,10 +540,10 @@ export class AuthService {
 
     // 生成新的访问令牌
     const payload = {
-      sub: auth.id,
-      username: auth.username,
       authId: auth.id,
-      roles: 'USER',
+      username: auth.username,
+      userId: auth.user?.id || auth.id,
+      roles: auth.user?.roles || 'USER',
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -622,15 +630,15 @@ export class AuthService {
    * 撤销用户的访问令牌和刷新令牌
    *
    * @param logoutDto 登出数据
-   * @param authId 认证ID
+   * @param currentUser 当前用户信息
    * @returns 登出结果
    */
-  async logout(logoutDto: LogoutDto, authId: string): Promise<LogoutResponseDto> {
+  async logout(logoutDto: LogoutDto, currentUser: CurrentUser): Promise<LogoutResponseDto> {
     // 清除刷新令牌缓存
-    await this.cacheService.del(`${CACHE_PREFIXES.REFRESH_TOKEN}:${authId}`);
+    await this.cacheService.del(`${CACHE_PREFIXES.REFRESH_TOKEN}:${currentUser.authId}`);
 
     // 清除用户信息缓存
-    await this.cacheService.del(`${CACHE_PREFIXES.USER_INFO}:${authId}`);
+    await this.cacheService.del(`${CACHE_PREFIXES.USER_INFO}:${currentUser.userId}`);
 
     // 如果提供了访问令牌，将其加入黑名单
     if (logoutDto.accessToken) {
@@ -664,8 +672,13 @@ export class AuthService {
    * @param authId 认证ID
    * @returns 认证信息或抛出异常
    */
-  @Cache({ key: `${CACHE_PREFIXES.USER_INFO}:\${0}`, ttl: CACHE_TTL.USER_INFO })
   async getAuthById(authId: string): Promise<Auth> {
+    const cacheKey = `${CACHE_PREFIXES.AUTH}:${authId}`;
+    const cached = await this.cacheService.get<Auth>(cacheKey);
+    if (cached) {
+      const entity = Object.assign(new Auth(), cached);
+      return entity;
+    }
     const auth = await this.authRepository.findOne({
       where: { id: authId },
       relations: ['user'],
@@ -673,6 +686,7 @@ export class AuthService {
     if (!auth) {
       throw BusinessExceptionFactory.notFound('认证记录', { reason: `认证ID ${authId} 不存在` });
     }
+    await this.cacheService.set<Auth>(cacheKey, auth, { ttl: CACHE_TTL.USER_INFO });
     return auth;
   }
 

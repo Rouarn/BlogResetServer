@@ -62,59 +62,53 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
    * @throws UnauthorizedException 认证失败或用户状态异常
    */
   async validate(payload: {
-    sub: string; // 认证ID
+    authId: string; // 认证ID
     username: string;
     iat?: number;
     exp?: number;
   }): Promise<{
     authId: string;
+    userId: string;
     username: string;
     roles: string[];
     lastLoginAt: Date;
   }> {
-    try {
-      // 验证载荷必要字段
-      if (!payload.sub || !payload.username) {
-        throw BusinessExceptionFactory.forbidden('令牌验证', { reason: '无效的令牌载荷', payload });
-      }
-
-      // 通过认证服务获取完整的用户认证信息
-      const authInfo = await this.authService.getAuthById(payload.sub);
-
-      // 检查认证状态
-      if (!authInfo || authInfo.status !== Status.ENABLED) {
-        throw BusinessExceptionFactory.forbidden('账号访问', {
-          reason: '账号已被禁用或不存在',
-          authId: payload.sub,
-        });
-      }
-
-      // 检查账号是否被锁定
-      if (authInfo.isLocked()) {
-        throw BusinessExceptionFactory.forbidden('账号访问', {
-          reason: '账号已被锁定',
-          authId: payload.sub,
-        });
-      }
-
-      // 返回标准化的认证信息
-      const userRoles = authInfo.user?.roles ? [authInfo.user.roles] : [Role.USER];
-
-      return {
-        authId: authInfo.id,
-        username: authInfo.username,
-        roles: userRoles,
-        lastLoginAt: authInfo.lastLoginAt,
-      };
-    } catch (error) {
-      // 统一异常处理
-      if (error instanceof Error && error.name === 'BusinessException') {
-        throw error;
-      }
-      throw BusinessExceptionFactory.forbidden('令牌验证', {
-        reason: '令牌验证失败',
-        error: error instanceof Error ? error.message : String(error),
+    // 验证载荷必要字段
+    if (!payload.authId || !payload.username) {
+      throw BusinessExceptionFactory.validation('令牌参数', {
+        reason: '无效的令牌载荷',
+        ...payload,
       });
     }
+
+    // 通过认证服务获取完整的用户认证信息
+    const authInfo = await this.authService.getAuthById(payload.authId);
+
+    // 检查认证状态
+    if (!authInfo || authInfo.status !== Status.ENABLED) {
+      throw BusinessExceptionFactory.forbidden('账号访问', {
+        reason: '账号已被禁用或不存在',
+        authId: payload.authId,
+      });
+    }
+
+    // 检查账号是否被锁定
+    if (authInfo.isLocked()) {
+      throw BusinessExceptionFactory.forbidden('账号访问', {
+        reason: '账号已被锁定',
+        authId: payload.authId,
+      });
+    }
+
+    // 返回标准化的认证信息
+    const userRoles = authInfo.user?.roles ? [authInfo.user.roles] : [Role.USER];
+
+    return {
+      authId: authInfo.id,
+      userId: authInfo.user?.id || authInfo.id,
+      username: authInfo.username,
+      roles: userRoles,
+      lastLoginAt: authInfo.lastLoginAt,
+    };
   }
 }

@@ -26,6 +26,8 @@ export const CACHE_PREFIXES = {
   USERS: 'auth:users',
   /** 用户信息缓存前缀 */
   USER_INFO: 'auth:userinfo',
+  /** 认证实体缓存前缀 */
+  AUTH: 'auth:auth',
   /** 验证码缓存前缀 */
   CAPTCHA: 'auth:captcha',
   /** 刷新令牌缓存前缀 */
