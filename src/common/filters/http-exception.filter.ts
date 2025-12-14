@@ -3,8 +3,9 @@
  * 统一将所有 `HttpException` 转换为规范的错误响应体，并在非生产环境附带 `stack`。
  * 建议在 `main.ts` 中通过 `app.useGlobalFilters(new HttpExceptionFilter())` 注册。
  */
-import type { ErrorResponse } from '@/common/interfaces';
 import { BusinessException } from '@/common/exceptions';
+import type { ErrorResponse } from '@/common/interfaces';
+import { formatTimestamp } from '@/utils/helpers';
 import {
   ArgumentsHost,
   Catch,
@@ -14,7 +15,6 @@ import {
   Injectable,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import { formatTimestamp } from 'src/utils/helpers';
 
 @Injectable()
 @Catch(HttpException)

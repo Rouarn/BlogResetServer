@@ -1,4 +1,6 @@
 import { CACHE_PREFIXES, CACHE_TOKENS, CACHE_TTL } from '@/common/constants';
+import { CurrentUser } from '@/common/decorators';
+import { isEnabled } from '@/common/enums';
 import { GENDER_LABELS } from '@/common/enums/gender.enum';
 import { BusinessException, BusinessExceptionFactory } from '@/common/exceptions';
 import { jwtOptions } from '@/config';
@@ -8,10 +10,8 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
-import { isEnabled } from 'src/common/enums';
 import * as svgCaptcha from 'svg-captcha';
 import { Repository } from 'typeorm';
-import { CurrentUser } from '@/common/decorators';
 import { UsersService } from '../users/users.service';
 import type {
   CaptchaResponseDto,

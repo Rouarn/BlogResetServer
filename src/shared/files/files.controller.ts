@@ -1,3 +1,6 @@
+import { GetCurrentUser } from '@/common/decorators';
+import { FileValidationPipe, FilesValidationPipe } from '@/common/pipes';
+import type { Auth as CurrentUser } from '@/modules/auth/entities/auth.entity';
 import {
   Body,
   Controller,
@@ -25,14 +28,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { Response } from 'express';
-import { GetCurrentUser } from 'src/common/decorators';
-import { FileValidationPipe, FilesValidationPipe } from 'src/common/pipes';
-import type { Auth as CurrentUser } from 'src/modules/auth/entities/auth.entity';
 import {
+  BatchUploadResultDto,
+  FileListResponseDto,
   FileQueryDto,
   FileUploadDto,
-  FileListResponseDto,
-  BatchUploadResultDto,
   UploadFileResultDto,
 } from './dto';
 import { FileAccessGuard } from './guards/file-access.guard';

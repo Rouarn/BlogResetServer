@@ -1,3 +1,4 @@
+import { Gender, Role } from '@/common/enums';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsDateString,
@@ -8,7 +9,6 @@ import {
   Length,
   Matches,
 } from 'class-validator';
-import { Gender, Role } from 'src/common/enums';
 
 /**
  * 创建用户DTO

@@ -7,11 +7,11 @@ import {
   PaginatedResponse,
   PaginationParams,
 } from '@/common/interfaces';
+import { formatTimestamp } from '@/utils';
 import type { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
 import { Injectable, Logger } from '@nestjs/common';
 import type { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { formatTimestamp } from 'src/utils';
 import { extractRootMessage, isPaginatedPayload, normalizePaginatedData } from './pagination.utils';
 
 /**

@@ -1,3 +1,4 @@
+import { Gender } from '@/common/enums';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsEmail,
@@ -8,7 +9,6 @@ import {
   Length,
   Matches,
 } from 'class-validator';
-import { Gender } from 'src/common/enums';
 
 /**
  * 注册DTO

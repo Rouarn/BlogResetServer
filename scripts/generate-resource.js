@@ -34,7 +34,7 @@ function genTemplates(resourceRaw) {
   const PascalSingular = toPascalCase(singular);
 
   const entity = `import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
-import { BaseEntity } from 'src/database';
+import { BaseEntity } from '@/database';
 
 @Entity('ra_${resource}')
 export class ${PascalSingular} extends BaseEntity {

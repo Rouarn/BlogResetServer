@@ -15,6 +15,7 @@
  * @version 1.0.0
  */
 
+import { Public } from '@/common/decorators';
 import { Controller, Get } from '@nestjs/common';
 import {
   ApiOperation,
@@ -23,7 +24,6 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { Public } from 'src/common/decorators';
 import { AppService } from './app.service';
 
 class HelloResponseDto {

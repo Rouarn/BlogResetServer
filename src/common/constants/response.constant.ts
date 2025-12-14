@@ -1,4 +1,4 @@
-import { formatTimestamp } from 'src/utils/helpers';
+import { formatTimestamp } from '@/utils/helpers';
 import type { PaginationParams, SuccessResponse } from '../interfaces/response.interface';
 
 /**

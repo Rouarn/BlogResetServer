@@ -1,4 +1,4 @@
-import { WHITE_LIST_ROUTES } from 'src/common/constants';
+import { WHITE_LIST_ROUTES } from '@/common/constants';
 
 /**
  * 白名单认证工具类

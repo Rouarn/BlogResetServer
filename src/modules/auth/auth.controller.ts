@@ -1,3 +1,4 @@
+import { CurrentUser, GetCurrentUser, Public } from '@/common/decorators';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import {
   Body,
@@ -13,7 +14,6 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
-import { CurrentUser, GetCurrentUser, Public } from 'src/common/decorators';
 import { AuthService } from './auth.service';
 import {
   CaptchaResponseDto,

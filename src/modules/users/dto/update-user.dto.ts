@@ -1,3 +1,4 @@
+import { Gender, Status } from '@/common/enums';
 import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
@@ -12,7 +13,6 @@ import {
   Length,
   Matches,
 } from 'class-validator';
-import { Gender, Status } from 'src/common/enums';
 import { CreateUserDto } from './create-user.dto';
 
 /**

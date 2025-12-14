@@ -1,8 +1,8 @@
+import { Status } from '@/common/enums';
+import { BaseEntity } from '@/database';
 import { User } from '@/modules/users/entities/user.entity';
 import * as bcrypt from 'bcryptjs';
 import { Exclude } from 'class-transformer';
-import { Status } from 'src/common/enums';
-import { BaseEntity } from 'src/database';
 import { BeforeInsert, Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 /**

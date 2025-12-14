@@ -10,7 +10,6 @@
     "start:dev": "cross-env NODE_ENV=development nest start --watch",
     "start:test": "cross-env NODE_ENV=test nest start",
     "start:test-watch": "cross-env NODE_ENV=test nest start --watch",
-    "start:debug": "cross-env NODE_ENV=development nest start --debug --watch",
     "start:prod": "cross-env NODE_ENV=production node dist/main",
     "build": "nest build",
     "build:dev": "cross-env NODE_ENV=development nest build",

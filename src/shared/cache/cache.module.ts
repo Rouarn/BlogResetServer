@@ -8,9 +8,9 @@
  * @version 1.0.0
  */
 
+import { CACHE_TOKENS } from '@/common/constants';
 import { Global, Logger, Module, OnModuleInit, Provider } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { CACHE_TOKENS } from 'src/common/constants';
 import { ICacheService } from './interfaces';
 import { CacheFactoryService } from './services/cache-factory.service';
 

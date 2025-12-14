@@ -1,10 +1,10 @@
+import { BusinessExceptionFactory } from '@/common/exceptions';
+import type { StaticOptions } from '@/common/interfaces';
+import { getCurrentTimestamp, randomString } from '@/utils';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import { fileTypeFromBuffer } from 'file-type';
-import type { StaticOptions } from 'src/common/interfaces';
-import { getCurrentTimestamp, randomString } from 'src/utils';
-import { BusinessExceptionFactory } from '@/common/exceptions';
 import { FileType } from '../enums';
 
 @Injectable()

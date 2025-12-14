@@ -1,5 +1,5 @@
+import { BaseEntity } from '@/database';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
-import { BaseEntity } from 'src/database';
 import { FileType } from '../enums';
 
 @Entity('files')

@@ -1,9 +1,9 @@
-import { CanActivate, ExecutionContext, Inject, Injectable, Logger } from '@nestjs/common';
+import { CACHE_TOKENS } from '@/common/constants';
 import { BusinessExceptionFactory } from '@/common/exceptions';
-import type { Request } from 'express';
-import { CACHE_TOKENS } from 'src/common/constants';
 import { CacheFactoryService, ICacheService } from '@/shared/cache';
-import { getCurrentTimestamp, WhitelistAuth } from 'src/utils';
+import { WhitelistAuth, getCurrentTimestamp } from '@/utils';
+import { CanActivate, ExecutionContext, Inject, Injectable, Logger } from '@nestjs/common';
+import type { Request } from 'express';
 
 /**
  * 限流配置接口

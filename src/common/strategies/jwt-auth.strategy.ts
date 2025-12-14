@@ -1,10 +1,10 @@
+import { Role, Status } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
+import { AuthService } from '@/modules/auth/auth.service';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { Role, Status } from 'src/common/enums';
-import { AuthService } from 'src/modules/auth/auth.service';
 
 /**
  * JWT 认证策略（JwtAuthStrategy）

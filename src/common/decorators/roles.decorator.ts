@@ -1,5 +1,5 @@
+import type { Role } from '@/common/enums/index';
 import { SetMetadata } from '@nestjs/common';
-import type { Role } from 'src/common/enums/index';
 
 /**
  * 角色权限标识键

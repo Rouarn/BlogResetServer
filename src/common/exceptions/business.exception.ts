@@ -3,9 +3,9 @@
  * 统一将 NestJS 的 `HttpException` 转为规范化的业务错误响应体，便于前后端约定与日志采集。
  * 使用场景：服务端主动抛出可预期的错误（校验失败、权限不足、资源不存在、冲突等）。
  */
-import { HttpException, HttpStatus } from '@nestjs/common';
-import { formatTimestamp } from 'src/utils/helpers';
 import type { ErrorResponse } from '@/common/interfaces';
+import { formatTimestamp } from '@/utils/helpers';
+import { HttpException, HttpStatus } from '@nestjs/common';
 
 /**
  * 继承自 `HttpException`，封装标准的错误响应结构。

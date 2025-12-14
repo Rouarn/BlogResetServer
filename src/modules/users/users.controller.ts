@@ -1,3 +1,6 @@
+import { Roles } from '@/common/decorators';
+import { Role } from '@/common/enums';
+import { RolesGuard } from '@/common/guards';
 import {
   Body,
   Controller,
@@ -18,9 +21,6 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { Roles } from 'src/common/decorators';
-import { Role } from 'src/common/enums';
-import { RolesGuard } from 'src/common/guards';
 import { CreateUserDto } from './dto/create-user.dto';
 import {
   BatchDeleteUserDto,
@@ -28,13 +28,13 @@ import {
   ToggleUserStatusDto,
   UpdateUserDto,
 } from './dto/update-user.dto';
-import { User } from './entities/user.entity';
-import { UsersService } from './users.service';
 import {
   BatchDeleteResponseDto,
   DeleteResponseDto,
   UserListResponseDto,
 } from './dto/users.responses.dto';
+import { User } from './entities/user.entity';
+import { UsersService } from './users.service';
 
 /**
  * 用户控制器（UsersController）
