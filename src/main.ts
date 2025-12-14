@@ -27,7 +27,7 @@ function resolveStaticPath(staticConfig: { root: string }): string {
   }
 
   const isProduction = process.env.NODE_ENV === 'production';
-  const baseDir = isProduction ? process.cwd() : path.join(process.cwd(), 'dist');
+  const baseDir = isProduction ? path.join(process.cwd(), 'dist') : process.cwd();
   return path.resolve(baseDir, staticConfig.root);
 }
 
@@ -91,7 +91,10 @@ function configureSwagger(
   SwaggerModule.setup(swaggerConfig.prefix, app, document);
 
   // 导出API文档为JSON
-  const apiDocPath = path.join(staticPath, 'api-docs.json');
+  const apiDocPath = path.join(staticPath, appConfig.swaggerOptions.filename);
+  console.log('appConfig: ', appConfig);
+  console.log('staticPath: ', staticPath);
+  console.log('apiDocPath: ', apiDocPath);
 
   if (!fs.existsSync(staticPath)) {
     fs.mkdirSync(staticPath, { recursive: true });

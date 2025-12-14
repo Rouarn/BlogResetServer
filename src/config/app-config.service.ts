@@ -163,19 +163,35 @@ export class AppConfigService {
     description: string;
     version: string;
     prefix: string;
+    filename: string;
     enabled: boolean;
   } {
-    const envSuffix = this.isDevelopment
-      ? ' - 开发版'
-      : this.environment === 'test'
-        ? ' - 测试版'
-        : '';
+    const env = [
+      {
+        env: 'development',
+        suffix: ' - 开发版',
+      },
+      {
+        env: 'production',
+        suffix: ' - 生产版',
+      },
+      {
+        env: 'test',
+        suffix: ' - 测试版',
+      },
+    ];
+    const suffix = env.find((item) => item.env === this.environment)?.suffix ?? '';
+
+    const baseTitle = this.configService.get<string>('NEST_SWAGGER_TITLE', 'API Documentation');
+    const description = this.configService.get<string>('NEST_SWAGGER_DESCRIPTION', 'API文档');
+    const title = `${baseTitle}${suffix}`;
 
     return {
-      title: `我与夏季 Ra API${envSuffix}`,
-      description: `我与夏季 Ra 系统API文档${this.isDevelopment ? ' - 开发环境' : ''}`,
+      title,
+      description,
       version: `V${this.configService.get<string>('API_DEFAULT_VERSION', '1.0.0')}`,
       prefix: this.configService.get<string>('NEST_SWAGGER_PREFIX', '/api-docs'),
+      filename: this.configService.get<string>('NEST_SWAGGER_FILENAME', 'api-docs.json'),
       enabled: this.environment !== 'production', // 生产环境关闭
     };
   }

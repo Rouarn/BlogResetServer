@@ -86,7 +86,7 @@ export class BootstrapLoggerService {
       this.logger.log('┌─ 📚 API 文档服务 ' + '─'.repeat(47) + '┐');
       this.logger.log(`│ 🔗 Swagger UI: ${appUrl}${appConfig.swaggerOptions.prefix}`);
       this.logger.log(
-        `│ 📄 JSON 文档: ${appUrl}${staticConfig.options.prefix ?? ''}/api-docs.json`,
+        `│ 📄 JSON 文档: ${appUrl}${staticConfig.options.prefix ?? ''}/${appConfig.swaggerOptions.filename}`,
       );
       this.logger.log('│ 💡 提示: 可导入到 Postman、Apifox 等工具');
       this.logger.log('└' + '─'.repeat(65) + '┘');

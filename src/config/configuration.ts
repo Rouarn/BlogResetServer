@@ -86,6 +86,7 @@ export default registerAs('app', () => ({
     description: process.env.NEST_SWAGGER_DESCRIPTION ?? 'API文档',
     version: process.env.NEST_SWAGGER_VERSION ?? '1.0',
     prefix: process.env.NEST_SWAGGER_PREFIX ?? '/api-docs',
+    filename: process.env.NEST_SWAGGER_FILENAME ?? 'api-docs.json',
     enabled: process.env.NODE_ENV !== 'production',
   },
 

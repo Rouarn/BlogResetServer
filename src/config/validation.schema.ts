@@ -70,6 +70,7 @@ export const validationSchema = Joi.object({
   NEST_SWAGGER_DESCRIPTION: Joi.string().default('API文档'),
   NEST_SWAGGER_VERSION: Joi.string().default('1.0'),
   NEST_SWAGGER_PREFIX: Joi.string().default('/api-docs'),
+  NEST_SWAGGER_FILENAME: Joi.string().default('api-docs.json'),
 
   // Redis 缓存配置 (可选)
   NEST_REDIS_ENABLED: Joi.string().valid('true', 'false').default('true'),
