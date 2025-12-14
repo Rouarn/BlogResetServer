@@ -47,7 +47,7 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
       };
 
       if (!redisConfig?.enabled) {
-        this.logger.warn('Redis is disabled in configuration');
+        this.logger.warn('Redis 是禁用的，跳过初始化');
         return;
       }
 
@@ -85,7 +85,7 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
       await this.redis.connect();
       this.logger.log('✅ Redis 初始化完成');
     } catch (error) {
-      this.logger.error(`Failed to initialize Redis: ${(error as Error).message}`);
+      this.logger.error(`❌ 初始化 Redis 失败: ${(error as Error).message}`);
       try {
         if (this.redis) {
           this.redis.disconnect();
@@ -342,14 +342,14 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
     operationName: string,
   ): Promise<T> {
     if (!this.redis || !this.isConnected) {
-      this.logger.warn(`Redis not available for ${operationName}, using fallback`);
+      this.logger.warn(`Redis 不可用，${operationName} 操作失败，使用回退值`);
       return fallback;
     }
 
     try {
       return await operation();
     } catch (error) {
-      this.logger.error(`Redis ${operationName} failed: ${(error as Error).message}`);
+      this.logger.error(`❌ Redis ${operationName} 操作失败: ${(error as Error).message}`);
       return fallback;
     }
   }

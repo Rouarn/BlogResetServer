@@ -36,10 +36,7 @@ export class CacheFactoryService implements OnModuleDestroy {
       this.cacheService = await this.createCacheService();
       return this.cacheService;
     } catch (error) {
-      this.logger.error(
-        `Failed to create cache service: ${(error as Error).message}`,
-        (error as Error).stack,
-      );
+      this.logger.error(`❌ 创建缓存服务失败: ${(error as Error).message}`, (error as Error).stack);
 
       // 如果 Redis 创建失败，回退到内存缓存
       if (this.cacheConfig.type === CacheServiceType.REDIS) {
@@ -84,7 +81,7 @@ export class CacheFactoryService implements OnModuleDestroy {
    * 用于配置更改后重新创建缓存服务
    */
   async reinitialize(): Promise<void> {
-    this.logger.log('Reinitializing cache service');
+    this.logger.log('🔄 正在重新初始化缓存服务');
 
     // 关闭现有服务
     if (this.cacheService) {
@@ -98,7 +95,7 @@ export class CacheFactoryService implements OnModuleDestroy {
     // 创建新的缓存服务
     this.cacheService = await this.createCacheService();
 
-    this.logger.log(`Cache service reinitialized with type: ${this.cacheConfig.type}`);
+    this.logger.log(`✅ 缓存服务重新初始化完成，类型: ${this.cacheConfig.type}`);
   }
 
   /**
@@ -133,7 +130,7 @@ export class CacheFactoryService implements OnModuleDestroy {
     if (this.cacheService) {
       await this.cacheService.close();
       this.cacheService = null;
-      this.logger.log('Cache service closed');
+      this.logger.log('✅ 缓存服务已关闭');
     }
   }
 
@@ -176,7 +173,7 @@ export class CacheFactoryService implements OnModuleDestroy {
           const isHealthy = await redisService.isHealthy();
           if (!isHealthy) {
             await redisService.close();
-            throw new Error('Redis connection health check failed');
+            throw new Error('❌ Redis 连接健康检查失败');
           }
 
           return redisService;
@@ -190,7 +187,7 @@ export class CacheFactoryService implements OnModuleDestroy {
         return new MemoryCacheService(this.configService);
 
       default:
-        throw new Error(`Unsupported cache service type: ${this.cacheConfig.type}`);
+        throw new Error(`❌ 不支持的缓存服务类型: ${this.cacheConfig.type}`);
     }
   }
 }
