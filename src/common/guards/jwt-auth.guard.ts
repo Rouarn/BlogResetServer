@@ -75,6 +75,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
    * @throws BusinessException 用户不存在
    */
   handleRequest<TUser = Auth>(error: Error, user: Auth, info: unknown): TUser {
+    console.log('error: ', error);
+    console.log('info: ', info);
+    console.log('user: ', user);
     if (info || error) throw BusinessExceptionFactory.validation('Token');
     if (typeof user !== 'object') throw BusinessExceptionFactory.notFound('用户', { user });
 

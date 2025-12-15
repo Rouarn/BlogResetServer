@@ -35,6 +35,7 @@ import {
 } from './dto/users.responses.dto';
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
+import { DisableTimestamps } from '../../database';
 
 /**
  * 用户控制器（UsersController）
@@ -152,6 +153,7 @@ export class UsersController {
     status: HttpStatus.CONFLICT,
     description: '邮箱已被使用',
   })
+  @DisableTimestamps()
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<void> {
     return await this.usersService.update(id, updateUserDto);
   }
