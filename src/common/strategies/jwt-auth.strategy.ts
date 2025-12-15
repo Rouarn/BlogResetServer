@@ -83,12 +83,12 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
   }> {
     const authHeader = req.headers.authorization ?? '';
     const token = authHeader.replace(/^Bearer\s+/i, '');
-    console.log('token: ', token);
+
     if (token) {
       const isBlacklisted = await this.cacheService.has(
         `${CACHE_PREFIXES.BLACKLIST_TOKEN}:${token}`,
       );
-      console.log('isBlacklisted: ', isBlacklisted);
+
       if (isBlacklisted) {
         throw BusinessExceptionFactory.unauthorized('令牌访问', { status: 'blacklisted' });
       }

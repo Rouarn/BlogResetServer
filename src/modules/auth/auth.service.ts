@@ -141,11 +141,13 @@ export class AuthService {
    * @throws BadRequestException 账号被锁定或其他业务错误
    */
   async login(loginDto: LoginDto, clientIp?: string): Promise<LoginResponseDto> {
-    // 查找认证记录，包含关联的用户信息
-    const auth = await this.authRepository.findOne({
-      where: { username: loginDto.username },
-      relations: ['user'],
-    });
+    // 查找认证记录，包含关联的用户信息，并显式选择密码和盐值
+    const auth = await this.authRepository
+      .createQueryBuilder('auth')
+      .leftJoinAndSelect('auth.user', 'user')
+      .addSelect(['auth.password', 'auth.salt'])
+      .where('auth.username = :username', { username: loginDto.username })
+      .getOne();
 
     if (!auth) {
       // 记录登录失败尝试（可选：防止用户名枚举攻击）
@@ -402,7 +404,13 @@ export class AuthService {
     changePasswordDto: ChangePasswordDto,
     authId: string,
   ): Promise<AuthMessageResponse> {
-    const auth = await this.authRepository.findOne({ where: { id: authId } });
+    // 显式选择密码和盐值用于验证
+    const auth = await this.authRepository
+      .createQueryBuilder('auth')
+      .addSelect(['auth.password', 'auth.salt'])
+      .where('auth.id = :id', { id: authId })
+      .getOne();
+
     if (!auth) {
       throw BusinessExceptionFactory.notFound('认证记录', { authId });
     }

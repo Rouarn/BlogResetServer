@@ -1,12 +1,11 @@
 import { BusinessExceptionFactory } from '@/common/exceptions';
-import type { Auth } from '@/modules/auth/entities/auth.entity';
 import { WhitelistAuth } from '@/utils';
-import { ExecutionContext, Injectable } from '@nestjs/common';
+import { ExecutionContext, Injectable, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import type { Request } from 'express';
 import type { Observable } from 'rxjs';
-import { IS_PUBLIC_KEY } from '../decorators';
+import { CurrentUser, IS_PUBLIC_KEY } from '../decorators';
 
 /**
  * JwtAuthGuard（JWT 认证守卫）
@@ -31,6 +30,8 @@ import { IS_PUBLIC_KEY } from '../decorators';
  */
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
+  private readonly logger = new Logger(JwtAuthGuard.name);
+
   /**
    * 构造函数
    * @param reflector 用于获取元数据的反射工具
@@ -74,10 +75,18 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
    * @throws BusinessException token 校验失败
    * @throws BusinessException 用户不存在
    */
-  handleRequest<TUser = Auth>(error: Error, user: Auth, info: unknown): TUser {
-    console.log('error: ', error);
-    console.log('info: ', info);
-    console.log('user: ', user);
+  handleRequest<TUser = CurrentUser>(error: Error, user: CurrentUser, info: unknown): TUser {
+    if (error) {
+      this.logger.error(`认证错误: ${error.message}`, error.stack);
+    }
+    if (info) {
+      this.logger.warn(`认证提示: ${JSON.stringify(info)}`);
+    }
+    // 仅在开发环境或调试时打印用户信息，避免生产环境日志泄露敏感信息
+    if (user && process.env.NODE_ENV !== 'production') {
+      this.logger.debug(`认证成功用户: ${user.username}/${user.userId}`);
+    }
+
     if (info || error) throw BusinessExceptionFactory.unauthorized('令牌验证失败');
     if (typeof user !== 'object') throw BusinessExceptionFactory.notFound('用户', { user });
 

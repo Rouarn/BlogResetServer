@@ -19,11 +19,11 @@ export class Auth extends BaseEntity {
   username: string;
 
   @Exclude()
-  @Column({ comment: '密码' })
+  @Column({ comment: '密码', select: false })
   password: string;
 
   @Exclude()
-  @Column({ length: 100, nullable: true, comment: '盐' })
+  @Column({ length: 100, nullable: true, comment: '盐', select: false })
   salt: string;
 
   @Column('simple-enum', {
