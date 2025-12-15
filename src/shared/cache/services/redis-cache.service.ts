@@ -12,6 +12,7 @@ import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { CacheOptions, CacheStats, ICacheService } from '../interfaces';
+import { deserialize, serialize } from '@/utils/helpers';
 
 @Injectable()
 export class RedisCacheService implements ICacheService, OnModuleDestroy {
@@ -110,7 +111,7 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
           return null;
         }
         this.stats.hits++;
-        return JSON.parse(value) as T;
+        return deserialize<T>(value);
       },
       null,
       'get',
@@ -126,7 +127,7 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
     await this.safeExecute(
       async () => {
         const redisKey = this.getKey(key, options?.prefix);
-        const serializedValue = JSON.stringify(value);
+        const serializedValue = serialize(value);
 
         const ttl = options?.ttl ?? this.configService.get('app.redis.cache.defaultTtl', 3600);
 

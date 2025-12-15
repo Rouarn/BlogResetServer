@@ -39,3 +39,6 @@ export * from './throttle.helper';
 
 // 唯一标识
 export * from './uuid.helper';
+
+// 其他
+export * from './custom-serialize.helper';

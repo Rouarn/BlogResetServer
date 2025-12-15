@@ -2,7 +2,7 @@ import { Status } from '@/common/enums';
 import { BaseEntity } from '@/database';
 import { User } from '@/modules/users/entities/user.entity';
 import * as bcrypt from 'bcryptjs';
-import { Exclude, Type } from 'class-transformer';
+import { Exclude } from 'class-transformer';
 import { BeforeInsert, Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 /**
@@ -33,7 +33,6 @@ export class Auth extends BaseEntity {
   })
   status: Status;
 
-  @Type(() => Date)
   @Column({ type: 'timestamp', nullable: true, comment: '最后登录时间' })
   lastLoginAt: Date;
 
@@ -43,11 +42,9 @@ export class Auth extends BaseEntity {
   @Column({ type: 'int', default: 0, comment: '登录失败次数' })
   loginAttempts: number;
 
-  @Type(() => Date)
   @Column({ type: 'timestamp', nullable: true, comment: '账户锁定时间' })
   lockedAt?: Date;
 
-  @Type(() => Date)
   @Column({ type: 'timestamp', nullable: true, comment: '密码最后修改时间' })
   passwordChangedAt?: Date;
 
@@ -110,7 +107,11 @@ export class Auth extends BaseEntity {
 
     // 锁定30分钟后自动解锁
     const lockDuration = 30 * 60 * 1000; // 30分钟
-    return Date.now() - this.lockedAt.getTime() < lockDuration;
+    const now = new Date();
+    const lockedAtDate =
+      this.lockedAt instanceof Date ? this.lockedAt : new Date(this.lockedAt as unknown as string);
+    if (Number.isNaN(lockedAtDate.getTime())) return false;
+    return now.getTime() - lockedAtDate.getTime() < lockDuration;
   }
 
   /**

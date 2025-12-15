@@ -9,7 +9,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
-import { plainToInstance } from 'class-transformer';
 import * as crypto from 'crypto';
 import * as svgCaptcha from 'svg-captcha';
 import { Repository } from 'typeorm';
@@ -155,7 +154,7 @@ export class AuthService {
     // 检查账号是否被锁定
     if (auth.isLocked()) {
       if (auth.lockedAt) {
-        const lockTime = new Date(auth.lockedAt.getTime() + 30 * 60 * 1000);
+        const lockTime = new Date(auth.lockedAt.getTime() + 30 * 60 * 1000); // 30分钟锁定
         if (new Date() < lockTime) {
           throw BusinessExceptionFactory.systemBusy({
             message: '账号已被锁定，请稍后重试',
@@ -678,7 +677,8 @@ export class AuthService {
     const cacheKey = `${CACHE_PREFIXES.AUTH}:${authId}`;
     const cached = await this.cacheService.get<Auth>(cacheKey);
     if (cached) {
-      return plainToInstance(Auth, cached, { enableImplicitConversion: true });
+      const entity = Object.assign(new Auth(), cached);
+      return entity;
     }
     const auth = await this.authRepository.findOne({
       where: { id: authId },
