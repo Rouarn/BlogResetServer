@@ -1,6 +1,5 @@
-import { GetCurrentUser } from '@/common/decorators';
+import { CurrentUser, GetCurrentUser } from '@/common/decorators';
 import { FileValidationPipe, FilesValidationPipe } from '@/common/pipes';
-import type { Auth as CurrentUser } from '@/modules/auth/entities/auth.entity';
 import {
   Body,
   Controller,
@@ -91,7 +90,7 @@ export class FilesController {
     @Body() uploadDto: FileUploadDto,
     @GetCurrentUser() user?: CurrentUser,
   ): Promise<FileUploadResult> {
-    const result = await this.filesService.uploadSingleFile(file, uploadDto, user?.id);
+    const result = await this.filesService.uploadSingleFile(file, uploadDto, user?.userId);
     return result;
   }
 
@@ -134,7 +133,7 @@ export class FilesController {
     @Body() uploadDto: FileUploadDto,
     @GetCurrentUser() user?: CurrentUser,
   ): Promise<BatchUploadResult> {
-    const result = await this.filesService.uploadMultipleFiles(files, uploadDto, user?.id);
+    const result = await this.filesService.uploadMultipleFiles(files, uploadDto, user?.userId);
     return result;
   }
 
@@ -163,7 +162,7 @@ export class FilesController {
     @Query() queryDto: FileQueryDto,
     @GetCurrentUser() user?: CurrentUser,
   ): Promise<unknown> {
-    const result = await this.filesService.findFiles(queryDto, user?.id);
+    const result = await this.filesService.findFiles(queryDto, user?.userId);
     return result;
   }
 
@@ -189,7 +188,7 @@ export class FilesController {
     @Param('id', ParseUUIDPipe) id: string,
     @GetCurrentUser() user?: CurrentUser,
   ): Promise<unknown> {
-    const file = await this.filesService.findFileById(id, user?.id);
+    const file = await this.filesService.findFileById(id, user?.userId);
     return file;
   }
 
@@ -202,7 +201,7 @@ export class FilesController {
     @Res() res: Response,
     @GetCurrentUser() user?: CurrentUser,
   ): Promise<void> {
-    const { file, buffer } = await this.filesService.getFileBuffer(id, user?.id);
+    const { file, buffer } = await this.filesService.getFileBuffer(id, user?.userId);
 
     res.set({
       'Content-Type': file.mimeType,
@@ -222,7 +221,7 @@ export class FilesController {
     @Res() res: Response,
     @GetCurrentUser() user?: CurrentUser,
   ): Promise<void> {
-    const { file, buffer } = await this.filesService.getFileBuffer(id, user?.id);
+    const { file, buffer } = await this.filesService.getFileBuffer(id, user?.userId);
 
     res.set({
       'Content-Type': file.mimeType,
@@ -243,7 +242,7 @@ export class FilesController {
     success: boolean;
     message: string;
   }> {
-    await this.filesService.deleteFile(id, user?.id);
+    await this.filesService.deleteFile(id, user?.userId);
     return {
       success: true,
       message: '文件删除成功',
