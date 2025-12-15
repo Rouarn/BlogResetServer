@@ -1,9 +1,12 @@
+import { CACHE_PREFIXES, CACHE_TOKENS } from '@/common/constants';
 import { Role, Status } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { AuthService } from '@/modules/auth/auth.service';
-import { Injectable } from '@nestjs/common';
+import type { ICacheService } from '@/shared/cache';
+import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
+import type { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
 /**
@@ -45,10 +48,12 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     private readonly config: ConfigService,
     private readonly authService: AuthService,
+    @Inject(CACHE_TOKENS.I_CACHE_SERVICE) private readonly cacheService: ICacheService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: config.get<string>('NEST_JWT_SECRET') ?? 'default-secret-key',
+      passReqToCallback: true,
     });
   }
 
@@ -61,18 +66,33 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
    * @returns 校验通过后的完整用户认证信息
    * @throws UnauthorizedException 认证失败或用户状态异常
    */
-  async validate(payload: {
-    authId: string; // 认证ID
-    username: string;
-    iat?: number;
-    exp?: number;
-  }): Promise<{
+  async validate(
+    req: Request,
+    payload: {
+      authId: string; // 认证ID
+      username: string;
+      iat?: number;
+      exp?: number;
+    },
+  ): Promise<{
     authId: string;
     userId: string;
     username: string;
     roles: string[];
     lastLoginAt: Date;
   }> {
+    const authHeader = req.headers.authorization ?? '';
+    const token = authHeader.replace(/^Bearer\s+/i, '');
+    console.log('token: ', token);
+    if (token) {
+      const isBlacklisted = await this.cacheService.has(
+        `${CACHE_PREFIXES.BLACKLIST_TOKEN}:${token}`,
+      );
+      console.log('isBlacklisted: ', isBlacklisted);
+      if (isBlacklisted) {
+        throw BusinessExceptionFactory.unauthorized('令牌访问', { status: 'blacklisted' });
+      }
+    }
     // 验证载荷必要字段
     if (!payload.authId || !payload.username) {
       throw BusinessExceptionFactory.validation('令牌参数', {

@@ -114,7 +114,8 @@ export class AuthService {
       avatar: authWithUser.user?.avatar || '',
       roles: authWithUser.user?.roles || 'USER',
       email: authWithUser.user?.email || '',
-      gender: authWithUser.user?.gender !== undefined ? String(authWithUser.user.gender) : '',
+      gender:
+        authWithUser.user?.gender !== undefined ? GENDER_LABELS[authWithUser.user.gender] : '',
       mobile: authWithUser.user?.mobile || '',
       bio: authWithUser.user?.bio || '',
       birthday: authWithUser.user?.birthday,
@@ -640,22 +641,18 @@ export class AuthService {
 
     // 清除用户信息缓存
     await this.cacheService.del(`${CACHE_PREFIXES.USER_INFO}:${currentUser.userId}`);
+    await this.cacheService.del(`${CACHE_PREFIXES.AUTH}:${currentUser.authId}`);
 
     // 如果提供了访问令牌，将其加入黑名单
     if (logoutDto.accessToken) {
-      try {
-        const payload = this.jwtService.verify<JwtPayloadDto>(logoutDto.accessToken);
-        const remainingTtl = payload.exp - Math.floor(Date.now() / 1000);
-
-        if (remainingTtl > 0) {
-          await this.cacheService.set(
-            `${CACHE_PREFIXES.BLACKLIST_TOKEN}:${logoutDto.accessToken}`,
-            'blacklisted',
-            { ttl: remainingTtl },
-          );
-        }
-      } catch (error) {
-        // 令牌无效或已过期，无需加入黑名单
+      const raw = logoutDto.accessToken.trim();
+      const token = raw.replace(/^Bearer\s+/i, '');
+      const payload = this.jwtService.verify<JwtPayloadDto>(token);
+      const remainingTtl = payload.exp - Math.floor(Date.now() / 1000);
+      if (remainingTtl > 0) {
+        await this.cacheService.set(`${CACHE_PREFIXES.BLACKLIST_TOKEN}:${token}`, 'blacklisted', {
+          ttl: remainingTtl,
+        });
       }
     }
 

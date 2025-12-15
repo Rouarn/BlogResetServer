@@ -78,7 +78,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     console.log('error: ', error);
     console.log('info: ', info);
     console.log('user: ', user);
-    if (info || error) throw BusinessExceptionFactory.validation('Token');
+    if (info || error) throw BusinessExceptionFactory.unauthorized('令牌验证失败');
     if (typeof user !== 'object') throw BusinessExceptionFactory.notFound('用户', { user });
 
     return user as TUser;

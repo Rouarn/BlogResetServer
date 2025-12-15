@@ -63,15 +63,17 @@ import { UsersModule } from './modules/users/users.module';
     JwtModule.registerAsync({
       global: true, // 全局可用，无需在每个模块中重复导入
       inject: [ConfigService], // 注入配置服务
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('NEST_JWT_SECRET'), // JWT 签名密钥
-        signOptions: {
-          expiresIn: configService.get<number>( // JWT 过期时间
-            'NEST_JWT_ACCESS_TOKEN_TTL',
-            3600, // 默认 1 天
-          ),
-        },
-      }),
+      useFactory: (configService: ConfigService) => {
+        return {
+          secret: configService.get<string>('NEST_JWT_SECRET'), // JWT 签名密钥
+          signOptions: {
+            expiresIn: configService.get<number>( // JWT 过期时间
+              'NEST_JWT_ACCESS_TOKEN_TTL',
+              3600, // 默认 1 天
+            ),
+          },
+        };
+      },
     }),
 
     // =============================================================================
