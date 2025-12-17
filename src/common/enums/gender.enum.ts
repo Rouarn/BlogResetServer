@@ -1,3 +1,5 @@
+import { EnumHelper } from '@/utils/helpers/enum.helper';
+
 /**
  * 用户性别枚举
  * 定义系统中支持的性别类型
@@ -14,7 +16,7 @@ export enum Gender {
 /**
  * 性别枚举的所有可能值
  */
-export const GENDER_VALUES = Object.values(Gender).filter((v) => typeof v === 'number') as number[];
+export const GENDER_VALUES = EnumHelper.getValues(Gender) as number[];
 
 /**
  * 性别枚举类型
@@ -45,7 +47,7 @@ export const GENDER_KEYS: Record<Gender, keyof typeof Gender> = {
  * @returns 如果是有效的性别枚举值则返回 true
  */
 export function isValidGender(value: unknown): value is Gender {
-  return typeof value === 'number' && GENDER_VALUES.includes(value);
+  return EnumHelper.hasValue(Gender, value);
 }
 
 /**
@@ -63,7 +65,7 @@ export function getGenderLabel(gender: Gender): string {
  * @returns 对应的枚举键名
  */
 export function getGenderKey(gender: Gender): keyof typeof Gender {
-  return GENDER_KEYS[gender];
+  return EnumHelper.getKeyByValue(Gender, gender)!;
 }
 
 /**
@@ -101,9 +103,5 @@ export function getGenderOptions(): {
   label: string;
   key: string;
 }[] {
-  return GENDER_VALUES.map((value) => ({
-    value,
-    label: getGenderLabel(value),
-    key: getGenderKey(value),
-  }));
+  return EnumHelper.toOptions(Gender, GENDER_LABELS);
 }

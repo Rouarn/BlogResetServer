@@ -101,7 +101,14 @@ const parsedStatus = parseStatus('1');
 ## 代码片段示例
 
 ```ts
-import { Role, RoleUtils, Status, getStatusOptions, Gender, getGenderOptions } from '@/common/enums';
+import {
+  Role,
+  RoleUtils,
+  Status,
+  getStatusOptions,
+  Gender,
+  getGenderOptions,
+} from '@/common/enums';
 
 // 生成表单选项
 const genderOptions = getGenderOptions();
@@ -132,4 +139,10 @@ src/common/enums/
 ```
 
 ---
+
 如需增加新的枚举类型，建议参考现有文件的结构与工具函数设计，保持统一的使用体验与类型签名。
+
+## 开发指南
+
+- 推荐使用 `EnumHelper` (`@/utils/helpers/enum.helper`) 来简化枚举工具函数的实现。
+- `EnumHelper` 提供了 `getValues`, `hasValue`, `getKeyByValue`, `toOptions` 等通用方法，可直接替代大部分手动实现的样板代码。

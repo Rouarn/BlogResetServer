@@ -1,3 +1,4 @@
+import { DisableTimestamps } from '@/database';
 import { Roles } from '@/common/decorators';
 import { Role } from '@/common/enums';
 import { RolesGuard } from '@/common/guards';
@@ -35,7 +36,6 @@ import {
 } from './dto/users.responses.dto';
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
-import { DisableTimestamps } from '../../database';
 
 /**
  * 用户控制器（UsersController）

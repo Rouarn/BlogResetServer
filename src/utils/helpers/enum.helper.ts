@@ -18,9 +18,7 @@ export class EnumHelper {
    * @returns 值数组
    */
   static getValues<T extends Record<string, string | number>>(enumObject: T): T[keyof T][] {
-    return Object.values(enumObject).filter(
-      (value) => typeof value === 'string' || typeof value === 'number',
-    ) as T[keyof T][];
+    return this.getKeys(enumObject).map((key) => enumObject[key]);
   }
 
   /**
