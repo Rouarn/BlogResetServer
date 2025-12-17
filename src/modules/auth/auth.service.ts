@@ -19,14 +19,10 @@ import type {
   CaptchaVerifyDto,
   CaptchaVerifyResponseDto,
 } from './dto/captcha-verify.dto';
+import type { ChangePasswordDto, RegisterDto, ResetPasswordDto } from './dto/create-user.response';
+import { AuthCreateUserResponse } from './dto/create-user.response';
 import type { LoginDto, LoginResponseDto } from './dto/login.dto';
 import { AuthMessageResponse } from './dto/message.dto';
-import type {
-  ChangePasswordDto,
-  RegisterDto,
-  RegisterResponseDto,
-  ResetPasswordDto,
-} from './dto/register.dto';
 import type {
   JwtPayloadDto,
   LogoutDto,
@@ -245,7 +241,7 @@ export class AuthService {
    * @throws ConflictException 用户名已存在
    * @throws BadRequestException 注册数据验证失败
    */
-  async register(registerDto: RegisterDto): Promise<RegisterResponseDto> {
+  async register(registerDto: RegisterDto): Promise<AuthCreateUserResponse> {
     // 检查用户名是否已存在
     const existingAuth = await this.authRepository.findOne({
       where: { username: registerDto.username },
@@ -281,14 +277,15 @@ export class AuthService {
 
     return {
       message: '注册成功',
-      userId: savedAuth.id,
-      username: savedAuth.username,
-      nickname: createdUser.nickname,
-      avatar: createdUser.avatar,
-      email: createdUser.email,
-      gender: createdUser.gender !== undefined ? GENDER_LABELS[createdUser.gender] : '',
-      mobile: createdUser.mobile,
-      needLogin: true,
+      data: {
+        userId: savedAuth.id,
+        username: savedAuth.username,
+        nickname: createdUser.nickname,
+        avatar: createdUser.avatar,
+        email: createdUser.email,
+        gender: createdUser.gender !== undefined ? GENDER_LABELS[createdUser.gender] : '',
+        mobile: createdUser.mobile,
+      },
     };
   }
 

@@ -57,25 +57,6 @@ export class CreateAuthDto {
   @Length(6, 50, { message: '密码长度必须在6-50个字符之间' })
   password: string;
 
-  @ApiProperty({
-    description: '验证码令牌',
-    example: 'captcha-token-456',
-  })
-  @IsString({ message: '验证码令牌必须是字符串' })
-  @IsNotEmpty({ message: '验证码令牌不能为空' })
-  captchaToken: string;
-
-  @ApiProperty({
-    description: '验证码',
-    example: 'EFGH',
-    minLength: 4,
-    maxLength: 6,
-  })
-  @IsString({ message: '验证码必须是字符串' })
-  @IsNotEmpty({ message: '验证码不能为空' })
-  @Length(4, 6, { message: '验证码长度必须在4-6个字符之间' })
-  captchaCode: string;
-
   @ApiPropertyOptional({
     description: '昵称',
     example: 'newuser',

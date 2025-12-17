@@ -21,10 +21,14 @@ import {
   CaptchaVerifyResponseDto,
 } from './dto/captcha-verify.dto';
 import { CreateAuthDto } from './dto/create-auth.dto';
-import { AuthCreateUserResponse } from './dto/create-user.response';
+import {
+  AuthCreateUserResponse,
+  ChangePasswordDto,
+  RegisterDto,
+  RegisterResponseDto,
+} from './dto/create-user.response';
 import { LoginDto, LoginResponseDto } from './dto/login.dto';
 import { AuthMessageResponse } from './dto/message.dto';
-import { ChangePasswordDto, RegisterDto, RegisterResponseDto } from './dto/register.dto';
 import { RefreshTokenDto, TokenResponseDto } from './dto/token.dto';
 import { AuthUserInfoDto } from './dto/user-info.dto';
 
@@ -149,7 +153,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: '注册结果', type: RegisterResponseDto })
   @Public()
   @Post('register')
-  register(@Body() body: CreateAuthDto): Promise<RegisterResponseDto> {
+  register(@Body() body: CreateAuthDto): Promise<AuthCreateUserResponse> {
     return this.authService.register(body);
   }
 
@@ -169,52 +173,7 @@ export class AuthController {
   @Public()
   @Post('create')
   async createUser(@Body() body: RegisterDto): Promise<AuthCreateUserResponse> {
-    const { captchaToken, captchaCode, ...userData } = body;
-
-    // 验证必要参数
-    if (!captchaToken || !captchaCode) {
-      return {
-        success: false,
-        message: '验证码token和验证码不能为空',
-      };
-    }
-
-    // 验证验证码
-    const captchaResult = await this.authService.verifyCaptcha({
-      token: captchaToken,
-      code: captchaCode,
-    });
-
-    if (!captchaResult.success) {
-      return {
-        success: false,
-        message: `验证码验证失败: ${captchaResult.message}`,
-      };
-    }
-
-    // 验证码通过，执行用户创建逻辑
-    try {
-      // 这里可以调用实际的用户创建服务
-      const result = await this.authService.register({
-        ...userData,
-        captchaToken,
-        captchaCode,
-      });
-
-      return {
-        success: true,
-        message: '用户创建成功',
-        record: {
-          id: result.userId,
-          username: result.username,
-        },
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: '用户创建失败',
-      };
-    }
+    return await this.authService.register(body);
   }
 
   /**
