@@ -8,6 +8,7 @@
  * @version 1.0.0
  */
 
+import { getCurrentTimestamp } from '@/utils/helpers';
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CacheOptions, CacheStats, ICacheService } from '../interfaces';
@@ -70,7 +71,7 @@ export class MemoryCacheService implements ICacheService, OnModuleDestroy {
     }
 
     // 更新最后访问时间
-    item.lastAccessed = Date.now();
+    item.lastAccessed = getCurrentTimestamp();
     this.stats.hits++;
 
     return item.value as T;
@@ -81,7 +82,7 @@ export class MemoryCacheService implements ICacheService, OnModuleDestroy {
    */
   async set<T = unknown>(key: string, value: T, options?: CacheOptions): Promise<void> {
     const cacheKey = this.getKey(key, options?.prefix);
-    const now = Date.now();
+    const now = getCurrentTimestamp();
 
     const ttl = options?.ttl ?? this.configService.get('app.redis.cache.defaultTtl', 3600);
     const expireAt = ttl && ttl > 0 ? now + ttl * 1000 : undefined;
@@ -197,7 +198,7 @@ export class MemoryCacheService implements ICacheService, OnModuleDestroy {
       return false;
     }
 
-    item.expireAt = ttl > 0 ? Date.now() + ttl * 1000 : undefined;
+    item.expireAt = ttl > 0 ? getCurrentTimestamp() + ttl * 1000 : undefined;
     return true;
   }
 
@@ -212,7 +213,7 @@ export class MemoryCacheService implements ICacheService, OnModuleDestroy {
 
     if (!item.expireAt) return -1; // 永不过期
 
-    const remaining = Math.ceil((item.expireAt - Date.now()) / 1000);
+    const remaining = Math.ceil((item.expireAt - getCurrentTimestamp()) / 1000);
     return remaining > 0 ? remaining : -2; // 已过期
   }
 
@@ -289,14 +290,14 @@ export class MemoryCacheService implements ICacheService, OnModuleDestroy {
    */
   private isExpired(item: CacheItem): boolean {
     if (!item.expireAt) return false;
-    return Date.now() > item.expireAt;
+    return getCurrentTimestamp() > item.expireAt;
   }
 
   /**
    * 清理过期的缓存项
    */
   private cleanupExpired(): void {
-    const now = Date.now();
+    const now = getCurrentTimestamp();
     let cleanedCount = 0;
 
     for (const [key, item] of this.cache.entries()) {
@@ -319,7 +320,7 @@ export class MemoryCacheService implements ICacheService, OnModuleDestroy {
     if (this.cache.size === 0) return;
 
     let oldestKey: string | null = null;
-    let oldestTime = Date.now();
+    let oldestTime = getCurrentTimestamp();
 
     for (const [key, item] of this.cache.entries()) {
       if (item.lastAccessed < oldestTime) {

@@ -5,6 +5,7 @@ import { GENDER_LABELS } from '@/common/enums/gender.enum';
 import { BusinessException, BusinessExceptionFactory } from '@/common/exceptions';
 import { jwtOptions } from '@/config';
 import { ICacheService } from '@/shared/cache';
+import { getCurrentTimestamp, isExpired } from '@/utils/helpers';
 import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -323,7 +324,7 @@ export class AuthService {
     const captchaData = {
       code: captchaCode.toLowerCase(),
       clientInfo,
-      timestamp: Date.now(),
+      timestamp: getCurrentTimestamp(),
     };
 
     // 存储到缓存中，5分钟过期
@@ -370,8 +371,7 @@ export class AuthService {
       }
 
       // 验证时间戳（防止重放攻击）
-      const now = Date.now();
-      if (now - captchaData.timestamp > CACHE_TTL.CAPTCHA * 1000) {
+      if (isExpired(captchaData.timestamp, CACHE_TTL.CAPTCHA * 1000)) {
         // 验证码过期
         await this.cacheService.del(`${CACHE_PREFIXES.CAPTCHA}:${captchaVerifyDto.token}`);
         throw BusinessExceptionFactory.validation('验证码已过期');
@@ -468,8 +468,7 @@ export class AuthService {
     }
 
     // 检查令牌是否过期（30分钟有效期）
-    const now = Date.now();
-    if (now - tokenData.timestamp > 30 * 60 * 1000) {
+    if (isExpired(tokenData.timestamp, 30 * 60 * 1000)) {
       await this.cacheService.del(`${CACHE_PREFIXES.RESET_TOKEN}:${resetPasswordDto.resetToken}`);
       throw BusinessExceptionFactory.invalidParameter('重置令牌', {
         token: resetPasswordDto.resetToken,
@@ -656,7 +655,7 @@ export class AuthService {
       const raw = logoutDto.accessToken.trim();
       const token = raw.replace(/^Bearer\s+/i, '');
       const payload = this.jwtService.verify<JwtPayloadDto>(token);
-      const remainingTtl = payload.exp - Math.floor(Date.now() / 1000);
+      const remainingTtl = payload.exp - Math.floor(getCurrentTimestamp() / 1000);
       if (remainingTtl > 0) {
         await this.cacheService.set(`${CACHE_PREFIXES.BLACKLIST_TOKEN}:${token}`, 'blacklisted', {
           ttl: remainingTtl,
@@ -750,7 +749,7 @@ export class AuthService {
    */
   private async generateRefreshToken(authId: string): Promise<string> {
     const randomBytes = crypto.randomBytes(32);
-    const timestamp = Date.now().toString();
+    const timestamp = getCurrentTimestamp().toString();
     const payload = `${authId}:${timestamp}:${randomBytes.toString('hex')}`;
     return Buffer.from(payload).toString('base64url');
   }
