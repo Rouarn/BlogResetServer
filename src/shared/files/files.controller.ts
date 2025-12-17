@@ -214,14 +214,21 @@ export class FilesController {
 
   @Get(':id/preview')
   @ApiOperation({ summary: '预览文件' })
+  @ApiQuery({
+    name: 'size',
+    required: false,
+    description: '图片尺寸，格式如 1920x1080',
+    example: '1920x1080',
+  })
   @ApiResponse({ status: 200, description: '文件预览成功' })
   @UseGuards(FileAccessGuard)
   async previewFile(
     @Param('id', ParseUUIDPipe) id: string,
+    @Query('size') size: string,
     @Res() res: Response,
     @GetCurrentUser() user?: CurrentUser,
   ): Promise<void> {
-    const { file, buffer } = await this.filesService.getFileBuffer(id, user?.userId);
+    const { file, buffer } = await this.filesService.getFileBuffer(id, user?.userId, size);
 
     res.set({
       'Content-Type': file.mimeType,
@@ -235,6 +242,17 @@ export class FilesController {
   @Delete(':id')
   @ApiOperation({ summary: '删除文件' })
   @ApiResponse({ status: 200, description: '文件删除成功' })
+  @ApiResponse({
+    status: 404,
+    description: '文件不存在',
+    type: 'object',
+  })
+  @ApiResponse({
+    status: 403,
+    description: '无权限删除',
+    type: 'object',
+  })
+  @UseGuards(FileAccessGuard)
   async deleteFile(
     @Param('id', ParseUUIDPipe) id: string,
     @GetCurrentUser() user?: CurrentUser,

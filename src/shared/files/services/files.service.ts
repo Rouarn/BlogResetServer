@@ -3,6 +3,7 @@ import { formatDatePath } from '@/utils';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as path from 'path';
+import sharp from 'sharp';
 import type { Repository } from 'typeorm';
 import type { FileQueryDto, FileUploadDto } from '../dto';
 import { File } from '../entities';
@@ -194,9 +195,32 @@ export class FilesService {
     return true;
   }
 
-  async getFileBuffer(id: string, userId?: string): Promise<{ file: File; buffer: Buffer }> {
+  async getFileBuffer(
+    id: string,
+    userId?: string,
+    size?: string,
+  ): Promise<{ file: File; buffer: Buffer }> {
     const file = await this.findFileById(id, userId);
-    const buffer = await this.storageService.download(file.path);
+    let buffer = await this.storageService.download(file.path);
+
+    if (size && file.mimeType.startsWith('image/')) {
+      try {
+        const [width, height] = size.split('x').map((s) => parseInt(s, 10));
+
+        if (!isNaN(width) && !isNaN(height)) {
+          buffer = await sharp(buffer)
+            .resize(width, height, {
+              fit: 'cover',
+              position: 'center',
+            })
+            .toBuffer();
+        }
+      } catch (error) {
+        this.logger.warn(`图片缩放失败: ${error}`);
+        // 缩放失败时返回原图
+      }
+    }
+
     return { file, buffer };
   }
 
