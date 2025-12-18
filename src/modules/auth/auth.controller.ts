@@ -15,20 +15,11 @@ import {
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { AuthService } from './auth.service';
-import {
-  CaptchaResponseDto,
-  CaptchaVerifyDto,
-  CaptchaVerifyResponseDto,
-} from './dto/captcha-verify.dto';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import {
-  AuthCreateUserResponse,
-  ChangePasswordDto,
-  RegisterDto,
-  RegisterResponseDto,
-} from './dto/create-user.response';
-import { LoginDto, LoginResponseDto } from './dto/login.dto';
+import { CaptchaResponseDto, CaptchaVerifyDto, CaptchaVerifyResponseDto } from './dto/captcha.dto';
+import { LoginDto } from './dto/login.dto';
 import { AuthMessageResponse } from './dto/message.dto';
+import { ChangePasswordDto } from './dto/password.dto';
+import { AuthCreateUserResponse, RegisterDto, RegisterResponseDto } from './dto/register.dto';
 import { RefreshTokenDto, TokenResponseDto } from './dto/token.dto';
 import { AuthUserInfoDto } from './dto/user-info.dto';
 
@@ -115,11 +106,11 @@ export class AuthController {
   @ApiResponse({
     status: 201,
     description: '登录成功',
-    type: LoginResponseDto,
+    type: TokenResponseDto,
   })
   @Public()
   @Post('login')
-  login(@Body() body: LoginDto, @Ip() clientIp: string): Promise<LoginResponseDto> {
+  login(@Body() body: LoginDto, @Ip() clientIp: string): Promise<TokenResponseDto> {
     return this.authService.login(body, clientIp);
   }
 
@@ -148,12 +139,12 @@ export class AuthController {
   })
   @ApiBody({
     description: '注册请求',
-    type: CreateAuthDto,
+    type: RegisterDto,
   })
   @ApiResponse({ status: 200, description: '注册结果', type: RegisterResponseDto })
   @Public()
   @Post('register')
-  register(@Body() body: CreateAuthDto): Promise<AuthCreateUserResponse> {
+  register(@Body() body: RegisterDto): Promise<AuthCreateUserResponse> {
     return this.authService.register(body);
   }
 

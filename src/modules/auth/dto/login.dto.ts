@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, Length } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
 
 /**
  * 登录DTO
@@ -44,50 +44,23 @@ export class LoginDto {
   @IsNotEmpty({ message: '密码不能为空' })
   @Length(6, 50, { message: '密码长度必须在6-50个字符之间' })
   password: string;
-}
-
-/**
- * 登录响应DTO
- *
- * 登录成功后返回的数据结构。
- *
- * 字段说明：
- * - accessToken: 访问令牌
- * - refreshToken: 刷新令牌（可选）
- * - expiresIn: 令牌过期时间（秒）
- * - tokenType: 令牌类型
- * - refreshExpiresIn: 刷新令牌过期时间（秒，可选）
- * - user: 用户基本信息
- */
-export class LoginResponseDto {
-  @ApiProperty({
-    description: '访问令牌',
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-  })
-  accessToken: string;
 
   @ApiPropertyOptional({
-    description: '刷新令牌',
-    example: 'refresh-token-123',
+    description: '验证码令牌',
+    example: 'captcha-token-123',
   })
-  refreshToken?: string;
-
-  @ApiProperty({
-    description: '令牌过期时间（秒）',
-    example: 3600,
-  })
-  expiresIn: number;
+  @IsOptional()
+  @IsString({ message: '验证码令牌必须是字符串' })
+  captchaToken?: string;
 
   @ApiPropertyOptional({
-    description: '刷新令牌过期时间（秒）',
-    example: 604800,
+    description: '验证码',
+    example: 'ABCD',
+    minLength: 4,
+    maxLength: 6,
   })
-  refreshExpiresIn?: number;
-
-  @ApiProperty({
-    description: '令牌类型',
-    example: 'Bearer',
-    default: 'Bearer',
-  })
-  tokenType: string = 'Bearer';
+  @IsOptional()
+  @IsString({ message: '验证码必须是字符串' })
+  @Length(4, 6, { message: '验证码长度必须在4-6个字符之间' })
+  captchaCode?: string;
 }

@@ -18,11 +18,11 @@ import type {
   CaptchaResponseDto,
   CaptchaVerifyDto,
   CaptchaVerifyResponseDto,
-} from './dto/captcha-verify.dto';
-import type { ChangePasswordDto, RegisterDto, ResetPasswordDto } from './dto/create-user.response';
-import { AuthCreateUserResponse } from './dto/create-user.response';
-import type { LoginDto, LoginResponseDto } from './dto/login.dto';
+} from './dto/captcha.dto';
+import type { LoginDto } from './dto/login.dto';
 import { AuthMessageResponse } from './dto/message.dto';
+import { ChangePasswordDto, ResetPasswordDto } from './dto/password.dto';
+import { AuthCreateUserResponse, RegisterDto } from './dto/register.dto';
 import type {
   JwtPayloadDto,
   LogoutDto,
@@ -137,7 +137,7 @@ export class AuthService {
    * @throws UnauthorizedException 认证失败
    * @throws BadRequestException 账号被锁定或其他业务错误
    */
-  async login(loginDto: LoginDto, clientIp?: string): Promise<LoginResponseDto> {
+  async login(loginDto: LoginDto, clientIp?: string): Promise<TokenResponseDto> {
     // 查找认证记录，包含关联的用户信息，并显式选择密码和盐值
     const auth = await this.authRepository
       .createQueryBuilder('auth')
