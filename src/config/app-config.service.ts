@@ -48,14 +48,16 @@ export class AppConfigService {
    * @returns 应用标题字符串
    */
   get appTitle(): string {
-    const envSuffix = this.isDevelopment
-      ? ' - 开发环境'
-      : this.environment === 'test'
-        ? ' - 测试环境'
-        : this.isProduction
-          ? ' - 生产环境'
-          : '';
-    return `我与夏季 Ra 系统${envSuffix}`;
+    const suffixMap: Record<string, string> = {
+      development: ' - 开发环境',
+      test: ' - 测试环境',
+      production: ' - 生产环境',
+    };
+
+    const baseTitle = this.configService.get<string>('NEST_APP_TITLE', 'NestJS Template');
+    const suffix = suffixMap[this.environment] ?? '';
+
+    return `${baseTitle}${suffix}`;
   }
 
   /**
@@ -166,21 +168,12 @@ export class AppConfigService {
     filename: string;
     enabled: boolean;
   } {
-    const env = [
-      {
-        env: 'development',
-        suffix: ' - 开发版',
-      },
-      {
-        env: 'production',
-        suffix: ' - 生产版',
-      },
-      {
-        env: 'test',
-        suffix: ' - 测试版',
-      },
-    ];
-    const suffix = env.find((item) => item.env === this.environment)?.suffix ?? '';
+    const suffixMap: Record<string, string> = {
+      development: ' - 开发版',
+      test: ' - 测试版',
+      production: ' - 生产版',
+    };
+    const suffix = suffixMap[this.environment] ?? '';
 
     const baseTitle = this.configService.get<string>('NEST_SWAGGER_TITLE', 'API Documentation');
     const description = this.configService.get<string>('NEST_SWAGGER_DESCRIPTION', 'API文档');

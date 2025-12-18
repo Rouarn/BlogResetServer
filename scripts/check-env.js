@@ -98,6 +98,7 @@ function main() {
 
   // 检查必需的环境变量
   const commonRequired = [
+    'NEST_APP_TITLE',
     'NEST_JWT_ACCESS_TOKEN_TTL',
     'NEST_JWT_REFRESH_TOKEN_TTL',
     'NEST_SWAGGER_PREFIX',

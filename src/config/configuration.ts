@@ -21,7 +21,7 @@ import { registerAs } from '@nestjs/config';
  * - 数据库配置：连接信息、同步设置、连接池等
  *
  * 环境变量映射：
- * - NEST_GLOB_APP_TITLE → app.title
+ * - NEST_APP_TITLE → app.title
  * - NEST_PORT → app.port
  * - NODE_ENV → app.environment
  * - NEST_JWT_SECRET → app.jwt.secret
@@ -43,7 +43,7 @@ import { registerAs } from '@nestjs/config';
  */
 export default registerAs('app', () => ({
   // 应用基础配置
-  title: process.env.NEST_GLOB_APP_TITLE ?? 'NestJS Application',
+  title: process.env.NEST_APP_TITLE ?? 'NestJS Template',
   port: process.env.NEST_PORT ? parseInt(process.env.NEST_PORT, 10) : 3000,
   baseUrl: process.env.NEST_BASE_URL ?? 'http://localhost:3000',
   environment: process.env.NODE_ENV ?? 'development',

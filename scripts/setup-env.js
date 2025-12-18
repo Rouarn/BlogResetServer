@@ -26,6 +26,7 @@ function question(prompt) {
 
 const envTemplates = {
   common: {
+    NEST_APP_TITLE: 'NestJS Template',
     NEST_JWT_ACCESS_TOKEN_TTL: 3600,
     NEST_JWT_REFRESH_TOKEN_TTL: 604800,
     NEST_SWAGGER_PREFIX: '/api-docs',
