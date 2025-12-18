@@ -1,8 +1,8 @@
+import { CurrentUser } from '@/common/decorators';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { FilesService } from '../services/files.service';
-import { CurrentUser } from '@/common/decorators';
 
 @Injectable()
 export class FileAccessGuard implements CanActivate {
@@ -27,7 +27,7 @@ export class FileAccessGuard implements CanActivate {
       await this.filesService.findFileById(fileId, user?.userId);
       return true;
     } catch {
-      throw BusinessExceptionFactory.forbidden('无权限访问该文件', { fileId });
+      throw BusinessExceptionFactory.forbidden('禁止访问该文件', { fileId });
     }
   }
 }

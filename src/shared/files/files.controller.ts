@@ -1,4 +1,4 @@
-import { CurrentUser, GetCurrentUser } from '@/common/decorators';
+import { CurrentUser, GetCurrentUser, Public } from '@/common/decorators';
 import { FileValidationPipe, FilesValidationPipe } from '@/common/pipes';
 import {
   Body,
@@ -218,6 +218,7 @@ export class FilesController {
   }
 
   @Get(':id/preview')
+  @Public()
   @ApiOperation({ summary: '预览文件' })
   @ApiQuery({
     name: 'size',
