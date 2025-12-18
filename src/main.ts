@@ -26,9 +26,7 @@ function resolveStaticPath(staticConfig: { root: string }): string {
     return staticConfig.root;
   }
 
-  const isProduction = process.env.NODE_ENV === 'production';
-  const baseDir = isProduction ? path.join(process.cwd(), 'dist') : process.cwd();
-  return path.resolve(baseDir, staticConfig.root);
+  return path.resolve(process.cwd(), staticConfig.root);
 }
 
 /**

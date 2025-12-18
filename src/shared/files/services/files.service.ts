@@ -1,3 +1,4 @@
+import { Status } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { formatDatePath } from '@/utils';
 import { Injectable, Logger } from '@nestjs/common';
@@ -61,7 +62,7 @@ export class FilesService {
       userId,
       fileType,
       description: uploadDto.description,
-      isPublic: uploadDto.isPublic ?? false,
+      isPublic: uploadDto.isPublic ? Status.ENABLED : Status.DISABLED,
       uploadProtocol: uploadDto.protocol,
     });
 
@@ -119,11 +120,12 @@ export class FilesService {
 
     // 基础过滤条件
     if (!publicOnly && userId) {
-      queryBuilder.where('file.userId = :userId OR file.isPublic = true', {
+      queryBuilder.where('file.userId = :userId OR file.isPublic = :isPublic', {
         userId,
+        isPublic: Status.ENABLED,
       });
     } else if (publicOnly) {
-      queryBuilder.where('file.isPublic = true');
+      queryBuilder.where('file.isPublic = :isPublic', { isPublic: Status.ENABLED });
     }
 
     // 类型过滤
@@ -226,7 +228,7 @@ export class FilesService {
 
   private canAccessFile(file: File, userId?: string): boolean {
     // 公开文件任何人都可以访问
-    if (file.isPublic) {
+    if (file.isPublic === Status.ENABLED) {
       return true;
     }
 

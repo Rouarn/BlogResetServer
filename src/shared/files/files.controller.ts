@@ -37,6 +37,7 @@ import {
 import { FileAccessGuard } from './guards/file-access.guard';
 import { BatchUploadResult, FileUploadResult } from './interfaces';
 import { FilesService } from './services/files.service';
+import { Status } from '@/common/enums';
 
 @ApiTags('文件管理')
 @ApiBearerAuth()
@@ -59,7 +60,9 @@ export class FilesController {
           type: 'string',
         },
         isPublic: {
-          type: 'boolean',
+          type: 'string',
+          enum: Object.values(Status),
+          default: Status.DISABLED,
         },
       },
     },
@@ -112,7 +115,9 @@ export class FilesController {
           type: 'string',
         },
         isPublic: {
-          type: 'boolean',
+          type: 'string',
+          enum: Object.values(Status),
+          default: Status.DISABLED,
         },
       },
     },

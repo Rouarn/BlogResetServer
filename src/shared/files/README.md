@@ -168,7 +168,7 @@ sequenceDiagram
 1.  **获取上下文**：从 Request 中解析 `user` 对象和路径参数 `id`。
 2.  **查询文件**：调用 Service 查询文件元数据。
 3.  **权限判断**：
-    - **Rule 1**: 如果 `file.isPublic === true`，允许访问。
+    - **Rule 1**: 如果 `file.isPublic === Status.ENABLED`，允许访问。
     - **Rule 2**: 如果 `file.userId === currentUser.id`，允许访问。
     - **Rule 3**: 否则，抛出 `403 Forbidden`。
 
@@ -218,6 +218,6 @@ sequenceDiagram
 - `id`: UUID，主键。
 - `hash`: SHA-256，唯一索引（用于去重）。
 - `path`: 磁盘相对路径（如 `2024/01/abc.png`）。
-- `isPublic`: Boolean，是否公开。
+- `isPublic`: String，是否公开（`Status.ENABLED` 或 `Status.DISABLED`）。
 - `userId`: 上传用户 ID（为空则为匿名上传）。
 - `fileType`: 枚举（IMAGE, VIDEO, DOCUMENT 等），用于快速筛选。

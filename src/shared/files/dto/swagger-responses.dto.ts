@@ -1,3 +1,4 @@
+import { Status } from '@/common/enums';
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
@@ -25,8 +26,8 @@ export class FileInfoDto {
   @ApiProperty({ description: '文件URL' })
   url: string;
 
-  @ApiProperty({ description: '是否公开' })
-  isPublic: boolean;
+  @ApiProperty({ description: '是否公开', enum: Status, default: Status.DISABLED })
+  isPublic: Status;
 
   @ApiProperty({ description: '创建时间' })
   createTime: Date;

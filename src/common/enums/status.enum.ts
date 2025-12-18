@@ -5,9 +5,9 @@ import { EnumHelper } from '@/utils/helpers/enum.helper';
  * 定义系统中通用的状态类型
  */
 export enum Status {
-  /** 禁用/停用 */
+  /** 禁用/停用/否 */
   DISABLED = 0,
-  /** 启用/激活 */
+  /** 启用/激活/是 */
   ENABLED = 1,
 }
 

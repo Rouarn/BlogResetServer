@@ -1,3 +1,4 @@
+import { Status } from '@/common/enums';
 import { BaseEntity } from '@/database';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { FileType } from '../enums';
@@ -48,6 +49,12 @@ export class File extends BaseEntity {
   @Column({ type: 'text', nullable: true, comment: '文件描述' })
   description: string;
 
-  @Column({ name: 'is_public', default: false, comment: '是否公开访问' })
-  isPublic: boolean;
+  @Column({
+    name: 'is_public',
+    type: 'enum',
+    enum: Status,
+    default: Status.DISABLED,
+    comment: '是否公开访问',
+  })
+  isPublic: Status;
 }
