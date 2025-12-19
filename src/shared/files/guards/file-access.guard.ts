@@ -1,21 +1,18 @@
 import { CurrentUser } from '@/common/decorators';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
 import { FilesService } from '../services/files.service';
 
 @Injectable()
 export class FileAccessGuard implements CanActivate {
-  constructor(
-    private reflector: Reflector,
-    private filesService: FilesService,
-  ) {}
+  constructor(private filesService: FilesService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    console.log('request: ', request);
-    const user = (request as { user: CurrentUser }).user;
-    const fileId = (request as { params: { id?: string } }).params.id;
+    const request = context
+      .switchToHttp()
+      .getRequest<{ user?: CurrentUser; params: { id?: string } }>();
+    const user = request.user;
+    const fileId = request.params.id;
 
     // 如果没有文件ID，允许访问（可能是列表接口）
     if (!fileId) {

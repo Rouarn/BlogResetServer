@@ -166,7 +166,7 @@ export class FilesService {
 
     // 检查访问权限
     if (!this.canAccessFile(file, userId)) {
-      throw BusinessExceptionFactory.forbidden('无权限访问该文件', { id });
+      throw BusinessExceptionFactory.forbidden('禁止访问该文件', { id });
     }
 
     return file;
@@ -241,7 +241,6 @@ export class FilesService {
   }
 
   private mapToUploadResult(file: File): FileUploadResult {
-    console.log('file: ', file);
     return {
       fileId: file.id,
       filename: file.filename,

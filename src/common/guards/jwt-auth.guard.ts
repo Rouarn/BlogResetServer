@@ -54,14 +54,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       return true;
     }
 
-    // 是否是公共路由（通过装饰器标记）
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-
-    if (isPublic) return true;
-
     // 校验token
     return super.canActivate(context);
   }
@@ -71,20 +63,40 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
    * @param error Passport 策略执行过程中的错误
    * @param user 验证通过后的用户对象
    * @param info 验证失败时的错误信息
+   * @param context 执行上下文
    * @returns 认证通过的用户对象
    * @throws BusinessException token 校验失败
    * @throws BusinessException 用户不存在
    */
-  handleRequest<TUser = CurrentUser>(error: Error, user: CurrentUser, info: unknown): TUser {
+  handleRequest<TUser = CurrentUser>(
+    error: Error,
+    user: CurrentUser,
+    info: unknown,
+    context: ExecutionContext,
+  ): TUser {
     if (error) {
       this.logger.error(`认证错误: ${error.message}`, error.stack);
     }
+    console.log('info: ', info);
     if (info) {
-      this.logger.warn(`认证提示: ${JSON.stringify(info)}`);
+      // JSON.stringify 无法序列化 Error 对象，需要特殊处理
+      const infoMsg = info instanceof Error ? info.message : JSON.stringify(info);
+      this.logger.warn(`认证提示: ${infoMsg}`);
     }
     // 仅在开发环境或调试时打印用户信息，避免生产环境日志泄露敏感信息
     if (user && process.env.NODE_ENV !== 'production') {
       this.logger.debug(`认证成功用户: ${user.username}/${user.userId}`);
+    }
+
+    // 判断是否是公共路由
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    // 如果是公共路由，允许没有用户信息
+    if (isPublic && (info || error || !user)) {
+      return null as unknown as TUser;
     }
 
     if (info || error) throw BusinessExceptionFactory.unauthorized('令牌验证失败');
