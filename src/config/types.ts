@@ -1,0 +1,102 @@
+/**
+ * 应用配置类型定义
+ */
+
+// 应用基础配置
+export type Environment = 'development' | 'production' | 'test';
+
+export interface AppBaseConfig {
+  title: string;
+  port: number;
+  baseUrl: string;
+  environment: Environment;
+}
+
+// JWT 认证配置
+export interface JwtConfig {
+  secret: string;
+  accessTokenTtl: string | number;
+}
+
+// 静态资源和文件上传配置
+export interface StaticConfig {
+  root: string;
+  prefix: string;
+  maxAge: string | number;
+  uploadsPath: string;
+  uploadsMaxSize: number;
+  uploadsAllowedTypes: string[];
+  uploadsMaxBatchFiles: number;
+}
+
+// CORS 跨域配置
+export interface CorsConfig {
+  origin: string[];
+  credentials: boolean;
+}
+
+// Swagger API 文档配置
+export interface SwaggerConfig {
+  title: string;
+  description: string;
+  version: string;
+  prefix: string;
+  filename: string;
+  enabled: boolean;
+}
+
+// Redis 缓存配置
+export interface RedisCacheConfig {
+  enabled: boolean;
+  host: string;
+  port: number;
+  password?: string;
+  db: number;
+  options: {
+    retryDelayOnFailover: number;
+    enableReadyCheck: boolean;
+    maxRetriesPerRequest: number;
+    lazyConnect: boolean;
+    keepAlive: number;
+    connectTimeout: number;
+    commandTimeout: number;
+  };
+  cache: {
+    defaultTtl: number;
+    keyPrefix: string;
+    maxSize: number;
+  };
+}
+
+// 数据库连接配置
+export interface DatabaseConfig {
+  type: 'mysql';
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  database: string;
+  tablePrefix: string;
+  synchronize: boolean;
+  logging: boolean;
+  logNotifications: boolean;
+  extra: {
+    connectionLimit: number;
+    acquireTimeout: number;
+    timeout: number;
+  };
+}
+
+// 完整的应用配置
+export interface AppConfig {
+  title: string;
+  port: number;
+  baseUrl: string;
+  environment: string;
+  jwt: JwtConfig;
+  static: StaticConfig;
+  cors: CorsConfig;
+  swagger: SwaggerConfig;
+  redis: RedisCacheConfig;
+  database: DatabaseConfig;
+}
