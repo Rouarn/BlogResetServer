@@ -1,11 +1,8 @@
 /**
  * Redis 缓存服务实现
  *
- * 基于 ioredis 实现的缓存服务，提供高性能的分布式缓存功能
- * 支持连接失败时的优雅降级处理
- *
- * @author NestJS Template
- * @version 1.0.0
+ * 基于 ioredis 实现的缓存服务，提供高性能的分布式缓存功能，
+ * 支持连接失败时的优雅降级处理。
  */
 
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';

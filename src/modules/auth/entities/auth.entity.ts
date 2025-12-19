@@ -7,8 +7,9 @@ import { BeforeInsert, Column, Entity, OneToOne, PrimaryGeneratedColumn } from '
 
 /**
  * 认证实体
- * 专门负责用户认证相关的信息
- * 包括用户名、密码、状态等认证必需的字段
+ *
+ * 专门负责用户认证相关的信息，包括用户名、密码、状态等认证必需的字段。
+ * 与用户信息实体通过一对一关系关联，实现认证与用户资料的分离。
  */
 @Entity('auth')
 export class Auth extends BaseEntity {

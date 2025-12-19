@@ -8,19 +8,15 @@ import { SetMetadata } from '@nestjs/common';
 export const ROLES_KEY = 'roles';
 
 /**
- * 角色权限装饰器（Roles）
+ * 角色权限装饰器
  *
  * 用于为控制器或路由方法指定访问所需的用户角色。
+ * RolesGuard 会检查当前用户是否拥有其中任意一个角色。
  *
- * 功能说明：
- * - 在路由元数据中设置所需的角色列表
- * - RolesGuard 会检查当前用户是否拥有其中任意一个角色
- * - 支持同时指定多个角色，用户拥有其中任意一个即可访问
+ * @param roles 允许访问的角色列表
+ * @returns 设置角色权限元数据的装饰器
  *
- * 依赖项：
- * - Role: 角色枚举类型
- *
- * 用法示例：
+ * @example
  * ```typescript
  * @Get('admin-only')
  * @Roles(Role.SYSTEM_ADMIN, Role.ORG_ADMIN)
@@ -28,9 +24,6 @@ export const ROLES_KEY = 'roles';
  *   return { message: '仅管理员可访问' };
  * }
  * ```
- *
- * @param roles 允许访问的角色列表
- * @returns 设置角色权限元数据的装饰器
  */
 export const Roles = (...roles: Role[]): MethodDecorator & ClassDecorator =>
   SetMetadata(ROLES_KEY, roles);

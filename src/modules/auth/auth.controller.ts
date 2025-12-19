@@ -23,6 +23,12 @@ import { AuthCreateUserResponse, RegisterDto, RegisterResponseDto } from './dto/
 import { RefreshTokenDto, TokenResponseDto } from './dto/token.dto';
 import { AuthUserInfoDto } from './dto/user-info.dto';
 
+/**
+ * 认证控制器
+ *
+ * 处理用户认证相关的HTTP请求，包括登录、注册、验证码等功能。
+ * 与AuthService配合完成认证业务逻辑。
+ */
 @ApiTags('认证管理')
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('auth')
@@ -31,8 +37,9 @@ export class AuthController {
 
   /**
    * 获取验证码
-   * 返回验证码图片和对应的token
-   * 支持防爬机制
+   * @param clientIp 客户端IP地址
+   * @param userAgent 用户代理字符串
+   * @returns 验证码图片和对应的token
    */
   @ApiOperation({
     summary: '获取验证码',
@@ -57,8 +64,8 @@ export class AuthController {
 
   /**
    * 验证验证码
-   * 独立的验证接口，遵循RESTFUL设计
-   * 包含安全验证机制
+   * @param body 验证码验证请求数据
+   * @returns 验证码验证结果
    */
   @ApiOperation({
     summary: '验证验证码',
@@ -84,6 +91,11 @@ export class AuthController {
     });
   }
 
+  /**
+   * 获取用户信息
+   * @param user 当前登录用户信息
+   * @returns 用户详细信息
+   */
   @ApiOperation({
     summary: '获取用户信息',
     description: '获取当前登录用户的详细信息，包括权限和角色',
@@ -95,6 +107,12 @@ export class AuthController {
     return await this.authService.getAuthInfo(user);
   }
 
+  /**
+   * 用户登录
+   * @param body 登录请求数据
+   * @param clientIp 客户端IP地址
+   * @returns 登录结果和令牌信息
+   */
   @ApiOperation({
     summary: '用户登录',
     description: '用户使用用户名和密码进行登录认证',
@@ -114,6 +132,11 @@ export class AuthController {
     return this.authService.login(body, clientIp);
   }
 
+  /**
+   * 刷新令牌
+   * @param body 刷新令牌请求数据
+   * @returns 新的访问令牌和刷新令牌
+   */
   @ApiOperation({
     summary: '刷新令牌',
     description: '使用刷新令牌获取新的访问令牌，并进行刷新令牌轮换',
@@ -133,6 +156,11 @@ export class AuthController {
     return this.authService.refreshToken(body);
   }
 
+  /**
+   * 用户注册
+   * @param body 注册请求数据
+   * @returns 注册结果
+   */
   @ApiOperation({
     summary: '用户注册',
     description: '新用户注册账号',
@@ -151,6 +179,8 @@ export class AuthController {
   /**
    * 创建用户（需要验证码验证）
    * 使用无状态验证码验证机制
+   * @param body 创建用户请求数据
+   * @returns 用户创建结果
    */
   @ApiOperation({
     summary: '创建用户',
@@ -169,11 +199,8 @@ export class AuthController {
 
   /**
    * 修改密码
-   *
-   * 允许已登录用户修改自己的密码。需要提供当前密码进行验证。
-   *
    * @param changePasswordDto 修改密码数据
-   * @param user
+   * @param user 当前用户信息
    * @returns 修改结果
    */
   @Put('change-password')
@@ -202,6 +229,9 @@ export class AuthController {
 
   /**
    * 退出登录
+   * @param user 当前用户信息
+   * @param req HTTP请求对象
+   * @returns 退出登录结果
    */
   @ApiOperation({
     summary: '退出登录',

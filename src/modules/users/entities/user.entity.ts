@@ -5,8 +5,9 @@ import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'ty
 
 /**
  * 用户信息实体
- * 专门负责存储用户的个人资料信息
- * 与认证信息分离，职责单一
+ *
+ * 专门负责存储用户的个人资料信息，与认证信息分离，实现职责单一。
+ * 通过一对一关系关联认证实体，形成完整的用户体系。
  */
 @Entity('users')
 export class User extends BaseEntity {

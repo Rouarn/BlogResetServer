@@ -1,6 +1,9 @@
 /**
  * 业务异常封装
- * 统一将 NestJS 的 `HttpException` 转为规范化的业务错误响应体，便于前后端约定与日志采集。
+ *
+ * 统一将 NestJS 的 `HttpException` 转为规范化的业务错误响应体，
+ * 便于前后端约定与日志采集。
+ *
  * 使用场景：服务端主动抛出可预期的错误（校验失败、权限不足、资源不存在、冲突等）。
  */
 import type { ErrorResponse } from '@/common/interfaces';
@@ -8,7 +11,10 @@ import { formatTimestamp } from '@/utils/helpers';
 import { HttpException, HttpStatus } from '@nestjs/common';
 
 /**
+ * 业务异常类
+ *
  * 继承自 `HttpException`，封装标准的错误响应结构。
+ *
  * 字段说明：
  * - `code`: HTTP 状态码
  * - `message`: 错误信息（可为字符串或字符串数组，支持多条提示）
