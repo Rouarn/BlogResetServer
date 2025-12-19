@@ -50,5 +50,4 @@ export const swaggerOptions = appConfig.swaggerOptions;
 export { appConfig };
 export { AppConfigService } from './app-config.service';
 export { ConfigModule } from './config.module';
-export { default as configuration } from './configuration';
 export { validationSchema } from './validation.schema';

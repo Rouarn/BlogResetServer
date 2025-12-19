@@ -1,5 +1,5 @@
 import { CurrentUser, GetCurrentUser, Public } from '@/common/decorators';
-import { FileValidationPipe, FilesValidationPipe } from '@/common/pipes';
+import { FilesValidationPipe, FileValidationPipe } from '@/common/pipes';
 import {
   Body,
   Controller,
@@ -93,8 +93,7 @@ export class FilesController {
     @Body() uploadDto: FileUploadDto,
     @GetCurrentUser() user?: CurrentUser,
   ): Promise<FileUploadResult> {
-    const result = await this.filesService.uploadSingleFile(file, uploadDto, user?.userId);
-    return result;
+    return await this.filesService.uploadSingleFile(file, uploadDto, user?.userId);
   }
 
   @Post('upload/batch')
@@ -138,8 +137,7 @@ export class FilesController {
     @Body() uploadDto: FileUploadDto,
     @GetCurrentUser() user?: CurrentUser,
   ): Promise<BatchUploadResult> {
-    const result = await this.filesService.uploadMultipleFiles(files, uploadDto, user?.userId);
-    return result;
+    return await this.filesService.uploadMultipleFiles(files, uploadDto, user?.userId);
   }
 
   @Get()
@@ -167,8 +165,7 @@ export class FilesController {
     @Query() queryDto: FileQueryDto,
     @GetCurrentUser() user?: CurrentUser,
   ): Promise<unknown> {
-    const result = await this.filesService.findFiles(queryDto, user?.userId);
-    return result;
+    return await this.filesService.findFiles(queryDto, user?.userId);
   }
 
   @Get(':id')
@@ -193,8 +190,7 @@ export class FilesController {
     @Param('id', ParseUUIDPipe) id: string,
     @GetCurrentUser() user?: CurrentUser,
   ): Promise<unknown> {
-    const file = await this.filesService.findFileById(id, user?.userId);
-    return file;
+    return await this.filesService.findFileById(id, user?.userId);
   }
 
   @Get(':id/download')

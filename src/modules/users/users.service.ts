@@ -71,26 +71,6 @@ export class UsersService {
     });
     return await this.userRepository.save(user);
   }
-
-  /**
-   * 获取用户信息
-   * @param user 用户对象
-   * @returns 用户基本信息
-   */
-  getUserInfo(user: User): {
-    userId: string;
-    nickname: string;
-    avatar: string;
-    roles: string;
-  } {
-    return {
-      userId: user.id,
-      nickname: user.nickname,
-      avatar: user.avatar,
-      roles: user.roles,
-    };
-  }
-
   /**
    * 根据ID获取用户（带缓存）
    * @param id 用户ID
@@ -111,18 +91,6 @@ export class UsersService {
     }
     await this.cacheService.set<User>(cacheKey, user, { ttl: CACHE_TTL.USER_INFO });
     return user;
-  }
-
-  /**
-   * 根据认证ID获取用户
-   * @param authId 认证ID
-   * @returns 用户信息
-   */
-  async findByAuthId(authId: string): Promise<User | null> {
-    return await this.userRepository.findOne({
-      where: { authId },
-      relations: ['auth'],
-    });
   }
 
   /**

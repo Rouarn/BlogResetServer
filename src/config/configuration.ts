@@ -141,7 +141,7 @@ export default registerAs('app', () => ({
     synchronize:
       process.env.NEST_DATABASE_SYNCHRONIZE === 'true' || process.env.NODE_ENV === 'development',
     // 精细化日志控制 - 默认关闭所有查询日志
-    logging: process.env.NEST_DATABASE_LOGGING === 'true' ? true : false,
+    logging: process.env.NEST_DATABASE_LOGGING === 'true',
     // 关闭额外的数据库通知
     logNotifications: false,
     // 优化连接池配置

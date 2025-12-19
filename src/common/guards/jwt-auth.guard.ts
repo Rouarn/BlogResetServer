@@ -77,7 +77,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     if (error) {
       this.logger.error(`认证错误: ${error.message}`, error.stack);
     }
-    console.log('info: ', info);
     if (info) {
       // JSON.stringify 无法序列化 Error 对象，需要特殊处理
       const infoMsg = info instanceof Error ? info.message : JSON.stringify(info);

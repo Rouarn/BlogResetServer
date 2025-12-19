@@ -16,7 +16,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { AppModule } from './app.module';
 import { BootstrapLoggerService } from './common/services';
-import { appConfig } from './config';
+import { appConfig, corsOptions, swaggerOptions } from './config';
 
 /**
  * 解析静态资源路径
@@ -34,7 +34,7 @@ function resolveStaticPath(staticConfig: { root: string }): string {
  */
 function configureApp(app: NestExpressApplication): void {
   // 配置CORS跨域策略
-  app.use(cors(appConfig.corsOptions));
+  app.use(cors(corsOptions));
 }
 
 /**
@@ -76,20 +76,18 @@ function configureSwagger(
 ): void {
   if (!appConfig.swaggerOptions.enabled) return;
 
-  const swaggerConfig = appConfig.swaggerOptions;
-
   const options = new DocumentBuilder()
     .addBearerAuth()
-    .setTitle(swaggerConfig.title)
-    .setDescription(swaggerConfig.description)
-    .setVersion(swaggerConfig.version)
+    .setTitle(swaggerOptions.title)
+    .setDescription(swaggerOptions.description)
+    .setVersion(swaggerOptions.version)
     .build();
 
   const document = SwaggerModule.createDocument(app, options);
-  SwaggerModule.setup(swaggerConfig.prefix, app, document);
+  SwaggerModule.setup(swaggerOptions.prefix, app, document);
 
   // 导出API文档为JSON
-  const apiDocPath = path.join(staticPath, appConfig.swaggerOptions.filename);
+  const apiDocPath = path.join(staticPath, swaggerOptions.filename);
 
   if (!fs.existsSync(staticPath)) {
     fs.mkdirSync(staticPath, { recursive: true });

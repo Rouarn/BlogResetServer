@@ -57,7 +57,7 @@ export class AuthController {
 
   /**
    * 验证验证码
-   * 独立的验证接口，遵循RESTful设计
+   * 独立的验证接口，遵循RESTFUL设计
    * 包含安全验证机制
    */
   @ApiOperation({
@@ -173,7 +173,7 @@ export class AuthController {
    * 允许已登录用户修改自己的密码。需要提供当前密码进行验证。
    *
    * @param changePasswordDto 修改密码数据
-   * @param req 请求对象
+   * @param user
    * @returns 修改结果
    */
   @Put('change-password')
