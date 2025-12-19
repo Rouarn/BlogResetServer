@@ -44,6 +44,7 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
    * 构造函数
    * @param config 配置服务实例，用于获取 JWT 密钥
    * @param authService 认证服务，用于验证用户状态
+   * @param cacheService
    */
   constructor(
     private readonly config: ConfigService,
@@ -62,6 +63,7 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
    *
    * 验证JWT载荷的有效性，并检查用户认证状态
    *
+   * @param req
    * @param payload JWT 载荷，包含认证ID等用户信息
    * @returns 校验通过后的完整用户认证信息
    * @throws UnauthorizedException 认证失败或用户状态异常

@@ -8,8 +8,7 @@ import type {
   UpdateEvent,
 } from 'typeorm';
 import { EventSubscriber } from 'typeorm';
-import { DISABLE_TIMESTAMPS_KEY } from '../decorators';
-import { BaseEntity } from '../entities/base.entity';
+import { DISABLE_TIMESTAMPS_KEY, BaseEntity } from '@/database';
 
 // 类型定义
 interface EntityWithTimestamps {

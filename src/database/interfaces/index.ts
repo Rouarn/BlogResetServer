@@ -22,9 +22,5 @@ export interface BaseEntityFields {
   updateTime: Date;
 }
 
-export interface QueryContext {
-  disableTimestamps?: boolean;
-}
-
 export const DATABASE_CONFIG = Symbol('DATABASE_CONFIG');
 export const QUERY_CONTEXT = Symbol('QUERY_CONTEXT');

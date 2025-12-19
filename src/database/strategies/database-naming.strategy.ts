@@ -1,7 +1,7 @@
 import type { NamingStrategyInterface } from 'typeorm';
 import { DefaultNamingStrategy } from 'typeorm';
 import { snakeCase } from 'typeorm/util/StringUtils';
-import type { DatabaseConfig } from '../interfaces';
+import type { DatabaseConfig } from '@/database';
 
 export class DatabaseNamingStrategy
   extends DefaultNamingStrategy
@@ -15,12 +15,13 @@ export class DatabaseNamingStrategy
   }
 
   columnName(propertyName: string, customName: string, embeddedPrefixes: string[]): string {
-    const configuredName =
-      propertyName === 'createTime'
-        ? this.fieldNames?.createTime
-        : propertyName === 'updateTime'
-          ? this.fieldNames?.updateTime
-          : undefined;
+    let configuredName: string | undefined;
+
+    if (propertyName === 'createTime') {
+      configuredName = this.fieldNames?.createTime;
+    } else if (propertyName === 'updateTime') {
+      configuredName = this.fieldNames?.updateTime;
+    }
 
     const baseName = customName ?? configuredName ?? propertyName;
     const withPrefix = embeddedPrefixes.length

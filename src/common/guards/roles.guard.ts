@@ -1,4 +1,4 @@
-import { Role } from '@/common/enums/index';
+import { Role } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';

@@ -3,9 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { DISABLE_TIMESTAMPS_KEY } from '../decorators';
-import type { QueryContext } from '../interfaces';
-import { QUERY_CONTEXT } from '../interfaces';
+import { DISABLE_TIMESTAMPS_KEY, QUERY_CONTEXT } from '@/database';
 
 /**
  * 审计拦截器
@@ -26,13 +24,10 @@ export class AuditInterceptor implements NestInterceptor {
       controller,
     ]);
 
-    // 创建查询上下文
-    const queryContext: QueryContext = {
+    // 将上下文附加到请求对象
+    (request as Record<string | symbol, unknown>)[QUERY_CONTEXT] = {
       disableTimestamps: disableTimestamps || false,
     };
-
-    // 将上下文附加到请求对象
-    (request as Record<string | symbol, unknown>)[QUERY_CONTEXT] = queryContext;
 
     return next.handle().pipe(
       tap(() => {

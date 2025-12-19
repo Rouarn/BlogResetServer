@@ -1,4 +1,4 @@
-import { EnumHelper } from '@/utils/helpers/enum.helper';
+import { EnumHelper } from '@/utils/helpers';
 
 /**
  * 用户性别枚举
