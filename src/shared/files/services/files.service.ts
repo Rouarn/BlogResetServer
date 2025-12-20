@@ -62,7 +62,7 @@ export class FilesService {
       userId,
       fileType,
       description: uploadDto.description,
-      isPublic: uploadDto.isPublic ? Status.ENABLED : Status.DISABLED,
+      isPublic: Number(uploadDto.isPublic) === Status.ENABLED ? Status.ENABLED : Status.DISABLED,
       uploadProtocol: uploadDto.protocol,
     });
 
@@ -238,6 +238,25 @@ export class FilesService {
     }
 
     return false;
+  }
+
+  async updateFilePublicStatus(id: string, isPublic: Status, userId?: string): Promise<File> {
+    const file = await this.fileRepository.findOne({ where: { id } });
+
+    if (!file) {
+      throw BusinessExceptionFactory.notFound('文件不存在', { id });
+    }
+
+    // 只有文件所有者可以修改文件状态
+    if (userId && file.userId !== userId) {
+      throw BusinessExceptionFactory.forbidden('只有文件所有者可以修改文件状态', { id });
+    }
+
+    file.isPublic = isPublic;
+    await this.fileRepository.save(file);
+
+    this.logger.log(`🔒 文件公开状态更新: ${file.originalName} (${id}) - ${isPublic}`);
+    return file;
   }
 
   private mapToUploadResult(file: File): FileUploadResult {

@@ -38,6 +38,7 @@ import { FileAccessGuard } from './guards/file-access.guard';
 import { BatchUploadResult, FileUploadResult } from './interfaces';
 import { FilesService } from './services/files.service';
 import { Status } from '@/common/enums';
+import { File } from './entities';
 
 @ApiTags('文件管理')
 @ApiBearerAuth()
@@ -109,16 +110,20 @@ export class FilesController {
             type: 'string',
             format: 'binary',
           },
+          description: '要上传的文件列表',
         },
         description: {
           type: 'string',
+          description: '文件描述',
         },
         isPublic: {
           type: 'string',
           enum: Object.values(Status),
           default: Status.DISABLED,
+          description: '是否公开文件',
         },
       },
+      required: ['files'],
     },
   })
   @ApiResponse({
@@ -267,5 +272,40 @@ export class FilesController {
       success: true,
       message: '文件删除成功',
     };
+  }
+
+  @Post(':id/public-status')
+  @ApiOperation({ summary: '更新文件公开状态' })
+  @ApiParam({ name: 'id', description: '文件ID', example: 'uuid' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        isPublic: {
+          type: 'string',
+          enum: Object.values(Status),
+        },
+      },
+      required: ['isPublic'],
+    },
+  })
+  @ApiResponse({ status: 200, description: '文件状态更新成功' })
+  @ApiResponse({
+    status: 404,
+    description: '文件不存在',
+    type: 'object',
+  })
+  @ApiResponse({
+    status: 403,
+    description: '无权限修改',
+    type: 'object',
+  })
+  @UseGuards(FileAccessGuard)
+  async updatePublicStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('isPublic') isPublic: Status,
+    @GetCurrentUser() user?: CurrentUser,
+  ): Promise<File> {
+    return await this.filesService.updateFilePublicStatus(id, isPublic, user?.userId);
   }
 }
