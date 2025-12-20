@@ -48,7 +48,6 @@ const envTemplates = {
     NEST_STATIC_ASSETS_MAXAGE: 0,
     NEST_CORS_ORIGINS:
       'http://localhost:8848,http://127.0.0.1:8848,http://localhost:8849,http://127.0.0.1:8849,http://localhost:8898,http://127.0.0.1:8898',
-    NEST_LOG_LEVEL: 'debug',
     NEST_STATIC_ASSETS_DIR: './static',
     NEST_STATIC_ASSETS_PREFIX: '/static',
     NEST_STATIC_UPLOAD_PATH: './dist/static/uploads',
@@ -83,7 +82,6 @@ const envTemplates = {
     NEST_DATABASE_LOGGING: 'false',
     NEST_DATABASE_SYNCHRONIZE: 'false',
     NEST_CORS_ORIGINS: '*',
-    NEST_LOG_LEVEL: 'error',
     NEST_STATIC_ASSETS_DIR: './static',
     NEST_STATIC_ASSETS_PREFIX: '/static',
     NEST_STATIC_ASSETS_MAXAGE: 86400,
@@ -119,7 +117,6 @@ const envTemplates = {
     NEST_DATABASE_SYNCHRONIZE: 'true',
     NEST_STATIC_ASSETS_MAXAGE: 0,
     NEST_CORS_ORIGINS: 'http://localhost:8849,http://localhost:3000,http://localhost:8898',
-    NEST_LOG_LEVEL: 'debug',
     NEST_STATIC_ASSETS_DIR: './dist/static',
     NEST_STATIC_ASSETS_PREFIX: '/static',
     NEST_STATIC_ASSETS_MAXAGE_TEST: 0,

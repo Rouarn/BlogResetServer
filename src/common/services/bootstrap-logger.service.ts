@@ -29,10 +29,6 @@ export class BootstrapLoggerService {
   }
 
   /**
-   * 输出调试面板配置信息
-   */
-
-  /**
    * 记录API文档保存信息
    * @param apiDocPath API文档文件路径
    * @param baseUrl 基础URL

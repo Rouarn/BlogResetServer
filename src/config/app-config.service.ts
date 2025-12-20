@@ -86,11 +86,6 @@ export class AppConfigService {
     };
   }
 
-  // 日志配置
-  get logLevel(): string {
-    return this.configService.get<string>('NEST_LOG_LEVEL', 'info');
-  }
-
   // Swagger API 文档配置
   get swaggerOptions(): {
     title: string;
