@@ -19,7 +19,12 @@ export const CACHE_TOKENS = {
 /**
  * 缓存键前缀常量
  */
-export const CACHE_PREFIXES = {} as const;
+export const CACHE_PREFIXES = {
+  /** 黑名单令牌缓存键前缀 */
+  BLACKLIST: 'auth:blacklist:token:',
+  /** 用户令牌缓存键前缀 */
+  USER_TOKENS: 'auth:user_tokens:',
+} as const;
 
 /**
  * 缓存 TTL 常量（秒）

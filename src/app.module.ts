@@ -29,7 +29,6 @@ import { JwtAuthGuard, RolesGuard } from './common/guards';
 // 公共组件导入
 import { ResponseInterceptor } from './common/interceptors';
 import { CustomValidationPipe } from './common/pipes';
-import { JwtAuthStrategy } from './common/strategies';
 // 配置模块导入
 import { ConfigModule as AppConfigModule, AppConfigService } from './config';
 // 时间戳管理模块
@@ -125,7 +124,6 @@ import { UsersModule } from './modules/users/users.module';
   providers: [
     // 应用核心服务
     AppService, // 应用根服务
-    JwtAuthStrategy, // JWT 认证策略
 
     // =============================================================================
     // 全局守卫配置 - 按优先级顺序执行

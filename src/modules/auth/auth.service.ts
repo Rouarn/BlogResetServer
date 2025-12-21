@@ -1,16 +1,17 @@
+import { CACHE_PREFIXES, CACHE_TOKENS, CACHE_TTL } from '@/common/constants';
 import { CurrentUser } from '@/common/decorators';
-import { isEnabled } from '@/common/enums';
+import { isEnabled, Role } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { jwtOptions } from '@/config';
-import { getCurrentTimestamp } from '@/utils/helpers';
-import { Injectable } from '@nestjs/common';
+import { ICacheService } from '@/shared/cache';
+import { getCurrentTimestamp, uuidv4 } from '@/utils/helpers';
+import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 import * as svgCaptcha from 'svg-captcha';
 import { Repository } from 'typeorm';
-import { CACHE_TTL } from '@/common/constants';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import type {
@@ -36,6 +37,8 @@ export class AuthService {
     private readonly authRepository: Repository<Auth>,
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
+    @Inject(CACHE_TOKENS.I_CACHE_SERVICE)
+    private readonly cacheService: ICacheService,
   ) {}
 
   /**
@@ -142,11 +145,17 @@ export class AuthService {
       username: auth.username,
       authId: auth.id,
       userId: auth.user?.id || auth.id,
-      roles: auth.user?.roles || 'USER',
+      roles: auth.user?.roles || Role.USER,
+      jti: uuidv4(),
     };
 
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = await this.generateRefreshToken(auth.id);
+
+    // 存储 UserToken 到缓存
+    await this.cacheService.set(`${CACHE_PREFIXES.USER_TOKENS}${auth.id}`, payload.jti, {
+      ttl: jwtOptions.expiresIn,
+    });
 
     return {
       accessToken,
@@ -353,11 +362,17 @@ export class AuthService {
       authId: auth.id,
       username: auth.username,
       userId: auth.user?.id || auth.id,
-      roles: auth.user?.roles || '',
+      roles: auth.user?.roles || Role.USER,
+      jti: uuidv4(),
     };
 
     const accessToken = this.jwtService.sign(payload);
     const newRefreshToken = await this.generateRefreshToken(auth.id);
+
+    // 更新 UserToken 到缓存
+    await this.cacheService.set(`${CACHE_PREFIXES.USER_TOKENS}${auth.id}`, payload.jti, {
+      ttl: jwtOptions.expiresIn,
+    });
 
     return {
       accessToken,
@@ -376,8 +391,48 @@ export class AuthService {
    * @param currentUser 当前用户信息
    * @returns 登出结果
    */
-  async logout(_currentUser: CurrentUser): Promise<{ message: string }> {
+  async logout(token: string): Promise<{ message: string }> {
+    const tokenPayload = this.jwtService.decode<
+      CurrentUser & { jti: string; exp: number; iat: number }
+    >(token);
+
+    if (!tokenPayload) {
+      throw BusinessExceptionFactory.unauthorized('令牌无效');
+    }
+
+    // 计算过期时间
+    const expiresIn = tokenPayload.exp - tokenPayload.iat;
+
+    await this.cacheService.set(
+      `${CACHE_PREFIXES.BLACKLIST}${tokenPayload.authId}:${tokenPayload.jti}`,
+      getCurrentTimestamp(),
+      {
+        ttl: expiresIn,
+      },
+    );
+
     return { message: '退出登录成功' };
+  }
+
+  /**
+   * 踢出指定用户 (管理员操作)
+   *
+   * @param authId 认证ID
+   */
+  async kickOutUserById(authId: string): Promise<void> {
+    const currentJti = await this.cacheService.get(`${CACHE_PREFIXES.USER_TOKENS}${authId}`);
+
+    if (currentJti) {
+      await this.cacheService.set(
+        `${CACHE_PREFIXES.BLACKLIST}${authId}:${currentJti}`,
+        getCurrentTimestamp(),
+        {
+          ttl: jwtOptions.expiresIn,
+        },
+      );
+      // 清除用户当前令牌记录
+      await this.cacheService.del(`${CACHE_PREFIXES.USER_TOKENS}${authId}`);
+    }
   }
 
   /**

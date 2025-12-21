@@ -1,15 +1,18 @@
-import { CurrentUser, GetCurrentUser, Public } from '@/common/decorators';
+import { CurrentUser, GetCurrentUser, Public, Roles } from '@/common/decorators';
 import {
   Body,
   ClassSerializerInterceptor,
   Controller,
   Get,
   Ip,
+  Param,
   Post,
   Put,
+  Req,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
 import { User } from '../users/entities/user.entity';
 import { AuthService } from './auth.service';
 import { CaptchaResponseDto, CaptchaVerifyDto, CaptchaVerifyResponseDto } from './dto/captcha.dto';
@@ -17,6 +20,7 @@ import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/password.dto';
 import { AuthCreateUserResponse, RegisterDto, RegisterResponseDto } from './dto/register.dto';
 import { RefreshTokenDto, TokenResponseDto } from './dto/token.dto';
+import { Role } from '../../common/enums';
 
 /**
  * 认证控制器
@@ -189,7 +193,25 @@ export class AuthController {
     description: '未授权访问',
   })
   @Post('logout')
-  async logout(@GetCurrentUser() user: CurrentUser): Promise<{ message: string }> {
-    return this.authService.logout(user);
+  async logout(@Req() req: Request): Promise<{ message: string }> {
+    const token = req.headers.authorization?.split(' ')[1] ?? '';
+    return this.authService.logout(token);
+  }
+
+  /**
+   * 踢出指定用户
+   * @param id 认证ID
+   */
+  @ApiOperation({
+    summary: '踢出指定用户',
+    description: '管理员强制指定用户下线',
+  })
+  @ApiResponse({ status: 200, description: '操作成功' })
+  @ApiBearerAuth()
+  @Roles(Role.SYSTEM_ADMIN)
+  @Post('kickout/:id')
+  async kickOutUser(@Param('id') id: string): Promise<{ message: string }> {
+    await this.authService.kickOutUserById(id);
+    return { message: '用户已踢出' };
   }
 }

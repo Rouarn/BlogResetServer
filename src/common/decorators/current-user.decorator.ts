@@ -15,6 +15,14 @@ export interface CurrentUser {
   lastLoginAt: Date;
 }
 
+declare global {
+  namespace Express {
+    interface Request {
+      user?: CurrentUser;
+    }
+  }
+}
+
 /**
  * 获取当前用户装饰器（GetCurrentUser）
  *
