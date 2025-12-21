@@ -10,6 +10,7 @@ import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 import * as svgCaptcha from 'svg-captcha';
 import { Repository } from 'typeorm';
+import { CACHE_TTL } from '@/common/constants';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import type {
@@ -20,9 +21,8 @@ import type {
 import type { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/password.dto';
 import { AuthCreateUserResponse, RegisterDto } from './dto/register.dto';
-import type { LogoutResponseDto, RefreshTokenDto, TokenResponseDto } from './dto/token.dto';
+import type { RefreshTokenDto, TokenResponseDto } from './dto/token.dto';
 import { Auth } from './entities/auth.entity';
-import { CACHE_TTL } from '../../common/constants';
 
 /**
  * 认证服务（AuthService）
@@ -376,7 +376,7 @@ export class AuthService {
    * @param currentUser 当前用户信息
    * @returns 登出结果
    */
-  async logout(_currentUser: CurrentUser): Promise<LogoutResponseDto> {
+  async logout(_currentUser: CurrentUser): Promise<{ message: string }> {
     return { message: '退出登录成功' };
   }
 

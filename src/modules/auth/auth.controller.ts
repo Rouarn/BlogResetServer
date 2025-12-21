@@ -32,8 +32,6 @@ export class AuthController {
 
   /**
    * 获取验证码
-   * @param clientIp 客户端IP地址
-   * @param userAgent 用户代理字符串
    * @returns 验证码图片和对应的token
    */
   @ApiOperation({

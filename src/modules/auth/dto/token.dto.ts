@@ -116,20 +116,3 @@ export class TokenResponseDto {
   })
   refreshExpiresIn?: number;
 }
-
-/**
- * 注销响应DTO
- *
- * 注销成功后返回的数据结构。
- *
- * 字段说明：
- * - message: 注销成功消息
- * - loggedOutDevices: 注销的设备数量（可选）
- */
-export class LogoutResponseDto {
-  @ApiProperty({
-    description: '注销成功消息',
-    example: '注销成功',
-  })
-  message: string;
-}
