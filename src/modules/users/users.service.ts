@@ -77,19 +77,18 @@ export class UsersService {
    * @returns 用户信息
    */
   async findById(id: string): Promise<User> {
-    const cacheKey = `${CACHE_PREFIXES.USER}:${id}`;
+    const cacheKey = `${CACHE_PREFIXES.USERS}:${id}`;
     const cached = await this.cacheService.get<User>(cacheKey);
     if (cached) {
       return cached;
     }
     const user = await this.userRepository.findOne({
       where: { id },
-      relations: ['auth'],
     });
     if (!user) {
       throw BusinessExceptionFactory.notFound('用户', { id });
     }
-    await this.cacheService.set<User>(cacheKey, user, { ttl: CACHE_TTL.USER_INFO });
+    await this.cacheService.set<User>(cacheKey, user, { ttl: CACHE_TTL.USER_LIST });
     return user;
   }
 
@@ -139,12 +138,8 @@ export class UsersService {
 
     await this.userRepository.save(user);
 
-    await this.cacheService.del(`${CACHE_PREFIXES.USER}:${id}`);
-    await this.cacheService.del(`${CACHE_PREFIXES.USER_INFO}:${id}`);
-    const keys = await this.cacheService.keys(`${CACHE_PREFIXES.USERS}:*`);
-    if (keys.length > 0) {
-      await this.cacheService.delMany(keys);
-    }
+    await this.cacheService.del(`${CACHE_PREFIXES.AUTHS}:${user.authId}`);
+    await this.cacheService.del(`${CACHE_PREFIXES.USERS}:${user.id}`);
     return;
   }
 
@@ -156,12 +151,8 @@ export class UsersService {
   async remove(id: string): Promise<{ message: string }> {
     const user = await this.findById(id);
     await this.userRepository.remove(user);
-    await this.cacheService.del(`${CACHE_PREFIXES.USER}:${id}`);
-    await this.cacheService.del(`${CACHE_PREFIXES.USER_INFO}:${id}`);
-    const keys = await this.cacheService.keys(`${CACHE_PREFIXES.USERS}:*`);
-    if (keys.length > 0) {
-      await this.cacheService.delMany(keys);
-    }
+    await this.cacheService.del(`${CACHE_PREFIXES.AUTHS}:${user.authId}`);
+    await this.cacheService.del(`${CACHE_PREFIXES.USERS}:${user.id}`);
     return { message: '用户删除成功' };
   }
 
@@ -182,11 +173,7 @@ export class UsersService {
 
     await this.userRepository.remove(users);
 
-    const toClearPatterns = [
-      `${CACHE_PREFIXES.USER}:*`,
-      `${CACHE_PREFIXES.USER_INFO}:*`,
-      `${CACHE_PREFIXES.USERS}:*`,
-    ];
+    const toClearPatterns = [`${CACHE_PREFIXES.AUTHS}:*`, `${CACHE_PREFIXES.USERS}:*`];
     for (const pattern of toClearPatterns) {
       const keys = await this.cacheService.keys(pattern);
       if (keys.length > 0) {

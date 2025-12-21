@@ -22,7 +22,6 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { CreateUserDto } from './dto/create-user.dto';
 import {
   BatchDeleteUserDto,
   QueryUserDto,
@@ -65,30 +64,6 @@ import { UsersService } from './users.service';
 @ApiBearerAuth()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-
-  /**
-   * 创建用户
-   * 仅管理员可操作
-   */
-  @Post()
-  @Roles(Role.SYSTEM_ADMIN, Role.ORG_ADMIN)
-  @ApiOperation({ summary: '创建用户', description: '创建新的用户资料' })
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    description: '用户创建成功',
-    type: User,
-  })
-  @ApiResponse({
-    status: HttpStatus.CONFLICT,
-    description: '邮箱已被使用',
-  })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: '请求参数验证失败',
-  })
-  async create(@Body() createUserDto: CreateUserDto): Promise<User> {
-    return await this.usersService.create(createUserDto);
-  }
 
   /**
    * 获取用户列表

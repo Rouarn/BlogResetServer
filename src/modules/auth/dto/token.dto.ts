@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 /**
  * JWT载荷DTO
@@ -118,45 +118,6 @@ export class TokenResponseDto {
 }
 
 /**
- * 注销DTO
- *
- * 用于用户注销的数据传输对象。
- *
- * 字段说明：
- * - refreshToken: 刷新令牌（可选，用于黑名单）
- * - allDevices: 是否注销所有设备（可选）
- *
- * 验证规则：
- * - refreshToken: 可选字符串
- * - allDevices: 可选布尔值
- */
-export class LogoutDto {
-  @ApiPropertyOptional({
-    description: '访问令牌（用于黑名单）',
-    example: 'access-token-abc',
-  })
-  @IsOptional()
-  @IsString({ message: '访问令牌必须是字符串' })
-  accessToken?: string;
-
-  @ApiPropertyOptional({
-    description: '刷新令牌（用于黑名单）',
-    example: 'refresh-token-def',
-  })
-  @IsOptional()
-  @IsString({ message: '刷新令牌必须是字符串' })
-  refreshToken?: string;
-
-  @ApiPropertyOptional({
-    description: '是否注销所有设备',
-    example: false,
-    default: false,
-  })
-  @IsOptional()
-  allDevices?: boolean = false;
-}
-
-/**
  * 注销响应DTO
  *
  * 注销成功后返回的数据结构。
@@ -171,16 +132,4 @@ export class LogoutResponseDto {
     example: '注销成功',
   })
   message: string;
-
-  @ApiProperty({
-    description: '是否成功注销',
-    example: true,
-  })
-  loggedOut: boolean;
-
-  @ApiPropertyOptional({
-    description: '注销的设备数量',
-    example: 1,
-  })
-  loggedOutDevices?: number;
 }

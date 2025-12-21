@@ -1,4 +1,5 @@
-import { CurrentUser, GetCurrentUser, Public } from '@/common/decorators';
+import { CurrentUser, GetCurrentUser, Public, Roles } from '@/common/decorators';
+import { Role } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import {
   Body,
@@ -9,19 +10,19 @@ import {
   Ip,
   Post,
   Put,
-  Req,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import type { Request } from 'express';
+import { User } from '../users/entities/user.entity';
 import { AuthService } from './auth.service';
 import { CaptchaResponseDto, CaptchaVerifyDto, CaptchaVerifyResponseDto } from './dto/captcha.dto';
+import { KickUserDto } from './dto/kick-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthMessageResponse } from './dto/message.dto';
+import { OnlineUserDto } from './dto/online-user.dto';
 import { ChangePasswordDto } from './dto/password.dto';
 import { AuthCreateUserResponse, RegisterDto, RegisterResponseDto } from './dto/register.dto';
 import { RefreshTokenDto, TokenResponseDto } from './dto/token.dto';
-import { AuthUserInfoDto } from './dto/user-info.dto';
 
 /**
  * 认证控制器
@@ -100,10 +101,10 @@ export class AuthController {
     summary: '获取用户信息',
     description: '获取当前登录用户的详细信息，包括权限和角色',
   })
-  @ApiResponse({ status: 200, description: '成功获取用户信息', type: AuthUserInfoDto })
+  @ApiResponse({ status: 200, description: '成功获取用户信息', type: User })
   @ApiBearerAuth()
   @Get('getUserInfo')
-  async getUserInfo(@GetCurrentUser() user: CurrentUser): Promise<AuthUserInfoDto> {
+  async getUserInfo(@GetCurrentUser() user: CurrentUser): Promise<User> {
     return await this.authService.getAuthInfo(user);
   }
 
@@ -128,8 +129,12 @@ export class AuthController {
   })
   @Public()
   @Post('login')
-  login(@Body() body: LoginDto, @Ip() clientIp: string): Promise<TokenResponseDto> {
-    return this.authService.login(body, clientIp);
+  login(
+    @Body() body: LoginDto,
+    @Ip() clientIp: string,
+    @Headers('user-agent') userAgent: string,
+  ): Promise<TokenResponseDto> {
+    return this.authService.login(body, clientIp, userAgent);
   }
 
   /**
@@ -228,9 +233,42 @@ export class AuthController {
   }
 
   /**
+   * 获取在线用户列表
+   */
+  @ApiOperation({
+    summary: '获取在线用户列表',
+    description: '获取当前所有在线用户的会话信息，仅管理员可用',
+  })
+  @ApiResponse({ status: 200, description: '在线用户列表', type: [OnlineUserDto] })
+  @ApiBearerAuth()
+  @Roles(Role.SYSTEM_ADMIN)
+  @Get('online-users')
+  async getOnlineUsers(): Promise<OnlineUserDto[]> {
+    return this.authService.getOnlineUsers();
+  }
+
+  /**
+   * 强制下线用户
+   */
+  @ApiOperation({
+    summary: '强制下线用户',
+    description: '强制特定用户或设备下线，仅管理员可用',
+  })
+  @ApiBody({
+    description: '强制下线请求',
+    type: KickUserDto,
+  })
+  @ApiResponse({ status: 200, description: '操作成功' })
+  @ApiBearerAuth()
+  @Roles(Role.SYSTEM_ADMIN)
+  @Post('kick')
+  async kickUser(@Body() body: KickUserDto): Promise<void> {
+    return this.authService.kickUser(body);
+  }
+
+  /**
    * 退出登录
-   * @param user 当前用户信息
-   * @param req HTTP请求对象
+   * @param authHeader Authorization header
    * @returns 退出登录结果
    */
   @ApiOperation({
@@ -243,10 +281,7 @@ export class AuthController {
     description: '未授权访问',
   })
   @Post('logout')
-  async logout(
-    @GetCurrentUser() user: CurrentUser,
-    @Req() req: Request,
-  ): Promise<AuthMessageResponse> {
-    return this.authService.logout({ accessToken: req.headers.authorization }, user);
+  async logout(@GetCurrentUser() user: CurrentUser): Promise<AuthMessageResponse> {
+    return this.authService.logout(user);
   }
 }

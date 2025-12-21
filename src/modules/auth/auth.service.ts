@@ -5,7 +5,7 @@ import { GENDER_LABELS } from '@/common/enums/gender.enum';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { jwtOptions } from '@/config';
 import { ICacheService } from '@/shared/cache';
-import { getCurrentTimestamp, isExpired } from '@/utils/helpers';
+import { formatISOString, getCurrentTimestamp, isExpired } from '@/utils/helpers';
 import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,24 +13,25 @@ import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 import * as svgCaptcha from 'svg-captcha';
 import { Repository } from 'typeorm';
+import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import type {
   CaptchaResponseDto,
   CaptchaVerifyDto,
   CaptchaVerifyResponseDto,
 } from './dto/captcha.dto';
+import { KickUserDto } from './dto/kick-user.dto';
 import type { LoginDto } from './dto/login.dto';
 import { AuthMessageResponse } from './dto/message.dto';
+import { OnlineSessionDto, OnlineUserDto } from './dto/online-user.dto';
 import { ChangePasswordDto } from './dto/password.dto';
 import { AuthCreateUserResponse, RegisterDto } from './dto/register.dto';
 import type {
   JwtPayloadDto,
-  LogoutDto,
   LogoutResponseDto,
   RefreshTokenDto,
   TokenResponseDto,
 } from './dto/token.dto';
-import { AuthUserInfoDto } from './dto/user-info.dto';
 import { Auth } from './entities/auth.entity';
 
 /**
@@ -86,11 +87,11 @@ export class AuthService {
    * @param auth 认证实体（仅用于获取ID）
    * @returns 包含用户ID、用户名、昵称、头像、角色、邮箱、性别、手机号等信息
    */
-  async getAuthInfo(auth: CurrentUser): Promise<AuthUserInfoDto> {
-    const cacheKey = `${CACHE_PREFIXES.USER_INFO}:${auth.userId}`;
-    const cached = await this.cacheService.get<AuthUserInfoDto>(cacheKey);
+  async getAuthInfo(auth: CurrentUser): Promise<User> {
+    const cacheKey = `${CACHE_PREFIXES.AUTHS}:${auth.authId}`;
+    const cached = await this.cacheService.get<Auth>(cacheKey);
     if (cached) {
-      return cached;
+      return cached['user'];
     }
     // 从数据库查询完整的认证和用户信息
     const authWithUser = await this.authRepository.findOne({
@@ -102,26 +103,7 @@ export class AuthService {
       throw BusinessExceptionFactory.notFound('用户信息', { authId: auth.authId });
     }
 
-    const result: AuthUserInfoDto = {
-      userId: authWithUser.user?.id || authWithUser.id,
-      username: authWithUser.username,
-      nickname: authWithUser.user?.nickname || authWithUser.username,
-      avatar: authWithUser.user?.avatar || '',
-      roles: authWithUser.user?.roles || 'USER',
-      email: authWithUser.user?.email || '',
-      gender: GENDER_LABELS[authWithUser.user.gender] ?? '',
-      mobile: authWithUser.user?.mobile || '',
-      bio: authWithUser.user?.bio || '',
-      birthday: authWithUser.user?.birthday,
-      city: authWithUser.user?.city || '',
-      profession: authWithUser.user?.profession || '',
-      authId: authWithUser.id,
-      lastLoginAt: authWithUser.lastLoginAt,
-      lastLoginIp: authWithUser.lastLoginIp ?? '',
-    };
-    await this.cacheService.set<AuthUserInfoDto>(cacheKey, result, { ttl: CACHE_TTL.USER_INFO });
-
-    return result;
+    return authWithUser.user;
   }
 
   /**
@@ -130,12 +112,17 @@ export class AuthService {
    * 验证用户凭据并生成JWT令牌，包含登录安全控制
    *
    * @param loginDto 包含用户名、密码等登录数据
-   * @param clientIp
+   * @param clientIp 客户端IP
+   * @param userAgent 用户代理
    * @returns 成功时返回完整的登录响应信息
    * @throws UnauthorizedException 认证失败
    * @throws BadRequestException 账号被锁定或其他业务错误
    */
-  async login(loginDto: LoginDto, clientIp?: string): Promise<TokenResponseDto> {
+  async login(
+    loginDto: LoginDto,
+    clientIp?: string,
+    userAgent?: string,
+  ): Promise<TokenResponseDto> {
     // 查找认证记录，包含关联的用户信息，并显式选择密码和盐值
     const auth = await this.authRepository
       .createQueryBuilder('auth')
@@ -144,6 +131,7 @@ export class AuthService {
       .where('auth.username = :username', { username: loginDto.username })
       .getOne();
 
+    console.log('auth: ', auth);
     if (!auth) {
       // 记录登录失败尝试（可选：防止用户名枚举攻击）
       throw BusinessExceptionFactory.notFound('用户', { username: loginDto.username });
@@ -216,6 +204,21 @@ export class AuthService {
       ttl: CACHE_TTL.REFRESH_TOKEN,
     });
 
+    // 缓存用户信息
+    // 排除敏感字段
+    const { password, salt, ...authInfo } = auth;
+    await this.cacheService.set(`${CACHE_PREFIXES.AUTHS}:${auth.id}`, authInfo, {
+      ttl: CACHE_TTL.AUTHS,
+    });
+
+    // 缓存用户信息
+    await this.cacheService.set(`${CACHE_PREFIXES.USERS}:${auth.user.id}`, auth.user, {
+      ttl: CACHE_TTL.USER_LIST,
+    });
+
+    // 记录在线状态
+    await this.cacheOnlineUser(auth, accessToken, clientIp, userAgent);
+
     return {
       accessToken,
       refreshToken,
@@ -266,7 +269,7 @@ export class AuthService {
     });
 
     // 清除相关缓存
-    await this.cacheService.del(`${CACHE_PREFIXES.USER_INFO}:${savedAuth.id}`);
+    await this.cacheService.del(`${CACHE_PREFIXES.AUTHS}:${savedAuth.id}`);
     await this.cacheService.del(`${CACHE_PREFIXES.USERS}:*`);
 
     return {
@@ -414,8 +417,8 @@ export class AuthService {
       passwordChangedAt: new Date(),
     });
 
-    // 清除相关缓存
-    await this.cacheService.del(`${CACHE_PREFIXES.USER_INFO}:${authId}`);
+    // 清除用户相关缓存
+    await this.cacheService.del(`${CACHE_PREFIXES.AUTHS}:${authId}`);
     await this.cacheService.del(`${CACHE_PREFIXES.REFRESH_TOKEN}:${authId}`);
 
     return { message: '密码修改成功' };
@@ -494,35 +497,21 @@ export class AuthService {
    *
    * 撤销用户的访问令牌和刷新令牌
    *
-   * @param logoutDto 登出数据
    * @param currentUser 当前用户信息
    * @returns 登出结果
    */
-  async logout(logoutDto: LogoutDto, currentUser: CurrentUser): Promise<LogoutResponseDto> {
+  async logout(currentUser: CurrentUser): Promise<LogoutResponseDto> {
     // 清除刷新令牌缓存
     await this.cacheService.del(`${CACHE_PREFIXES.REFRESH_TOKEN}:${currentUser.authId}`);
 
     // 清除用户信息缓存
-    await this.cacheService.del(`${CACHE_PREFIXES.USER_INFO}:${currentUser.userId}`);
-    await this.cacheService.del(`${CACHE_PREFIXES.AUTH}:${currentUser.authId}`);
+    await this.cacheService.del(`${CACHE_PREFIXES.AUTHS}:${currentUser.authId}`);
+    await this.cacheService.del(`${CACHE_PREFIXES.USERS}:${currentUser.userId}`);
 
-    // 如果提供了访问令牌，将其加入黑名单
-    if (logoutDto.accessToken) {
-      const raw = logoutDto.accessToken.trim();
-      const token = raw.replace(/^Bearer\s+/i, '');
-      const payload = this.jwtService.verify<JwtPayloadDto>(token);
-      const remainingTtl = payload.exp - Math.floor(getCurrentTimestamp() / 1000);
-      if (remainingTtl > 0) {
-        await this.cacheService.set(`${CACHE_PREFIXES.BLACKLIST_TOKEN}:${token}`, 'blacklisted', {
-          ttl: remainingTtl,
-        });
-      }
-    }
+    // 清除在线用户缓存
+    await this.cacheService.del(`${CACHE_PREFIXES.ONLINE_USER}:${currentUser.userId}`);
 
-    return {
-      message: '登出成功',
-      loggedOut: true,
-    };
+    return { message: '登出成功' };
   }
 
   /**
@@ -534,7 +523,7 @@ export class AuthService {
    * @returns 认证信息或抛出异常
    */
   async getAuthById(authId: string): Promise<Auth> {
-    const cacheKey = `${CACHE_PREFIXES.AUTH}:${authId}`;
+    const cacheKey = `${CACHE_PREFIXES.AUTHS}:${authId}`;
     const cached = await this.cacheService.get<Auth>(cacheKey);
     if (cached) {
       return Object.assign(new Auth(), cached);
@@ -546,7 +535,7 @@ export class AuthService {
     if (!auth) {
       throw BusinessExceptionFactory.notFound('认证记录', { reason: `认证ID ${authId} 不存在` });
     }
-    await this.cacheService.set<Auth>(cacheKey, auth, { ttl: CACHE_TTL.USER_INFO });
+    await this.cacheService.set<Auth>(cacheKey, auth, { ttl: CACHE_TTL.AUTHS });
     return auth;
   }
   /**
@@ -667,5 +656,100 @@ export class AuthService {
       updateData.lastLoginIp = clientIp;
     }
     await this.authRepository.update(authId, updateData);
+  }
+
+  /**
+   * 记录在线用户状态
+   */
+  private async cacheOnlineUser(
+    auth: Auth,
+    token: string,
+    ip?: string,
+    userAgent?: string,
+  ): Promise<void> {
+    const tokenSignature = crypto.createHash('md5').update(token).digest('hex');
+    const key = `${CACHE_PREFIXES.ONLINE_USER}:${auth.user.id}:${tokenSignature}`;
+
+    const session: OnlineSessionDto = {
+      ip: ip ?? '',
+      userAgent: userAgent ?? '',
+      loginAt: formatISOString(),
+      key,
+      userId: auth.user.id,
+      username: auth.user.nickname,
+      token,
+      tokenSignature,
+    };
+
+    const decoded = this.jwtService.decode<JwtPayloadDto>(token);
+
+    if (decoded?.exp) {
+      const ttl = decoded.exp - Math.floor(Date.now() / 1000);
+      if (ttl > 0) {
+        await this.cacheService.set(key, session, { ttl });
+      }
+    }
+  }
+
+  /**
+   * 获取所有在线用户
+   */
+  async getOnlineUsers(): Promise<OnlineUserDto[]> {
+    const keys = await this.cacheService.keys(`${CACHE_PREFIXES.ONLINE_USER}:*`);
+    const usersMap = new Map<string, OnlineUserDto>();
+
+    for (const key of keys) {
+      const data = await this.cacheService.get<OnlineSessionDto>(key);
+      if (!data) continue;
+
+      if (!usersMap.has(data.userId)) {
+        usersMap.set(data.userId, {
+          userId: data.userId,
+          username: data.username,
+          sessions: [],
+        });
+      }
+
+      usersMap.get(data.userId)?.sessions.push({
+        ip: data.ip,
+        userAgent: data.userAgent,
+        loginAt: data.loginAt,
+        key: data.key,
+        userId: data.userId,
+        username: data.username,
+        token: data.token,
+        tokenSignature: data.tokenSignature,
+      });
+    }
+
+    return Array.from(usersMap.values());
+  }
+
+  /**
+   * 强制下线用户
+   */
+  async kickUser(kickDto: KickUserDto): Promise<void> {
+    if (kickDto.tokenSignature) {
+      const key = `${CACHE_PREFIXES.ONLINE_USER}:${kickDto.userId}`;
+      await this.kickSession(key);
+    } else {
+      const keys = await this.cacheService.keys(
+        `${CACHE_PREFIXES.ONLINE_USER}:${kickDto.userId}:*`,
+      );
+      for (const key of keys) {
+        await this.kickSession(key);
+      }
+    }
+  }
+
+  private async kickSession(key: string): Promise<void> {
+    const data = await this.cacheService.get<OnlineSessionDto>(key);
+
+    // 清除用户相关缓存
+    await this.cacheService.del(`${CACHE_PREFIXES.AUTHS}:${data?.userId}`);
+    await this.cacheService.del(`${CACHE_PREFIXES.REFRESH_TOKEN}:${data?.userId}`);
+    await this.cacheService.del(`${CACHE_PREFIXES.USERS}:${data?.userId}`);
+
+    await this.cacheService.del(key);
   }
 }

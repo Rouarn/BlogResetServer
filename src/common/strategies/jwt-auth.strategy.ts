@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import type { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { CurrentUser } from '../decorators';
 
 /**
  * JWT 认证策略（JwtAuthStrategy）
@@ -38,7 +39,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
  * - 异常情况统一处理
  */
 @Injectable()
-// 验证请求头中的token
+// 验证请求头中的token是否有效
 export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
   /**
    * 构造函数
@@ -70,12 +71,7 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
    */
   async validate(
     req: Request,
-    payload: {
-      authId: string; // 认证ID
-      username: string;
-      iat?: number;
-      exp?: number;
-    },
+    payload: CurrentUser,
   ): Promise<{
     authId: string;
     userId: string;
@@ -88,13 +84,14 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
 
     if (token) {
       const isBlacklisted = await this.cacheService.has(
-        `${CACHE_PREFIXES.BLACKLIST_TOKEN}:${token}`,
+        `${CACHE_PREFIXES.USERS}:${payload.userId}`,
       );
 
-      if (isBlacklisted) {
+      if (!isBlacklisted) {
         throw BusinessExceptionFactory.unauthorized('令牌访问', { status: 'blacklisted' });
       }
     }
+
     // 验证载荷必要字段
     if (!payload.authId || !payload.username) {
       throw BusinessExceptionFactory.validation('令牌参数', {
