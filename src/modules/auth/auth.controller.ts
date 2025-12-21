@@ -1,4 +1,5 @@
 import { CurrentUser, GetCurrentUser, Public, Roles } from '@/common/decorators';
+import { Role } from '@/common/enums';
 import {
   Body,
   ClassSerializerInterceptor,
@@ -9,10 +10,12 @@ import {
   Post,
   Put,
   Req,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
+import { RolesGuard } from '@/common/guards';
 import { User } from '../users/entities/user.entity';
 import { AuthService } from './auth.service';
 import { CaptchaResponseDto, CaptchaVerifyDto, CaptchaVerifyResponseDto } from './dto/captcha.dto';
@@ -20,7 +23,6 @@ import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/password.dto';
 import { AuthCreateUserResponse, RegisterDto, RegisterResponseDto } from './dto/register.dto';
 import { RefreshTokenDto, TokenResponseDto } from './dto/token.dto';
-import { Role } from '../../common/enums';
 
 /**
  * 认证控制器
@@ -83,6 +85,23 @@ export class AuthController {
   @Get('getUserInfo')
   async getUserInfo(@GetCurrentUser() user: CurrentUser): Promise<User> {
     return await this.authService.getAuthInfo(user);
+  }
+
+  /**
+   * 获取所有在线用户
+   * @returns 在线用户列表
+   */
+  @ApiOperation({
+    summary: '获取在线用户',
+    description: '获取所有当前在线的用户列表（仅系统管理员可用）',
+  })
+  @ApiResponse({ status: 200, description: '成功获取在线用户列表', type: [User] })
+  @ApiBearerAuth()
+  @Roles(Role.SYSTEM_ADMIN)
+  @UseGuards(RolesGuard)
+  @Get('active-users')
+  async getActiveUsers(): Promise<User[]> {
+    return await this.authService.getActiveUsers();
   }
 
   /**
@@ -209,6 +228,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: '操作成功' })
   @ApiBearerAuth()
   @Roles(Role.SYSTEM_ADMIN)
+  @UseGuards(RolesGuard)
   @Post('kickout/:id')
   async kickOutUser(@Param('id') id: string): Promise<{ message: string }> {
     await this.authService.kickOutUserById(id);

@@ -11,7 +11,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 import * as svgCaptcha from 'svg-captcha';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import type {
@@ -61,6 +61,38 @@ export class AuthService {
     }
 
     return authWithUser.user;
+  }
+
+  /**
+   * 获取所有当前登录用户
+   *
+   * @returns 当前在线的用户列表
+   */
+  async getActiveUsers(): Promise<User[]> {
+    // 获取所有用户令牌键
+    const keys = await this.cacheService.keys(`${CACHE_PREFIXES.USER_TOKENS}*`);
+
+    if (!keys || keys.length === 0) {
+      return [];
+    }
+
+    // 从键中提取 authId
+    const authIds = keys.map((key) => {
+      return key.replace(CACHE_PREFIXES.USER_TOKENS, '');
+    });
+
+    if (authIds.length === 0) {
+      return [];
+    }
+
+    // 查询对应的用户信息
+    const auths = await this.authRepository.find({
+      where: { id: In(authIds) },
+      relations: ['user'],
+    });
+
+    // 提取并返回用户实体
+    return auths.map((auth) => auth.user).filter((user) => !!user);
   }
 
   /**
