@@ -22,6 +22,7 @@ import { ChangePasswordDto } from './dto/password.dto';
 import { AuthCreateUserResponse, RegisterDto } from './dto/register.dto';
 import type { LogoutResponseDto, RefreshTokenDto, TokenResponseDto } from './dto/token.dto';
 import { Auth } from './entities/auth.entity';
+import { CACHE_TTL } from '../../common/constants';
 
 /**
  * 认证服务（AuthService）
@@ -152,7 +153,7 @@ export class AuthService {
       refreshToken,
       tokenType: 'Bearer',
       expiresIn: jwtOptions.expiresIn,
-      refreshExpiresIn: 604800, // 7 days
+      refreshExpiresIn: CACHE_TTL.REFRESH_TOKEN, // 7 days
     };
   }
 
@@ -227,7 +228,6 @@ export class AuthService {
     return {
       image: captchaImage,
       token: captchaToken,
-      expiresIn: 300, // 5分钟
     };
   }
 
@@ -364,7 +364,7 @@ export class AuthService {
       refreshToken: newRefreshToken,
       tokenType: 'Bearer',
       expiresIn: jwtOptions.expiresIn,
-      refreshExpiresIn: 604800, // 7天
+      refreshExpiresIn: CACHE_TTL.REFRESH_TOKEN, // 7天
     };
   }
 

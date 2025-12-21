@@ -24,4 +24,7 @@ export const CACHE_PREFIXES = {} as const;
 /**
  * 缓存 TTL 常量（秒）
  */
-export const CACHE_TTL = {} as const;
+export const CACHE_TTL = {
+  /** 刷新令牌缓存 TTL（秒）7天 */
+  REFRESH_TOKEN: 604800,
+} as const;

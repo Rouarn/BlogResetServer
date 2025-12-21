@@ -66,12 +66,6 @@ export class CaptchaResponseDto {
     example: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...',
   })
   image: string;
-
-  @ApiProperty({
-    description: '过期时间（秒）',
-    example: 300,
-  })
-  expiresIn: number;
 }
 
 /**

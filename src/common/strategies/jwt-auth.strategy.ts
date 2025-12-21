@@ -1,4 +1,4 @@
-import { Status } from '@/common/enums';
+import { Role, Status } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { AuthService } from '@/modules/auth/auth.service';
 import { Injectable } from '@nestjs/common';
@@ -28,7 +28,6 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: config.get<string>('NEST_JWT_SECRET') ?? 'default-secret-key',
-      passReqToCallback: true,
     });
   }
 
@@ -37,7 +36,6 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
    *
    * 验证JWT载荷的有效性，并检查用户认证状态
    *
-   * @param req
    * @param payload JWT 载荷，包含认证ID等用户信息
    * @returns 校验通过后的完整用户认证信息
    * @throws UnauthorizedException 认证失败或用户状态异常
@@ -46,6 +44,7 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
     authId: string;
     userId: string;
     username: string;
+    roles: string[];
   }> {
     // 验证载荷必要字段
     if (!payload.authId || !payload.username) {
@@ -77,6 +76,7 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
       authId: authInfo.id,
       userId: authInfo.user?.id || authInfo.id,
       username: authInfo.username,
+      roles: [authInfo.user?.roles || Role.USER],
     };
   }
 }
