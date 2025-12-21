@@ -25,7 +25,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HttpExceptionFilter } from './common/filters';
-import { GlobalGuard, JwtAuthGuard, RolesGuard } from './common/guards';
+import { JwtAuthGuard, RolesGuard } from './common/guards';
 // 公共组件导入
 import { ResponseInterceptor } from './common/interceptors';
 import { CustomValidationPipe } from './common/pipes';
@@ -130,10 +130,6 @@ import { UsersModule } from './modules/users/users.module';
     // =============================================================================
     // 全局守卫配置 - 按优先级顺序执行
     // =============================================================================
-    {
-      provide: APP_GUARD,
-      useClass: GlobalGuard, // 全局限流守卫 (优先执行限流检查)
-    },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard, // JWT 认证守卫 (验证访问令牌)

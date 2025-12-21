@@ -1,8 +1,6 @@
-import { CACHE_PREFIXES, CACHE_TOKENS, CACHE_TTL } from '@/common/constants';
-import { Role, Status, isEnabled, toggleStatus } from '@/common/enums';
+import { Role, Status, toggleStatus } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
-import { ICacheService } from '@/shared/cache';
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import type { CreateUserDto } from './dto/create-user.dto';
@@ -14,30 +12,12 @@ import { User } from './entities/user.entity';
  *
  * 提供用户信息管理的核心业务逻辑，专注于用户资料的CRUD操作。
  * 与认证功能分离，职责单一明确。
- *
- * 功能说明：
- * - 用户信息CRUD：创建、查询、更新、删除用户资料
- * - 用户状态管理：启用/禁用用户
- * - 用户角色管理：分配和管理用户角色
- * - 批量操作：批量删除、批量状态更新
- * - 缓存管理：自动缓存用户信息，提高查询性能
- *
- * 依赖项：
- * - Repository<User>: 用户数据仓库，处理数据库操作
- * - ICacheService: 缓存服务，用于用户信息缓存
- *
- * 安全特性：
- * - 数据验证和完整性检查
- * - 缓存自动失效管理
- * - 批量操作的事务支持
  */
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    @Inject(CACHE_TOKENS.I_CACHE_SERVICE)
-    private readonly cacheService: ICacheService,
   ) {}
 
   /**
@@ -77,18 +57,13 @@ export class UsersService {
    * @returns 用户信息
    */
   async findById(id: string): Promise<User> {
-    const cacheKey = `${CACHE_PREFIXES.USERS}:${id}`;
-    const cached = await this.cacheService.get<User>(cacheKey);
-    if (cached) {
-      return cached;
-    }
     const user = await this.userRepository.findOne({
       where: { id },
+      relations: ['auth'],
     });
     if (!user) {
       throw BusinessExceptionFactory.notFound('用户', { id });
     }
-    await this.cacheService.set<User>(cacheKey, user, { ttl: CACHE_TTL.USER_LIST });
     return user;
   }
 
@@ -99,11 +74,6 @@ export class UsersService {
    * @returns 用户列表和总数
    */
   async findAll(current: number = 1, size: number = 10): Promise<{ list: User[]; total: number }> {
-    const cacheKey = `${CACHE_PREFIXES.USERS}:page:${current}:size:${size}`;
-    const cached = await this.cacheService.get<{ list: User[]; total: number }>(cacheKey);
-    if (cached) {
-      return cached;
-    }
     const [data, total] = await this.userRepository.findAndCount({
       skip: (current - 1) * size,
       take: size,
@@ -111,7 +81,6 @@ export class UsersService {
       order: { createTime: 'DESC' },
     });
     const result = { list: data, total };
-    await this.cacheService.set(cacheKey, result, { ttl: CACHE_TTL.USER_LIST });
     return result;
   }
 
@@ -138,8 +107,6 @@ export class UsersService {
 
     await this.userRepository.save(user);
 
-    await this.cacheService.del(`${CACHE_PREFIXES.AUTHS}:${user.authId}`);
-    await this.cacheService.del(`${CACHE_PREFIXES.USERS}:${user.id}`);
     return;
   }
 
@@ -151,8 +118,6 @@ export class UsersService {
   async remove(id: string): Promise<{ message: string }> {
     const user = await this.findById(id);
     await this.userRepository.remove(user);
-    await this.cacheService.del(`${CACHE_PREFIXES.AUTHS}:${user.authId}`);
-    await this.cacheService.del(`${CACHE_PREFIXES.USERS}:${user.id}`);
     return { message: '用户删除成功' };
   }
 
@@ -161,9 +126,7 @@ export class UsersService {
    * @param batchDeleteDto 批量删除DTO
    * @returns 删除结果
    */
-  async batchRemove(
-    batchDeleteDto: BatchDeleteUserDto,
-  ): Promise<{ message: string; deletedCount: number }> {
+  async batchRemove(batchDeleteDto: BatchDeleteUserDto): Promise<{ message: string }> {
     const { ids } = batchDeleteDto;
 
     const users = await this.userRepository.findBy({ id: In(ids) });
@@ -173,17 +136,7 @@ export class UsersService {
 
     await this.userRepository.remove(users);
 
-    const toClearPatterns = [`${CACHE_PREFIXES.AUTHS}:*`, `${CACHE_PREFIXES.USERS}:*`];
-    for (const pattern of toClearPatterns) {
-      const keys = await this.cacheService.keys(pattern);
-      if (keys.length > 0) {
-        await this.cacheService.delMany(keys);
-      }
-    }
-    return {
-      message: `成功删除 ${users.length} 个用户`,
-      deletedCount: users.length,
-    };
+    return { message: `成功删除 ${users.length} 个用户` };
   }
 
   /**
@@ -205,33 +158,5 @@ export class UsersService {
     await this.userRepository.save(user);
 
     return user;
-  }
-
-  /**
-   * 启用用户
-   * @param id 用户ID
-   * @returns 更新后的用户信息
-   */
-  async enableUser(id: string): Promise<User> {
-    return await this.toggleUserStatus(id, Status.ENABLED);
-  }
-
-  /**
-   * 禁用用户
-   * @param id 用户ID
-   * @returns 更新后的用户信息
-   */
-  async disableUser(id: string): Promise<User> {
-    return await this.toggleUserStatus(id, Status.DISABLED);
-  }
-
-  /**
-   * 检查用户是否启用
-   * @param id 用户ID
-   * @returns 是否启用
-   */
-  async isUserEnabled(id: string): Promise<boolean> {
-    const user = await this.findById(id);
-    return user.auth ? isEnabled(user.auth.status) : false;
   }
 }

@@ -1,7 +1,7 @@
-import { DisableTimestamps } from '@/database';
 import { Roles } from '@/common/decorators';
 import { Role } from '@/common/enums';
 import { RolesGuard } from '@/common/guards';
+import { DisableTimestamps } from '@/database';
 import {
   Body,
   Controller,
@@ -28,11 +28,7 @@ import {
   ToggleUserStatusDto,
   UpdateUserDto,
 } from './dto/update-user.dto';
-import {
-  BatchDeleteResponseDto,
-  DeleteResponseDto,
-  UserListResponseDto,
-} from './dto/users.responses.dto';
+import { UserListResponseDto } from './dto/users.responses.dto';
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 
@@ -41,23 +37,6 @@ import { UsersService } from './users.service';
  *
  * 提供用户管理的REST API接口，专注于用户资料的CRUD操作。
  * 与认证功能分离，职责单一明确。
- *
- * 功能模块：
- * - 用户信息管理：创建、查询、更新、删除用户资料
- * - 用户状态管理：启用/禁用用户账户
- * - 批量操作：批量删除用户
- * - 用户查询：支持分页、筛选和搜索
- *
- * 权限控制：
- * - 所有接口需要JWT认证
- * - 管理员操作需要ADMIN或SUPER角色
- * - 普通用户只能查看和更新自己的信息
- *
- * API设计原则：
- * - RESTful风格的URL设计
- * - 统一的响应格式
- * - 完整的Swagger文档
- * - 适当的HTTP状态码
  */
 @ApiTags('用户管理')
 @Controller('users')
@@ -145,13 +124,12 @@ export class UsersController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: '用户删除成功',
-    type: DeleteResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: '用户不存在',
   })
-  async remove(@Param('id') id: string): Promise<DeleteResponseDto> {
+  async remove(@Param('id') id: string): Promise<{ message: string }> {
     return await this.usersService.remove(id);
   }
 
@@ -166,65 +144,20 @@ export class UsersController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: '批量删除成功',
-    type: BatchDeleteResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: '未找到要删除的用户',
   })
-  async batchRemove(@Body() batchDeleteDto: BatchDeleteUserDto): Promise<BatchDeleteResponseDto> {
+  async batchRemove(@Body() batchDeleteDto: BatchDeleteUserDto): Promise<{ message: string }> {
     return await this.usersService.batchRemove(batchDeleteDto);
-  }
-
-  /**
-   * 启用用户
-   * 仅管理员可操作
-   */
-  @Patch(':id/enable')
-  @UseGuards(RolesGuard)
-  @Roles(Role.SYSTEM_ADMIN, Role.ORG_ADMIN)
-  @ApiOperation({ summary: '启用用户', description: '启用指定用户账户' })
-  @ApiParam({ name: 'id', description: '用户ID', example: 'uuid-123' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: '用户启用成功',
-    type: User,
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: '用户不存在',
-  })
-  async enableUser(@Param('id') id: string): Promise<User> {
-    return await this.usersService.enableUser(id);
-  }
-
-  /**
-   * 禁用用户
-   * 仅管理员可操作
-   */
-  @Patch(':id/disable')
-  @UseGuards(RolesGuard)
-  @Roles(Role.SYSTEM_ADMIN, Role.ORG_ADMIN)
-  @ApiOperation({ summary: '禁用用户', description: '禁用指定用户账户' })
-  @ApiParam({ name: 'id', description: '用户ID', example: 'uuid-123' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: '用户禁用成功',
-    type: User,
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: '用户不存在',
-  })
-  async disableUser(@Param('id') id: string): Promise<User> {
-    return await this.usersService.disableUser(id);
   }
 
   /**
    * 切换用户状态
    * 仅管理员可操作
    */
-  @Patch(':id/toggle-status')
+  @Patch(':id/status')
   @UseGuards(RolesGuard)
   @Roles(Role.SYSTEM_ADMIN, Role.ORG_ADMIN)
   @ApiOperation({ summary: '切换用户状态', description: '切换用户启用/禁用状态' })
@@ -243,30 +176,5 @@ export class UsersController {
     @Body() toggleDto: ToggleUserStatusDto,
   ): Promise<User> {
     return await this.usersService.toggleUserStatus(id, toggleDto.status);
-  }
-
-  /**
-   * 检查用户状态
-   */
-  @Get(':id/status')
-  @ApiOperation({ summary: '检查用户状态', description: '检查用户是否启用' })
-  @ApiParam({ name: 'id', description: '用户ID', example: 'uuid-123' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: '获取用户状态成功',
-    schema: {
-      type: 'object',
-      properties: {
-        enabled: { type: 'boolean', example: true },
-      },
-    },
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: '用户不存在',
-  })
-  async checkStatus(@Param('id') id: string): Promise<{ enabled: boolean }> {
-    const enabled = await this.usersService.isUserEnabled(id);
-    return { enabled };
   }
 }

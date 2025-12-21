@@ -59,12 +59,11 @@
   - 装饰器：`@Cache`、`@CacheEvict`（键模板占位 `${0}` 等；键生成器与条件控制），见 `src/shared/cache/decorators/cache.decorator.ts`。
   - 服务实现：内存与 Redis，工厂统一创建；常量前缀与 TTL 在 `src/common/constants/cache.constant.ts`。
   - 使用示例：用户服务列表与单条缓存、更新与删除失效（参考 UsersService）。
- 
 
 ## 公共层（src/common）
 
 - 装饰器：`@JwtAuth`、`@Roles`、`@Public`、`@GetCurrentUser` 等。
-- 守卫：`JwtAuthGuard`、`RolesGuard`、`GlobalGuard`。
+- 守卫：`JwtAuthGuard`、`RolesGuard`。
 - 拦截器：`ResponseInterceptor` 统一响应格式。
 - 过滤器：`HttpExceptionFilter` 统一错误处理。
 - 异常体系：业务/系统异常与工厂（`src/common/exceptions/index.ts`）。

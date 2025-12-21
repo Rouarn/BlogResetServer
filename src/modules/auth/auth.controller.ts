@@ -1,12 +1,10 @@
-import { CurrentUser, GetCurrentUser, Public, Roles } from '@/common/decorators';
-import { Role } from '@/common/enums';
+import { CurrentUser, GetCurrentUser, Public } from '@/common/decorators';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import {
   Body,
   ClassSerializerInterceptor,
   Controller,
   Get,
-  Headers,
   Ip,
   Post,
   Put,
@@ -16,10 +14,7 @@ import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nes
 import { User } from '../users/entities/user.entity';
 import { AuthService } from './auth.service';
 import { CaptchaResponseDto, CaptchaVerifyDto, CaptchaVerifyResponseDto } from './dto/captcha.dto';
-import { KickUserDto } from './dto/kick-user.dto';
 import { LoginDto } from './dto/login.dto';
-import { AuthMessageResponse } from './dto/message.dto';
-import { OnlineUserDto } from './dto/online-user.dto';
 import { ChangePasswordDto } from './dto/password.dto';
 import { AuthCreateUserResponse, RegisterDto, RegisterResponseDto } from './dto/register.dto';
 import { RefreshTokenDto, TokenResponseDto } from './dto/token.dto';
@@ -49,18 +44,8 @@ export class AuthController {
   @ApiResponse({ status: 200, description: '成功获取验证码', type: CaptchaResponseDto })
   @Public()
   @Get('captcha')
-  async getCaptcha(
-    @Ip() clientIp: string,
-    @Headers('user-agent') userAgent: string,
-  ): Promise<CaptchaResponseDto> {
-    const clientInfo = { ip: clientIp, userAgent };
-    const result = await this.authService.generateCaptcha(clientInfo);
-
-    return {
-      image: result.image,
-      token: result.token,
-      expiresIn: result.expiresIn,
-    };
+  async getCaptcha(): Promise<CaptchaResponseDto> {
+    return this.authService.generateCaptcha();
   }
 
   /**
@@ -86,10 +71,7 @@ export class AuthController {
       throw BusinessExceptionFactory.invalidParameter('验证码token和code不能为空');
     }
 
-    return this.authService.verifyCaptcha({
-      token,
-      code,
-    });
+    return this.authService.verifyCaptcha({ token, code });
   }
 
   /**
@@ -129,12 +111,8 @@ export class AuthController {
   })
   @Public()
   @Post('login')
-  login(
-    @Body() body: LoginDto,
-    @Ip() clientIp: string,
-    @Headers('user-agent') userAgent: string,
-  ): Promise<TokenResponseDto> {
-    return this.authService.login(body, clientIp, userAgent);
+  login(@Body() body: LoginDto, @Ip() clientIp: string): Promise<TokenResponseDto> {
+    return this.authService.login(body, clientIp);
   }
 
   /**
@@ -182,27 +160,6 @@ export class AuthController {
   }
 
   /**
-   * 创建用户（需要验证码验证）
-   * 使用无状态验证码验证机制
-   * @param body 创建用户请求数据
-   * @returns 用户创建结果
-   */
-  @ApiOperation({
-    summary: '创建用户',
-    description: '创建新用户，需要验证码验证，使用无状态验证码验证机制',
-  })
-  @ApiBody({
-    description: '创建用户请求',
-    type: RegisterDto,
-  })
-  @ApiResponse({ status: 200, description: '用户创建结果', type: AuthCreateUserResponse })
-  @Public()
-  @Post('create')
-  async createUser(@Body() body: RegisterDto): Promise<AuthCreateUserResponse> {
-    return await this.authService.register(body);
-  }
-
-  /**
    * 修改密码
    * @param changePasswordDto 修改密码数据
    * @param user 当前用户信息
@@ -213,7 +170,7 @@ export class AuthController {
     summary: '修改密码',
     description: '允许已登录用户修改自己的密码',
   })
-  @ApiResponse({ status: 200, description: '密码修改成功', type: AuthMessageResponse })
+  @ApiResponse({ status: 200, description: '密码修改成功' })
   @ApiResponse({ status: 400, description: '密码修改失败' })
   @ApiResponse({
     status: 401,
@@ -222,53 +179,13 @@ export class AuthController {
   async changePassword(
     @Body() changePasswordDto: ChangePasswordDto,
     @GetCurrentUser() user: { authId: string },
-  ): Promise<AuthMessageResponse> {
-    try {
-      return this.authService.changePassword(changePasswordDto, user.authId);
-    } catch (_) {
-      return {
-        message: '密码修改失败',
-      };
-    }
-  }
-
-  /**
-   * 获取在线用户列表
-   */
-  @ApiOperation({
-    summary: '获取在线用户列表',
-    description: '获取当前所有在线用户的会话信息，仅管理员可用',
-  })
-  @ApiResponse({ status: 200, description: '在线用户列表', type: [OnlineUserDto] })
-  @ApiBearerAuth()
-  @Roles(Role.SYSTEM_ADMIN)
-  @Get('online-users')
-  async getOnlineUsers(): Promise<OnlineUserDto[]> {
-    return this.authService.getOnlineUsers();
-  }
-
-  /**
-   * 强制下线用户
-   */
-  @ApiOperation({
-    summary: '强制下线用户',
-    description: '强制特定用户或设备下线，仅管理员可用',
-  })
-  @ApiBody({
-    description: '强制下线请求',
-    type: KickUserDto,
-  })
-  @ApiResponse({ status: 200, description: '操作成功' })
-  @ApiBearerAuth()
-  @Roles(Role.SYSTEM_ADMIN)
-  @Post('kick')
-  async kickUser(@Body() body: KickUserDto): Promise<void> {
-    return this.authService.kickUser(body);
+  ): Promise<{ message: string }> {
+    return this.authService.changePassword(changePasswordDto, user.authId);
   }
 
   /**
    * 退出登录
-   * @param authHeader Authorization header
+   * @param user 当前登录用户信息
    * @returns 退出登录结果
    */
   @ApiOperation({
@@ -281,7 +198,7 @@ export class AuthController {
     description: '未授权访问',
   })
   @Post('logout')
-  async logout(@GetCurrentUser() user: CurrentUser): Promise<AuthMessageResponse> {
+  async logout(@GetCurrentUser() user: CurrentUser): Promise<{ message: string }> {
     return this.authService.logout(user);
   }
 }

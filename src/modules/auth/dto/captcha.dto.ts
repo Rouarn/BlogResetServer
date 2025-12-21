@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
+import { IsNotEmpty, IsString, Length } from 'class-validator';
 
 /**
  * 验证码验证DTO
@@ -42,15 +42,6 @@ export class CaptchaVerifyDto {
   @IsNotEmpty({ message: '验证码不能为空' })
   @Length(4, 6, { message: '验证码长度必须在4-6个字符之间' })
   code: string;
-
-  @ApiPropertyOptional({
-    description: '验证码类型',
-    example: 'login',
-    enum: ['login', 'register', 'reset-password', 'change-password'],
-  })
-  @IsOptional()
-  @IsString({ message: '验证码类型必须是字符串' })
-  type?: string;
 }
 
 /**

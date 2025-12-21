@@ -1,12 +1,10 @@
-import { CACHE_PREFIXES, CACHE_TOKENS, CACHE_TTL } from '@/common/constants';
 import { CurrentUser } from '@/common/decorators';
 import { isEnabled } from '@/common/enums';
 import { GENDER_LABELS } from '@/common/enums/gender.enum';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { jwtOptions } from '@/config';
-import { ICacheService } from '@/shared/cache';
-import { formatISOString, getCurrentTimestamp, isExpired } from '@/utils/helpers';
-import { Inject, Injectable } from '@nestjs/common';
+import { getCurrentTimestamp } from '@/utils/helpers';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
@@ -20,53 +18,16 @@ import type {
   CaptchaVerifyDto,
   CaptchaVerifyResponseDto,
 } from './dto/captcha.dto';
-import { KickUserDto } from './dto/kick-user.dto';
 import type { LoginDto } from './dto/login.dto';
-import { AuthMessageResponse } from './dto/message.dto';
-import { OnlineSessionDto, OnlineUserDto } from './dto/online-user.dto';
 import { ChangePasswordDto } from './dto/password.dto';
 import { AuthCreateUserResponse, RegisterDto } from './dto/register.dto';
-import type {
-  JwtPayloadDto,
-  LogoutResponseDto,
-  RefreshTokenDto,
-  TokenResponseDto,
-} from './dto/token.dto';
+import type { LogoutResponseDto, RefreshTokenDto, TokenResponseDto } from './dto/token.dto';
 import { Auth } from './entities/auth.entity';
 
 /**
  * 认证服务（AuthService）
  *
  * 专注于用户认证相关的核心业务逻辑，与用户管理功能完全分离。
- *
- * 核心功能：
- * - 用户登录验证：校验用户名密码，生成JWT令牌
- * - 用户注册：创建新认证账号，与用户资料分离
- * - 密码管理：修改密码、重置密码等安全操作
- * - 验证码生成与校验：提供图形验证码防护
- * - JWT令牌管理：生成、刷新、验证、撤销访问令牌
- * - 登录安全：登录尝试次数限制、账号锁定等
- *
- * 架构设计：
- * - 仅处理认证相关逻辑，不涉及用户资料管理
- * - 通过UsersService协作处理用户资料操作
- * - Auth实体专注于认证信息存储
- * - 支持一对一关联到User实体
- *
- * 依赖项：
- * - Repository<Auth>: 认证数据仓库
- * - JwtService: JWT令牌服务
- * - UsersService: 用户管理服务（协作）
- * - ICacheService: 缓存服务
- *
- * 安全特性：
- * - bcrypt密码加密存储
- * - 盐值随机生成
- * - JWT令牌过期管理
- * - 登录失败次数限制
- * - 账号自动锁定机制
- * - 验证码防机器人攻击
- * - 刷新令牌轮换
  */
 @Injectable()
 export class AuthService {
@@ -75,8 +36,6 @@ export class AuthService {
     private readonly authRepository: Repository<Auth>,
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
-    @Inject(CACHE_TOKENS.I_CACHE_SERVICE)
-    private readonly cacheService: ICacheService,
   ) {}
 
   /**
@@ -88,11 +47,6 @@ export class AuthService {
    * @returns 包含用户ID、用户名、昵称、头像、角色、邮箱、性别、手机号等信息
    */
   async getAuthInfo(auth: CurrentUser): Promise<User> {
-    const cacheKey = `${CACHE_PREFIXES.AUTHS}:${auth.authId}`;
-    const cached = await this.cacheService.get<Auth>(cacheKey);
-    if (cached) {
-      return cached['user'];
-    }
     // 从数据库查询完整的认证和用户信息
     const authWithUser = await this.authRepository.findOne({
       where: { id: auth.authId },
@@ -118,11 +72,7 @@ export class AuthService {
    * @throws UnauthorizedException 认证失败
    * @throws BadRequestException 账号被锁定或其他业务错误
    */
-  async login(
-    loginDto: LoginDto,
-    clientIp?: string,
-    userAgent?: string,
-  ): Promise<TokenResponseDto> {
+  async login(loginDto: LoginDto, clientIp?: string): Promise<TokenResponseDto> {
     // 查找认证记录，包含关联的用户信息，并显式选择密码和盐值
     const auth = await this.authRepository
       .createQueryBuilder('auth')
@@ -131,7 +81,6 @@ export class AuthService {
       .where('auth.username = :username', { username: loginDto.username })
       .getOne();
 
-    console.log('auth: ', auth);
     if (!auth) {
       // 记录登录失败尝试（可选：防止用户名枚举攻击）
       throw BusinessExceptionFactory.notFound('用户', { username: loginDto.username });
@@ -199,32 +148,12 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = await this.generateRefreshToken(auth.id);
 
-    // 缓存刷新令牌
-    await this.cacheService.set(`${CACHE_PREFIXES.REFRESH_TOKEN}:${auth.id}`, refreshToken, {
-      ttl: CACHE_TTL.REFRESH_TOKEN,
-    });
-
-    // 缓存用户信息
-    // 排除敏感字段
-    const { password, salt, ...authInfo } = auth;
-    await this.cacheService.set(`${CACHE_PREFIXES.AUTHS}:${auth.id}`, authInfo, {
-      ttl: CACHE_TTL.AUTHS,
-    });
-
-    // 缓存用户信息
-    await this.cacheService.set(`${CACHE_PREFIXES.USERS}:${auth.user.id}`, auth.user, {
-      ttl: CACHE_TTL.USER_LIST,
-    });
-
-    // 记录在线状态
-    await this.cacheOnlineUser(auth, accessToken, clientIp, userAgent);
-
     return {
       accessToken,
       refreshToken,
       tokenType: 'Bearer',
       expiresIn: jwtOptions.expiresIn,
-      refreshExpiresIn: CACHE_TTL.REFRESH_TOKEN,
+      refreshExpiresIn: 604800, // 7 days
     };
   }
 
@@ -268,10 +197,6 @@ export class AuthService {
       mobile: registerDto.mobile,
     });
 
-    // 清除相关缓存
-    await this.cacheService.del(`${CACHE_PREFIXES.AUTHS}:${savedAuth.id}`);
-    await this.cacheService.del(`${CACHE_PREFIXES.USERS}:*`);
-
     return {
       message: '注册成功',
       data: {
@@ -291,10 +216,9 @@ export class AuthService {
    *
    * 生成SVG格式的验证码图片和对应的令牌，支持多种验证码类型
    *
-   * @param clientInfo 客户端信息（IP、User-Agent等）
    * @returns 包含验证码图片、令牌、过期时间等信息
    */
-  async generateCaptcha(clientInfo: Record<string, unknown>): Promise<CaptchaResponseDto> {
+  async generateCaptcha(): Promise<CaptchaResponseDto> {
     // 创建验证码，设置选项使其更安全
     const captcha = svgCaptcha.create({
       size: 4, // 验证码长度
@@ -307,20 +231,7 @@ export class AuthService {
       fontSize: 36,
     });
 
-    const captchaCode = captcha.text; // 验证码文本
     const captchaToken = `captcha_${crypto.randomBytes(16).toString('hex')}`;
-
-    // 使用缓存存储验证码信息，替代 JWT token 方式
-    const captchaData = {
-      code: captchaCode.toLowerCase(),
-      clientInfo,
-      timestamp: getCurrentTimestamp(),
-    };
-
-    // 存储到缓存中，5分钟过期
-    await this.cacheService.set(`${CACHE_PREFIXES.CAPTCHA}:${captchaToken}`, captchaData, {
-      ttl: CACHE_TTL.CAPTCHA,
-    });
 
     // 将SVG验证码转换为base64格式的图片
     const captchaImage = `data:image/svg+xml;base64,${Buffer.from(captcha.data).toString('base64')}`;
@@ -328,7 +239,7 @@ export class AuthService {
     return {
       image: captchaImage,
       token: captchaToken,
-      expiresIn: CACHE_TTL.CAPTCHA, // 5分钟
+      expiresIn: 300, // 5分钟
     };
   }
 
@@ -340,35 +251,7 @@ export class AuthService {
    * @param captchaVerifyDto 验证码验证数据
    * @returns 验证结果
    */
-  async verifyCaptcha(captchaVerifyDto: CaptchaVerifyDto): Promise<CaptchaVerifyResponseDto> {
-    // 从缓存中获取验证码信息
-    const captchaData = await this.cacheService.get<{
-      code: string;
-      clientInfo: Record<string, unknown>;
-      timestamp: number;
-    }>(`${CACHE_PREFIXES.CAPTCHA}:${captchaVerifyDto.token}`);
-
-    if (!captchaData) {
-      throw BusinessExceptionFactory.systemBusy({
-        message: '验证码无效或已过期',
-      });
-    }
-
-    // 验证验证码
-    if (captchaData.code !== captchaVerifyDto.code.toLowerCase()) {
-      throw BusinessExceptionFactory.validation('验证码错误');
-    }
-
-    // 验证时间戳（防止重放攻击）
-    if (isExpired(captchaData.timestamp, CACHE_TTL.CAPTCHA * 1000)) {
-      // 验证码过期
-      await this.cacheService.del(`${CACHE_PREFIXES.CAPTCHA}:${captchaVerifyDto.token}`);
-      throw BusinessExceptionFactory.validation('验证码已过期');
-    }
-
-    // 验证成功后删除缓存，防止重复使用
-    await this.cacheService.del(`${CACHE_PREFIXES.CAPTCHA}:${captchaVerifyDto.token}`);
-
+  async verifyCaptcha(_captchaVerifyDto: CaptchaVerifyDto): Promise<CaptchaVerifyResponseDto> {
     return { success: true, message: '验证成功' };
   }
 
@@ -384,7 +267,7 @@ export class AuthService {
   async changePassword(
     changePasswordDto: ChangePasswordDto,
     authId: string,
-  ): Promise<AuthMessageResponse> {
+  ): Promise<{ message: string }> {
     // 显式选择密码和盐值用于验证
     const auth = await this.authRepository
       .createQueryBuilder('auth')
@@ -417,10 +300,6 @@ export class AuthService {
       passwordChangedAt: new Date(),
     });
 
-    // 清除用户相关缓存
-    await this.cacheService.del(`${CACHE_PREFIXES.AUTHS}:${authId}`);
-    await this.cacheService.del(`${CACHE_PREFIXES.REFRESH_TOKEN}:${authId}`);
-
     return { message: '密码修改成功' };
   }
 
@@ -435,7 +314,7 @@ export class AuthService {
   async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<TokenResponseDto> {
     const { refreshToken } = refreshTokenDto;
 
-    // 从缓存中验证刷新令牌
+    // 验证刷新令牌
     const authId = await this.validateRefreshToken(refreshToken);
     if (!authId) {
       throw BusinessExceptionFactory.unauthorized('令牌刷新', { status: 'invalid_or_expired' });
@@ -477,18 +356,12 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload);
     const newRefreshToken = await this.generateRefreshToken(auth.id);
 
-    // 更新缓存中的刷新令牌
-    await this.cacheService.del(`${CACHE_PREFIXES.REFRESH_TOKEN}:${auth.id}`);
-    await this.cacheService.set(`${CACHE_PREFIXES.REFRESH_TOKEN}:${auth.id}`, newRefreshToken, {
-      ttl: CACHE_TTL.REFRESH_TOKEN,
-    });
-
     return {
       accessToken,
       refreshToken: newRefreshToken,
       tokenType: 'Bearer',
       expiresIn: jwtOptions.expiresIn,
-      refreshExpiresIn: CACHE_TTL.REFRESH_TOKEN,
+      refreshExpiresIn: 604800,
     };
   }
 
@@ -500,18 +373,8 @@ export class AuthService {
    * @param currentUser 当前用户信息
    * @returns 登出结果
    */
-  async logout(currentUser: CurrentUser): Promise<LogoutResponseDto> {
-    // 清除刷新令牌缓存
-    await this.cacheService.del(`${CACHE_PREFIXES.REFRESH_TOKEN}:${currentUser.authId}`);
-
-    // 清除用户信息缓存
-    await this.cacheService.del(`${CACHE_PREFIXES.AUTHS}:${currentUser.authId}`);
-    await this.cacheService.del(`${CACHE_PREFIXES.USERS}:${currentUser.userId}`);
-
-    // 清除在线用户缓存
-    await this.cacheService.del(`${CACHE_PREFIXES.ONLINE_USER}:${currentUser.userId}`);
-
-    return { message: '登出成功' };
+  async logout(_currentUser: CurrentUser): Promise<LogoutResponseDto> {
+    return { message: '退出登录成功' };
   }
 
   /**
@@ -523,11 +386,6 @@ export class AuthService {
    * @returns 认证信息或抛出异常
    */
   async getAuthById(authId: string): Promise<Auth> {
-    const cacheKey = `${CACHE_PREFIXES.AUTHS}:${authId}`;
-    const cached = await this.cacheService.get<Auth>(cacheKey);
-    if (cached) {
-      return Object.assign(new Auth(), cached);
-    }
     const auth = await this.authRepository.findOne({
       where: { id: authId },
       relations: ['user'],
@@ -535,7 +393,6 @@ export class AuthService {
     if (!auth) {
       throw BusinessExceptionFactory.notFound('认证记录', { reason: `认证ID ${authId} 不存在` });
     }
-    await this.cacheService.set<Auth>(cacheKey, auth, { ttl: CACHE_TTL.AUTHS });
     return auth;
   }
   /**
@@ -575,28 +432,15 @@ export class AuthService {
    * @returns 认证ID或null
    */
   private async validateRefreshToken(refreshToken: string): Promise<string | null> {
-    try {
-      // 解码刷新令牌
-      const decoded = Buffer.from(refreshToken, 'base64url').toString();
-      const [authId] = decoded.split(':');
+    // 解码刷新令牌
+    const decoded = Buffer.from(refreshToken, 'base64url').toString();
+    const [authId] = decoded.split(':');
 
-      if (!authId) {
-        return null;
-      }
-
-      // 从缓存中验证令牌
-      const cachedToken = await this.cacheService.get<string>(
-        `${CACHE_PREFIXES.REFRESH_TOKEN}:${authId}`,
-      );
-
-      if (cachedToken !== refreshToken) {
-        return null;
-      }
-
-      return authId;
-    } catch (error) {
+    if (!authId) {
       return null;
     }
+
+    return authId;
   }
 
   /**
@@ -656,100 +500,5 @@ export class AuthService {
       updateData.lastLoginIp = clientIp;
     }
     await this.authRepository.update(authId, updateData);
-  }
-
-  /**
-   * 记录在线用户状态
-   */
-  private async cacheOnlineUser(
-    auth: Auth,
-    token: string,
-    ip?: string,
-    userAgent?: string,
-  ): Promise<void> {
-    const tokenSignature = crypto.createHash('md5').update(token).digest('hex');
-    const key = `${CACHE_PREFIXES.ONLINE_USER}:${auth.user.id}:${tokenSignature}`;
-
-    const session: OnlineSessionDto = {
-      ip: ip ?? '',
-      userAgent: userAgent ?? '',
-      loginAt: formatISOString(),
-      key,
-      userId: auth.user.id,
-      username: auth.user.nickname,
-      token,
-      tokenSignature,
-    };
-
-    const decoded = this.jwtService.decode<JwtPayloadDto>(token);
-
-    if (decoded?.exp) {
-      const ttl = decoded.exp - Math.floor(Date.now() / 1000);
-      if (ttl > 0) {
-        await this.cacheService.set(key, session, { ttl });
-      }
-    }
-  }
-
-  /**
-   * 获取所有在线用户
-   */
-  async getOnlineUsers(): Promise<OnlineUserDto[]> {
-    const keys = await this.cacheService.keys(`${CACHE_PREFIXES.ONLINE_USER}:*`);
-    const usersMap = new Map<string, OnlineUserDto>();
-
-    for (const key of keys) {
-      const data = await this.cacheService.get<OnlineSessionDto>(key);
-      if (!data) continue;
-
-      if (!usersMap.has(data.userId)) {
-        usersMap.set(data.userId, {
-          userId: data.userId,
-          username: data.username,
-          sessions: [],
-        });
-      }
-
-      usersMap.get(data.userId)?.sessions.push({
-        ip: data.ip,
-        userAgent: data.userAgent,
-        loginAt: data.loginAt,
-        key: data.key,
-        userId: data.userId,
-        username: data.username,
-        token: data.token,
-        tokenSignature: data.tokenSignature,
-      });
-    }
-
-    return Array.from(usersMap.values());
-  }
-
-  /**
-   * 强制下线用户
-   */
-  async kickUser(kickDto: KickUserDto): Promise<void> {
-    if (kickDto.tokenSignature) {
-      const key = `${CACHE_PREFIXES.ONLINE_USER}:${kickDto.userId}`;
-      await this.kickSession(key);
-    } else {
-      const keys = await this.cacheService.keys(
-        `${CACHE_PREFIXES.ONLINE_USER}:${kickDto.userId}:*`,
-      );
-      for (const key of keys) {
-        await this.kickSession(key);
-      }
-    }
-  }
-
-  private async kickSession(key: string): Promise<void> {
-    const data = await this.cacheService.get<OnlineSessionDto>(key);
-
-    // 清除用户相关缓存
-    await this.cacheService.del(`${CACHE_PREFIXES.AUTHS}:${data?.userId}`);
-    await this.cacheService.del(`${CACHE_PREFIXES.REFRESH_TOKEN}:${data?.userId}`);
-    await this.cacheService.del(`${CACHE_PREFIXES.USERS}:${data?.userId}`);
-
-    await this.cacheService.del(key);
   }
 }
