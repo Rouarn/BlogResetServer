@@ -21,9 +21,11 @@ export const CACHE_TOKENS = {
  */
 export const CACHE_PREFIXES = {
   /** 黑名单令牌缓存键前缀 */
-  BLACKLIST: 'auth:blacklist:token:',
+  BLACKLIST: 'auth:blacklist:',
   /** 用户令牌缓存键前缀 */
   USER_TOKENS: 'auth:user_tokens:',
+  /** 刷新令牌缓存键前缀 */
+  REFRESH_TOKENS: 'auth:refresh_tokens:',
 } as const;
 
 /**

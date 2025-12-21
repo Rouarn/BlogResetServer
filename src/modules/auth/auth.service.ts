@@ -149,12 +149,30 @@ export class AuthService {
       jti: uuidv4(),
     };
 
+    // 单点登录控制：检查并移除旧的令牌
+    const existingJti = await this.cacheService.get(`${CACHE_PREFIXES.USER_TOKENS}${auth.id}`);
+    if (existingJti) {
+      // 将旧令牌加入黑名单
+      await this.cacheService.set(
+        `${CACHE_PREFIXES.BLACKLIST}${auth.id}:${existingJti}`,
+        getCurrentTimestamp(),
+        {
+          ttl: jwtOptions.expiresIn,
+        },
+      );
+    }
+
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = await this.generateRefreshToken(auth.id);
 
     // 存储 UserToken 到缓存
     await this.cacheService.set(`${CACHE_PREFIXES.USER_TOKENS}${auth.id}`, payload.jti, {
       ttl: jwtOptions.expiresIn,
+    });
+
+    // 存储 RefreshToken 到缓存
+    await this.cacheService.set(`${CACHE_PREFIXES.REFRESH_TOKENS}${auth.id}`, refreshToken, {
+      ttl: CACHE_TTL.REFRESH_TOKEN,
     });
 
     return {
@@ -374,6 +392,11 @@ export class AuthService {
       ttl: jwtOptions.expiresIn,
     });
 
+    // 更新 RefreshToken 到缓存
+    await this.cacheService.set(`${CACHE_PREFIXES.REFRESH_TOKENS}${auth.id}`, newRefreshToken, {
+      ttl: CACHE_TTL.REFRESH_TOKEN,
+    });
+
     return {
       accessToken,
       refreshToken: newRefreshToken,
@@ -411,6 +434,9 @@ export class AuthService {
       },
     );
 
+    // 清除 Refresh Token
+    await this.cacheService.del(`${CACHE_PREFIXES.REFRESH_TOKENS}${tokenPayload.authId}`);
+
     return { message: '退出登录成功' };
   }
 
@@ -433,6 +459,9 @@ export class AuthService {
       // 清除用户当前令牌记录
       await this.cacheService.del(`${CACHE_PREFIXES.USER_TOKENS}${authId}`);
     }
+
+    // 清除 Refresh Token，防止用户立即刷新令牌
+    await this.cacheService.del(`${CACHE_PREFIXES.REFRESH_TOKENS}${authId}`);
   }
 
   /**
@@ -496,6 +525,13 @@ export class AuthService {
     const [authId] = decoded.split(':');
 
     if (!authId) {
+      return null;
+    }
+
+    // 验证是否与缓存中的令牌一致
+    const storedToken = await this.cacheService.get(`${CACHE_PREFIXES.REFRESH_TOKENS}${authId}`);
+
+    if (!storedToken || storedToken !== refreshToken) {
       return null;
     }
 
