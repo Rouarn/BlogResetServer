@@ -1,4 +1,5 @@
 import { BusinessExceptionFactory } from '@/common/exceptions';
+import { appConfig } from '@/config';
 import { WhitelistAuth } from '@/utils';
 import { ExecutionContext, Injectable, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -83,7 +84,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       this.logger.warn(`认证提示: ${infoMsg}`);
     }
     // 仅在开发环境或调试时打印用户信息，避免生产环境日志泄露敏感信息
-    if (user && process.env.NODE_ENV !== 'production') {
+    if (user && !appConfig.isProduction) {
       this.logger.debug(`认证成功用户: ${user.username}/${user.userId}`);
     }
 

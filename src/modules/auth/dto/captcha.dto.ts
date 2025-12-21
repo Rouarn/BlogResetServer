@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, Length } from 'class-validator';
 
 /**
@@ -86,20 +86,8 @@ export class CaptchaResponseDto {
  */
 export class CaptchaVerifyResponseDto {
   @ApiProperty({
-    description: '验证是否成功',
-    example: true,
-  })
-  success: boolean;
-
-  @ApiProperty({
     description: '验证结果消息',
     example: '验证码验证成功',
   })
   message: string;
-
-  @ApiPropertyOptional({
-    description: '剩余尝试次数',
-    example: 2,
-  })
-  remainingAttempts?: number;
 }

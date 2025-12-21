@@ -1,6 +1,5 @@
 import { CurrentUser } from '@/common/decorators';
 import { isEnabled } from '@/common/enums';
-import { GENDER_LABELS } from '@/common/enums/gender.enum';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { jwtOptions } from '@/config';
 import { getCurrentTimestamp } from '@/utils/helpers';
@@ -188,7 +187,7 @@ export class AuthService {
     const savedAuth = await this.authRepository.save(auth);
 
     // 总是创建关联的用户记录，确保两个表的数据一致性
-    const createdUser = await this.usersService.create({
+    await this.usersService.create({
       authId: savedAuth.id,
       nickname: registerDto.nickname ?? savedAuth.username, // 如果没有昵称，使用用户名
       email: registerDto.email,
@@ -197,18 +196,7 @@ export class AuthService {
       mobile: registerDto.mobile,
     });
 
-    return {
-      message: '注册成功',
-      data: {
-        userId: savedAuth.id,
-        username: savedAuth.username,
-        nickname: createdUser.nickname,
-        avatar: createdUser.avatar,
-        email: createdUser.email,
-        gender: GENDER_LABELS[createdUser.gender],
-        mobile: createdUser.mobile,
-      },
-    };
+    return { message: '注册成功' };
   }
 
   /**
@@ -231,7 +219,7 @@ export class AuthService {
       fontSize: 36,
     });
 
-    const captchaToken = `captcha_${crypto.randomBytes(16).toString('hex')}`;
+    const captchaToken = `captcha_${crypto.createHash('md5').update(captcha.text.toLowerCase()).digest('hex')}_${crypto.randomBytes(16).toString('hex')}`;
 
     // 将SVG验证码转换为base64格式的图片
     const captchaImage = `data:image/svg+xml;base64,${Buffer.from(captcha.data).toString('base64')}`;
@@ -251,8 +239,23 @@ export class AuthService {
    * @param captchaVerifyDto 验证码验证数据
    * @returns 验证结果
    */
-  async verifyCaptcha(_captchaVerifyDto: CaptchaVerifyDto): Promise<CaptchaVerifyResponseDto> {
-    return { success: true, message: '验证成功' };
+  async verifyCaptcha(captchaVerifyDto: CaptchaVerifyDto): Promise<CaptchaVerifyResponseDto> {
+    // 验证验证码逻辑
+    const { token, code } = captchaVerifyDto;
+
+    if (!token || !code) {
+      throw BusinessExceptionFactory.invalidParameter('验证码token和code不能为空');
+    }
+
+    // 从token中提取验证码文本
+    const storedToken = token.split('_')[1];
+
+    // 比较验证码文本是否匹配
+    if (storedToken !== crypto.createHash('md5').update(code.toLowerCase()).digest('hex')) {
+      throw BusinessExceptionFactory.validation('验证码错误');
+    }
+
+    return { message: '验证成功' };
   }
 
   /**
@@ -317,7 +320,7 @@ export class AuthService {
     // 验证刷新令牌
     const authId = await this.validateRefreshToken(refreshToken);
     if (!authId) {
-      throw BusinessExceptionFactory.unauthorized('令牌刷新', { status: 'invalid_or_expired' });
+      throw BusinessExceptionFactory.unauthorized('令牌刷新');
     }
 
     // 获取认证信息
@@ -350,7 +353,7 @@ export class AuthService {
       authId: auth.id,
       username: auth.username,
       userId: auth.user?.id || auth.id,
-      roles: auth.user?.roles || 'USER',
+      roles: auth.user?.roles || '',
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -361,7 +364,7 @@ export class AuthService {
       refreshToken: newRefreshToken,
       tokenType: 'Bearer',
       expiresIn: jwtOptions.expiresIn,
-      refreshExpiresIn: 604800,
+      refreshExpiresIn: 604800, // 7天
     };
   }
 
@@ -395,6 +398,7 @@ export class AuthService {
     }
     return auth;
   }
+
   /**
    * 验证密码
    *

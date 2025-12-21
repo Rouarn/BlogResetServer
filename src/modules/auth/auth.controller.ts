@@ -1,5 +1,4 @@
 import { CurrentUser, GetCurrentUser, Public } from '@/common/decorators';
-import { BusinessExceptionFactory } from '@/common/exceptions';
 import {
   Body,
   ClassSerializerInterceptor,
@@ -65,13 +64,7 @@ export class AuthController {
   @Public()
   @Post('captcha/verify')
   verifyCaptcha(@Body() body: CaptchaVerifyDto): Promise<CaptchaVerifyResponseDto> {
-    const { token, code } = body;
-
-    if (!token || !code) {
-      throw BusinessExceptionFactory.invalidParameter('验证码token和code不能为空');
-    }
-
-    return this.authService.verifyCaptcha({ token, code });
+    return this.authService.verifyCaptcha(body);
   }
 
   /**

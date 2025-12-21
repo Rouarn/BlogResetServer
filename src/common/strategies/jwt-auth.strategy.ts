@@ -20,7 +20,6 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
    * 构造函数
    * @param config 配置服务实例，用于获取 JWT 密钥
    * @param authService 认证服务，用于验证用户状态
-   * @param cacheService
    */
   constructor(
     private readonly config: ConfigService,
@@ -51,8 +50,7 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
     // 验证载荷必要字段
     if (!payload.authId || !payload.username) {
       throw BusinessExceptionFactory.validation('令牌参数', {
-        reason: '无效的令牌载荷',
-        ...payload,
+        message: '无效的令牌载荷',
       });
     }
 
@@ -62,7 +60,7 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
     // 检查认证状态
     if (!authInfo || authInfo.status !== Status.ENABLED) {
       throw BusinessExceptionFactory.forbidden('账号访问', {
-        reason: '账号已被禁用或不存在',
+        message: '账号已被禁用或不存在',
         authId: payload.authId,
       });
     }
@@ -70,7 +68,7 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
     // 检查账号是否被锁定
     if (authInfo.isLocked()) {
       throw BusinessExceptionFactory.forbidden('账号访问', {
-        reason: '账号已被锁定',
+        message: '账号已被锁定',
         authId: payload.authId,
       });
     }
