@@ -17,11 +17,6 @@ import { IS_PUBLIC_KEY } from '../decorators';
  *
  * 用于保护需要身份认证的路由，手动实现 JWT 校验逻辑。
  * 集成了原 JwtAuthStrategy 的业务逻辑，不再依赖 passport-jwt。
- *
- * 功能说明：
- * - 统一管理 Token 解析、过期检查、黑名单校验、用户状态检查
- * - 解决 passport-jwt 策略下过期错误无法精细控制的问题
- * - 支持 @Public 装饰器和白名单配置
  */
 @Injectable()
 export class JwtAuthGuard implements CanActivate {

@@ -1,23 +1,7 @@
 /**
  * 验证工具模块统一导出
  *
- * 提供各种常用的验证功能，包括：
- * - 邮箱验证
- * - 手机号验证
- * - 身份证验证
- * - URL验证
- * - 数字验证
- * - 字符串验证
- * - 日期验证
- *
- * 用法示例：
- * ```typescript
- * import { isEmail, isPhone, isIdCard } from '@/utils/validators';
- *
- * const emailValid = isEmail('test@example.com');
- * const phoneValid = isPhone('13800138000');
- * const idCardValid = isIdCard('110101199001011234');
- * ```
+ * 提供各种常用的验证功能。
  */
 
 // 邮箱验证

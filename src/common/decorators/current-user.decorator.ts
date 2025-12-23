@@ -8,41 +8,6 @@ import type { CurrentUser } from '../interfaces';
  *
  * 用于在控制器方法参数中直接获取当前登录用户的认证信息。
  * 与新的认证架构集成，返回标准化的用户认证信息。
- *
- * 功能说明：
- * - 从请求对象中提取经过 JWT 认证后的用户信息
- * - 返回包含认证ID、用户名、角色等标准化信息
- * - 需要配合 JwtAuthGuard 使用，确保用户已通过认证
- * - 支持类型安全的用户信息访问
- *
- * 架构特点：
- * - 与JWT策略返回的信息结构一致
- * - 提供完整的用户认证上下文
- * - 支持角色权限验证
- * - 类型安全的接口定义
- *
- * 用法示例：
- * ```typescript
- * @Get('profile')
- * @JwtAuth()
- * getProfile(@GetCurrentUser() user: CurrentUser) {
- *   return {
- *     authId: user.authId,
- *     username: user.username,
- *     roles: user.roles
- *   };
- * }
- *
- * // 获取特定字段
- * @Post('update')
- * @JwtAuth()
- * updateData(
- *   @GetCurrentUser('authId') authId: string,
- *   @Body() updateDto: UpdateDto
- * ) {
- *   return this.service.update(authId, updateDto);
- * }
- * ```
  */
 export const GetCurrentUser = createParamDecorator(
   (

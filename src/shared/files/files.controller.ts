@@ -1,6 +1,6 @@
 import { GetCurrentUser, Public } from '@/common/decorators';
 import { CurrentUser } from '@/common/interfaces';
-import { FilesValidationPipe, FileValidationPipe } from '@/common/pipes';
+import { FilesValidationPipe, FileValidationPipe } from './pipes';
 import {
   Body,
   Controller,
