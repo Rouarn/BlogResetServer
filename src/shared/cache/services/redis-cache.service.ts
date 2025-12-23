@@ -6,11 +6,10 @@
  */
 
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { CacheOptions, CacheStats, ICacheService } from '../interfaces';
 import { deserialize, serialize } from '@/utils/helpers';
-import { RedisCacheConfig } from '@/config/types';
+import { AppConfigService } from '@/config';
 
 @Injectable()
 export class RedisCacheService implements ICacheService, OnModuleDestroy {
@@ -23,7 +22,7 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
     keys: 0,
   };
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(private readonly appConfig: AppConfigService) {
     // 不在构造函数中初始化，而是在需要时初始化
   }
 
@@ -36,9 +35,9 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
     }
 
     try {
-      const redisConfig = this.configService.get<RedisCacheConfig>('app.redis');
+      const redisConfig = this.appConfig.redisConfig;
 
-      if (!redisConfig?.enabled) {
+      if (!redisConfig.enabled) {
         this.logger.warn('Redis 是禁用的，跳过初始化');
         return;
       }
@@ -118,7 +117,7 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
         const redisKey = this.getKey(key, options?.prefix);
         const serializedValue = serialize(value);
 
-        const ttl = options?.ttl ?? this.configService.get('app.redis.cache.defaultTtl', 3600);
+        const ttl = options?.ttl ?? this.appConfig.redisConfig.cache.defaultTtl;
 
         if (ttl && ttl > 0) {
           await this.redis!.setex(redisKey, ttl, serializedValue);
@@ -189,7 +188,7 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
   async clear(): Promise<void> {
     await this.safeExecute(
       async () => {
-        const keyPrefix = this.configService.get('app.redis.cache.keyPrefix', 'nestjs:');
+        const keyPrefix = this.appConfig.redisConfig.cache.keyPrefix;
         const keys = await this.redis!.keys(`${keyPrefix}*`);
         if (keys && keys.length > 0) {
           await this.redis!.del(...keys);
@@ -207,7 +206,7 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
   async keys(pattern?: string): Promise<string[]> {
     return await this.safeExecute(
       async () => {
-        const keyPrefix = this.configService.get('app.redis.cache.keyPrefix', 'nestjs:');
+        const keyPrefix = this.appConfig.redisConfig.cache.keyPrefix;
         const searchPattern = pattern ? `${keyPrefix}${pattern}` : `${keyPrefix}*`;
         const keys = await this.redis!.keys(searchPattern);
         // 移除前缀
@@ -252,7 +251,7 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
   async getStats(): Promise<CacheStats> {
     const keyCount = await this.safeExecute(
       async () => {
-        const keyPrefix = this.configService.get('app.redis.cache.keyPrefix', 'nestjs:');
+        const keyPrefix = this.appConfig.redisConfig.cache.keyPrefix;
         const keys = await this.redis!.keys(`${keyPrefix}*`);
         return keys ? keys.length : 0;
       },
@@ -319,7 +318,7 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
    * 获取带前缀的键名
    */
   private getKey(key: string, prefix?: string): string {
-    const keyPrefix = prefix ?? this.configService.get('app.redis.cache.keyPrefix', 'nestjs:');
+    const keyPrefix = prefix ?? this.appConfig.redisConfig.cache.keyPrefix;
     return `${keyPrefix}${key}`;
   }
 

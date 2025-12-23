@@ -8,9 +8,8 @@
  * @version 1.0.0
  */
 
-import { RedisCacheConfig } from '@/config';
+import { AppConfigService } from '@/config';
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { CacheConfig, CacheServiceType, ICacheService } from '../interfaces';
 import { MemoryCacheService } from './memory-cache.service';
 import { RedisCacheService } from './redis-cache.service';
@@ -21,7 +20,7 @@ export class CacheFactoryService implements OnModuleDestroy {
   private cacheService: ICacheService | null = null;
   private readonly cacheConfig: CacheConfig;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(private readonly appConfig: AppConfigService) {
     this.cacheConfig = this.buildCacheConfig();
   }
 
@@ -42,7 +41,7 @@ export class CacheFactoryService implements OnModuleDestroy {
       // 如果 Redis 创建失败，回退到内存缓存
       if (this.cacheConfig.type === CacheServiceType.REDIS) {
         this.logger.warn('⚠️  Redis 连接失败，正在回退到内存缓存...');
-        this.cacheService = new MemoryCacheService(this.configService);
+        this.cacheService = new MemoryCacheService(this.appConfig);
         this.cacheConfig.type = CacheServiceType.MEMORY;
         return this.cacheService;
       }
@@ -146,15 +145,15 @@ export class CacheFactoryService implements OnModuleDestroy {
    * 构建缓存配置
    */
   private buildCacheConfig(): CacheConfig {
-    const redisEnabled = this.configService.get<boolean>('app.redis.enabled', false);
-    const redisCache = this.configService.get<RedisCacheConfig['cache']>('app.redis.cache');
+    const redisEnabled = this.appConfig.redisConfig.enabled;
+    const redisCache = this.appConfig.redisConfig.cache;
 
     return {
       type: redisEnabled ? CacheServiceType.REDIS : CacheServiceType.MEMORY,
       enabled: redisEnabled,
-      defaultTtl: redisCache?.defaultTtl ?? 3600,
-      keyPrefix: redisCache?.keyPrefix ?? 'app:cache:',
-      maxSize: redisCache?.maxSize ?? 1000,
+      defaultTtl: redisCache.defaultTtl,
+      keyPrefix: redisCache.keyPrefix,
+      maxSize: redisCache.maxSize,
     };
   }
 
@@ -165,7 +164,7 @@ export class CacheFactoryService implements OnModuleDestroy {
     switch (this.cacheConfig.type) {
       case CacheServiceType.REDIS:
         this.logger.log('⚙️  正在创建 Redis 缓存服务...');
-        const redisService = new RedisCacheService(this.configService);
+        const redisService = new RedisCacheService(this.appConfig);
 
         try {
           // 先初始化 Redis 连接
@@ -186,7 +185,7 @@ export class CacheFactoryService implements OnModuleDestroy {
 
       case CacheServiceType.MEMORY:
         this.logger.log('💾 正在创建内存缓存服务...');
-        return new MemoryCacheService(this.configService);
+        return new MemoryCacheService(this.appConfig);
 
       default:
         throw new Error(`❌ 不支持的缓存服务类型: ${this.cacheConfig.type}`);

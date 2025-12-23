@@ -49,10 +49,15 @@ export class AppConfigService {
   }
 
   // JWT 认证配置
-  get jwtOptions(): { secret: string | undefined; expiresIn: number } {
+  get jwtOptions(): {
+    secret: string | undefined;
+    accessTokenTtl: number;
+    refreshTokenTtl: number;
+  } {
     return {
       secret: this.configService.get<string>('app.jwt.secret'),
-      expiresIn: this.configService.get<number>('app.jwt.accessTokenTtl', 3600),
+      accessTokenTtl: this.configService.get<number>('app.jwt.accessTokenTtl', 3600),
+      refreshTokenTtl: this.configService.get<number>('app.jwt.refreshTokenTtl', 604800),
     };
   }
 
@@ -114,6 +119,60 @@ export class AppConfigService {
       prefix: this.configService.get<string>('app.swagger.prefix', '/api-docs'),
       filename: this.configService.get<string>('app.swagger.filename', 'api-docs.json'),
       enabled: environment !== 'production',
+    };
+  }
+
+  // Redis 缓存配置
+  get redisConfig(): {
+    enabled: boolean;
+    host: string;
+    port: number;
+    password?: string;
+    db: number;
+    options: {
+      retryDelayOnFailover: number;
+      enableReadyCheck: boolean;
+      maxRetriesPerRequest: number;
+      lazyConnect: boolean;
+      keepAlive: number;
+      connectTimeout: number;
+      commandTimeout: number;
+    };
+    cache: {
+      defaultTtl: number;
+      keyPrefix: string;
+      maxSize: number;
+    };
+  } {
+    return {
+      enabled: this.configService.get<boolean>('app.redis.enabled', false),
+      host: this.configService.get<string>('app.redis.host', 'localhost'),
+      port: this.configService.get<number>('app.redis.port', 6379),
+      password: this.configService.get<string>('app.redis.password'),
+      db: this.configService.get<number>('app.redis.db', 0),
+      options: {
+        retryDelayOnFailover: this.configService.get<number>(
+          'app.redis.options.retryDelayOnFailover',
+          100,
+        ),
+        enableReadyCheck: this.configService.get<boolean>(
+          'app.redis.options.enableReadyCheck',
+          false,
+        ),
+        maxRetriesPerRequest: this.configService.get<number>(
+          'app.redis.options.maxRetriesPerRequest',
+          3,
+        ),
+        lazyConnect: this.configService.get<boolean>('app.redis.options.lazyConnect', true),
+        keepAlive: this.configService.get<number>('app.redis.options.keepAlive', 30000),
+        connectTimeout: this.configService.get<number>('app.redis.options.connectTimeout', 10000),
+        commandTimeout: this.configService.get<number>('app.redis.options.commandTimeout', 5000),
+      },
+      cache: {
+        defaultTtl: this.configService.get<number>('app.redis.cache.defaultTtl', 3600),
+        keyPrefix: this.configService.get<string>('app.redis.cache.keyPrefix', 'nestjs:'),
+        maxSize: this.configService.get<number>('app.redis.cache.maxSize', 1000),
+      },
     };
   }
 

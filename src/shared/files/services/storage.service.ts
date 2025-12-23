@@ -1,6 +1,5 @@
 import { AppConfigService } from '@/config';
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import type { StorageAdapter, StorageConfig } from '../interfaces';
@@ -10,10 +9,7 @@ export class StorageService implements StorageAdapter {
   private readonly logger = new Logger(StorageService.name);
   private readonly config: StorageConfig;
 
-  constructor(
-    private configService: ConfigService,
-    private appConfigService: AppConfigService,
-  ) {
+  constructor(private appConfigService: AppConfigService) {
     const staticConfig = this.appConfigService.staticAssetsOptions;
 
     // 使用静态资源配置中的上传设置

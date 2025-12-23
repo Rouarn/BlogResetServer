@@ -9,8 +9,9 @@
  */
 
 import { CACHE_TOKENS } from '@/common/constants';
+import { AppConfigService } from '@/config';
 import { Global, Logger, Module, OnModuleInit, Provider } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { ICacheService } from './interfaces';
 import { CacheFactoryService } from './services/cache-factory.service';
 
@@ -37,7 +38,7 @@ export class CacheModule implements OnModuleInit {
 
   constructor(
     private readonly cacheFactory: CacheFactoryService,
-    private readonly configService: ConfigService,
+    private readonly appConfig: AppConfigService,
   ) {}
 
   /**
@@ -45,7 +46,7 @@ export class CacheModule implements OnModuleInit {
    */
   async onModuleInit(): Promise<void> {
     const cacheType = this.cacheFactory.getCurrentCacheType();
-    const redisEnabled = this.configService.get<boolean>('app.redis.enabled', false);
+    const redisEnabled = this.appConfig.redisConfig.enabled;
 
     this.logger.log('');
     this.logger.log('╔═══════════════════════════════════════════════════════════════════╗');
@@ -57,9 +58,9 @@ export class CacheModule implements OnModuleInit {
     this.logger.log(`│ ⚡ Redis状态: ${redisEnabled ? '✅ 已启用' : '❌ 已禁用'}`);
 
     if (redisEnabled) {
-      const host = this.configService.get<string>('app.redis.host', 'localhost');
-      const port = this.configService.get<number>('app.redis.port', 6379);
-      const db = this.configService.get<number>('app.redis.db', 0);
+      const host = this.appConfig.redisConfig.host;
+      const port = this.appConfig.redisConfig.port;
+      const db = this.appConfig.redisConfig.db;
 
       // 检查Redis连接状态
       const cacheService = await this.cacheFactory.getCacheService();
@@ -69,12 +70,8 @@ export class CacheModule implements OnModuleInit {
       this.logger.log(`│ 🔗 连接状态: ${isHealthy ? '🟢 已连接' : '🔴 连接失败'}`);
     }
 
-    this.logger.log(
-      `│ ⏰ 默认TTL: ${this.configService.get<number>('app.redis.cache.defaultTtl', 3600)}秒`,
-    );
-    this.logger.log(
-      `│ 🏷️  键前缀: ${this.configService.get<string>('app.redis.cache.keyPrefix', 'nestjs:')}`,
-    );
+    this.logger.log(`│ ⏰ 默认TTL: ${this.appConfig.redisConfig.cache.defaultTtl}秒`);
+    this.logger.log(`│ 🏷️  键前缀: ${this.appConfig.redisConfig.cache.keyPrefix}`);
     this.logger.log('└──────────────────────────────────────────────────────────────────┘');
     this.logger.log('');
   }

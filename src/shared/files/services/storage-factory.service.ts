@@ -1,7 +1,6 @@
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { AppConfigService } from '@/config';
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import * as path from 'path';
 import type {
   StorageAdapter,
@@ -15,15 +14,12 @@ import { StorageService } from './storage.service';
 export class StorageFactoryService implements StorageFactory {
   private readonly logger = new Logger(StorageFactoryService.name);
 
-  constructor(
-    private configService: ConfigService,
-    private appConfig: AppConfigService,
-  ) {}
+  constructor(private appConfig: AppConfigService) {}
 
   createAdapter(config: StorageFactoryConfig): StorageAdapter {
     switch (config.type) {
       case StorageType.LOCAL:
-        return new StorageService(this.configService, this.appConfig);
+        return new StorageService(this.appConfig);
 
       default:
         throw BusinessExceptionFactory.systemBusy({

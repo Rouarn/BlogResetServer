@@ -81,8 +81,8 @@ export class RefreshTokenDto {
  * - accessToken: 访问令牌
  * - refreshToken: 刷新令牌（可选）
  * - tokenType: 令牌类型
- * - expiresIn: 访问令牌过期时间（秒）
- * - refreshExpiresIn: 刷新令牌过期时间（秒，可选）
+ * - accessTokenTtl: 访问令牌过期时间（秒）
+ * - refreshaccessTokenTtl: 刷新令牌过期时间（秒，可选）
  */
 export class TokenResponseDto {
   @ApiProperty({
@@ -108,11 +108,11 @@ export class TokenResponseDto {
     description: '访问令牌过期时间（秒）',
     example: 3600,
   })
-  expiresIn: number;
+  accessTokenTtl: number;
 
   @ApiPropertyOptional({
     description: '刷新令牌过期时间（秒）',
     example: 604800,
   })
-  refreshExpiresIn?: number;
+  refreshTokenTtl?: number;
 }

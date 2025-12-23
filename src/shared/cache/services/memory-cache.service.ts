@@ -10,7 +10,7 @@
 
 import { getCurrentTimestamp } from '@/utils/helpers';
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { AppConfigService } from '@/config';
 import { CacheOptions, CacheStats, ICacheService } from '../interfaces';
 
 /**
@@ -39,9 +39,9 @@ export class MemoryCacheService implements ICacheService, OnModuleDestroy {
     memoryUsage: 0,
   };
 
-  constructor(private readonly configService: ConfigService) {
-    this.maxSize = this.configService.get('app.redis.cache.maxSize', 1000);
-    this.keyPrefix = this.configService.get('app.redis.cache.keyPrefix', 'nestjs:');
+  constructor(private readonly appConfig: AppConfigService) {
+    this.maxSize = this.appConfig.redisConfig.cache.maxSize;
+    this.keyPrefix = this.appConfig.redisConfig.cache.keyPrefix;
 
     // 启动定期清理过期缓存的定时器
     this.startCleanupTimer();
@@ -84,7 +84,7 @@ export class MemoryCacheService implements ICacheService, OnModuleDestroy {
     const cacheKey = this.getKey(key, options?.prefix);
     const now = getCurrentTimestamp();
 
-    const ttl = options?.ttl ?? this.configService.get('app.redis.cache.defaultTtl', 3600);
+    const ttl = options?.ttl ?? this.appConfig.redisConfig.cache.defaultTtl;
     const expireAt = ttl && ttl > 0 ? now + ttl * 1000 : undefined;
 
     // 确保不超过容量限制

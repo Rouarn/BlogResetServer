@@ -6,7 +6,6 @@ import { AuthService } from '@/modules/auth/auth.service';
 import { ICacheService } from '@/shared/cache';
 import { WhitelistAuth } from '@/utils';
 import { CanActivate, ExecutionContext, Inject, Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
@@ -31,7 +30,6 @@ export class JwtAuthGuard implements CanActivate {
     private readonly reflector: Reflector,
     private readonly jwtService: JwtService,
     private readonly authService: AuthService,
-    private readonly configService: ConfigService,
     private readonly appConfig: AppConfigService,
     @Inject(CACHE_TOKENS.I_CACHE_SERVICE)
     private readonly cacheService: ICacheService,
@@ -68,7 +66,7 @@ export class JwtAuthGuard implements CanActivate {
       const payload = await this.jwtService.verifyAsync<
         CurrentUser & { jti: string; exp?: number; iat?: number }
       >(token, {
-        secret: this.configService.get<string>('app.jwt.secret'),
+        secret: this.appConfig.jwtOptions.secret as string,
       });
 
       // 5. 检查 Token 黑名单

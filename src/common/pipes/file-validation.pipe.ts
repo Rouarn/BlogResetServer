@@ -1,7 +1,6 @@
-import { Injectable, PipeTransform } from '@nestjs/common';
 import { BusinessExceptionFactory } from '@/common/exceptions';
-import { ConfigService } from '@nestjs/config';
-import type { StaticOptions } from '../interfaces';
+import { AppConfigService } from '@/config';
+import { Injectable, PipeTransform } from '@nestjs/common';
 
 /**
  * 单文件验证管道（FileValidationPipe）
@@ -15,7 +14,7 @@ import type { StaticOptions } from '../interfaces';
  * - 验证失败时抛出 BadRequestException 异常
  *
  * 依赖项：
- * - ConfigService: 用于读取文件上传相关配置
+ * - AppConfigService: 用于读取文件上传相关配置
  * - app.static.upload.maxFileSize: 最大文件大小配置
  * - app.static.upload.allowedTypes: 允许的文件类型配置
  *
@@ -33,7 +32,7 @@ export class FileValidationPipe implements PipeTransform {
    * 构造函数
    * @param configService 配置服务实例，用于获取文件上传配置
    */
-  constructor(private configService: ConfigService) {}
+  constructor(private readonly appConfig: AppConfigService) {}
 
   /**
    * 验证单个文件
@@ -47,7 +46,7 @@ export class FileValidationPipe implements PipeTransform {
     }
 
     // 验证文件大小
-    const staticConfig = this.configService.get<StaticOptions>('app.static');
+    const staticConfig = this.appConfig.staticAssetsOptions.options;
 
     if (!staticConfig) {
       throw BusinessExceptionFactory.systemBusy({ reason: '文件上传配置未找到' });
@@ -105,7 +104,7 @@ export class FilesValidationPipe implements PipeTransform {
    * 构造函数
    * @param configService 配置服务实例，用于获取文件上传配置
    */
-  constructor(private configService: ConfigService) {}
+  constructor(private readonly appConfig: AppConfigService) {}
 
   /**
    * 验证多个文件
@@ -118,7 +117,7 @@ export class FilesValidationPipe implements PipeTransform {
       throw BusinessExceptionFactory.invalidParameter('文件列表', { reason: '文件列表不能为空' });
     }
 
-    const staticConfig = this.configService.get<StaticOptions>('app.static');
+    const staticConfig = this.appConfig.staticAssetsOptions.options;
 
     if (!staticConfig) {
       throw BusinessExceptionFactory.systemBusy({ reason: '文件上传配置未找到' });
@@ -132,7 +131,7 @@ export class FilesValidationPipe implements PipeTransform {
       });
     }
 
-    const fileValidationPipe = new FileValidationPipe(this.configService);
+    const fileValidationPipe = new FileValidationPipe(this.appConfig);
     return files.map((file) => fileValidationPipe.transform(file));
   }
 }

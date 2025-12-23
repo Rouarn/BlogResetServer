@@ -52,7 +52,7 @@ export class CaptchaVerifyDto {
  * 字段说明：
  * - token: 验证码令牌
  * - image: 验证码图片（Base64编码）
- * - expiresIn: 过期时间（秒）
+ * - accessTokenTtl: 过期时间（秒）
  */
 export class CaptchaResponseDto {
   @ApiProperty({

@@ -1,8 +1,7 @@
 import { BusinessExceptionFactory } from '@/common/exceptions';
-import type { StaticOptions } from '@/common/interfaces';
+import { AppConfigService } from '@/config';
 import { getCurrentTimestamp, randomString } from '@/utils';
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import { fileTypeFromBuffer } from 'file-type';
 import { FileType } from '../enums';
@@ -32,11 +31,11 @@ export class ValidationService {
     [FileType.OTHER]: ['*'],
   };
 
-  constructor(private configService: ConfigService) {}
+  constructor(private readonly appConfig: AppConfigService) {}
 
   async validateFile(file: Express.Multer.File): Promise<void> {
     // 验证文件大小 - 使用静态资源配置中的限制
-    const staticConfig = this.configService.get('app.static') as StaticOptions;
+    const staticConfig = this.appConfig.staticAssetsOptions.options;
     if (!staticConfig) {
       throw BusinessExceptionFactory.systemBusy({ message: '文件上传配置未找到' });
     }
@@ -69,7 +68,7 @@ export class ValidationService {
   }
 
   async validateFiles(files: Express.Multer.File[]): Promise<void> {
-    const staticConfig = this.configService.get('app.static') as StaticOptions;
+    const staticConfig = this.appConfig.staticAssetsOptions.options;
     if (!staticConfig) {
       throw BusinessExceptionFactory.systemBusy({ reason: '文件上传配置未找到' });
     }
