@@ -331,7 +331,7 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
     operationName: string,
   ): Promise<T> {
     if (!this.redis || !this.isConnected) {
-      this.logger.warn(`Redis 不可用，${operationName} 操作失败，使用回退值`);
+      this.logger.warn(`Redis 不可用，${operationName} 操作失败，使用回退值 ${fallback}`);
       return fallback;
     }
 

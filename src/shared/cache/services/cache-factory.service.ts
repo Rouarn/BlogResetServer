@@ -1,7 +1,6 @@
 /**
  * 缓存工厂服务
  *
- * 根据配置动态选择缓存实现（Redis 或内存缓存）
  * 提供统一的缓存服务创建和管理功能
  *
  * @author NestJS Template
@@ -11,6 +10,7 @@
 import { AppConfigService } from '@/config';
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { CacheConfig, ICacheService } from '../interfaces';
+import { NoopCacheService } from './noop-cache.service';
 import { RedisCacheService } from './redis-cache.service';
 
 @Injectable()
@@ -128,6 +128,11 @@ export class CacheFactoryService implements OnModuleDestroy {
    * 创建缓存服务实例
    */
   private async createCacheService(): Promise<ICacheService> {
+    const enabled = this.appConfig.redisConfig.enabled;
+    if (!enabled) {
+      this.logger.warn('Redis 已禁用，使用 NoopCacheService');
+      return new NoopCacheService();
+    }
     this.logger.log('⚙️  正在创建 Redis 缓存服务...');
     const redisService = new RedisCacheService(this.appConfig);
     try {
