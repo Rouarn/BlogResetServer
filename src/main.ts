@@ -16,7 +16,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { AppModule } from './app.module';
 import { BootstrapLoggerService } from './common/services';
-import { appConfig, corsOptions, swaggerOptions } from './config';
+import { AppConfigService } from './config';
 
 /**
  * 解析静态资源路径
@@ -32,15 +32,15 @@ function resolveStaticPath(staticConfig: { root: string }): string {
 /**
  * 配置应用基础设置
  */
-function configureApp(app: NestExpressApplication): void {
+function configureApp(app: NestExpressApplication, appConfig: AppConfigService): void {
   // 配置CORS跨域策略
-  app.use(cors(corsOptions));
+  app.use(cors(appConfig.corsOptions));
 }
 
 /**
  * 配置API版本控制
  */
-function configureVersioning(app: NestExpressApplication): void {
+function configureVersioning(app: NestExpressApplication, appConfig: AppConfigService): void {
   const versionConfig = appConfig.apiVersioning;
 
   app.enableVersioning({
@@ -56,6 +56,7 @@ function configureVersioning(app: NestExpressApplication): void {
 function configureStaticAssets(
   app: NestExpressApplication,
   logger: BootstrapLoggerService,
+  appConfig: AppConfigService,
 ): string {
   const staticConfig = appConfig.staticAssetsOptions;
   const staticPath = resolveStaticPath(staticConfig);
@@ -73,8 +74,10 @@ function configureSwagger(
   app: NestExpressApplication,
   staticPath: string,
   logger: BootstrapLoggerService,
+  appConfig: AppConfigService,
 ): void {
-  if (!appConfig.swaggerOptions.enabled) return;
+  const swaggerOptions = appConfig.swaggerOptions;
+  if (!swaggerOptions.enabled) return;
 
   const options = new DocumentBuilder()
     .addBearerAuth()
@@ -103,45 +106,40 @@ function configureSwagger(
     apiDocPath,
     appConfig.baseUrl,
     appConfig.staticAssetsOptions.options.prefix,
+    swaggerOptions.filename,
   );
 }
 
-/**
- * 应用程序启动函数
- */
 async function bootstrap(): Promise<void> {
-  try {
-    const app = await NestFactory.create<NestExpressApplication>(AppModule);
-    const logger = new BootstrapLoggerService();
+  // 创建应用实例
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true, // 缓存日志直到 Logger 初始化完成
+  });
 
-    // 配置应用基础设置
-    configureApp(app);
+  // 获取配置服务
+  const appConfig = app.get(AppConfigService);
 
-    // 配置API版本控制
-    configureVersioning(app);
+  // 初始化自定义日志服务
+  const logger = app.get(BootstrapLoggerService);
+  app.useLogger(logger);
 
-    // 配置静态资源服务
-    const staticPath = configureStaticAssets(app, logger);
+  // 配置应用组件
+  configureApp(app, appConfig);
+  configureVersioning(app, appConfig);
+  const staticPath = configureStaticAssets(app, logger, appConfig);
+  configureSwagger(app, staticPath, logger, appConfig);
 
-    // 配置Swagger文档
-    configureSwagger(app, staticPath, logger);
+  // 启动应用
+  const port = appConfig.port;
+  await app.listen(port);
 
-    // 启动服务器
-    await app.listen(appConfig.port);
-
-    // 记录启动信息
-    await logger.logApplicationStartup(
-      app,
-      appConfig,
-      appConfig.apiVersioning,
-      appConfig.staticAssetsOptions,
-    );
-  } catch (error) {
-    const logger = new BootstrapLoggerService();
-    logger.logApplicationError(error);
-    process.exit(1);
-  }
+  // 打印启动完成信息
+  await logger.logApplicationStartup(
+    app,
+    appConfig,
+    appConfig.apiVersioning,
+    appConfig.staticAssetsOptions,
+  );
 }
 
-// 启动应用
 void bootstrap();

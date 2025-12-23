@@ -1,7 +1,7 @@
 import { CACHE_PREFIXES, CACHE_TOKENS } from '@/common/constants';
 import { Role, Status } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
-import { appConfig } from '@/config';
+import { AppConfigService } from '@/config';
 import { AuthService } from '@/modules/auth/auth.service';
 import { ICacheService } from '@/shared/cache';
 import { WhitelistAuth } from '@/utils';
@@ -32,6 +32,7 @@ export class JwtAuthGuard implements CanActivate {
     private readonly jwtService: JwtService,
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
+    private readonly appConfig: AppConfigService,
     @Inject(CACHE_TOKENS.I_CACHE_SERVICE)
     private readonly cacheService: ICacheService,
   ) {}
@@ -67,7 +68,7 @@ export class JwtAuthGuard implements CanActivate {
       const payload = await this.jwtService.verifyAsync<
         CurrentUser & { jti: string; exp?: number; iat?: number }
       >(token, {
-        secret: this.configService.get<string>('NEST_JWT_SECRET'),
+        secret: this.configService.get<string>('app.jwt.secret'),
       });
 
       // 5. 检查 Token 黑名单
@@ -102,7 +103,7 @@ export class JwtAuthGuard implements CanActivate {
       } as CurrentUser;
 
       // 仅在开发环境或调试时打印用户信息
-      if (!appConfig.isProduction) {
+      if (!this.appConfig.isProduction) {
         this.logger.debug(`认证成功用户: ${authInfo.username}/${authInfo.id}`);
       }
 
@@ -117,7 +118,7 @@ export class JwtAuthGuard implements CanActivate {
       // 处理特定错误
       if (error.name === 'TokenExpiredError') {
         // 仅调试模式打印，避免生产环境日志刷屏
-        if (!appConfig.isProduction) {
+        if (!this.appConfig.isProduction) {
           this.logger.debug(`Token已过期: ${error.message}`);
         }
         throw BusinessExceptionFactory.unauthorized('令牌已过期');

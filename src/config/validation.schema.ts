@@ -53,17 +53,23 @@ export const validationSchema = Joi.object({
 
   // 静态资源和文件上传统一配置
   NEST_STATIC_ASSETS_DIR: Joi.string().default('./static'), // 静态资源存储路径
-  NEST_STATIC_ASSETS_MAX_AGE: Joi.number().default(86400), // 24小时缓存
+  NEST_STATIC_ASSETS_MAXAGE: Joi.number().default(86400), // 24小时缓存
   NEST_STATIC_ASSETS_PREFIX: Joi.string().default('/static'), // 静态资源访问前缀
 
   // 文件上传配置
   NEST_STATIC_UPLOAD_PATH: Joi.string().default('./uploads'), // 文件上传存储路径
   NEST_UPLOAD_MAX_SIZE: Joi.number().default(10485760), // 10MB
   NEST_UPLOAD_ALLOWED_TYPES: Joi.string().default(''), // 空字符串表示允许所有类型
+  NEST_UPLOAD_MAX_FILES: Joi.number().default(10), // 同时最大上传文件数量
+
+  // API 版本控制配置
+  API_PREFIX: Joi.string().default('api'),
+  API_DEFAULT_VERSION: Joi.string().default('1'),
 
   // JWT 认证配置
   NEST_JWT_SECRET: Joi.string().required(),
   NEST_JWT_ACCESS_TOKEN_TTL: Joi.number().default(3600),
+  NEST_JWT_REFRESH_TOKEN_TTL: Joi.number().default(604800),
 
   // Swagger API 文档配置
   NEST_SWAGGER_TITLE: Joi.string().default('API Documentation'),
@@ -82,10 +88,14 @@ export const validationSchema = Joi.object({
   NEST_REDIS_KEY_PREFIX: Joi.string().default('nestjs:'),
   NEST_REDIS_MAX_SIZE: Joi.number().default(1000),
 
+  // CORS 跨域配置
+  NEST_CORS_ORIGINS: Joi.string().optional(),
+
   // 数据库配置 (必需)
   NEST_DATABASE_HOST: Joi.string().default('localhost'),
   NEST_DATABASE_PORT: Joi.number().default(3306),
   NEST_DATABASE_USER: Joi.string().required(),
   NEST_DATABASE_PASSWORD: Joi.string().required(),
   NEST_DATABASE_NAME: Joi.string().required(),
+  NEST_DATABASE_TABLE_PREFIX: Joi.string().allow('').optional().default(''),
 });

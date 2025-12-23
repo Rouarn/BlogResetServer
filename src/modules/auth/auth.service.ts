@@ -2,7 +2,7 @@ import { CACHE_PREFIXES, CACHE_TOKENS, CACHE_TTL } from '@/common/constants';
 import { CurrentUser } from '@/common/decorators';
 import { isEnabled, Role } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
-import { jwtOptions } from '@/config';
+import { AppConfigService } from '@/config';
 import { ICacheService } from '@/shared/cache';
 import { getCurrentTimestamp, uuidv4 } from '@/utils/helpers';
 import { Inject, Injectable } from '@nestjs/common';
@@ -37,6 +37,7 @@ export class AuthService {
     private readonly authRepository: Repository<Auth>,
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
+    private readonly appConfig: AppConfigService,
     @Inject(CACHE_TOKENS.I_CACHE_SERVICE)
     private readonly cacheService: ICacheService,
   ) {}
@@ -189,7 +190,7 @@ export class AuthService {
         `${CACHE_PREFIXES.BLACKLIST}${auth.id}:${existingJti}`,
         getCurrentTimestamp(),
         {
-          ttl: jwtOptions.expiresIn,
+          ttl: this.appConfig.jwtOptions.expiresIn,
         },
       );
     }
@@ -199,7 +200,7 @@ export class AuthService {
 
     // 存储 UserToken 到缓存
     await this.cacheService.set(`${CACHE_PREFIXES.USER_TOKENS}${auth.id}`, payload.jti, {
-      ttl: jwtOptions.expiresIn,
+      ttl: this.appConfig.jwtOptions.expiresIn,
     });
 
     // 存储 RefreshToken 到缓存
@@ -211,7 +212,7 @@ export class AuthService {
       accessToken,
       refreshToken,
       tokenType: 'Bearer',
-      expiresIn: jwtOptions.expiresIn,
+      expiresIn: this.appConfig.jwtOptions.expiresIn,
       refreshExpiresIn: CACHE_TTL.REFRESH_TOKEN, // 7 days
     };
   }
@@ -421,7 +422,7 @@ export class AuthService {
 
     // 更新 UserToken 到缓存
     await this.cacheService.set(`${CACHE_PREFIXES.USER_TOKENS}${auth.id}`, payload.jti, {
-      ttl: jwtOptions.expiresIn,
+      ttl: this.appConfig.jwtOptions.expiresIn,
     });
 
     // 更新 RefreshToken 到缓存
@@ -433,7 +434,7 @@ export class AuthService {
       accessToken,
       refreshToken: newRefreshToken,
       tokenType: 'Bearer',
-      expiresIn: jwtOptions.expiresIn,
+      expiresIn: this.appConfig.jwtOptions.expiresIn,
       refreshExpiresIn: CACHE_TTL.REFRESH_TOKEN, // 7天
     };
   }
@@ -485,7 +486,7 @@ export class AuthService {
         `${CACHE_PREFIXES.BLACKLIST}${authId}:${currentJti}`,
         getCurrentTimestamp(),
         {
-          ttl: jwtOptions.expiresIn,
+          ttl: this.appConfig.jwtOptions.expiresIn,
         },
       );
       // 清除用户当前令牌记录

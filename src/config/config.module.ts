@@ -31,7 +31,7 @@ import { validationSchema } from './validation.schema';
  * // 在其他模块中注入使用
  * constructor(private appConfig: AppConfigService) {}
  *
- * // 或直接注入 ConfigService
+ * // 或直接注入 ConfigService 访问原始配置
  * constructor(private configService: ConfigService) {}
  * ```
  */

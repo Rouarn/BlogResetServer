@@ -15,18 +15,19 @@ export interface AppBaseConfig {
 // JWT 认证配置
 export interface JwtConfig {
   secret: string;
-  accessTokenTtl: string | number;
+  accessTokenTtl: number;
+  refreshTokenTtl: number;
 }
 
 // 静态资源和文件上传配置
 export interface StaticConfig {
   root: string;
   prefix: string;
-  maxAge: string | number;
+  maxAge: number;
   uploadsPath: string;
   uploadsMaxSize: number;
   uploadsAllowedTypes: string[];
-  uploadsMaxBatchFiles: number;
+  uploadsMaxFiles: number;
 }
 
 // CORS 跨域配置
@@ -87,12 +88,19 @@ export interface DatabaseConfig {
   };
 }
 
+// API 版本控制配置
+export interface ApiConfig {
+  prefix: string;
+  version: string;
+}
+
 // 完整的应用配置
 export interface AppConfig {
   title: string;
   port: number;
   baseUrl: string;
   environment: string;
+  api: ApiConfig;
   jwt: JwtConfig;
   static: StaticConfig;
   cors: CorsConfig;

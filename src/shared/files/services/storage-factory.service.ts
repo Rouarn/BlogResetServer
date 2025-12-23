@@ -1,8 +1,8 @@
+import { BusinessExceptionFactory } from '@/common/exceptions';
+import { AppConfigService } from '@/config';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as path from 'path';
-import { BusinessExceptionFactory } from '@/common/exceptions';
-import { staticAssetsOptions } from '@/config';
 import type {
   StorageAdapter,
   StorageFactory,
@@ -15,12 +15,15 @@ import { StorageService } from './storage.service';
 export class StorageFactoryService implements StorageFactory {
   private readonly logger = new Logger(StorageFactoryService.name);
 
-  constructor(private configService: ConfigService) {}
+  constructor(
+    private configService: ConfigService,
+    private appConfig: AppConfigService,
+  ) {}
 
   createAdapter(config: StorageFactoryConfig): StorageAdapter {
     switch (config.type) {
       case StorageType.LOCAL:
-        return new StorageService(this.configService);
+        return new StorageService(this.configService, this.appConfig);
 
       default:
         throw BusinessExceptionFactory.systemBusy({
@@ -45,6 +48,7 @@ export class StorageFactoryService implements StorageFactory {
     switch (type) {
       case StorageType.LOCAL:
         // 上传文件保存在静态资源目录下的 uploads 子目录
+        const staticAssetsOptions = this.appConfig.staticAssetsOptions;
         const uploadPath: string = path.join(
           process.cwd(),
           staticAssetsOptions.root,

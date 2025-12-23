@@ -29,6 +29,7 @@ import { JwtAuthGuard, RolesGuard } from './common/guards';
 // 公共组件导入
 import { ResponseInterceptor } from './common/interceptors';
 import { CustomValidationPipe } from './common/pipes';
+import { BootstrapLoggerService } from './common/services';
 // 配置模块导入
 import { ConfigModule as AppConfigModule, AppConfigService } from './config';
 // 时间戳管理模块
@@ -64,10 +65,10 @@ import { UsersModule } from './modules/users/users.module';
       inject: [ConfigService], // 注入配置服务
       useFactory: (configService: ConfigService) => {
         return {
-          secret: configService.get<string>('NEST_JWT_SECRET'), // JWT 签名密钥
+          secret: configService.get<string>('app.jwt.secret'), // JWT 签名密钥
           signOptions: {
             expiresIn: configService.get<number>( // JWT 过期时间
-              'NEST_JWT_ACCESS_TOKEN_TTL',
+              'app.jwt.accessTokenTtl',
               3600, // 默认 1 天
             ),
           },
@@ -92,13 +93,16 @@ import { UsersModule } from './modules/users/users.module';
     // =============================================================================
     // 数据库管理模块 - 自动时间戳功能
     // =============================================================================
-    DatabaseModule.forRoot({
-      enableTimestamps: true, // 启用时间戳功能
-      fieldNames: {
-        createTime: 'createTime',
-        updateTime: 'updateTime',
-      },
-      tablePrefix: process.env.NEST_DATABASE_TABLE_PREFIX ?? '',
+    DatabaseModule.forRootAsync({
+      inject: [AppConfigService],
+      useFactory: (appConfig: AppConfigService) => ({
+        enableTimestamps: true, // 启用时间戳功能
+        fieldNames: {
+          createTime: 'createTime',
+          updateTime: 'updateTime',
+        },
+        tablePrefix: appConfig.databaseConfig.tablePrefix,
+      }),
     }),
 
     // =============================================================================
@@ -124,6 +128,7 @@ import { UsersModule } from './modules/users/users.module';
   providers: [
     // 应用核心服务
     AppService, // 应用根服务
+    BootstrapLoggerService, // 启动日志服务
 
     // =============================================================================
     // 全局守卫配置 - 按优先级顺序执行

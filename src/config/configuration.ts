@@ -42,10 +42,17 @@ export default registerAs('app', (): AppConfig => {
     baseUrl: getEnvVar('NEST_BASE_URL', 'http://localhost:3000'),
     environment,
 
+    // API 版本控制配置
+    api: {
+      prefix: getEnvVar('API_PREFIX', 'api'),
+      version: getEnvVar('API_DEFAULT_VERSION', '1'),
+    },
+
     // JWT 认证配置
     jwt: {
       secret: getEnvVar('NEST_JWT_SECRET', 'your-secret-key'),
       accessTokenTtl: getEnvVar('NEST_JWT_ACCESS_TOKEN_TTL', 3600),
+      refreshTokenTtl: getEnvVar('NEST_JWT_REFRESH_TOKEN_TTL', 604800),
     },
 
     // 静态资源和文件上传配置
@@ -56,7 +63,7 @@ export default registerAs('app', (): AppConfig => {
       uploadsPath: getEnvVar('NEST_STATIC_UPLOAD_PATH', './uploads'),
       uploadsMaxSize: getEnvVar('NEST_UPLOAD_MAX_SIZE', 10 * 1024 * 1024), // 10MB
       uploadsAllowedTypes: getEnvVar('NEST_UPLOAD_ALLOWED_TYPES', [] as string[]),
-      uploadsMaxBatchFiles: getEnvVar('NEST_UPLOAD_MAX_BATCH_FILES', 10),
+      uploadsMaxFiles: getEnvVar('NEST_UPLOAD_MAX_FILES', 10),
     },
 
     // CORS 跨域配置
