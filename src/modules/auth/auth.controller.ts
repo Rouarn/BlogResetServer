@@ -73,36 +73,23 @@ export class AuthController {
   }
 
   /**
-   * 获取用户信息
-   * @param user 当前登录用户信息
-   * @returns 用户详细信息
+   * 用户注册
+   * @param body 注册请求数据
+   * @returns 注册结果
    */
   @ApiOperation({
-    summary: '获取用户信息',
-    description: '获取当前登录用户的详细信息，包括权限和角色',
+    summary: '用户注册',
+    description: '新用户注册账号',
   })
-  @ApiResponse({ status: 200, description: '成功获取用户信息', type: User })
-  @ApiBearerAuth()
-  @Get('getUserInfo')
-  async getUserInfo(@GetCurrentUser() user: CurrentUser): Promise<User> {
-    return await this.authService.getAuthInfo(user);
-  }
-
-  /**
-   * 获取所有在线用户
-   * @returns 在线用户列表
-   */
-  @ApiOperation({
-    summary: '获取在线用户',
-    description: '获取所有当前在线的用户列表（仅系统管理员可用）',
+  @ApiBody({
+    description: '注册请求',
+    type: RegisterDto,
   })
-  @ApiResponse({ status: 200, description: '成功获取在线用户列表', type: [User] })
-  @ApiBearerAuth()
-  @Roles(Role.SYSTEM_ADMIN)
-  @UseGuards(RolesGuard)
-  @Get('active-users')
-  async getActiveUsers(): Promise<User[]> {
-    return await this.authService.getActiveUsers();
+  @ApiResponse({ status: 200, description: '注册结果', type: RegisterResponseDto })
+  @Public()
+  @Post('register')
+  register(@Body() body: RegisterDto): Promise<AuthCreateUserResponse> {
+    return this.authService.register(body);
   }
 
   /**
@@ -155,23 +142,19 @@ export class AuthController {
   }
 
   /**
-   * 用户注册
-   * @param body 注册请求数据
-   * @returns 注册结果
+   * 获取用户信息
+   * @param user 当前登录用户信息
+   * @returns 用户详细信息
    */
   @ApiOperation({
-    summary: '用户注册',
-    description: '新用户注册账号',
+    summary: '获取用户信息',
+    description: '获取当前登录用户的详细信息，包括权限和角色',
   })
-  @ApiBody({
-    description: '注册请求',
-    type: RegisterDto,
-  })
-  @ApiResponse({ status: 200, description: '注册结果', type: RegisterResponseDto })
-  @Public()
-  @Post('register')
-  register(@Body() body: RegisterDto): Promise<AuthCreateUserResponse> {
-    return this.authService.register(body);
+  @ApiResponse({ status: 200, description: '成功获取用户信息', type: User })
+  @ApiBearerAuth()
+  @Get('getUserInfo')
+  async getUserInfo(@GetCurrentUser() user: CurrentUser): Promise<User> {
+    return await this.authService.getAuthInfo(user);
   }
 
   /**
@@ -216,6 +199,23 @@ export class AuthController {
   async logout(@Req() req: Request): Promise<{ message: string }> {
     const token = req.headers.authorization?.split(' ')[1] ?? '';
     return this.authService.logout(token);
+  }
+
+  /**
+   * 获取所有在线用户
+   * @returns 在线用户列表
+   */
+  @ApiOperation({
+    summary: '获取在线用户',
+    description: '获取所有当前在线的用户列表（仅系统管理员可用）',
+  })
+  @ApiResponse({ status: 200, description: '成功获取在线用户列表', type: [User] })
+  @ApiBearerAuth()
+  @Roles(Role.SYSTEM_ADMIN)
+  @UseGuards(RolesGuard)
+  @Get('active-users')
+  async getActiveUsers(): Promise<User[]> {
+    return await this.authService.getActiveUsers();
   }
 
   /**

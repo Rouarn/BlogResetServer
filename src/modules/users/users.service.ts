@@ -51,21 +51,6 @@ export class UsersService {
     });
     return await this.userRepository.save(user);
   }
-  /**
-   * 根据ID获取用户（带缓存）
-   * @param id 用户ID
-   * @returns 用户信息
-   */
-  async findById(id: string): Promise<User> {
-    const user = await this.userRepository.findOne({
-      where: { id },
-      relations: ['auth'],
-    });
-    if (!user) {
-      throw BusinessExceptionFactory.notFound('用户', { id });
-    }
-    return user;
-  }
 
   /**
    * 获取所有用户（带分页和缓存）
@@ -82,6 +67,22 @@ export class UsersService {
     });
     const result = { list: data, total };
     return result;
+  }
+
+  /**
+   * 根据ID获取用户（带缓存）
+   * @param id 用户ID
+   * @returns 用户信息
+   */
+  async findById(id: string): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: ['auth'],
+    });
+    if (!user) {
+      throw BusinessExceptionFactory.notFound('用户', { id });
+    }
+    return user;
   }
 
   /**
@@ -111,6 +112,27 @@ export class UsersService {
   }
 
   /**
+   * 切换用户状态（通过关联的认证实体）
+   * 注意：这个方法需要与认证服务协作
+   * @param id 用户ID
+   * @param status 目标状态
+   * @returns 更新后的用户信息
+   */
+  async toggleUserStatus(id: string, status?: Status): Promise<User> {
+    const user = await this.findById(id);
+
+    if (!user.auth) {
+      throw BusinessExceptionFactory.notFound('用户认证信息', { id, hasAuth: false });
+    }
+
+    // 更新认证状态
+    user.auth.status = status ?? toggleStatus(user.auth.status);
+    await this.userRepository.save(user);
+
+    return user;
+  }
+
+  /**
    * 删除用户
    * @param id 用户ID
    * @returns 删除结果消息
@@ -137,26 +159,5 @@ export class UsersService {
     await this.userRepository.remove(users);
 
     return { message: `成功删除 ${users.length} 个用户` };
-  }
-
-  /**
-   * 切换用户状态（通过关联的认证实体）
-   * 注意：这个方法需要与认证服务协作
-   * @param id 用户ID
-   * @param status 目标状态
-   * @returns 更新后的用户信息
-   */
-  async toggleUserStatus(id: string, status?: Status): Promise<User> {
-    const user = await this.findById(id);
-
-    if (!user.auth) {
-      throw BusinessExceptionFactory.notFound('用户认证信息', { id, hasAuth: false });
-    }
-
-    // 更新认证状态
-    user.auth.status = status ?? toggleStatus(user.auth.status);
-    await this.userRepository.save(user);
-
-    return user;
   }
 }

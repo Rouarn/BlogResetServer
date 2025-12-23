@@ -43,57 +43,104 @@ export class AuthService {
   ) {}
 
   /**
-   * 获取认证用户详细信息
+   * 生成验证码
    *
-   * 从数据库查询认证用户的详细信息，包含所有非敏感字段
+   * 生成SVG格式的验证码图片和对应的令牌，支持多种验证码类型
    *
-   * @param auth 认证实体（仅用于获取ID）
-   * @returns 包含用户ID、用户名、昵称、头像、角色、邮箱、性别、手机号等信息
+   * @returns 包含验证码图片、令牌、过期时间等信息
    */
-  async getAuthInfo(auth: CurrentUser): Promise<User> {
-    // 从数据库查询完整的认证和用户信息
-    const authWithUser = await this.authRepository.findOne({
-      where: { id: auth.authId },
-      relations: ['user'],
+  async generateCaptcha(): Promise<CaptchaResponseDto> {
+    // 创建验证码，设置选项使其更安全
+    const captcha = svgCaptcha.create({
+      size: 4, // 验证码长度
+      ignoreChars: '0o1il', // 排除容易混淆的字符
+      noise: 3, // 干扰线条数量
+      color: true, // 文字颜色
+      background: '#f0f0f0', // 背景色
+      width: 120,
+      height: 40,
+      fontSize: 36,
     });
 
-    if (!authWithUser) {
-      throw BusinessExceptionFactory.notFound('用户信息', { authId: auth.authId });
-    }
+    const captchaToken = `captcha_${crypto.createHash('md5').update(captcha.text.toLowerCase()).digest('hex')}_${crypto.randomBytes(16).toString('hex')}`;
 
-    return authWithUser.user;
+    // 将SVG验证码转换为base64格式的图片
+    const captchaImage = `data:image/svg+xml;base64,${Buffer.from(captcha.data).toString('base64')}`;
+
+    return {
+      image: captchaImage,
+      token: captchaToken,
+    };
   }
 
   /**
-   * 获取所有当前登录用户
+   * 验证验证码
    *
-   * @returns 当前在线的用户列表
+   * 校验用户输入的验证码是否正确
+   *
+   * @param captchaVerifyDto 验证码验证数据
+   * @returns 验证结果
    */
-  async getActiveUsers(): Promise<User[]> {
-    // 获取所有用户令牌键
-    const keys = await this.cacheService.keys(`${CACHE_PREFIXES.USER_TOKENS}*`);
+  async verifyCaptcha(captchaVerifyDto: CaptchaVerifyDto): Promise<CaptchaVerifyResponseDto> {
+    // 验证验证码逻辑
+    const { token, code } = captchaVerifyDto;
 
-    if (!keys || keys.length === 0) {
-      return [];
+    if (!token || !code) {
+      throw BusinessExceptionFactory.invalidParameter('验证码token和code不能为空');
     }
 
-    // 从键中提取 authId
-    const authIds = keys.map((key) => {
-      return key.replace(CACHE_PREFIXES.USER_TOKENS, '');
-    });
+    // 从token中提取验证码文本
+    const storedToken = token.split('_')[1];
 
-    if (authIds.length === 0) {
-      return [];
+    // 比较验证码文本是否匹配
+    if (storedToken !== crypto.createHash('md5').update(code.toLowerCase()).digest('hex')) {
+      throw BusinessExceptionFactory.validation('验证码错误');
     }
 
-    // 查询对应的用户信息
-    const auths = await this.authRepository.find({
-      where: { id: In(authIds) },
-      relations: ['user'],
+    return { message: '验证成功' };
+  }
+
+  /**
+   * 用户注册
+   *
+   * 创建新认证账号，支持同时创建关联的用户资料
+   *
+   * @param registerDto 包含用户注册信息的数据传输对象
+   * @returns 注册结果消息
+   * @throws ConflictException 用户名已存在
+   * @throws BadRequestException 注册数据验证失败
+   */
+  async register(registerDto: RegisterDto): Promise<AuthCreateUserResponse> {
+    // 检查用户名是否已存在
+    const existingAuth = await this.authRepository.findOne({
+      where: { username: registerDto.username },
     });
 
-    // 提取并返回用户实体
-    return auths.map((auth) => auth.user).filter((user) => !!user);
+    if (existingAuth) {
+      throw BusinessExceptionFactory.conflict('用户名已存在', { username: registerDto.username });
+    }
+
+    // 创建认证记录（密码将通过@BeforeInsert钩子自动加密）
+    const auth = this.authRepository.create({
+      username: registerDto.username,
+      password: registerDto.password, // 原始密码，将被@BeforeInsert钩子加密
+      isLocked: false,
+      loginAttempts: 0,
+    });
+
+    const savedAuth = await this.authRepository.save(auth);
+
+    // 总是创建关联的用户记录，确保两个表的数据一致性
+    await this.usersService.create({
+      authId: savedAuth.id,
+      nickname: registerDto.nickname ?? savedAuth.username, // 如果没有昵称，使用用户名
+      email: registerDto.email,
+      avatar: registerDto.avatar,
+      gender: registerDto.gender,
+      mobile: registerDto.mobile,
+    });
+
+    return { message: '注册成功' };
   }
 
   /**
@@ -218,155 +265,6 @@ export class AuthService {
   }
 
   /**
-   * 用户注册
-   *
-   * 创建新认证账号，支持同时创建关联的用户资料
-   *
-   * @param registerDto 包含用户注册信息的数据传输对象
-   * @returns 注册结果消息
-   * @throws ConflictException 用户名已存在
-   * @throws BadRequestException 注册数据验证失败
-   */
-  async register(registerDto: RegisterDto): Promise<AuthCreateUserResponse> {
-    // 检查用户名是否已存在
-    const existingAuth = await this.authRepository.findOne({
-      where: { username: registerDto.username },
-    });
-
-    if (existingAuth) {
-      throw BusinessExceptionFactory.conflict('用户名已存在', { username: registerDto.username });
-    }
-
-    // 创建认证记录（密码将通过@BeforeInsert钩子自动加密）
-    const auth = this.authRepository.create({
-      username: registerDto.username,
-      password: registerDto.password, // 原始密码，将被@BeforeInsert钩子加密
-      isLocked: false,
-      loginAttempts: 0,
-    });
-
-    const savedAuth = await this.authRepository.save(auth);
-
-    // 总是创建关联的用户记录，确保两个表的数据一致性
-    await this.usersService.create({
-      authId: savedAuth.id,
-      nickname: registerDto.nickname ?? savedAuth.username, // 如果没有昵称，使用用户名
-      email: registerDto.email,
-      avatar: registerDto.avatar,
-      gender: registerDto.gender,
-      mobile: registerDto.mobile,
-    });
-
-    return { message: '注册成功' };
-  }
-
-  /**
-   * 生成验证码
-   *
-   * 生成SVG格式的验证码图片和对应的令牌，支持多种验证码类型
-   *
-   * @returns 包含验证码图片、令牌、过期时间等信息
-   */
-  async generateCaptcha(): Promise<CaptchaResponseDto> {
-    // 创建验证码，设置选项使其更安全
-    const captcha = svgCaptcha.create({
-      size: 4, // 验证码长度
-      ignoreChars: '0o1il', // 排除容易混淆的字符
-      noise: 3, // 干扰线条数量
-      color: true, // 文字颜色
-      background: '#f0f0f0', // 背景色
-      width: 120,
-      height: 40,
-      fontSize: 36,
-    });
-
-    const captchaToken = `captcha_${crypto.createHash('md5').update(captcha.text.toLowerCase()).digest('hex')}_${crypto.randomBytes(16).toString('hex')}`;
-
-    // 将SVG验证码转换为base64格式的图片
-    const captchaImage = `data:image/svg+xml;base64,${Buffer.from(captcha.data).toString('base64')}`;
-
-    return {
-      image: captchaImage,
-      token: captchaToken,
-    };
-  }
-
-  /**
-   * 验证验证码
-   *
-   * 校验用户输入的验证码是否正确
-   *
-   * @param captchaVerifyDto 验证码验证数据
-   * @returns 验证结果
-   */
-  async verifyCaptcha(captchaVerifyDto: CaptchaVerifyDto): Promise<CaptchaVerifyResponseDto> {
-    // 验证验证码逻辑
-    const { token, code } = captchaVerifyDto;
-
-    if (!token || !code) {
-      throw BusinessExceptionFactory.invalidParameter('验证码token和code不能为空');
-    }
-
-    // 从token中提取验证码文本
-    const storedToken = token.split('_')[1];
-
-    // 比较验证码文本是否匹配
-    if (storedToken !== crypto.createHash('md5').update(code.toLowerCase()).digest('hex')) {
-      throw BusinessExceptionFactory.validation('验证码错误');
-    }
-
-    return { message: '验证成功' };
-  }
-
-  /**
-   * 修改密码
-   *
-   * 验证旧密码并设置新密码
-   *
-   * @param changePasswordDto 修改密码数据
-   * @param authId 认证ID
-   * @returns 修改结果
-   */
-  async changePassword(
-    changePasswordDto: ChangePasswordDto,
-    authId: string,
-  ): Promise<{ message: string }> {
-    // 显式选择密码和盐值用于验证
-    const auth = await this.authRepository
-      .createQueryBuilder('auth')
-      .addSelect(['auth.password', 'auth.salt'])
-      .where('auth.id = :id', { id: authId })
-      .getOne();
-
-    if (!auth) {
-      throw BusinessExceptionFactory.notFound('认证记录', { authId });
-    }
-
-    // 验证旧密码
-    const isOldPasswordValid = await this.validatePassword(
-      changePasswordDto.oldPassword,
-      auth.password,
-    );
-
-    if (!isOldPasswordValid) {
-      throw BusinessExceptionFactory.validation('旧密码错误');
-    }
-
-    // 生成新的盐值和密码哈希
-    const salt = bcrypt.genSaltSync(10);
-    const hashedPassword = bcrypt.hashSync(changePasswordDto.newPassword, salt);
-
-    // 更新密码
-    await this.authRepository.update(authId, {
-      password: hashedPassword,
-      salt,
-      passwordChangedAt: new Date(),
-    });
-
-    return { message: '密码修改成功' };
-  }
-
-  /**
    * 刷新访问令牌
    *
    * 使用有效地刷新令牌生成新的访问令牌
@@ -440,6 +338,76 @@ export class AuthService {
   }
 
   /**
+   * 获取认证用户详细信息
+   *
+   * 从数据库查询认证用户的详细信息，包含所有非敏感字段
+   *
+   * @param auth 认证实体（仅用于获取ID）
+   * @returns 包含用户ID、用户名、昵称、头像、角色、邮箱、性别、手机号等信息
+   */
+  async getAuthInfo(auth: CurrentUser): Promise<User> {
+    // 从数据库查询完整的认证和用户信息
+    const authWithUser = await this.authRepository.findOne({
+      where: { id: auth.authId },
+      relations: ['user'],
+    });
+
+    if (!authWithUser) {
+      throw BusinessExceptionFactory.notFound('用户信息', { authId: auth.authId });
+    }
+
+    return authWithUser.user;
+  }
+
+  /**
+   * 修改密码
+   *
+   * 验证旧密码并设置新密码
+   *
+   * @param changePasswordDto 修改密码数据
+   * @param authId 认证ID
+   * @returns 修改结果
+   */
+  async changePassword(
+    changePasswordDto: ChangePasswordDto,
+    authId: string,
+  ): Promise<{ message: string }> {
+    // 显式选择密码和盐值用于验证
+    const auth = await this.authRepository
+      .createQueryBuilder('auth')
+      .addSelect(['auth.password', 'auth.salt'])
+      .where('auth.id = :id', { id: authId })
+      .getOne();
+
+    if (!auth) {
+      throw BusinessExceptionFactory.notFound('认证记录', { authId });
+    }
+
+    // 验证旧密码
+    const isOldPasswordValid = await this.validatePassword(
+      changePasswordDto.oldPassword,
+      auth.password,
+    );
+
+    if (!isOldPasswordValid) {
+      throw BusinessExceptionFactory.validation('旧密码错误');
+    }
+
+    // 生成新的盐值和密码哈希
+    const salt = bcrypt.genSaltSync(10);
+    const hashedPassword = bcrypt.hashSync(changePasswordDto.newPassword, salt);
+
+    // 更新密码
+    await this.authRepository.update(authId, {
+      password: hashedPassword,
+      salt,
+      passwordChangedAt: new Date(),
+    });
+
+    return { message: '密码修改成功' };
+  }
+
+  /**
    * 用户登出
    *
    * 撤销用户的访问令牌和刷新令牌
@@ -471,6 +439,38 @@ export class AuthService {
     await this.cacheService.del(`${CACHE_PREFIXES.REFRESH_TOKENS}${tokenPayload.authId}`);
 
     return { message: '退出登录成功' };
+  }
+
+  /**
+   * 获取所有当前登录用户
+   *
+   * @returns 当前在线的用户列表
+   */
+  async getActiveUsers(): Promise<User[]> {
+    // 获取所有用户令牌键
+    const keys = await this.cacheService.keys(`${CACHE_PREFIXES.USER_TOKENS}*`);
+
+    if (!keys || keys.length === 0) {
+      return [];
+    }
+
+    // 从键中提取 authId
+    const authIds = keys.map((key) => {
+      return key.replace(CACHE_PREFIXES.USER_TOKENS, '');
+    });
+
+    if (authIds.length === 0) {
+      return [];
+    }
+
+    // 查询对应的用户信息
+    const auths = await this.authRepository.find({
+      where: { id: In(authIds) },
+      relations: ['user'],
+    });
+
+    // 提取并返回用户实体
+    return auths.map((auth) => auth.user).filter((user) => !!user);
   }
 
   /**

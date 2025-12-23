@@ -113,6 +113,31 @@ export class UsersController {
   }
 
   /**
+   * 切换用户状态
+   * 仅管理员可操作
+   */
+  @Patch(':id/status')
+  @UseGuards(RolesGuard)
+  @Roles(Role.SYSTEM_ADMIN, Role.ORG_ADMIN)
+  @ApiOperation({ summary: '切换用户状态', description: '切换用户启用/禁用状态' })
+  @ApiParam({ name: 'id', description: '用户ID', example: 'uuid-123' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: '用户状态切换成功',
+    type: User,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: '用户不存在',
+  })
+  async toggleStatus(
+    @Param('id') id: string,
+    @Body() toggleDto: ToggleUserStatusDto,
+  ): Promise<User> {
+    return await this.usersService.toggleUserStatus(id, toggleDto.status);
+  }
+
+  /**
    * 删除用户
    * 仅管理员可操作
    */
@@ -151,30 +176,5 @@ export class UsersController {
   })
   async batchRemove(@Body() batchDeleteDto: BatchDeleteUserDto): Promise<{ message: string }> {
     return await this.usersService.batchRemove(batchDeleteDto);
-  }
-
-  /**
-   * 切换用户状态
-   * 仅管理员可操作
-   */
-  @Patch(':id/status')
-  @UseGuards(RolesGuard)
-  @Roles(Role.SYSTEM_ADMIN, Role.ORG_ADMIN)
-  @ApiOperation({ summary: '切换用户状态', description: '切换用户启用/禁用状态' })
-  @ApiParam({ name: 'id', description: '用户ID', example: 'uuid-123' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: '用户状态切换成功',
-    type: User,
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: '用户不存在',
-  })
-  async toggleStatus(
-    @Param('id') id: string,
-    @Body() toggleDto: ToggleUserStatusDto,
-  ): Promise<User> {
-    return await this.usersService.toggleUserStatus(id, toggleDto.status);
   }
 }

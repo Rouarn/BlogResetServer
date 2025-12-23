@@ -31,7 +31,7 @@ import { CustomValidationPipe } from './common/pipes';
 import { BootstrapLoggerService } from './common/services';
 // 配置模块导入
 import { ConfigModule as AppConfigModule, AppConfigService } from './config';
-// 时间戳管理模块
+// 时间管理模块
 import {
   DATABASE_CONFIG,
   DatabaseConfig,
