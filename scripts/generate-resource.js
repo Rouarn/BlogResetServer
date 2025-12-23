@@ -158,7 +158,7 @@ export class ${PascalPlural}Service {
     return;
   }
 
-  async remove(dto: Delete${PascalSingular}Dto): Promise<{ message: string; deletedCount: number }> {
+  async remove(dto: Delete${PascalSingular}Dto): Promise<{ message: string; }> {
     if (dto.id) {
       const entity = await this.findById(dto.id);
       await this.repo.remove(entity);
@@ -167,7 +167,7 @@ export class ${PascalPlural}Service {
       if (keys.length > 0) {
         await this.cacheService.delMany(keys);
       }
-      return { message: '删除成功', deletedCount: 1 };
+      return { message: '删除成功' };
     }
     if (dto.ids?.length) {
       const list = await this.repo.findBy({ id: In(dto.ids) });
@@ -182,7 +182,7 @@ export class ${PascalPlural}Service {
           await this.cacheService.delMany(keys);
         }
       }
-      return { message: \`成功删除 \${list.length} 条记录\`, deletedCount: list.length };
+      return { message: \`成功删除 \${list.length} 条记录\`, };
     }
     throw BusinessExceptionFactory.invalidParameter('缺少删除参数', { reason: '必须提供要删除的记录 ID 或 ID 列表' });
   }
@@ -232,7 +232,7 @@ export class ${PascalPlural}Controller {
 
   @Delete()
   @ApiOperation({ summary: '删除记录' })
-  async delete(@Query() query: Delete${PascalSingular}Dto): Promise<{ message: string; deletedCount: number }> {
+  async delete(@Query() query: Delete${PascalSingular}Dto): Promise<{ message: string; }> {
     return await this.service.remove(query);
   }
 }

@@ -8,6 +8,7 @@
  * @version 1.0.0
  */
 
+import { RedisCacheConfig } from '@/config';
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CacheConfig, CacheServiceType, ICacheService } from '../interfaces';
@@ -146,13 +147,14 @@ export class CacheFactoryService implements OnModuleDestroy {
    */
   private buildCacheConfig(): CacheConfig {
     const redisEnabled = this.configService.get<boolean>('app.redis.enabled', false);
+    const redisCache = this.configService.get<RedisCacheConfig['cache']>('app.redis.cache');
 
     return {
       type: redisEnabled ? CacheServiceType.REDIS : CacheServiceType.MEMORY,
-      enabled: this.configService.get<boolean>('app.redis.cache.enabled', true),
-      defaultTtl: this.configService.get<number>('app.redis.cache.defaultTtl', 3600),
-      keyPrefix: this.configService.get<string>('app.redis.cache.keyPrefix', 'app:cache:'),
-      maxSize: this.configService.get<number>('app.redis.cache.maxSize', 1000),
+      enabled: redisEnabled,
+      defaultTtl: redisCache?.defaultTtl ?? 3600,
+      keyPrefix: redisCache?.keyPrefix ?? 'app:cache:',
+      maxSize: redisCache?.maxSize ?? 1000,
     };
   }
 

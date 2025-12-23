@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { CacheOptions, CacheStats, ICacheService } from '../interfaces';
 import { deserialize, serialize } from '@/utils/helpers';
+import { RedisCacheConfig } from '@/config/types';
 
 @Injectable()
 export class RedisCacheService implements ICacheService, OnModuleDestroy {
@@ -35,14 +36,7 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
     }
 
     try {
-      const redisConfig = this.configService.get('app.redis') as {
-        enabled: boolean;
-        host: string;
-        port: number;
-        password?: string;
-        db: number;
-        options?: Record<string, unknown>;
-      };
+      const redisConfig = this.configService.get<RedisCacheConfig>('app.redis');
 
       if (!redisConfig?.enabled) {
         this.logger.warn('Redis 是禁用的，跳过初始化');
@@ -54,8 +48,6 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
         port: redisConfig.port,
         password: redisConfig.password,
         db: redisConfig.db,
-        connectTimeout: 5000,
-        lazyConnect: true, // 延迟连接
         ...redisConfig.options,
       });
 

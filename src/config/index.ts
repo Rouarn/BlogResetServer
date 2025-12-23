@@ -47,7 +47,8 @@ export const staticAssetsOptions = appConfig.staticAssetsOptions;
 export const swaggerOptions = appConfig.swaggerOptions;
 
 // 导出配置服务实例
-export { appConfig };
 export { AppConfigService } from './app-config.service';
 export { ConfigModule } from './config.module';
+export * from './types';
 export { validationSchema } from './validation.schema';
+export { appConfig };
