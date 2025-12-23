@@ -1,9 +1,5 @@
-import { CurrentUser } from '@/common/interfaces';
-
-declare global {
-  namespace Express {
-    interface Request {
-      user?: CurrentUser;
-    }
+declare namespace Express {
+  interface Request {
+    user?: import('@/common/interfaces').CurrentUser;
   }
 }

@@ -132,6 +132,42 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
     );
   }
 
+  async mget<T = unknown>(keys: string[]): Promise<(T | null)[]> {
+    if (keys.length === 0) return [];
+    return await this.safeExecute(
+      async () => {
+        const redisKeys = keys.map((k) => this.getKey(k));
+        const values = await this.redis!.mget(redisKeys);
+        return (values ?? []).map((v) => (v == null ? null : deserialize<T>(v)));
+      },
+      [],
+      'mget',
+    );
+  }
+
+  async mset<T = unknown>(entries: Record<string, T>, options?: CacheOptions): Promise<void> {
+    const keys = Object.keys(entries);
+    if (keys.length === 0) return;
+    await this.safeExecute(
+      async () => {
+        const ttl = options?.ttl ?? this.appConfig.redisConfig.cache.defaultTtl;
+        const pipeline = this.redis!.pipeline();
+        for (const k of keys) {
+          const redisKey = this.getKey(k, options?.prefix);
+          const serializedValue = serialize(entries[k]);
+          if (ttl && ttl > 0) {
+            pipeline.setex(redisKey, ttl, serializedValue);
+          } else {
+            pipeline.set(redisKey, serializedValue);
+          }
+        }
+        await pipeline.exec();
+      },
+      undefined,
+      'mset',
+    );
+  }
+
   /**
    * 删除缓存
    */
@@ -189,10 +225,20 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
     await this.safeExecute(
       async () => {
         const keyPrefix = this.appConfig.redisConfig.cache.keyPrefix;
-        const keys = await this.redis!.keys(`${keyPrefix}*`);
-        if (keys && keys.length > 0) {
-          await this.redis!.del(...keys);
-        }
+        let cursor = '0';
+        do {
+          const [next, keys] = await this.redis!.scan(
+            cursor,
+            'MATCH',
+            `${keyPrefix}*`,
+            'COUNT',
+            100,
+          );
+          cursor = next;
+          if (keys && keys.length > 0) {
+            await this.redis!.del(...keys);
+          }
+        } while (cursor !== '0');
         this.stats.keys = 0;
       },
       undefined,
@@ -207,13 +253,41 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
     return await this.safeExecute(
       async () => {
         const keyPrefix = this.appConfig.redisConfig.cache.keyPrefix;
-        const searchPattern = pattern ? `${keyPrefix}${pattern}` : `${keyPrefix}*`;
-        const keys = await this.redis!.keys(searchPattern);
-        // 移除前缀
-        return keys ? keys.map((key) => key.replace(keyPrefix, '')) : [];
+        const match = pattern ? `${keyPrefix}${pattern}` : `${keyPrefix}*`;
+        const out: string[] = [];
+        let cursor = '0';
+        do {
+          const [next, keys] = await this.redis!.scan(cursor, 'MATCH', match, 'COUNT', 100);
+          cursor = next;
+          if (keys?.length) {
+            out.push(...keys.map((k) => k.replace(keyPrefix, '')));
+          }
+        } while (cursor !== '0');
+        return out;
       },
       [],
       'keys',
+    );
+  }
+
+  async scan(pattern?: string, count: number = 100): Promise<string[]> {
+    return await this.safeExecute(
+      async () => {
+        const keyPrefix = this.appConfig.redisConfig.cache.keyPrefix;
+        const match = pattern ? `${keyPrefix}${pattern}` : `${keyPrefix}*`;
+        const out: string[] = [];
+        let cursor = '0';
+        do {
+          const [next, keys] = await this.redis!.scan(cursor, 'MATCH', match, 'COUNT', count);
+          cursor = next;
+          if (keys?.length) {
+            out.push(...keys.map((k) => k.replace(keyPrefix, '')));
+          }
+        } while (cursor !== '0');
+        return out;
+      },
+      [],
+      'scan',
     );
   }
 
@@ -242,6 +316,294 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
       },
       -2,
       'ttl',
+    );
+  }
+
+  async incr(key: string): Promise<number> {
+    return await this.safeExecute(
+      async () => {
+        const result = await this.redis!.incr(this.getKey(key));
+        return result ?? 0;
+      },
+      0,
+      'incr',
+    );
+  }
+
+  async decr(key: string): Promise<number> {
+    return await this.safeExecute(
+      async () => {
+        const result = await this.redis!.decr(this.getKey(key));
+        return result ?? 0;
+      },
+      0,
+      'decr',
+    );
+  }
+
+  async hget<T = unknown>(key: string, field: string): Promise<T | null> {
+    return await this.safeExecute(
+      async () => {
+        const v = await this.redis!.hget(this.getKey(key), field);
+        return v == null ? null : deserialize<T>(v);
+      },
+      null,
+      'hget',
+    );
+  }
+
+  async hset<T = unknown>(
+    key: string,
+    field: string,
+    value: T,
+    options?: CacheOptions,
+  ): Promise<void> {
+    await this.safeExecute(
+      async () => {
+        const redisKey = this.getKey(key, options?.prefix);
+        await this.redis!.hset(redisKey, field, serialize(value));
+        const ttl = options?.ttl ?? this.appConfig.redisConfig.cache.defaultTtl;
+        if (ttl && ttl > 0) await this.redis!.expire(redisKey, ttl);
+      },
+      undefined,
+      'hset',
+    );
+  }
+
+  async hmget<T = unknown>(key: string, fields: string[]): Promise<(T | null)[]> {
+    return await this.safeExecute(
+      async () => {
+        if (fields.length === 0) return [];
+        const arr = await this.redis!.hmget(this.getKey(key), ...fields);
+        return (arr ?? []).map((v) => (v == null ? null : deserialize<T>(v)));
+      },
+      [],
+      'hmget',
+    );
+  }
+
+  async hmset<T = unknown>(
+    key: string,
+    entries: Record<string, T>,
+    options?: CacheOptions,
+  ): Promise<void> {
+    await this.safeExecute(
+      async () => {
+        const redisKey = this.getKey(key, options?.prefix);
+        const pipeline = this.redis!.pipeline();
+        for (const field of Object.keys(entries)) {
+          pipeline.hset(redisKey, field, serialize(entries[field]));
+        }
+        const ttl = options?.ttl ?? this.appConfig.redisConfig.cache.defaultTtl;
+        if (ttl && ttl > 0) pipeline.expire(redisKey, ttl);
+        await pipeline.exec();
+      },
+      undefined,
+      'hmset',
+    );
+  }
+
+  async hdel(key: string, ...fields: string[]): Promise<number> {
+    return await this.safeExecute(
+      async () => {
+        if (fields.length === 0) return 0;
+        const result = await this.redis!.hdel(this.getKey(key), ...fields);
+        return result ?? 0;
+      },
+      0,
+      'hdel',
+    );
+  }
+
+  async hgetall<T = unknown>(key: string): Promise<Record<string, T>> {
+    return await this.safeExecute(
+      async () => {
+        const obj = await this.redis!.hgetall(this.getKey(key));
+        const out: Record<string, T> = {};
+        for (const f of Object.keys(obj ?? {})) {
+          out[f] = deserialize<T>(obj[f]);
+        }
+        return out;
+      },
+      {},
+      'hgetall',
+    );
+  }
+
+  async sadd<T = unknown>(key: string, ...members: T[]): Promise<number> {
+    return await this.safeExecute(
+      async () => {
+        if (members.length === 0) return 0;
+        const arr = members.map((m) => serialize(m));
+        const result = await this.redis!.sadd(this.getKey(key), ...arr);
+        return result ?? 0;
+      },
+      0,
+      'sadd',
+    );
+  }
+
+  async srem<T = unknown>(key: string, ...members: T[]): Promise<number> {
+    return await this.safeExecute(
+      async () => {
+        if (members.length === 0) return 0;
+        const arr = members.map((m) => serialize(m));
+        const result = await this.redis!.srem(this.getKey(key), ...arr);
+        return result ?? 0;
+      },
+      0,
+      'srem',
+    );
+  }
+
+  async smembers<T = unknown>(key: string): Promise<T[]> {
+    return await this.safeExecute(
+      async () => {
+        const arr = await this.redis!.smembers(this.getKey(key));
+        return (arr ?? []).map((v) => deserialize<T>(v));
+      },
+      [],
+      'smembers',
+    );
+  }
+
+  async sismember<T = unknown>(key: string, member: T): Promise<boolean> {
+    return await this.safeExecute(
+      async () => {
+        const result = await this.redis!.sismember(this.getKey(key), serialize(member));
+        return (result ?? 0) === 1;
+      },
+      false,
+      'sismember',
+    );
+  }
+
+  async lpush<T = unknown>(key: string, ...values: T[]): Promise<number> {
+    return await this.safeExecute(
+      async () => {
+        if (values.length === 0) return 0;
+        const arr = values.map((v) => serialize(v));
+        const result = await this.redis!.lpush(this.getKey(key), ...arr);
+        return result ?? 0;
+      },
+      0,
+      'lpush',
+    );
+  }
+
+  async rpush<T = unknown>(key: string, ...values: T[]): Promise<number> {
+    return await this.safeExecute(
+      async () => {
+        if (values.length === 0) return 0;
+        const arr = values.map((v) => serialize(v));
+        const result = await this.redis!.rpush(this.getKey(key), ...arr);
+        return result ?? 0;
+      },
+      0,
+      'rpush',
+    );
+  }
+
+  async lrange<T = unknown>(key: string, start: number, stop: number): Promise<T[]> {
+    return await this.safeExecute(
+      async () => {
+        const arr = await this.redis!.lrange(this.getKey(key), start, stop);
+        return (arr ?? []).map((v) => deserialize<T>(v));
+      },
+      [],
+      'lrange',
+    );
+  }
+
+  async lpop<T = unknown>(key: string): Promise<T | null> {
+    return await this.safeExecute(
+      async () => {
+        const v = await this.redis!.lpop(this.getKey(key));
+        return v == null ? null : deserialize<T>(v);
+      },
+      null,
+      'lpop',
+    );
+  }
+
+  async rpop<T = unknown>(key: string): Promise<T | null> {
+    return await this.safeExecute(
+      async () => {
+        const v = await this.redis!.rpop(this.getKey(key));
+        return v == null ? null : deserialize<T>(v);
+      },
+      null,
+      'rpop',
+    );
+  }
+
+  async llen(key: string): Promise<number> {
+    return await this.safeExecute(
+      async () => {
+        const redisKey = this.getKey(key);
+        return await this.redis!.llen(redisKey);
+      },
+      0,
+      'llen',
+    );
+  }
+
+  async zadd<T = unknown>(key: string, score: number, member: T): Promise<number> {
+    return await this.safeExecute(
+      async () => {
+        const redisKey = this.getKey(key);
+        const result = await this.redis!.zadd(redisKey, score, serialize(member));
+        return typeof result === 'string' ? parseInt(result, 10) : result;
+      },
+      0,
+      'zadd',
+    );
+  }
+
+  async zrem<T = unknown>(key: string, ...members: T[]): Promise<number> {
+    return await this.safeExecute(
+      async () => {
+        const redisKey = this.getKey(key);
+        const serializedMembers = members.map((m) => serialize(m));
+        return await this.redis!.zrem(redisKey, ...serializedMembers);
+      },
+      0,
+      'zrem',
+    );
+  }
+
+  async zscore<T = unknown>(key: string, member: T): Promise<number | null> {
+    return await this.safeExecute(
+      async () => {
+        const redisKey = this.getKey(key);
+        const score = await this.redis!.zscore(redisKey, serialize(member));
+        return score ? parseFloat(score) : null;
+      },
+      null,
+      'zscore',
+    );
+  }
+
+  async zrange<T = unknown>(key: string, start: number, stop: number): Promise<T[]> {
+    return await this.safeExecute(
+      async () => {
+        const redisKey = this.getKey(key);
+        const values = await this.redis!.zrange(redisKey, start, stop);
+        return values.map((v) => deserialize<T>(v));
+      },
+      [],
+      'zrange',
+    );
+  }
+
+  async zcard(key: string): Promise<number> {
+    return await this.safeExecute(
+      async () => {
+        const redisKey = this.getKey(key);
+        return await this.redis!.zcard(redisKey);
+      },
+      0,
+      'zcard',
     );
   }
 

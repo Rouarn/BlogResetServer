@@ -102,7 +102,7 @@ export class JwtAuthGuard implements CanActivate {
         username: authInfo.username,
         roles: [authInfo.user?.roles || Role.USER],
         lastLoginAt: authInfo.lastLoginAt,
-      } as CurrentUser;
+      };
 
       // 仅在开发环境或调试时打印用户信息
       if (!this.appConfig.isProduction) {
