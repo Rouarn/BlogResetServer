@@ -86,7 +86,6 @@ export const validationSchema = Joi.object({
   NEST_REDIS_DB: Joi.number().default(0),
   NEST_REDIS_DEFAULT_TTL: Joi.number().default(3600),
   NEST_REDIS_KEY_PREFIX: Joi.string().default('nestjs:'),
-  NEST_REDIS_MAX_SIZE: Joi.number().default(1000),
 
   // CORS 跨域配置
   NEST_CORS_ORIGINS: Joi.string().optional(),

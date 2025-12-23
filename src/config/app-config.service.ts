@@ -141,7 +141,6 @@ export class AppConfigService {
     cache: {
       defaultTtl: number;
       keyPrefix: string;
-      maxSize: number;
     };
   } {
     return {
@@ -171,7 +170,6 @@ export class AppConfigService {
       cache: {
         defaultTtl: this.configService.get<number>('app.redis.cache.defaultTtl', 3600),
         keyPrefix: this.configService.get<string>('app.redis.cache.keyPrefix', 'nestjs:'),
-        maxSize: this.configService.get<number>('app.redis.cache.maxSize', 1000),
       },
     };
   }

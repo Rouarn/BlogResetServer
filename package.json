@@ -24,8 +24,6 @@
     "update": "pnpm update",
     "update:latest": "pnpm update --latest",
     "update:interactive": "pnpm update --interactive",
-    "env:check": "node scripts/check-env.js",
-    "env:setup": "node scripts/setup-env.js",
     "clean:tests": "node scripts/remove-spec-files.js",
     "deploy:prepare": "node scripts/deploy.js",
     "deploy:build": "pnpm run build:prod && pnpm run deploy:prepare",

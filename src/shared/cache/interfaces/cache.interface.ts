@@ -125,25 +125,15 @@ export interface ICacheService {
 /**
  * 缓存服务类型枚举
  */
-export enum CacheServiceType {
-  /** Redis 缓存服务 */
-  REDIS = 'redis',
-  /** 内存缓存服务 */
-  MEMORY = 'memory',
-}
 
 /**
  * 缓存配置接口
  */
 export interface CacheConfig {
-  /** 缓存服务类型 */
-  type: CacheServiceType;
   /** 是否启用缓存 */
   enabled: boolean;
   /** 默认过期时间（秒） */
   defaultTtl: number;
   /** 键前缀 */
   keyPrefix: string;
-  /** 最大缓存大小（内存缓存使用） */
-  maxSize?: number;
 }

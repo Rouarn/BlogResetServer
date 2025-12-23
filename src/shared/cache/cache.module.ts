@@ -45,7 +45,6 @@ export class CacheModule implements OnModuleInit {
    * 模块初始化时的日志输出
    */
   async onModuleInit(): Promise<void> {
-    const cacheType = this.cacheFactory.getCurrentCacheType();
     const redisEnabled = this.appConfig.redisConfig.enabled;
 
     this.logger.log('');
@@ -54,7 +53,7 @@ export class CacheModule implements OnModuleInit {
     this.logger.log('╚═══════════════════════════════════════════════════════════════════╝');
     this.logger.log('');
     this.logger.log('┌─ 📦 缓存配置信息 ────────────────────────────────────────────────┐');
-    this.logger.log(`│ 📦 缓存类型: ${cacheType === 'redis' ? '💎 Redis' : '💾 Memory'}`);
+    this.logger.log(`│ 📦 缓存类型: 💎 Redis`);
     this.logger.log(`│ ⚡ Redis状态: ${redisEnabled ? '✅ 已启用' : '❌ 已禁用'}`);
 
     if (redisEnabled) {

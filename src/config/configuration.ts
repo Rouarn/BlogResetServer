@@ -104,7 +104,6 @@ export default registerAs('app', (): AppConfig => {
       cache: {
         defaultTtl: getEnvVar('NEST_REDIS_DEFAULT_TTL', 3600),
         keyPrefix: getEnvVar('NEST_REDIS_KEY_PREFIX', 'nestjs:'),
-        maxSize: getEnvVar('NEST_REDIS_MAX_SIZE', 1000),
       },
     },
 

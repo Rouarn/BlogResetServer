@@ -65,7 +65,6 @@ export interface RedisCacheConfig {
   cache: {
     defaultTtl: number;
     keyPrefix: string;
-    maxSize: number;
   };
 }
 
