@@ -15,3 +15,4 @@
  */
 export * from './response.interface';
 export * from './files.interface';
+export * from './current-user.interface';

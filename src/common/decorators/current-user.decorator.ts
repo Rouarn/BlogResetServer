@@ -1,27 +1,7 @@
 import type { ExecutionContext } from '@nestjs/common';
 import { createParamDecorator } from '@nestjs/common';
 import type { Request } from 'express';
-
-/**
- * 当前用户认证信息接口
- *
- * 定义从JWT策略返回的标准化用户认证信息结构
- */
-export interface CurrentUser {
-  authId: string;
-  userId: string;
-  username: string;
-  roles: string[];
-  lastLoginAt: Date;
-}
-
-declare global {
-  namespace Express {
-    interface Request {
-      user?: CurrentUser;
-    }
-  }
-}
+import type { CurrentUser } from '../interfaces';
 
 /**
  * 获取当前用户装饰器（GetCurrentUser）
@@ -68,9 +48,13 @@ export const GetCurrentUser = createParamDecorator(
   (
     field: keyof CurrentUser | undefined,
     ctx: ExecutionContext,
-  ): CurrentUser | string | string[] | Date => {
+  ): CurrentUser | string | string[] | Date | undefined => {
     const request = ctx.switchToHttp().getRequest<Request>();
-    const user = request.user as CurrentUser;
+    const user: CurrentUser | undefined = request.user;
+
+    if (!user) {
+      return undefined;
+    }
 
     // 如果指定了特定字段，返回该字段的值
     if (field) {

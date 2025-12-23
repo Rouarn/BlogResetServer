@@ -17,7 +17,6 @@
  * @version 1.0.0
  */
 import { Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core/constants';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -62,15 +61,16 @@ import { UsersModule } from './modules/users/users.module';
     // =============================================================================
     JwtModule.registerAsync({
       global: true, // 全局可用，无需在每个模块中重复导入
-      inject: [ConfigService], // 注入配置服务
-      useFactory: (configService: ConfigService) => {
+      inject: [AppConfigService], // 注入配置服务
+      useFactory: (appConfig: AppConfigService) => {
         return {
-          secret: configService.get<string>('app.jwt.secret'), // JWT 签名密钥
+          secret: appConfig.jwtOptions.secret, // JWT 签名密钥
           signOptions: {
-            expiresIn: configService.get<number>( // JWT 过期时间
-              'app.jwt.accessTokenTtl',
-              3600, // 默认 1 天
-            ),
+            expiresIn: appConfig.jwtOptions.accessTokenTtl, // JWT 过期时间
+            algorithm: 'HS256',
+          },
+          verifyOptions: {
+            algorithms: ['HS256'],
           },
         };
       },

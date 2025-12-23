@@ -1,4 +1,4 @@
-import { CurrentUser } from '@/common/decorators';
+import { CurrentUser } from '@/common/interfaces';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { FilesService } from '../services/files.service';

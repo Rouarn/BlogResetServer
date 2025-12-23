@@ -1,5 +1,5 @@
 import { CACHE_PREFIXES, CACHE_TOKENS, CACHE_TTL } from '@/common/constants';
-import { CurrentUser } from '@/common/decorators';
+import { CurrentUser } from '@/common/interfaces';
 import { isEnabled, Role } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { AppConfigService } from '@/config';

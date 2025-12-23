@@ -82,7 +82,7 @@ export class RefreshTokenDto {
  * - refreshToken: 刷新令牌（可选）
  * - tokenType: 令牌类型
  * - accessTokenTtl: 访问令牌过期时间（秒）
- * - refreshaccessTokenTtl: 刷新令牌过期时间（秒，可选）
+ * - refreshTokenTtl: 刷新令牌过期时间（秒，可选）
  */
 export class TokenResponseDto {
   @ApiProperty({

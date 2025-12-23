@@ -1,4 +1,5 @@
-import { CurrentUser, GetCurrentUser, Public, Roles } from '@/common/decorators';
+import { GetCurrentUser, Public, Roles } from '@/common/decorators';
+import { CurrentUser } from '@/common/interfaces';
 import { Role } from '@/common/enums';
 import {
   Body,

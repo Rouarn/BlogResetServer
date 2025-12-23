@@ -1,6 +1,7 @@
 import { CACHE_PREFIXES, CACHE_TOKENS } from '@/common/constants';
 import { Role, Status } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
+import { CurrentUser } from '@/common/interfaces';
 import { AppConfigService } from '@/config';
 import { AuthService } from '@/modules/auth/auth.service';
 import { ICacheService } from '@/shared/cache';
@@ -9,7 +10,7 @@ import { CanActivate, ExecutionContext, Inject, Injectable, Logger } from '@nest
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
-import { CurrentUser, IS_PUBLIC_KEY } from '../decorators';
+import { IS_PUBLIC_KEY } from '../decorators';
 
 /**
  * JwtAuthGuard（JWT 认证守卫）
@@ -67,6 +68,8 @@ export class JwtAuthGuard implements CanActivate {
         CurrentUser & { jti: string; exp?: number; iat?: number }
       >(token, {
         secret: this.appConfig.jwtOptions.secret as string,
+        algorithms: ['HS256'],
+        clockTolerance: 5, // 允许5秒时间差，解决时钟不同步问题
       });
 
       // 5. 检查 Token 黑名单
@@ -98,6 +101,7 @@ export class JwtAuthGuard implements CanActivate {
         userId: authInfo.user?.id || authInfo.id,
         username: authInfo.username,
         roles: [authInfo.user?.roles || Role.USER],
+        lastLoginAt: authInfo.lastLoginAt,
       } as CurrentUser;
 
       // 仅在开发环境或调试时打印用户信息
