@@ -1,7 +1,7 @@
 import { CACHE_PREFIXES, CACHE_TOKENS, CACHE_TTL } from '@/common/constants';
-import { CurrentUser } from '@/common/interfaces';
 import { isEnabled, Role } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
+import { CurrentUser } from '@/common/interfaces';
 import { AppConfigService } from '@/config';
 import { ICacheService } from '@/shared/cache';
 import { getCurrentTimestamp, uuidv4 } from '@/utils/helpers';
@@ -11,7 +11,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 import * as svgCaptcha from 'svg-captcha';
-import { In, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import type {
@@ -35,6 +35,7 @@ export class AuthService {
   constructor(
     @InjectRepository(Auth)
     private readonly authRepository: Repository<Auth>,
+    private readonly dataSource: DataSource,
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
     private readonly appConfig: AppConfigService,
@@ -111,36 +112,51 @@ export class AuthService {
    * @throws BadRequestException 注册数据验证失败
    */
   async register(registerDto: RegisterDto): Promise<AuthCreateUserResponse> {
-    // 检查用户名是否已存在
-    const existingAuth = await this.authRepository.findOne({
-      where: { username: registerDto.username },
+    return await this.dataSource.transaction(async (manager) => {
+      // 检查用户名是否已存在
+      const existingAuth = await manager.findOne(Auth, {
+        where: { username: registerDto.username },
+      });
+
+      if (existingAuth) {
+        throw BusinessExceptionFactory.conflict('用户名已存在', { username: registerDto.username });
+      }
+
+      // 创建认证记录（密码将通过@BeforeInsert钩子自动加密）
+      const auth = manager.create(Auth, {
+        username: registerDto.username,
+        password: registerDto.password, // 原始密码，将被@BeforeInsert钩子加密
+        isLocked: false,
+        loginAttempts: 0,
+      });
+
+      const savedAuth = await manager.save(auth);
+
+      // 检查是否已存在相同邮箱的用户
+      if (registerDto.email) {
+        const existingUser = await manager.findOne(User, {
+          where: { email: registerDto.email },
+        });
+        if (existingUser) {
+          throw BusinessExceptionFactory.conflict('邮箱已被使用', { email: registerDto.email });
+        }
+      }
+
+      // 创建关联的用户记录
+      const user = manager.create(User, {
+        authId: savedAuth.id,
+        nickname: registerDto.nickname ?? savedAuth.username,
+        email: registerDto.email,
+        avatar: registerDto.avatar,
+        gender: registerDto.gender,
+        mobile: registerDto.mobile,
+        roles: Role.USER, // 默认为普通用户
+      });
+
+      await manager.save(user);
+
+      return { message: '注册成功' };
     });
-
-    if (existingAuth) {
-      throw BusinessExceptionFactory.conflict('用户名已存在', { username: registerDto.username });
-    }
-
-    // 创建认证记录（密码将通过@BeforeInsert钩子自动加密）
-    const auth = this.authRepository.create({
-      username: registerDto.username,
-      password: registerDto.password, // 原始密码，将被@BeforeInsert钩子加密
-      isLocked: false,
-      loginAttempts: 0,
-    });
-
-    const savedAuth = await this.authRepository.save(auth);
-
-    // 总是创建关联的用户记录，确保两个表的数据一致性
-    await this.usersService.create({
-      authId: savedAuth.id,
-      nickname: registerDto.nickname ?? savedAuth.username, // 如果没有昵称，使用用户名
-      email: registerDto.email,
-      avatar: registerDto.avatar,
-      gender: registerDto.gender,
-      mobile: registerDto.mobile,
-    });
-
-    return { message: '注册成功' };
   }
 
   /**

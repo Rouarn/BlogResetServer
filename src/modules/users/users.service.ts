@@ -1,9 +1,8 @@
-import { Role, Status, toggleStatus } from '@/common/enums';
+import { Status, toggleStatus } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import type { CreateUserDto } from './dto/create-user.dto';
 import type { BatchDeleteUserDto, UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 
@@ -19,38 +18,6 @@ export class UsersService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
-
-  /**
-   * 创建用户
-   * @param createUserDto 创建用户DTO
-   * @returns 创建的用户信息
-   */
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    // 检查是否已存在相同邮箱的用户
-    if (createUserDto.email) {
-      const existingUser = await this.userRepository.findOne({
-        where: { email: createUserDto.email },
-      });
-      if (existingUser) {
-        throw BusinessExceptionFactory.conflict('邮箱已被使用', { email: createUserDto.email });
-      }
-    }
-
-    const user = this.userRepository.create({
-      authId: createUserDto.authId,
-      nickname: createUserDto.nickname,
-      avatar: createUserDto.avatar,
-      gender: createUserDto.gender,
-      mobile: createUserDto.mobile,
-      roles: createUserDto.roles as Role,
-      bio: createUserDto.bio,
-      email: createUserDto.email,
-      birthday: createUserDto.birthday,
-      city: createUserDto.city,
-      profession: createUserDto.profession,
-    });
-    return await this.userRepository.save(user);
-  }
 
   /**
    * 获取所有用户（带分页和缓存）
