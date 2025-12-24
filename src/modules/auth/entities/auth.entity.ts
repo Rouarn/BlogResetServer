@@ -1,9 +1,8 @@
 import { Status } from '@/common/enums';
 import { BaseEntity } from '@/database';
 import { User } from '@/modules/users/entities/user.entity';
-import * as bcrypt from 'bcryptjs';
 import { Exclude } from 'class-transformer';
-import { BeforeInsert, Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 /**
  * 认证实体
@@ -52,74 +51,4 @@ export class Auth extends BaseEntity {
   // 一对一关联用户信息
   @OneToOne(() => User, (user) => user.auth, { cascade: true, onDelete: 'CASCADE' })
   user: User;
-
-  @BeforeInsert()
-  async encryptPwd(): Promise<void> {
-    try {
-      const saltRounds = 10;
-      // 同步地生成一个随机的盐
-      const salt = bcrypt.genSaltSync(saltRounds);
-      this.salt = salt;
-      // 同步地使用新生成的盐对密码进行哈希处理
-      this.password = bcrypt.hashSync(this.password, salt);
-      this.passwordChangedAt = new Date();
-    } catch (err) {
-      throw new Error('密码加密过程中发生错误');
-    }
-  }
-
-  /**
-   * 验证密码
-   * @param inputPassword 输入的密码
-   * @returns 密码是否正确
-   */
-  async validatePassword(inputPassword: string): Promise<boolean> {
-    return bcrypt.compareSync(inputPassword, this.password);
-  }
-
-  /**
-   * 记录登录成功
-   * @param ip 登录IP
-   */
-  recordSuccessfulLogin(ip?: string): void {
-    this.lastLoginAt = new Date();
-    this.lastLoginIp = ip;
-    this.loginAttempts = 0;
-    this.lockedAt = undefined;
-  }
-
-  /**
-   * 记录登录失败
-   */
-  recordFailedLogin(): void {
-    this.loginAttempts += 1;
-    // 如果失败次数超过5次，锁定账户30分钟
-    if (this.loginAttempts >= 5) {
-      this.lockedAt = new Date();
-    }
-  }
-
-  /**
-   * 检查账户是否被锁定
-   * @returns 是否被锁定
-   */
-  isLocked(): boolean {
-    if (!this.lockedAt) return false;
-
-    // 锁定30分钟后自动解锁
-    const lockDuration = 30 * 60 * 1000; // 30分钟
-    const now = new Date();
-    const lockedAtDate =
-      this.lockedAt instanceof Date ? this.lockedAt : new Date(this.lockedAt as unknown as string);
-    if (Number.isNaN(lockedAtDate.getTime())) return false;
-    return now.getTime() - lockedAtDate.getTime() < lockDuration;
-  }
-
-  /**
-   * 解锁账户
-   */
-  unlock(): void {
-    this.loginAttempts = 0;
-    this.lockedAt = undefined;
-  }
 }

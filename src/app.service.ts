@@ -13,8 +13,8 @@
  * @author NestJS Template
  * @version 1.0.0
  */
-import { Injectable } from '@nestjs/common';
-import { readFileSync } from 'fs';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
 // Package.json 类型定义
@@ -26,18 +26,31 @@ interface PackageJson {
   license?: string;
 }
 
-// 动态读取 package.json 文件
-const packageJson: PackageJson = JSON.parse(
-  readFileSync(join(process.cwd(), 'package.json'), 'utf8'),
-) as PackageJson;
-
 /**
  * 应用根服务类
  *
  * 基本信息获取等通用服务
  */
 @Injectable()
-export class AppService {
+export class AppService implements OnModuleInit {
+  private packageJson: PackageJson;
+
+  async onModuleInit(): Promise<void> {
+    // 在模块初始化时读取 package.json 文件，提供更好的错误处理
+    const packageJsonPath = join(process.cwd(), 'package.json');
+
+    if (!existsSync(packageJsonPath)) {
+      throw new Error(`package.json not found at ${packageJsonPath}`);
+    }
+
+    try {
+      const fileContent = readFileSync(packageJsonPath, 'utf8');
+      this.packageJson = JSON.parse(fileContent) as PackageJson;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to read or parse package.json: ${errorMessage}`);
+    }
+  }
   /**
    * 获取应用欢迎信息
    *
@@ -60,9 +73,9 @@ export class AppService {
     version: string;
   } {
     return {
-      message: `Hello ${packageJson.name} v${packageJson.version}`,
+      message: `Hello ${this.packageJson.name} v${this.packageJson.version}`,
       timestamp: new Date().toISOString(),
-      version: packageJson.version,
+      version: this.packageJson.version,
     };
   }
 
@@ -91,11 +104,11 @@ export class AppService {
     license?: string;
   } {
     return {
-      version: packageJson.version,
-      name: packageJson.name,
-      description: packageJson.description,
-      author: packageJson.author,
-      license: packageJson.license,
+      version: this.packageJson.version,
+      name: this.packageJson.name,
+      description: this.packageJson.description,
+      author: this.packageJson.author,
+      license: this.packageJson.license,
     };
   }
 
@@ -126,11 +139,11 @@ export class AppService {
     uptime: number;
   } {
     return {
-      name: packageJson.name,
-      version: packageJson.version,
-      description: packageJson.description,
-      author: packageJson.author,
-      license: packageJson.license,
+      name: this.packageJson.name,
+      version: this.packageJson.version,
+      description: this.packageJson.description,
+      author: this.packageJson.author,
+      license: this.packageJson.license,
       environment: process.env.NODE_ENV ?? 'development',
       nodeVersion: process.version,
       uptime: process.uptime(),

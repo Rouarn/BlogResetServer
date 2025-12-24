@@ -83,7 +83,7 @@ export class JwtAuthGuard implements CanActivate {
           authId: payload.authId,
         });
       }
-      if (authInfo.isLocked()) {
+      if (this.authService.isAccountLocked(authInfo)) {
         throw BusinessExceptionFactory.forbidden('账号访问', {
           message: '账号已被锁定',
           authId: payload.authId,

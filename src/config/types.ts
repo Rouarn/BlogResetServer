@@ -19,6 +19,11 @@ export interface JwtConfig {
   refreshTokenTtl: number;
 }
 
+// Bcrypt 加密配置
+export interface BcryptConfig {
+  saltRounds: number;
+}
+
 // 静态资源和文件上传配置
 export interface StaticConfig {
   root: string;
@@ -101,6 +106,7 @@ export interface AppConfig {
   environment: string;
   api: ApiConfig;
   jwt: JwtConfig;
+  bcrypt: BcryptConfig;
   static: StaticConfig;
   cors: CorsConfig;
   swagger: SwaggerConfig;

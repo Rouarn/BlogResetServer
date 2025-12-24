@@ -122,11 +122,13 @@ export class AuthService {
         throw BusinessExceptionFactory.conflict('用户名已存在', { username: registerDto.username });
       }
 
-      // 创建认证记录（密码将通过@BeforeInsert钩子自动加密）
+      // 创建认证记录
+      const { salt, hashedPassword } = this.encryptPassword(registerDto.password);
       const auth = manager.create(Auth, {
         username: registerDto.username,
-        password: registerDto.password, // 原始密码，将被@BeforeInsert钩子加密
-        isLocked: false,
+        password: hashedPassword,
+        salt,
+        passwordChangedAt: new Date(),
         loginAttempts: 0,
       });
 
@@ -186,20 +188,17 @@ export class AuthService {
     }
 
     // 检查账号是否被锁定
-    if (auth.isLocked()) {
-      if (auth.lockedAt) {
-        const lockTime = new Date(auth.lockedAt.getTime() + 30 * 60 * 1000); // 30分钟锁定
-        if (new Date() < lockTime) {
-          throw BusinessExceptionFactory.systemBusy({
-            message: '账号已被锁定，请稍后重试',
-            lockTime: lockTime.toLocaleString(),
-            locked: true,
-          });
-        } else {
-          // 锁定时间已过，解锁账号
-          await this.unlockAccount(auth.id);
-          auth.unlock();
-        }
+    if (this.isAccountLocked(auth)) {
+      const lockTime = new Date(auth.lockedAt!.getTime() + 30 * 60 * 1000); // 30分钟锁定
+      if (new Date() < lockTime) {
+        throw BusinessExceptionFactory.systemBusy({
+          message: '账号已被锁定，请稍后重试',
+          lockTime: lockTime.toLocaleString(),
+          locked: true,
+        });
+      } else {
+        // 锁定时间已过，解锁账号
+        await this.unlockAccount(auth.id);
       }
     }
 
@@ -308,7 +307,7 @@ export class AuthService {
     }
 
     // 检查账号状态
-    if (auth.isLocked()) {
+    if (this.isAccountLocked(auth)) {
       throw BusinessExceptionFactory.forbidden('账户被锁定', {
         authId,
         locked: true,
@@ -410,8 +409,7 @@ export class AuthService {
     }
 
     // 生成新的盐值和密码哈希
-    const salt = bcrypt.genSaltSync(10);
-    const hashedPassword = bcrypt.hashSync(changePasswordDto.newPassword, salt);
+    const { salt, hashedPassword } = this.encryptPassword(changePasswordDto.newPassword);
 
     // 更新密码
     await this.authRepository.update(authId, {
@@ -543,6 +541,38 @@ export class AuthService {
    */
   private async validatePassword(inputPassword: string, storedPassword: string): Promise<boolean> {
     return await bcrypt.compare(inputPassword, storedPassword);
+  }
+
+  /**
+   * 加密密码
+   *
+   * @param password 原始密码
+   * @returns 包含盐值和哈希密码的对象
+   */
+  private encryptPassword(password: string): { salt: string; hashedPassword: string } {
+    const salt = bcrypt.genSaltSync(this.appConfig.bcryptSaltRounds);
+    const hashedPassword = bcrypt.hashSync(password, salt);
+    return { salt, hashedPassword };
+  }
+
+  /**
+   * 检查账号是否被锁定
+   *
+   * @param auth 认证实体
+   * @returns 是否被锁定
+   */
+  public isAccountLocked(auth: Auth): boolean {
+    if (!auth.lockedAt) return false;
+
+    // 锁定30分钟后自动解锁
+    const lockDuration = 30 * 60 * 1000; // 30分钟
+    const now = new Date();
+    const lockedAtDate =
+      auth.lockedAt instanceof Date ? auth.lockedAt : new Date(auth.lockedAt as unknown as string);
+
+    if (Number.isNaN(lockedAtDate.getTime())) return false;
+
+    return now.getTime() - lockedAtDate.getTime() < lockDuration;
   }
 
   /**

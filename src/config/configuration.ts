@@ -55,6 +55,11 @@ export default registerAs('app', (): AppConfig => {
       refreshTokenTtl: getEnvVar('NEST_JWT_REFRESH_TOKEN_TTL', 604800),
     },
 
+    // Bcrypt 加密配置
+    bcrypt: {
+      saltRounds: getEnvVar('NEST_BCRYPT_SALT_ROUNDS', 10),
+    },
+
     // 静态资源和文件上传配置
     static: {
       root: getEnvVar('NEST_STATIC_ASSETS_DIR', './static'),

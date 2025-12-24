@@ -61,6 +61,11 @@ export class AppConfigService {
     };
   }
 
+  // Bcrypt 加密配置
+  get bcryptSaltRounds(): number {
+    return this.configService.get<number>('app.bcrypt.saltRounds', 10);
+  }
+
   // 静态资源服务配置
   get staticAssetsOptions(): {
     root: string;
