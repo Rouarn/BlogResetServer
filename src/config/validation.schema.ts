@@ -26,6 +26,8 @@ export const validationSchema = Joi.object({
   // API 版本控制配置
   API_PREFIX: Joi.string().default('api'),
   API_DEFAULT_VERSION: Joi.string().default('1'),
+  API_VERSIONING_TYPE: Joi.string().valid('uri', 'header').default('header'),
+  API_VERSIONING_HEADER: Joi.string().default('X-Api-Version'),
 
   // JWT 认证配置
   NEST_JWT_SECRET: Joi.string().required(),

@@ -43,11 +43,20 @@ function configureApp(app: NestExpressApplication, appConfig: AppConfigService):
 function configureVersioning(app: NestExpressApplication, appConfig: AppConfigService): void {
   const versionConfig = appConfig.apiVersioning;
 
-  app.enableVersioning({
-    type: VersioningType.URI,
-    prefix: `${versionConfig.prefix}/v`,
-    defaultVersion: versionConfig.defaultVersion,
-  });
+  if (versionConfig.type === 'uri') {
+    app.enableVersioning({
+      type: VersioningType.URI,
+      prefix: `${versionConfig.prefix}/v`,
+      defaultVersion: versionConfig.defaultVersion,
+    });
+  } else if (versionConfig.type === 'header') {
+    app.setGlobalPrefix(versionConfig.prefix);
+    app.enableVersioning({
+      type: VersioningType.HEADER,
+      header: versionConfig.header,
+      defaultVersion: versionConfig.defaultVersion,
+    });
+  }
 }
 
 /**

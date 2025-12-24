@@ -90,7 +90,18 @@ export class JwtAuthGuard implements CanActivate {
         });
       }
 
-      // 7. 注入用户信息到请求对象
+      // 7. 检查密码是否修改（使旧令牌失效）
+      if (authInfo.passwordChangedAt) {
+        // 将数据库时间转换为 Unix 时间戳（秒）
+        const passwordChangedTimestamp = Math.floor(authInfo.passwordChangedAt.getTime() / 1000);
+        // 如果密码修改时间晚于令牌签发时间，则令牌失效
+        // iat 是令牌签发时间（秒）
+        if (payload.iat && passwordChangedTimestamp > payload.iat) {
+          throw BusinessExceptionFactory.unauthorized('密码已修改，请重新登录');
+        }
+      }
+
+      // 8. 注入用户信息到请求对象
       request.user = {
         authId: authInfo.id,
         userId: authInfo.user?.id || authInfo.id,

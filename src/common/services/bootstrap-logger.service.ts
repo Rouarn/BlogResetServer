@@ -58,10 +58,19 @@ export class BootstrapLoggerService extends ConsoleLogger {
   async logApplicationStartup(
     app: NestExpressApplication,
     appConfig: AppConfigService,
-    versionConfig: { prefix: string; defaultVersion: string },
+    versionConfig: {
+      prefix: string;
+      defaultVersion: string;
+      type: 'uri' | 'header';
+      header: string;
+    },
     staticConfig: { root: string; options: ServeStaticOptions },
   ): Promise<void> {
     const appUrl = await app.getUrl();
+    const apiUrl =
+      versionConfig.type === 'uri'
+        ? `${appUrl}/${versionConfig.prefix}/v${versionConfig.defaultVersion}`
+        : `${appUrl}/${versionConfig.prefix}`;
 
     // 空行
     this.log('');
@@ -79,7 +88,12 @@ export class BootstrapLoggerService extends ConsoleLogger {
     this.log(`│ 🏷️  应用名称: ${appConfig.appTitle}`);
     this.log(`│ 🌍 运行环境: ${appConfig.environment}`);
     this.log(`│ 🚀 服务地址: ${appUrl}`);
-    this.log(`│ 🔗 API 访问: ${appUrl}/${versionConfig.prefix}/v${versionConfig.defaultVersion}`);
+    this.log(`│ 🔗 API 访问: ${apiUrl}`);
+    if (versionConfig.type === 'header') {
+      this.log(
+        `│ 🎫 API 版本: Header: ${versionConfig.header}, Version: ${versionConfig.defaultVersion}`,
+      );
+    }
     this.log(`│ ⚡ 端口号码: ${appConfig.port}`);
     this.log('└' + '─'.repeat(65) + '┘');
 

@@ -34,6 +34,9 @@ export class ValidationService {
   constructor(private readonly appConfig: AppConfigService) {}
 
   async validateFile(file: Express.Multer.File): Promise<void> {
+    // 验证文件名安全性
+    this.validateFilename(file.originalname);
+
     // 验证文件大小 - 使用静态资源配置中的限制
     const staticConfig = this.appConfig.staticAssetsOptions.options;
     if (!staticConfig) {
@@ -54,6 +57,7 @@ export class ValidationService {
       throw BusinessExceptionFactory.invalidParameter('文件类型', {
         detectedType: detectedType.mime,
         expectedType: file.mimetype,
+        reason: '文件真实类型与声明类型不匹配',
       });
     }
 
@@ -63,6 +67,38 @@ export class ValidationService {
       throw BusinessExceptionFactory.invalidParameter('文件类型', {
         fileType: file.mimetype,
         allowedTypes,
+      });
+    }
+  }
+
+  /**
+   * 验证文件名的安全性
+   * @param filename 原始文件名
+   */
+  validateFilename(filename: string): void {
+    if (!filename) {
+      throw BusinessExceptionFactory.invalidParameter('文件名', { reason: '文件名不能为空' });
+    }
+
+    // 检查非法字符 (Null Byte)
+    if (/\0/g.test(filename)) {
+      throw BusinessExceptionFactory.invalidParameter('文件名', {
+        reason: '文件名包含非法字符',
+      });
+    }
+
+    // 检查路径遍历字符
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+      throw BusinessExceptionFactory.invalidParameter('文件名', {
+        reason: '文件名包含路径遍历字符',
+      });
+    }
+
+    // 检查扩展名安全性
+    const ext = this.getFileExtension(filename);
+    if (ext && !/^[a-z0-9]+$/i.test(ext)) {
+      throw BusinessExceptionFactory.invalidParameter('文件扩展名', {
+        reason: '扩展名包含非法字符',
       });
     }
   }
@@ -102,14 +138,27 @@ export class ValidationService {
   generateUniqueFilename(originalName: string): string {
     const timestamp = getCurrentTimestamp();
     const random = randomString(8);
-    const ext = originalName.split('.').pop();
-    return `${timestamp}_${random}.${ext}`;
+    const ext = this.getFileExtension(originalName);
+    // 确保扩展名安全
+    const safeExt = ext ? this.sanitizeFilename(ext) : 'bin';
+    return `${timestamp}_${random}.${safeExt}`;
+  }
+
+  /**
+   * 安全获取文件扩展名
+   */
+  private getFileExtension(filename: string): string {
+    const parts = filename.split('.');
+    // 如果没有扩展名或只有点，返回空字符串
+    if (parts.length < 2 || (parts.length === 2 && parts[0] === '')) return '';
+    return parts.pop()?.toLowerCase() ?? '';
   }
 
   sanitizeFilename(filename: string): string {
     return filename
-      .replace(/[^a-zA-Z0-9.-]/g, '_')
-      .replace(/_{2,}/g, '_')
+      .replace(/[^a-z0-9.-]/gi, '_') // 仅允许字母、数字、点、横杠
+      .replace(/\.{2,}/g, '.') // 防止连续点
+      .replace(/^\.+|\.+$/g, '') // 去除首尾点
       .toLowerCase();
   }
 }

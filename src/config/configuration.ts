@@ -46,6 +46,8 @@ export default registerAs('app', (): AppConfig => {
     api: {
       prefix: getEnvVar('API_PREFIX', 'api'),
       version: getEnvVar('API_DEFAULT_VERSION', '1'),
+      type: getEnvVar('API_VERSIONING_TYPE', 'header'),
+      header: getEnvVar('API_VERSIONING_HEADER', 'X-Api-Version'),
     },
 
     // JWT 认证配置

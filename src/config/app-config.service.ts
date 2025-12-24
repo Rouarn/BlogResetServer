@@ -220,10 +220,17 @@ export class AppConfigService {
   }
 
   // API 版本控制配置
-  get apiVersioning(): { prefix: string; defaultVersion: string } {
+  get apiVersioning(): {
+    prefix: string;
+    defaultVersion: string;
+    type: 'uri' | 'header';
+    header: string;
+  } {
     return {
       prefix: this.configService.get<string>('app.api.prefix', 'api'),
       defaultVersion: this.configService.get<string>('app.api.version', '1'),
+      type: this.configService.get<'uri' | 'header'>('app.api.type', 'header'),
+      header: this.configService.get<string>('app.api.header', 'X-Api-Version'),
     };
   }
 }

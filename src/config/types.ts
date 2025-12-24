@@ -103,6 +103,8 @@ export interface DatabaseConfig {
 export interface ApiConfig {
   prefix: string;
   version: string;
+  type: 'uri' | 'header';
+  header: string;
 }
 
 // 完整的应用配置
