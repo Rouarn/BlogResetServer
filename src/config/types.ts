@@ -24,6 +24,13 @@ export interface BcryptConfig {
   saltRounds: number;
 }
 
+// 认证安全配置
+export interface AuthSecurityConfig {
+  maxLoginAttempts: number;
+  baseLockDuration: number;
+  maxLockDuration: number;
+}
+
 // 静态资源和文件上传配置
 export interface StaticConfig {
   root: string;
@@ -107,6 +114,7 @@ export interface AppConfig {
   api: ApiConfig;
   jwt: JwtConfig;
   bcrypt: BcryptConfig;
+  auth: AuthSecurityConfig;
   static: StaticConfig;
   cors: CorsConfig;
   swagger: SwaggerConfig;

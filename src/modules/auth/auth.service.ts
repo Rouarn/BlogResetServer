@@ -189,17 +189,22 @@ export class AuthService {
 
     // 检查账号是否被锁定
     if (this.isAccountLocked(auth)) {
-      const lockTime = new Date(auth.lockedAt!.getTime() + 30 * 60 * 1000); // 30分钟锁定
+      const lockDuration = this.calculateLockDuration(auth.loginAttempts);
+      const lockTime = new Date(auth.lockedAt!.getTime() + lockDuration);
+
       if (new Date() < lockTime) {
+        const remainingMs = lockTime.getTime() - new Date().getTime();
+        const remainingMinutes = Math.ceil(remainingMs / 60000);
+
         throw BusinessExceptionFactory.systemBusy({
-          message: '账号已被锁定，请稍后重试',
+          message: `账号已被锁定，请 ${remainingMinutes} 分钟后再试`,
           lockTime: lockTime.toLocaleString(),
           locked: true,
+          remainingMinutes,
         });
-      } else {
-        // 锁定时间已过，解锁账号
-        await this.unlockAccount(auth.id);
       }
+      // 锁定时间已过，允许尝试（不重置loginAttempts，保持指数退避基数）
+      // 只有在登录成功时才重置
     }
 
     // 验证密码
@@ -209,12 +214,19 @@ export class AuthService {
       // 增加登录失败次数
       await this.incrementLoginAttempts(auth.id);
 
-      // 检查是否需要锁定账号（5次失败后锁定）
-      if (auth.loginAttempts + 1 >= 5) {
+      // 更新auth对象的loginAttempts用于后续判断
+      const currentAttempts = auth.loginAttempts + 1;
+      const { maxLoginAttempts } = this.appConfig.authSecurityOptions;
+
+      // 检查是否需要锁定账号
+      if (currentAttempts >= maxLoginAttempts) {
         await this.lockAccount(auth.id);
+        const duration = this.calculateLockDuration(currentAttempts);
+
         throw BusinessExceptionFactory.systemBusy({
+          message: `账号已被锁定，请 ${Math.ceil(duration / 60000)} 分钟后再试`,
           locked: true,
-          durationMinutes: 30,
+          durationMinutes: Math.ceil(duration / 60000),
         });
       }
 
@@ -229,8 +241,8 @@ export class AuthService {
       });
     }
 
-    // 登录成功，重置登录失败次数
-    await this.resetLoginAttempts(auth.id);
+    // 登录成功，重置登录失败次数和锁定状态
+    await this.unlockAccount(auth.id);
 
     // 更新最后登录时间
     await this.updateLastLogin(auth.id, clientIp);
@@ -556,6 +568,33 @@ export class AuthService {
   }
 
   /**
+   * 计算当前锁定持续时间（指数退避）
+   *
+   * @param loginAttempts 当前失败次数
+   * @returns 锁定持续时间（毫秒）
+   */
+  private calculateLockDuration(loginAttempts: number): number {
+    const { maxLoginAttempts, baseLockDuration, maxLockDuration } =
+      this.appConfig.authSecurityOptions;
+
+    // 基础锁定时间（毫秒）
+    const baseDurationMs = baseLockDuration * 1000;
+    const maxDurationMs = maxLockDuration * 1000;
+
+    // 超过最大尝试次数的额外次数
+    const extraAttempts = Math.max(0, loginAttempts - maxLoginAttempts);
+
+    // 指数退避计算: base * (2 ^ extraAttempts)
+    // 例如: max=5, base=30m
+    // attempts=5 -> extra=0 -> 30m
+    // attempts=6 -> extra=1 -> 60m
+    // attempts=7 -> extra=2 -> 120m
+    const duration = baseDurationMs * Math.pow(2, extraAttempts);
+
+    return Math.min(duration, maxDurationMs);
+  }
+
+  /**
    * 检查账号是否被锁定
    *
    * @param auth 认证实体
@@ -564,8 +603,8 @@ export class AuthService {
   public isAccountLocked(auth: Auth): boolean {
     if (!auth.lockedAt) return false;
 
-    // 锁定30分钟后自动解锁
-    const lockDuration = 30 * 60 * 1000; // 30分钟
+    // 动态计算锁定时间
+    const lockDuration = this.calculateLockDuration(auth.loginAttempts);
     const now = new Date();
     const lockedAtDate =
       auth.lockedAt instanceof Date ? auth.lockedAt : new Date(auth.lockedAt as unknown as string);

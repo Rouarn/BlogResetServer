@@ -32,6 +32,9 @@ export const validationSchema = Joi.object({
   NEST_JWT_ACCESS_TOKEN_TTL: Joi.number().default(3600),
   NEST_JWT_REFRESH_TOKEN_TTL: Joi.number().default(604800),
   NEST_BCRYPT_SALT_ROUNDS: Joi.number().default(10).min(4).max(31),
+  NEST_AUTH_MAX_LOGIN_ATTEMPTS: Joi.number().default(5),
+  NEST_AUTH_BASE_LOCK_DURATION: Joi.number().default(1800),
+  NEST_AUTH_MAX_LOCK_DURATION: Joi.number().default(86400),
 
   // Swagger API 文档配置
   NEST_SWAGGER_TITLE: Joi.string().default('API Documentation'),

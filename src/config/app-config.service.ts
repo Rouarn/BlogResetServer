@@ -66,6 +66,19 @@ export class AppConfigService {
     return this.configService.get<number>('app.bcrypt.saltRounds', 10);
   }
 
+  // 认证安全配置
+  get authSecurityOptions(): {
+    maxLoginAttempts: number;
+    baseLockDuration: number;
+    maxLockDuration: number;
+  } {
+    return {
+      maxLoginAttempts: this.configService.get<number>('app.auth.maxLoginAttempts', 5),
+      baseLockDuration: this.configService.get<number>('app.auth.baseLockDuration', 1800),
+      maxLockDuration: this.configService.get<number>('app.auth.maxLockDuration', 86400),
+    };
+  }
+
   // 静态资源服务配置
   get staticAssetsOptions(): {
     root: string;

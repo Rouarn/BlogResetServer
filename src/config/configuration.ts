@@ -60,6 +60,13 @@ export default registerAs('app', (): AppConfig => {
       saltRounds: getEnvVar('NEST_BCRYPT_SALT_ROUNDS', 10),
     },
 
+    // 认证安全配置
+    auth: {
+      maxLoginAttempts: getEnvVar('NEST_AUTH_MAX_LOGIN_ATTEMPTS', 5),
+      baseLockDuration: getEnvVar('NEST_AUTH_BASE_LOCK_DURATION', 1800),
+      maxLockDuration: getEnvVar('NEST_AUTH_MAX_LOCK_DURATION', 86400),
+    },
+
     // 静态资源和文件上传配置
     static: {
       root: getEnvVar('NEST_STATIC_ASSETS_DIR', './static'),
