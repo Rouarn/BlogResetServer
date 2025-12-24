@@ -1,4 +1,4 @@
-import { Gender, Status } from '@/common/enums';
+import { Gender, Role, Status } from '@/common/enums';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
@@ -115,11 +115,11 @@ export class UpdateUserDto {
 
   @ApiPropertyOptional({
     description: '用户角色',
-    example: 'ADMIN',
+    example: Role.USER,
   })
   @IsOptional()
-  @IsString()
-  roles?: string;
+  @IsEnum(Role, { message: '角色值无效' })
+  roles?: Role;
 }
 
 /**
