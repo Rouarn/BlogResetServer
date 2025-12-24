@@ -1,6 +1,8 @@
+import { CACHE_PREFIXES, CACHE_TOKENS, CACHE_TTL } from '@/common/constants';
 import { Status, toggleStatus } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
-import { Injectable } from '@nestjs/common';
+import { ICacheService } from '@/shared/cache/interfaces';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import type { BatchDeleteUserDto, UpdateUserDto } from './dto/update-user.dto';
@@ -17,6 +19,8 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @Inject(CACHE_TOKENS.I_CACHE_SERVICE)
+    private readonly cacheService: ICacheService,
   ) {}
 
   /**
@@ -42,6 +46,12 @@ export class UsersService {
    * @returns 用户信息
    */
   async findById(id: string): Promise<User> {
+    const cacheKey = `${CACHE_PREFIXES.USER_PROFILE}${id}`;
+    const cachedUser = await this.cacheService.get<User>(cacheKey);
+    if (cachedUser) {
+      return cachedUser;
+    }
+
     const user = await this.userRepository.findOne({
       where: { id },
       relations: ['auth'],
@@ -49,6 +59,9 @@ export class UsersService {
     if (!user) {
       throw BusinessExceptionFactory.notFound('用户', { id });
     }
+
+    // 缓存用户信息，设置1小时过期
+    await this.cacheService.set(cacheKey, user, { ttl: CACHE_TTL.USER_PROFILE });
     return user;
   }
 
@@ -74,6 +87,8 @@ export class UsersService {
     Object.assign(user, updateUserDto);
 
     await this.userRepository.save(user);
+    // 清除缓存
+    await this.cacheService.del(`${CACHE_PREFIXES.USER_PROFILE}${id}`);
 
     return;
   }
@@ -96,6 +111,9 @@ export class UsersService {
     user.auth.status = status ?? toggleStatus(user.auth.status);
     await this.userRepository.save(user);
 
+    // 清除缓存
+    await this.cacheService.del(`${CACHE_PREFIXES.USER_PROFILE}${id}`);
+
     return user;
   }
 
@@ -107,6 +125,8 @@ export class UsersService {
   async remove(id: string): Promise<{ message: string }> {
     const user = await this.findById(id);
     await this.userRepository.remove(user);
+    // 清除缓存
+    await this.cacheService.del(`${CACHE_PREFIXES.USER_PROFILE}${id}`);
     return { message: '用户删除成功' };
   }
 
@@ -124,6 +144,10 @@ export class UsersService {
     }
 
     await this.userRepository.remove(users);
+
+    // 批量清除缓存
+    const cacheKeys = users.map((user) => `${CACHE_PREFIXES.USER_PROFILE}${user.id}`);
+    await this.cacheService.delMany(cacheKeys);
 
     return { message: `成功删除 ${users.length} 个用户` };
   }

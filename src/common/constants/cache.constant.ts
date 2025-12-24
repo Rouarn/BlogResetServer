@@ -26,12 +26,14 @@ export const CACHE_PREFIXES = {
   USER_TOKENS: 'auth:user_tokens:',
   /** 刷新令牌缓存键前缀 */
   REFRESH_TOKENS: 'auth:refresh_tokens:',
+  /** 用户资料缓存键前缀 */
+  USER_PROFILE: 'users:profile:',
 } as const;
 
 /**
  * 缓存 TTL 常量（秒）
  */
 export const CACHE_TTL = {
-  /** 刷新令牌缓存 TTL（秒）7天 */
-  REFRESH_TOKEN: 604800,
+  /** 用户资料缓存过期时间（1小时） */
+  USER_PROFILE: 3600,
 } as const;

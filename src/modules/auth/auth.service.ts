@@ -1,4 +1,4 @@
-import { CACHE_PREFIXES, CACHE_TOKENS, CACHE_TTL } from '@/common/constants';
+import { CACHE_PREFIXES, CACHE_TOKENS } from '@/common/constants';
 import { isEnabled, Role } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { CurrentUser } from '@/common/interfaces';
@@ -279,7 +279,7 @@ export class AuthService {
 
     // 存储 RefreshToken 到缓存
     await this.cacheService.set(`${CACHE_PREFIXES.REFRESH_TOKENS}${auth.id}`, refreshToken, {
-      ttl: CACHE_TTL.REFRESH_TOKEN,
+      ttl: this.appConfig.jwtOptions.refreshTokenTtl,
     });
 
     return {
@@ -352,7 +352,7 @@ export class AuthService {
 
     // 更新 RefreshToken 到缓存
     await this.cacheService.set(`${CACHE_PREFIXES.REFRESH_TOKENS}${auth.id}`, newRefreshToken, {
-      ttl: CACHE_TTL.REFRESH_TOKEN,
+      ttl: this.appConfig.jwtOptions.refreshTokenTtl,
     });
 
     return {
@@ -373,13 +373,18 @@ export class AuthService {
    * @returns 包含用户ID、用户名、昵称、头像、角色、邮箱、性别、手机号等信息
    */
   async getAuthInfo(auth: CurrentUser): Promise<User> {
-    // 从数据库查询完整的认证和用户信息
+    // 使用 UsersService 获取用户信息，利用其缓存机制
+    if (auth.userId) {
+      return await this.usersService.findById(auth.userId);
+    }
+
+    // 如果没有 userId（理论上不应该发生），降级为直接查询
     const authWithUser = await this.authRepository.findOne({
       where: { id: auth.authId },
       relations: ['user'],
     });
 
-    if (!authWithUser) {
+    if (!authWithUser?.user) {
       throw BusinessExceptionFactory.notFound('用户信息', { authId: auth.authId });
     }
 
