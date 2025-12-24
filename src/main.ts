@@ -11,6 +11,7 @@ import { VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import compression from 'compression';
 import cors from 'cors';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -33,6 +34,9 @@ function resolveStaticPath(staticConfig: { root: string }): string {
  * 配置应用基础设置
  */
 function configureApp(app: NestExpressApplication, appConfig: AppConfigService): void {
+  // 启用 GZIP 压缩
+  app.use(compression());
+
   // 配置CORS跨域策略
   app.use(cors(appConfig.corsOptions));
 }
