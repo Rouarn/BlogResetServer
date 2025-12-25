@@ -66,15 +66,11 @@ function configureVersioning(app: NestExpressApplication, appConfig: AppConfigSe
 /**
  * 配置静态资源服务
  */
-function configureStaticAssets(
-  app: NestExpressApplication,
-  logger: Logger,
-  appConfig: AppConfigService,
-): string {
+function configureStaticAssets(app: NestExpressApplication, appConfig: AppConfigService): string {
   const staticConfig = appConfig.staticAssetsOptions;
   const staticPath = resolveStaticPath(staticConfig);
 
-  BootstrapLogHelper.logStaticResourceConfig(logger, staticConfig, staticPath);
+  BootstrapLogHelper.logStaticResourceConfig(staticConfig, staticPath);
   app.useStaticAssets(staticPath, staticConfig.options);
 
   return staticPath;
@@ -86,7 +82,6 @@ function configureStaticAssets(
 function configureSwagger(
   app: NestExpressApplication,
   staticPath: string,
-  logger: Logger,
   appConfig: AppConfigService,
 ): void {
   const swaggerOptions = appConfig.swaggerOptions;
@@ -116,7 +111,6 @@ function configureSwagger(
   fs.writeFileSync(apiDocPath, JSON.stringify(document, null, 2));
 
   BootstrapLogHelper.logApiDocumentSaved(
-    logger,
     apiDocPath,
     appConfig.baseUrl,
     appConfig.staticAssetsOptions.options.prefix,
@@ -142,8 +136,8 @@ async function bootstrap(): Promise<void> {
     // 配置应用组件
     configureApp(app, appConfig);
     configureVersioning(app, appConfig);
-    const staticPath = configureStaticAssets(app, logger, appConfig);
-    configureSwagger(app, staticPath, logger, appConfig);
+    const staticPath = configureStaticAssets(app, appConfig);
+    configureSwagger(app, staticPath, appConfig);
 
     // 启动应用
     const port = appConfig.port;
@@ -151,14 +145,13 @@ async function bootstrap(): Promise<void> {
 
     // 打印启动完成信息
     await BootstrapLogHelper.logApplicationStartup(
-      logger,
       app,
       appConfig,
       appConfig.apiVersioning,
       appConfig.staticAssetsOptions,
     );
   } catch (error) {
-    BootstrapLogHelper.logApplicationError(logger, error);
+    BootstrapLogHelper.logApplicationError(error);
     process.exit(1);
   }
 }
