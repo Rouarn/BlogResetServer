@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { ServeStaticOptions } from '@nestjs/platform-express/interfaces/serve-static-options.interface';
 import type { Environment } from './types';
+import { CorsOptions } from 'cors';
 
 /**
  * 应用配置服务
@@ -98,13 +99,54 @@ export class AppConfigService {
   }
 
   // CORS 跨域配置
-  get corsOptions(): { origin: string[]; credentials: boolean } {
-    const origins = this.configService.get<string[]>('app.cors.origin', [
-      'http://localhost:3000',
-      'http://localhost:9527',
-    ]);
+  get corsOptions(): CorsOptions {
+    const allowList = this.configService.get<string[]>('app.cors.origin', []);
+
+    // 生产环境：严格检查 Origin
+    if (this.isProduction) {
+      return {
+        origin: (requestOrigin, callback) => {
+          // 允许无 Origin 的请求 (如 curl, postman, server-to-server)
+          if (!requestOrigin) {
+            return callback(null, true);
+          }
+
+          // 检查是否在允许列表中
+          if (allowList.includes('*') || allowList.includes(requestOrigin)) {
+            return callback(null, true);
+          }
+
+          callback(new Error('不允许的跨域请求'));
+        },
+        credentials: true,
+      };
+    }
+
+    // 开发/测试环境：允许所有 localhost 和局域网 IP
     return {
-      origin: origins,
+      origin: (requestOrigin, callback) => {
+        if (!requestOrigin) {
+          return callback(null, true);
+        }
+
+        // 允许白名单中的域名
+        if (allowList.includes('*') || allowList.includes(requestOrigin)) {
+          return callback(null, true);
+        }
+
+        // 允许本地开发环境
+        // 匹配: localhost, 127.0.0.1, 192.168.x.x, 10.x.x.x, 172.16-31.x.x
+        const isLocalDev =
+          /^(http|https):\/\/(localhost|127\.0\.0\.1|192\.168\.|10\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(
+            requestOrigin,
+          );
+
+        if (isLocalDev) {
+          return callback(null, true);
+        }
+
+        callback(null, false);
+      },
       credentials: true,
     };
   }

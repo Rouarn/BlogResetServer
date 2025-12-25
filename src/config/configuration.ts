@@ -82,10 +82,7 @@ export default registerAs('app', (): AppConfig => {
 
     // CORS 跨域配置
     cors: {
-      origin: getEnvVar('NEST_CORS_ORIGINS', [
-        'http://localhost:9527',
-        'http://192.168.31.32:8848',
-      ]),
+      origin: getEnvVar('NEST_CORS_ORIGINS', []),
       credentials: true,
     },
 
