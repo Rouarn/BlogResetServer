@@ -30,14 +30,16 @@ export class UsersService {
    * @returns 用户列表和总数
    */
   async findAll(current: number = 1, size: number = 10): Promise<{ list: User[]; total: number }> {
-    const [data, total] = await this.userRepository.findAndCount({
-      skip: (current - 1) * size,
-      take: size,
-      relations: ['auth'],
-      order: { createTime: 'DESC' },
-    });
-    const result = { list: data, total };
-    return result;
+    const queryBuilder = this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.auth', 'auth')
+      .orderBy('user.createTime', 'DESC')
+      .skip((current - 1) * size)
+      .take(size);
+
+    const [data, total] = await queryBuilder.getManyAndCount();
+
+    return { list: data, total };
   }
 
   /**

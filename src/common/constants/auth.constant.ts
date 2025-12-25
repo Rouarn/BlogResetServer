@@ -23,7 +23,7 @@ export const JWT_CONSTANTS = {
   /** JWT Token 在请求头中的字段名 */
   HEADER_KEY: 'Authorization',
   /** JWT Token 的前缀 */
-  TOKEN_PREFIX: 'Bearer ',
+  TOKEN_PREFIX: 'Bearer',
 } as const;
 
 /**

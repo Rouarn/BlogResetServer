@@ -1,4 +1,4 @@
-import { CACHE_PREFIXES, CACHE_TOKENS } from '@/common/constants';
+import { CACHE_PREFIXES, CACHE_TOKENS, JWT_CONSTANTS } from '@/common/constants';
 import { isEnabled, Role } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { CurrentUser } from '@/common/interfaces';
@@ -285,7 +285,7 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      tokenType: 'Bearer',
+      tokenType: JWT_CONSTANTS.TOKEN_PREFIX,
       accessTokenTtl: this.appConfig.jwtOptions.accessTokenTtl,
       refreshTokenTtl: this.appConfig.jwtOptions.refreshTokenTtl, // 7 days
     };
@@ -358,7 +358,7 @@ export class AuthService {
     return {
       accessToken,
       refreshToken: newRefreshToken,
-      tokenType: 'Bearer',
+      tokenType: JWT_CONSTANTS.TOKEN_PREFIX,
       accessTokenTtl: this.appConfig.jwtOptions.accessTokenTtl,
       refreshTokenTtl: this.appConfig.jwtOptions.refreshTokenTtl, // 7天
     };

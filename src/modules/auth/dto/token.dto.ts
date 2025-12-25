@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
+import { JWT_CONSTANTS } from '@/common/constants';
 
 /**
  * JWT载荷DTO
@@ -99,10 +100,10 @@ export class TokenResponseDto {
 
   @ApiProperty({
     description: '令牌类型',
-    example: 'Bearer',
-    default: 'Bearer',
+    example: JWT_CONSTANTS.TOKEN_PREFIX,
+    default: JWT_CONSTANTS.TOKEN_PREFIX,
   })
-  tokenType: string = 'Bearer';
+  tokenType: string = JWT_CONSTANTS.TOKEN_PREFIX;
 
   @ApiProperty({
     description: '访问令牌过期时间（秒）',

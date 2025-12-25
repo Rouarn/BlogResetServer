@@ -5,7 +5,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as path from 'path';
 import sharp from 'sharp';
-import type { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import type { FileQueryDto, FileUploadDto } from '../dto';
 import { File } from '../entities';
 import type { BatchUploadResult, FileUploadResult } from '../interfaces';
@@ -90,9 +90,26 @@ export class FilesService {
       failureCount: 0,
     };
 
+    // 预先计算所有文件的哈希值
+    const fileHashes = files.map((file) => this.validationService.generateFileHash(file.buffer));
+
+    // 批量查询已存在的文件
+    const existingFiles = await this.fileRepository.findBy({ hash: In(fileHashes) });
+    const existingFilesMap = new Map(existingFiles.map((file) => [file.hash, file]));
+
     // 并发处理文件上传
-    const uploadPromises = files.map(async (file) => {
+    const uploadPromises = files.map(async (file, index) => {
       try {
+        const fileHash = fileHashes[index];
+        const existingFile = existingFilesMap.get(fileHash);
+
+        if (existingFile) {
+          const result = this.mapToUploadResult(existingFile);
+          results.successful.push(result);
+          results.successCount++;
+          return;
+        }
+
         const result = await this.uploadSingleFile(file, uploadDto, userId);
         results.successful.push(result);
         results.successCount++;

@@ -1,4 +1,4 @@
-import { CACHE_PREFIXES, CACHE_TOKENS } from '@/common/constants';
+import { CACHE_PREFIXES, CACHE_TOKENS, JWT_CONSTANTS } from '@/common/constants';
 import { Role, Status } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { CurrentUser } from '@/common/interfaces';
@@ -139,6 +139,6 @@ export class JwtAuthGuard implements CanActivate {
 
   private extractTokenFromHeader(request: Request): string | undefined {
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
-    return type === 'Bearer' ? token : undefined;
+    return type === JWT_CONSTANTS.TOKEN_PREFIX ? token : undefined;
   }
 }

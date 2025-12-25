@@ -34,7 +34,7 @@ function resolveStaticPath(staticConfig: { root: string }): string {
  * 配置应用基础设置
  */
 function configureApp(app: NestExpressApplication, appConfig: AppConfigService): void {
-  // 启用 GZIP 压缩
+  // 启用 GZIP 压缩 Accept-Encoding: gzip
   app.use(compression());
 
   // 配置CORS跨域策略
