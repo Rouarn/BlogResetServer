@@ -5,11 +5,11 @@
  * 支持连接失败时的优雅降级处理。
  */
 
+import { AppConfigService } from '@/config';
+import { deserialize, getErrorMessage, serialize } from '@/utils';
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import Redis from 'ioredis';
 import { CacheOptions, CacheStats, ICacheService } from '../interfaces';
-import { deserialize, serialize } from '@/utils/helpers';
-import { AppConfigService } from '@/config';
 
 @Injectable()
 export class RedisCacheService implements ICacheService, OnModuleDestroy {
@@ -74,7 +74,7 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
       await this.redis.connect();
       this.logger.log('✅ Redis 初始化完成');
     } catch (error) {
-      this.logger.error(`❌ 初始化 Redis 失败: ${(error as Error).message}`);
+      this.logger.error(`❌ 初始化 Redis 失败: ${getErrorMessage(error)}`);
       try {
         if (this.redis) {
           this.redis.disconnect();
@@ -700,7 +700,7 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
     try {
       return await operation();
     } catch (error) {
-      this.logger.error(`❌ Redis ${operationName} 操作失败: ${(error as Error).message}`);
+      this.logger.error(`❌ Redis ${operationName} 操作失败: ${getErrorMessage(error)}`);
       return fallback;
     }
   }

@@ -1,5 +1,5 @@
-import { formatTimestamp } from '@/utils/helpers';
 import type { PaginationParams, SuccessResponse } from '@/common/interfaces';
+import { formatTimestamp } from '@/utils';
 
 /**
  * 成功响应常量

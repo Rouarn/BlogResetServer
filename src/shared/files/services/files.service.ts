@@ -1,6 +1,6 @@
 import { Status } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
-import { formatDatePath } from '@/utils';
+import { formatDatePath, getErrorMessage } from '@/utils';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as path from 'path';
@@ -116,7 +116,7 @@ export class FilesService {
       } catch (error) {
         results.failed.push({
           filename: file.originalname,
-          error: (error as Error).message,
+          error: getErrorMessage(error),
         });
         results.failureCount++;
         this.logger.error(`❌ 文件上传失败: ${file.originalname}`, error);

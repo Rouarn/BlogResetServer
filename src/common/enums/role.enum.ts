@@ -1,4 +1,4 @@
-import { EnumHelper } from '@/utils/helpers';
+import { EnumHelper } from '@/utils';
 
 /**
  * 用户角色系统

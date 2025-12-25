@@ -25,3 +25,4 @@ export * from './uuid.helper';
 
 // 其他
 export * from './custom-serialize.helper';
+export * from './error.helper';

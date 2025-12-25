@@ -4,7 +4,7 @@ import { BusinessExceptionFactory } from '@/common/exceptions';
 import { CurrentUser } from '@/common/interfaces';
 import { AppConfigService } from '@/config';
 import { ICacheService } from '@/shared/cache';
-import { getCurrentTimestamp, uuidv4 } from '@/utils/helpers';
+import { getCurrentTimestamp, uuidv4 } from '@/utils';
 import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';

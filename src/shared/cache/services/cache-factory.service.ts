@@ -8,6 +8,7 @@
  */
 
 import { AppConfigService } from '@/config';
+import { getErrorMessage } from '@/utils';
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { CacheConfig, ICacheService } from '../interfaces';
 import { NoopCacheService } from './noop-cache.service';
@@ -35,7 +36,7 @@ export class CacheFactoryService implements OnModuleDestroy {
       this.cacheService = await this.createCacheService();
       return this.cacheService;
     } catch (error) {
-      this.logger.error(`❌ 创建缓存服务失败: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(`❌ 创建缓存服务失败: ${getErrorMessage(error)}`, (error as Error).stack);
       throw error;
     }
   }
@@ -89,7 +90,7 @@ export class CacheFactoryService implements OnModuleDestroy {
 
       return { healthy };
     } catch (error) {
-      return { healthy: false, error: (error as Error).message };
+      return { healthy: false, error: getErrorMessage(error) };
     }
   }
 

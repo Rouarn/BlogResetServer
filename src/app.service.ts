@@ -13,8 +13,9 @@
  * @author NestJS Template
  * @version 1.0.0
  */
+import { getErrorMessage } from '@/utils';
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { readFileSync, existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
 // Package.json 类型定义
@@ -47,8 +48,7 @@ export class AppService implements OnModuleInit {
       const fileContent = readFileSync(packageJsonPath, 'utf8');
       this.packageJson = JSON.parse(fileContent) as PackageJson;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to read or parse package.json: ${errorMessage}`);
+      throw new Error(`Failed to read or parse package.json: ${getErrorMessage(error)}`);
     }
   }
   /**
