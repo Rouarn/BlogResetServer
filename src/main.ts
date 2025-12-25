@@ -7,7 +7,7 @@
  * @version 1.0.0
  */
 
-import { VersioningType } from '@nestjs/common';
+import { Logger, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -16,7 +16,7 @@ import cors from 'cors';
 import * as fs from 'fs';
 import * as path from 'path';
 import { AppModule } from './app.module';
-import { BootstrapLoggerService } from './common/services';
+import { BootstrapLogHelper } from './common/helpers';
 import { AppConfigService } from './config';
 
 /**
@@ -68,13 +68,13 @@ function configureVersioning(app: NestExpressApplication, appConfig: AppConfigSe
  */
 function configureStaticAssets(
   app: NestExpressApplication,
-  logger: BootstrapLoggerService,
+  logger: Logger,
   appConfig: AppConfigService,
 ): string {
   const staticConfig = appConfig.staticAssetsOptions;
   const staticPath = resolveStaticPath(staticConfig);
 
-  logger.logStaticResourceConfig(staticConfig, staticPath);
+  BootstrapLogHelper.logStaticResourceConfig(logger, staticConfig, staticPath);
   app.useStaticAssets(staticPath, staticConfig.options);
 
   return staticPath;
@@ -86,7 +86,7 @@ function configureStaticAssets(
 function configureSwagger(
   app: NestExpressApplication,
   staticPath: string,
-  logger: BootstrapLoggerService,
+  logger: Logger,
   appConfig: AppConfigService,
 ): void {
   const swaggerOptions = appConfig.swaggerOptions;
@@ -115,7 +115,8 @@ function configureSwagger(
 
   fs.writeFileSync(apiDocPath, JSON.stringify(document, null, 2));
 
-  logger.logApiDocumentSaved(
+  BootstrapLogHelper.logApiDocumentSaved(
+    logger,
     apiDocPath,
     appConfig.baseUrl,
     appConfig.staticAssetsOptions.options.prefix,
@@ -124,35 +125,42 @@ function configureSwagger(
 }
 
 async function bootstrap(): Promise<void> {
-  // 创建应用实例
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    bufferLogs: true, // 缓存日志直到 Logger 初始化完成
-  });
+  // 初始化日志服务
+  const logger = new Logger('Bootstrap');
 
-  // 获取配置服务
-  const appConfig = app.get(AppConfigService);
+  try {
+    // 创建应用实例
+    const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+      bufferLogs: true, // 缓存日志直到 Logger 初始化完成
+    });
 
-  // 初始化自定义日志服务
-  const logger = app.get(BootstrapLoggerService);
-  app.useLogger(logger);
+    // 获取配置服务
+    const appConfig = app.get(AppConfigService);
 
-  // 配置应用组件
-  configureApp(app, appConfig);
-  configureVersioning(app, appConfig);
-  const staticPath = configureStaticAssets(app, logger, appConfig);
-  configureSwagger(app, staticPath, logger, appConfig);
+    app.useLogger(logger);
 
-  // 启动应用
-  const port = appConfig.port;
-  await app.listen(port);
+    // 配置应用组件
+    configureApp(app, appConfig);
+    configureVersioning(app, appConfig);
+    const staticPath = configureStaticAssets(app, logger, appConfig);
+    configureSwagger(app, staticPath, logger, appConfig);
 
-  // 打印启动完成信息
-  await logger.logApplicationStartup(
-    app,
-    appConfig,
-    appConfig.apiVersioning,
-    appConfig.staticAssetsOptions,
-  );
+    // 启动应用
+    const port = appConfig.port;
+    await app.listen(port);
+
+    // 打印启动完成信息
+    await BootstrapLogHelper.logApplicationStartup(
+      logger,
+      app,
+      appConfig,
+      appConfig.apiVersioning,
+      appConfig.staticAssetsOptions,
+    );
+  } catch (error) {
+    BootstrapLogHelper.logApplicationError(logger, error);
+    process.exit(1);
+  }
 }
 
 void bootstrap();
