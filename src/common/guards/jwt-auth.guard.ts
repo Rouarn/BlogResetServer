@@ -72,19 +72,19 @@ export class JwtAuthGuard implements CanActivate {
         `${CACHE_PREFIXES.BLACKLIST}${payload.authId}:${payload.jti}`,
       );
       if (isBlacklisted) {
-        throw BusinessExceptionFactory.unauthorized('Token无效或已过期');
+        BusinessExceptionFactory.unauthorized('Token无效或已过期');
       }
 
       // 6. 检查数据库用户状态
       const authInfo = await this.authService.getAuthById(payload.authId);
       if (!authInfo || authInfo.status !== Status.ENABLED) {
-        throw BusinessExceptionFactory.forbidden('账号访问', {
+        BusinessExceptionFactory.forbidden('账号访问', {
           message: '账号已被禁用或不存在',
           authId: payload.authId,
         });
       }
       if (this.authService.isAccountLocked(authInfo)) {
-        throw BusinessExceptionFactory.forbidden('账号访问', {
+        BusinessExceptionFactory.forbidden('账号访问', {
           message: '账号已被锁定',
           authId: payload.authId,
         });
@@ -97,7 +97,7 @@ export class JwtAuthGuard implements CanActivate {
         // 如果密码修改时间晚于令牌签发时间，则令牌失效
         // iat 是令牌签发时间（秒）
         if (payload.iat && passwordChangedTimestamp > payload.iat) {
-          throw BusinessExceptionFactory.unauthorized('密码已修改，请重新登录');
+          BusinessExceptionFactory.unauthorized('密码已修改，请重新登录');
         }
       }
 

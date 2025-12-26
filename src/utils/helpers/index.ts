@@ -6,7 +6,6 @@
 
 // 字符串处理
 export * from './capitalize.helper';
-export * from './random-string.helper';
 
 // 数据处理
 export * from './deep-clone.helper';

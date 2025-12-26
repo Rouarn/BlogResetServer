@@ -4,7 +4,7 @@ import { BusinessExceptionFactory } from '@/common/exceptions';
 import { CurrentUser } from '@/common/interfaces';
 import { AppConfigService } from '@/config';
 import { ICacheService } from '@/shared/cache';
-import { getCurrentTimestamp, uuidv4 } from '@/utils';
+import { getCurrentTimestamp, uuid4 } from '@/utils';
 import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -27,7 +27,6 @@ import { Auth } from './entities/auth.entity';
 
 /**
  * 认证服务（AuthService）
- *
  * 专注于用户认证相关的核心业务逻辑，与用户管理功能完全分离。
  */
 @Injectable()
@@ -168,7 +167,6 @@ export class AuthService {
    *
    * @param loginDto 包含用户名、密码等登录数据
    * @param clientIp 客户端IP
-   * @param userAgent 用户代理
    * @returns 成功时返回完整的登录响应信息
    * @throws UnauthorizedException 认证失败
    * @throws BadRequestException 账号被锁定或其他业务错误
@@ -253,7 +251,7 @@ export class AuthService {
       authId: auth.id,
       userId: auth.user?.id || auth.id,
       roles: auth.user?.roles || Role.USER,
-      jti: uuidv4(),
+      jti: uuid4(),
     };
 
     // 单点登录控制：检查并移除旧的令牌
@@ -339,7 +337,7 @@ export class AuthService {
       username: auth.username,
       userId: auth.user?.id || auth.id,
       roles: auth.user?.roles || Role.USER,
-      jti: uuidv4(),
+      jti: uuid4(),
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -443,8 +441,8 @@ export class AuthService {
    *
    * 撤销用户的访问令牌和刷新令牌
    *
-   * @param currentUser 当前用户信息
    * @returns 登出结果
+   * @param token
    */
   async logout(token: string): Promise<{ message: string }> {
     const tokenPayload = this.jwtService.decode<
@@ -611,8 +609,7 @@ export class AuthService {
     // 动态计算锁定时间
     const lockDuration = this.calculateLockDuration(auth.loginAttempts);
     const now = new Date();
-    const lockedAtDate =
-      auth.lockedAt instanceof Date ? auth.lockedAt : new Date(auth.lockedAt as unknown as string);
+    const lockedAtDate = auth.lockedAt;
 
     if (Number.isNaN(lockedAtDate.getTime())) return false;
 
@@ -668,17 +665,6 @@ export class AuthService {
    */
   private async incrementLoginAttempts(authId: string): Promise<void> {
     await this.authRepository.increment({ id: authId }, 'loginAttempts', 1);
-  }
-
-  /**
-   * 重置登录失败次数
-   *
-   * @param authId 认证ID
-   */
-  private async resetLoginAttempts(authId: string): Promise<void> {
-    await this.authRepository.update(authId, {
-      loginAttempts: 0,
-    });
   }
 
   /**

@@ -22,7 +22,6 @@ export class CustomValidationPipe extends ValidationPipe {
           .map((error) => {
             if (error.constraints) {
               // 处理字段验证错误（如 @IsNotEmpty, @IsString 等）
-
               return Object.values(error.constraints).map((msg) => {
                 // 将常见的英文错误消息转换为中文
                 if (msg.includes('should not exist')) {

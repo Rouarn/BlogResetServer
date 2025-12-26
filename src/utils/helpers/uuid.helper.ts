@@ -191,6 +191,7 @@ export function getNilUUID(): string {
 /**
  * 格式化 UUID (移除连字符)
  * @param uuid UUID 字符串
+ * @param removeHyphens
  * @returns 格式化后的 UUID 字符串
  */
 export function formatUUID(uuid: string, removeHyphens: boolean = false): string {
@@ -317,7 +318,7 @@ export class UUIDUtil {
 // 导出常用函数的别名
 export {
   generateUUID as uuidGenerator,
-  generateUUIDv4 as uuidv4,
+  generateUUIDv4 as uuid4,
   isValidUUID as validateUUID,
   NIL_UUID as nilUUID,
 };

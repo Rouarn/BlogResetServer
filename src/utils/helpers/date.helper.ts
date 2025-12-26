@@ -17,7 +17,7 @@
  * @author NestJS Template
  * @version 1.0.0
  */
-import { formatDate } from './format-date.helper';
+import { formatDate } from '@/utils';
 
 /**
  * 格式化当前时间戳为标准格式

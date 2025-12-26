@@ -1,6 +1,6 @@
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { AppConfigService } from '@/config';
-import { getCurrentTimestamp, randomString } from '@/utils';
+import { getCurrentTimestamp, uuid4 } from '@/utils';
 import { Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { fileTypeFromBuffer } from 'file-type';
@@ -137,7 +137,7 @@ export class ValidationService {
 
   generateUniqueFilename(originalName: string): string {
     const timestamp = getCurrentTimestamp();
-    const random = randomString(8);
+    const random = uuid4();
     const ext = this.getFileExtension(originalName);
     // 确保扩展名安全
     const safeExt = ext ? this.sanitizeFilename(ext) : 'bin';

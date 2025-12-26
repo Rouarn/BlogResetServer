@@ -1,8 +1,8 @@
 /**
  * 深拷贝对象
  * （优先 structuredClone，失败自动降级）
- * @param obj 任意对象
  * @returns 深拷贝后的新对象
+ * @param value
  */
 export function deepClone<T>(value: T): T {
   // 1️⃣ 优先使用 Node 原生 structuredClone
