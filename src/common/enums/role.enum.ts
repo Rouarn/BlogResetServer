@@ -1,3 +1,5 @@
+import { EnumHelper } from '@/utils';
+
 /**
  * 用户角色系统
  * 提供通用的角色管理和权限控制功能
@@ -124,7 +126,7 @@ export type RoleGroup = keyof typeof ROLE_GROUPS;
 /**
  * 获取所有角色值
  */
-export const ROLE_VALUES = Object.values(Role);
+export const ROLE_VALUES = EnumHelper.getValues(Role) as Role[];
 
 /**
  * 角色工具类
@@ -134,7 +136,7 @@ export class RoleUtils {
    * 验证角色是否有效
    */
   static isValidRole(value: unknown): value is Role {
-    return typeof value === 'string' && ROLE_VALUES.includes(value as Role);
+    return EnumHelper.hasValue(Role, value);
   }
 
   /**

@@ -1,6 +1,6 @@
-import { forwardRef, Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@/shared/cache';
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
@@ -36,7 +36,7 @@ import { Auth } from './entities/auth.entity';
  * - 完整的安全控制机制
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([Auth]), CacheModule, forwardRef(() => UsersModule)],
+  imports: [TypeOrmModule.forFeature([Auth]), CacheModule, UsersModule],
   controllers: [AuthController],
   providers: [AuthService],
   exports: [AuthService, TypeOrmModule],

@@ -8,8 +8,7 @@ import type {
   UpdateEvent,
 } from 'typeorm';
 import { EventSubscriber } from 'typeorm';
-import { DISABLE_TIMESTAMPS_KEY } from '../decorators';
-import { BaseEntity } from '../entities/base.entity';
+import { DISABLE_TIMESTAMPS_KEY, BaseEntity } from '@/database';
 
 // 类型定义
 interface EntityWithTimestamps {
@@ -26,8 +25,10 @@ type BaseEntityLike = Omit<EntityWithTimestamps, 'constructor'> & {
 type AuditEvent = InsertEvent<BaseEntity> | UpdateEvent<BaseEntity>;
 
 /**
- * 时间戳订阅者
- * 自动处理实体的创建时间和更新时间
+ * 审计订阅者
+ *
+ * 自动处理实体的创建时间和更新时间，确保数据审计信息的准确性。
+ * 同时记录实体删除操作，便于追踪数据变更历史。
  */
 @Injectable()
 @EventSubscriber()
@@ -37,14 +38,17 @@ export class AuditSubscriber implements EntitySubscriberInterface<BaseEntity> {
   constructor(private readonly reflector: Reflector) {}
 
   /**
-   * 监听所有实体
+   * 指定监听的实体类型
+   * @returns 监听的实体基类
    */
   listenTo(): typeof BaseEntity {
     return BaseEntity;
   }
 
   /**
-   * 插入前处理
+   * 实体插入前处理
+   * 自动设置创建时间和更新时间
+   * @param event 插入事件对象
    */
   beforeInsert(event: InsertEvent<BaseEntity>): void {
     if (!this.isBaseEntity(event.entity as BaseEntityLike) || this.isTimestampsDisabled(event)) {
@@ -64,7 +68,9 @@ export class AuditSubscriber implements EntitySubscriberInterface<BaseEntity> {
   }
 
   /**
-   * 更新前处理
+   * 实体更新前处理
+   * 自动更新时间戳
+   * @param event 更新事件对象
    */
   beforeUpdate(event: UpdateEvent<BaseEntity>): void {
     if (!this.isBaseEntity(event.entity as BaseEntityLike) || this.isTimestampsDisabled(event)) {
@@ -79,7 +85,9 @@ export class AuditSubscriber implements EntitySubscriberInterface<BaseEntity> {
   }
 
   /**
-   * 删除前处理 - 用于记录和验证
+   * 实体删除前处理
+   * 记录删除操作日志
+   * @param event 删除事件对象
    */
   async beforeRemove(event: RemoveEvent<BaseEntity>): Promise<void> {
     if (!this.isBaseEntity(event.entity as BaseEntityLike)) {
@@ -96,7 +104,10 @@ export class AuditSubscriber implements EntitySubscriberInterface<BaseEntity> {
   }
 
   /**
-   * 加载后处理 - 可以在这里添加额外的逻辑
+   * 实体加载后处理
+   * 可在此添加加载后的处理逻辑，如时间戳格式化等
+   * @param entity 加载的实体
+   * @param event 加载事件对象
    */
   afterLoad(_entity: BaseEntity, _event?: LoadEvent<BaseEntity>): void {
     // 可以在这里添加加载后的处理逻辑
@@ -105,6 +116,8 @@ export class AuditSubscriber implements EntitySubscriberInterface<BaseEntity> {
 
   /**
    * 检查实体是否为时间戳管理实体
+   * @param entity 待检查的实体
+   * @returns 是否为时间戳管理实体
    */
   private isBaseEntity(entity: BaseEntityLike | null | undefined): boolean {
     if (!entity) return false;
@@ -120,6 +133,8 @@ export class AuditSubscriber implements EntitySubscriberInterface<BaseEntity> {
 
   /**
    * 检查是否禁用时间戳
+   * @param event 审计事件对象
+   * @returns 是否禁用时间戳
    */
   private isTimestampsDisabled(event: AuditEvent): boolean {
     // 检查实体类上的元数据

@@ -1,10 +1,7 @@
+import { AppConfigService } from '@/config';
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { appConfig } from 'src/config';
-import { BusinessExceptionFactory } from '../../../common/exceptions';
-import { StaticOptions } from '../../../common/interfaces';
 import type { StorageAdapter, StorageConfig } from '../interfaces';
 
 @Injectable()
@@ -12,18 +9,15 @@ export class StorageService implements StorageAdapter {
   private readonly logger = new Logger(StorageService.name);
   private readonly config: StorageConfig;
 
-  constructor(private configService: ConfigService) {
-    const staticConfig = this.configService.get<StaticOptions>('app.static');
+  constructor(private appConfigService: AppConfigService) {
+    const staticConfig = this.appConfigService.staticAssetsOptions;
 
     // 使用静态资源配置中的上传设置
-    if (!staticConfig) {
-      throw BusinessExceptionFactory.invalidParameter('文件上传配置未找到');
-    }
     this.config = {
       type: 'local',
-      basePath: staticConfig.uploadsPath,
-      maxFileSize: staticConfig.uploadsMaxSize,
-      allowedTypes: staticConfig.uploadsAllowedTypes,
+      basePath: staticConfig.options.uploadsPath,
+      maxFileSize: staticConfig.options.uploadsMaxSize,
+      allowedTypes: staticConfig.options.uploadsAllowedTypes,
     };
     void this.ensureUploadDirectory();
   }
@@ -80,9 +74,9 @@ export class StorageService implements StorageAdapter {
   }
 
   getUrl(relativePath: string): string {
-    const baseUrl = appConfig.baseUrl;
+    const baseUrl = this.appConfigService.baseUrl;
 
-    const staticConfig = appConfig.staticAssetsOptions;
+    const staticConfig = this.appConfigService.staticAssetsOptions;
 
     // 获取 staticConfig.options.uploadsPath 与 staticConfig.options.prefix 不同的部分
     const uploadsPath = staticConfig.options.uploadsPath;

@@ -1,3 +1,6 @@
+import { GetCurrentUser, Public } from '@/common/decorators';
+import { CurrentUser } from '@/common/interfaces';
+import { FilesValidationPipe, FileValidationPipe } from './pipes';
 import {
   Body,
   Controller,
@@ -25,14 +28,18 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { Response } from 'express';
-import { GetCurrentUser } from 'src/common/decorators';
-import { FileValidationPipe, FilesValidationPipe } from 'src/common/pipes';
-import type { Auth as CurrentUser } from 'src/modules/auth/entities/auth.entity';
-import { FileQueryDto, FileUploadDto } from './dto';
-import { FileListResponseDto, FileUploadResponseDto } from './dto/swagger-responses.dto';
+import {
+  BatchUploadResultDto,
+  FileListResponseDto,
+  FileQueryDto,
+  FileUploadDto,
+  UploadFileResultDto,
+} from './dto';
 import { FileAccessGuard } from './guards/file-access.guard';
 import { BatchUploadResult, FileUploadResult } from './interfaces';
 import { FilesService } from './services/files.service';
+import { Status } from '@/common/enums';
+import { File } from './entities';
 
 @ApiTags('文件管理')
 @ApiBearerAuth()
@@ -55,7 +62,9 @@ export class FilesController {
           type: 'string',
         },
         isPublic: {
-          type: 'boolean',
+          type: 'string',
+          enum: Object.values(Status),
+          default: Status.DISABLED,
         },
       },
     },
@@ -63,7 +72,7 @@ export class FilesController {
   @ApiResponse({
     status: 201,
     description: '文件上传成功',
-    type: FileUploadResponseDto,
+    type: UploadFileResultDto,
   })
   @ApiResponse({
     status: 400,
@@ -86,8 +95,7 @@ export class FilesController {
     @Body() uploadDto: FileUploadDto,
     @GetCurrentUser() user?: CurrentUser,
   ): Promise<FileUploadResult> {
-    const result = await this.filesService.uploadSingleFile(file, uploadDto, user?.id);
-    return result;
+    return await this.filesService.uploadSingleFile(file, uploadDto, user?.userId);
   }
 
   @Post('upload/batch')
@@ -103,20 +111,26 @@ export class FilesController {
             type: 'string',
             format: 'binary',
           },
+          description: '要上传的文件列表',
         },
         description: {
           type: 'string',
+          description: '文件描述',
         },
         isPublic: {
-          type: 'boolean',
+          type: 'string',
+          enum: Object.values(Status),
+          default: Status.DISABLED,
+          description: '是否公开文件',
         },
       },
+      required: ['files'],
     },
   })
   @ApiResponse({
     status: 201,
     description: '批量文件上传完成',
-    type: 'object',
+    type: BatchUploadResultDto,
   })
   @ApiResponse({
     status: 400,
@@ -129,8 +143,7 @@ export class FilesController {
     @Body() uploadDto: FileUploadDto,
     @GetCurrentUser() user?: CurrentUser,
   ): Promise<BatchUploadResult> {
-    const result = await this.filesService.uploadMultipleFiles(files, uploadDto, user?.id);
-    return result;
+    return await this.filesService.uploadMultipleFiles(files, uploadDto, user?.userId);
   }
 
   @Get()
@@ -158,14 +171,16 @@ export class FilesController {
     @Query() queryDto: FileQueryDto,
     @GetCurrentUser() user?: CurrentUser,
   ): Promise<unknown> {
-    const result = await this.filesService.findFiles(queryDto, user?.id);
-    return result;
+    return await this.filesService.findFiles(queryDto, user?.userId);
   }
 
   @Get(':id')
   @ApiOperation({ summary: '获取文件详情' })
   @ApiParam({ name: 'id', description: '文件ID', example: 'uuid' })
-  @ApiResponse({ status: 200, description: '获取文件详情成功' })
+  @ApiResponse({
+    status: 200,
+    description: '获取文件详情成功',
+  })
   @ApiResponse({
     status: 404,
     description: '文件不存在',
@@ -181,8 +196,7 @@ export class FilesController {
     @Param('id', ParseUUIDPipe) id: string,
     @GetCurrentUser() user?: CurrentUser,
   ): Promise<unknown> {
-    const file = await this.filesService.findFileById(id, user?.id);
-    return file;
+    return await this.filesService.findFileById(id, user?.userId);
   }
 
   @Get(':id/download')
@@ -194,7 +208,7 @@ export class FilesController {
     @Res() res: Response,
     @GetCurrentUser() user?: CurrentUser,
   ): Promise<void> {
-    const { file, buffer } = await this.filesService.getFileBuffer(id, user?.id);
+    const { file, buffer } = await this.filesService.getFileBuffer(id, user?.userId);
 
     res.set({
       'Content-Type': file.mimeType,
@@ -206,15 +220,23 @@ export class FilesController {
   }
 
   @Get(':id/preview')
+  @Public()
   @ApiOperation({ summary: '预览文件' })
+  @ApiQuery({
+    name: 'size',
+    required: false,
+    description: '图片尺寸，格式如 1920x1080',
+    example: '1920x1080',
+  })
   @ApiResponse({ status: 200, description: '文件预览成功' })
   @UseGuards(FileAccessGuard)
   async previewFile(
     @Param('id', ParseUUIDPipe) id: string,
+    @Query('size') size: string,
     @Res() res: Response,
     @GetCurrentUser() user?: CurrentUser,
   ): Promise<void> {
-    const { file, buffer } = await this.filesService.getFileBuffer(id, user?.id);
+    const { file, buffer } = await this.filesService.getFileBuffer(id, user?.userId, size);
 
     res.set({
       'Content-Type': file.mimeType,
@@ -228,6 +250,17 @@ export class FilesController {
   @Delete(':id')
   @ApiOperation({ summary: '删除文件' })
   @ApiResponse({ status: 200, description: '文件删除成功' })
+  @ApiResponse({
+    status: 404,
+    description: '文件不存在',
+    type: 'object',
+  })
+  @ApiResponse({
+    status: 403,
+    description: '无权限删除',
+    type: 'object',
+  })
+  @UseGuards(FileAccessGuard)
   async deleteFile(
     @Param('id', ParseUUIDPipe) id: string,
     @GetCurrentUser() user?: CurrentUser,
@@ -235,10 +268,45 @@ export class FilesController {
     success: boolean;
     message: string;
   }> {
-    await this.filesService.deleteFile(id, user?.id);
+    await this.filesService.deleteFile(id, user?.userId);
     return {
       success: true,
       message: '文件删除成功',
     };
+  }
+
+  @Post(':id/public-status')
+  @ApiOperation({ summary: '更新文件公开状态' })
+  @ApiParam({ name: 'id', description: '文件ID', example: 'uuid' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        isPublic: {
+          type: 'string',
+          enum: Object.values(Status),
+        },
+      },
+      required: ['isPublic'],
+    },
+  })
+  @ApiResponse({ status: 200, description: '文件状态更新成功' })
+  @ApiResponse({
+    status: 404,
+    description: '文件不存在',
+    type: 'object',
+  })
+  @ApiResponse({
+    status: 403,
+    description: '无权限修改',
+    type: 'object',
+  })
+  @UseGuards(FileAccessGuard)
+  async updatePublicStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('isPublic') isPublic: Status,
+    @GetCurrentUser() user?: CurrentUser,
+  ): Promise<File> {
+    return await this.filesService.updateFilePublicStatus(id, isPublic, user?.userId);
   }
 }

@@ -20,34 +20,20 @@ export const CACHE_TOKENS = {
  * 缓存键前缀常量
  */
 export const CACHE_PREFIXES = {
-  /** 用户相关缓存前缀 */
-  USER: 'auth:user',
-  /** 用户列表缓存前缀 */
-  USERS: 'auth:users',
-  /** 用户信息缓存前缀 */
-  USER_INFO: 'auth:userinfo',
-  /** 验证码缓存前缀 */
-  CAPTCHA: 'auth:captcha',
-  /** 刷新令牌缓存前缀 */
-  REFRESH_TOKEN: 'auth:refresh_token',
-  /** 重置令牌缓存前缀 */
-  RESET_TOKEN: 'auth:reset_token',
-  /** 黑名单令牌缓存前缀 */
-  BLACKLIST_TOKEN: 'auth:blacklist_token',
+  /** 黑名单令牌缓存键前缀 */
+  BLACKLIST: 'auth:blacklist:',
+  /** 用户令牌缓存键前缀 */
+  USER_TOKENS: 'auth:user_tokens:',
+  /** 刷新令牌缓存键前缀 */
+  REFRESH_TOKENS: 'auth:refresh_tokens:',
+  /** 用户资料缓存键前缀 */
+  USER_PROFILE: 'users:profile:',
 } as const;
 
 /**
  * 缓存 TTL 常量（秒）
  */
 export const CACHE_TTL = {
-  /** 用户信息缓存时间：1小时 */
-  USER_INFO: 3600,
-  /** 用户列表缓存时间：30分钟 */
-  USER_LIST: 1800,
-  /** 验证码缓存时间：5分钟 */
-  CAPTCHA: 300,
-  /** 刷新令牌缓存时间：7天 */
-  REFRESH_TOKEN: 604800,
-  /** 重置令牌缓存时间：30分钟 */
-  RESET_TOKEN: 1800,
+  /** 用户资料缓存过期时间（1小时） */
+  USER_PROFILE: 3600,
 } as const;

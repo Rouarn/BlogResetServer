@@ -22,17 +22,13 @@ export class CustomValidationPipe extends ValidationPipe {
           .map((error) => {
             if (error.constraints) {
               // 处理字段验证错误（如 @IsNotEmpty, @IsString 等）
-              const constraintMessages = Object.values(error.constraints).map((msg) => {
+              return Object.values(error.constraints).map((msg) => {
                 // 将常见的英文错误消息转换为中文
-                if (typeof msg === 'string') {
-                  if (msg.includes('should not exist')) {
-                    return `属性 ${error.property} 不应该存在`;
-                  }
-                  // 可以添加更多错误消息的中文转换
+                if (msg.includes('should not exist')) {
+                  return `属性 ${error.property} 不应该存在`;
                 }
                 return msg;
               });
-              return constraintMessages;
             } else if (error.property && !error.constraints) {
               // 处理禁止的额外属性错误（forbidNonWhitelisted: true）
               // 当属性不在白名单中时，class-validator不会设置constraints

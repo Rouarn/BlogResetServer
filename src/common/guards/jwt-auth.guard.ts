@@ -1,83 +1,144 @@
-import { ExecutionContext, Injectable } from '@nestjs/common';
+import { CACHE_PREFIXES, CACHE_TOKENS, JWT_CONSTANTS } from '@/common/constants';
+import { Role, Status } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
+import { CurrentUser } from '@/common/interfaces';
+import { AppConfigService } from '@/config';
+import { AuthService } from '@/modules/auth/auth.service';
+import { ICacheService } from '@/shared/cache';
+import { WhitelistAuth } from '@/utils';
+import { CanActivate, ExecutionContext, Inject, Injectable, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
-import type { Observable } from 'rxjs';
-import type { Auth } from 'src/modules/auth/entities/auth.entity';
-import { WhitelistAuth } from 'src/utils';
 import { IS_PUBLIC_KEY } from '../decorators';
 
 /**
  * JwtAuthGuard（JWT 认证守卫）
  *
- * 用于保护需要身份认证的路由，基于 JWT 策略进行用户身份校验。
- *
- * 功能说明：
- * - 继承自 NestJS 的 AuthGuard('jwt')，自动集成 Passport 的 JWT 策略。
- * - 支持通过 @Public 装饰器声明无需认证的公共路由。
- * - 校验失败时自动抛出 401（未授权）或 404（用户不存在）异常。
- *
- * 依赖项：
- * - Reflector：用于读取路由元数据（如是否为公共路由）。
- *
- * 主要方法：
- * - canActivate：判断当前请求是否需要认证，若为公共路由则直接放行，否则进入 JWT 校验。
- * - handleRequest：处理认证结果，抛出相应异常或返回用户对象。
- *
- * 用法示例：
- * - 在需要保护的控制器或路由上使用 @UseGuards(JwtAuthGuard)
- * - 在无需认证的路由上使用 @Public 装饰器
+ * 用于保护需要身份认证的路由，手动实现 JWT 校验逻辑。
+ * 集成了原 JwtAuthStrategy 的业务逻辑，不再依赖 passport-jwt。
  */
 @Injectable()
-export class JwtAuthGuard extends AuthGuard('jwt') {
-  /**
-   * 构造函数
-   * @param reflector 用于获取元数据的反射工具
-   */
-  constructor(private reflector: Reflector) {
-    super();
-  }
+export class JwtAuthGuard implements CanActivate {
+  private readonly logger = new Logger(JwtAuthGuard.name);
 
-  /**
-   * 判断当前请求是否需要认证
-   * @param context 执行上下文，包含请求相关信息
-   * @returns 是否允许访问（布尔值、Promise 或 Observable）
-   */
-  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly jwtService: JwtService,
+    private readonly authService: AuthService,
+    private readonly appConfig: AppConfigService,
+    @Inject(CACHE_TOKENS.I_CACHE_SERVICE)
+    private readonly cacheService: ICacheService,
+  ) {}
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
     const path = request.path ?? request.url;
 
-    // 检查是否在白名单中
+    // 1. 检查是否在白名单中 (直接放行，不解析Token)
     if (WhitelistAuth.isWhitelistedPath(path)) {
       return true;
     }
 
-    // 是否是公共路由（通过装饰器标记）
+    // 2. 检查是否是 @Public 路由 (允许不登录，但如果有Token会尝试解析)
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
 
-    if (isPublic) return true;
+    // 3. 获取 Token
+    const token = this.extractTokenFromHeader(request);
 
-    // 校验token
-    return super.canActivate(context);
+    if (!token) {
+      if (isPublic) {
+        return true;
+      }
+      throw BusinessExceptionFactory.unauthorized('未提供认证令牌');
+    }
+
+    try {
+      // 4. 验证 Token (包括签名和过期时间)
+      // verifyAsync 会自动检查 exp，如果过期会抛出 TokenExpiredError
+      const payload = await this.jwtService.verifyAsync<
+        CurrentUser & { jti: string; exp?: number; iat?: number }
+      >(token, {
+        secret: this.appConfig.jwtOptions.secret as string,
+        algorithms: ['HS256'],
+        clockTolerance: 5, // 允许5秒时间差，解决时钟不同步问题
+      });
+
+      // 5. 检查 Token 黑名单
+      const isBlacklisted = await this.cacheService.get(
+        `${CACHE_PREFIXES.BLACKLIST}${payload.authId}:${payload.jti}`,
+      );
+      if (isBlacklisted) {
+        BusinessExceptionFactory.unauthorized('Token无效或已过期');
+      }
+
+      // 6. 检查数据库用户状态
+      const authInfo = await this.authService.getAuthById(payload.authId);
+      if (!authInfo || authInfo.status !== Status.ENABLED) {
+        BusinessExceptionFactory.forbidden('账号访问', {
+          message: '账号已被禁用或不存在',
+          authId: payload.authId,
+        });
+      }
+      if (this.authService.isAccountLocked(authInfo)) {
+        BusinessExceptionFactory.forbidden('账号访问', {
+          message: '账号已被锁定',
+          authId: payload.authId,
+        });
+      }
+
+      // 7. 检查密码是否修改（使旧令牌失效）
+      if (authInfo.passwordChangedAt) {
+        // 将数据库时间转换为 Unix 时间戳（秒）
+        const passwordChangedTimestamp = Math.floor(authInfo.passwordChangedAt.getTime() / 1000);
+        // 如果密码修改时间晚于令牌签发时间，则令牌失效
+        // iat 是令牌签发时间（秒）
+        if (payload.iat && passwordChangedTimestamp > payload.iat) {
+          BusinessExceptionFactory.unauthorized('密码已修改，请重新登录');
+        }
+      }
+
+      // 8. 注入用户信息到请求对象
+      request.user = {
+        authId: authInfo.id,
+        userId: authInfo.user?.id || authInfo.id,
+        username: authInfo.username,
+        roles: [authInfo.user?.roles || Role.USER],
+        lastLoginAt: authInfo.lastLoginAt,
+      };
+
+      // 仅在开发环境或调试时打印用户信息
+      if (!this.appConfig.isProduction) {
+        this.logger.debug(`认证成功用户: ${authInfo.username}/${authInfo.id}`);
+      }
+
+      return true;
+    } catch (e: unknown) {
+      const error = e as Error;
+      // 如果是 @Public 路由，忽略所有认证错误
+      if (isPublic) {
+        return true;
+      }
+
+      // 处理特定错误
+      if (error.name === 'TokenExpiredError') {
+        // 仅调试模式打印，避免生产环境日志刷屏
+        if (!this.appConfig.isProduction) {
+          this.logger.debug(`Token已过期: ${error.message}`);
+        }
+        throw BusinessExceptionFactory.unauthorized('令牌已过期');
+      }
+
+      this.logger.error(`认证失败: ${error.message}`, error.stack);
+      throw BusinessExceptionFactory.unauthorized('认证失败');
+    }
   }
 
-  /**
-   * 处理认证结果
-   * @param error Passport 策略执行过程中的错误
-   * @param user 验证通过后的用户对象
-   * @param info 验证失败时的错误信息
-   * @returns 认证通过的用户对象
-   * @throws BusinessException token 校验失败
-   * @throws BusinessException 用户不存在
-   */
-  handleRequest<TUser = Auth>(error: Error, user: Auth, info: unknown): TUser {
-    if (info || error) throw BusinessExceptionFactory.validation('Token');
-    if (typeof user !== 'object') throw BusinessExceptionFactory.notFound('用户', { user });
-
-    return user as TUser;
+  private extractTokenFromHeader(request: Request): string | undefined {
+    const [type, token] = request.headers.authorization?.split(' ') ?? [];
+    return type === JWT_CONSTANTS.TOKEN_PREFIX ? token : undefined;
   }
 }

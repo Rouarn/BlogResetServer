@@ -7,36 +7,17 @@ import {
   PaginatedResponse,
   PaginationParams,
 } from '@/common/interfaces';
+import { formatTimestamp } from '@/utils';
 import type { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
 import { Injectable, Logger } from '@nestjs/common';
 import type { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { formatTimestamp } from 'src/utils';
 import { extractRootMessage, isPaginatedPayload, normalizePaginatedData } from './pagination.utils';
 
 /**
  * 响应数据格式化拦截器（ResponseInterceptor）
  *
  * 用于统一格式化所有 API 接口的响应数据结构。
- *
- * 功能说明：
- * - 将开发者接口返回的格式转换为统一的前端响应格式
- * - 普通接口支持两种返回格式：
- *   1. 直接返回数据：T -> {data: T, message: 'success', code: 200, timestamp: string}
- *   2. 包装格式：{data: T, message?: R} -> {data: T, message: R, code: 200, timestamp: string}
- * - 分页接口支持多种返回格式（自动识别并归一化为标准分页响应）：
- *   1. 直接返回：{list: T[], total: number}
- *   2. 直接返回：{records: T[], total: number}
- *   3. 直接返回：{data: T[], total: number}
- *   4. 包装返回：{data: {list: T[], total: number}, message?: string}
- *   5. 包装返回：{data: {records: T[], total: number}, message?: string}
- *   6. 包装返回：{data: {data: T[], total: number}, message?: string}
- * - 通过请求参数中的 current 和 size 字段判断是否为分页请求
- * - 如根对象包含 message 字段，则透传为响应消息；否则使用默认成功消息
- *
- * 响应格式：
- * - 普通响应：{ code: 200, message: string, data: T, timestamp: string }
- * - 分页响应：{ code: 200, message: string, data: { records: T[], total: number, totalPages: number, current: number, size: number }, timestamp: string }
  */
 @Injectable()
 export class ResponseInterceptor<T = unknown> implements NestInterceptor {

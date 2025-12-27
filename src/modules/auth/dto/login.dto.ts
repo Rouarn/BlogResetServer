@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, Length } from 'class-validator';
 
 /**
@@ -25,7 +25,7 @@ import { IsNotEmpty, IsString, Length } from 'class-validator';
 export class LoginDto {
   @ApiProperty({
     description: '用户名',
-    example: 'admin',
+    example: 'newuser',
     minLength: 3,
     maxLength: 20,
   })
@@ -36,7 +36,7 @@ export class LoginDto {
 
   @ApiProperty({
     description: '密码',
-    example: '123456',
+    example: 'password123',
     minLength: 6,
     maxLength: 50,
   })
@@ -44,50 +44,4 @@ export class LoginDto {
   @IsNotEmpty({ message: '密码不能为空' })
   @Length(6, 50, { message: '密码长度必须在6-50个字符之间' })
   password: string;
-}
-
-/**
- * 登录响应DTO
- *
- * 登录成功后返回的数据结构。
- *
- * 字段说明：
- * - accessToken: 访问令牌
- * - refreshToken: 刷新令牌（可选）
- * - expiresIn: 令牌过期时间（秒）
- * - tokenType: 令牌类型
- * - refreshExpiresIn: 刷新令牌过期时间（秒，可选）
- * - user: 用户基本信息
- */
-export class LoginResponseDto {
-  @ApiProperty({
-    description: '访问令牌',
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-  })
-  accessToken: string;
-
-  @ApiPropertyOptional({
-    description: '刷新令牌',
-    example: 'refresh-token-123',
-  })
-  refreshToken?: string;
-
-  @ApiProperty({
-    description: '令牌过期时间（秒）',
-    example: 3600,
-  })
-  expiresIn: number;
-
-  @ApiPropertyOptional({
-    description: '刷新令牌过期时间（秒）',
-    example: 604800,
-  })
-  refreshExpiresIn?: number;
-
-  @ApiProperty({
-    description: '令牌类型',
-    example: 'Bearer',
-    default: 'Bearer',
-  })
-  tokenType: string = 'Bearer';
 }

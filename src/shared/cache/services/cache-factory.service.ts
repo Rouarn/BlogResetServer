@@ -1,17 +1,17 @@
 /**
  * 缓存工厂服务
  *
- * 根据配置动态选择缓存实现（Redis 或内存缓存）
  * 提供统一的缓存服务创建和管理功能
  *
  * @author NestJS Template
  * @version 1.0.0
  */
 
+import { AppConfigService } from '@/config';
+import { getErrorMessage } from '@/utils';
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { CacheConfig, CacheServiceType, ICacheService } from '../interfaces';
-import { MemoryCacheService } from './memory-cache.service';
+import { CacheConfig, ICacheService } from '../interfaces';
+import { NoopCacheService } from './noop-cache.service';
 import { RedisCacheService } from './redis-cache.service';
 
 @Injectable()
@@ -20,7 +20,7 @@ export class CacheFactoryService implements OnModuleDestroy {
   private cacheService: ICacheService | null = null;
   private readonly cacheConfig: CacheConfig;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(private readonly appConfig: AppConfigService) {
     this.cacheConfig = this.buildCacheConfig();
   }
 
@@ -36,19 +36,7 @@ export class CacheFactoryService implements OnModuleDestroy {
       this.cacheService = await this.createCacheService();
       return this.cacheService;
     } catch (error) {
-      this.logger.error(
-        `Failed to create cache service: ${(error as Error).message}`,
-        (error as Error).stack,
-      );
-
-      // 如果 Redis 创建失败，回退到内存缓存
-      if (this.cacheConfig.type === CacheServiceType.REDIS) {
-        this.logger.warn('⚠️  Redis 连接失败，正在回退到内存缓存...');
-        this.cacheService = new MemoryCacheService(this.configService);
-        this.cacheConfig.type = CacheServiceType.MEMORY;
-        return this.cacheService;
-      }
-
+      this.logger.error(`❌ 创建缓存服务失败: ${getErrorMessage(error)}`, (error as Error).stack);
       throw error;
     }
   }
@@ -58,18 +46,6 @@ export class CacheFactoryService implements OnModuleDestroy {
    */
   getCacheConfig(): CacheConfig {
     return { ...this.cacheConfig };
-  }
-
-  /**
-   * 获取当前缓存服务类型
-   */
-  getCurrentCacheType(): CacheServiceType {
-    if (this.cacheService) {
-      return this.cacheService instanceof RedisCacheService
-        ? CacheServiceType.REDIS
-        : CacheServiceType.MEMORY;
-    }
-    return this.cacheConfig.type;
   }
 
   /**
@@ -84,7 +60,7 @@ export class CacheFactoryService implements OnModuleDestroy {
    * 用于配置更改后重新创建缓存服务
    */
   async reinitialize(): Promise<void> {
-    this.logger.log('Reinitializing cache service');
+    this.logger.log('🔄 正在重新初始化缓存服务');
 
     // 关闭现有服务
     if (this.cacheService) {
@@ -98,14 +74,13 @@ export class CacheFactoryService implements OnModuleDestroy {
     // 创建新的缓存服务
     this.cacheService = await this.createCacheService();
 
-    this.logger.log(`Cache service reinitialized with type: ${this.cacheConfig.type}`);
+    this.logger.log(`✅ 缓存服务重新初始化完成，类型: Redis`);
   }
 
   /**
    * 获取缓存服务健康状态
    */
   async getHealthStatus(): Promise<{
-    type: CacheServiceType;
     healthy: boolean;
     error?: string;
   }> {
@@ -113,16 +88,9 @@ export class CacheFactoryService implements OnModuleDestroy {
       const service = await this.getCacheService();
       const healthy = await service.isHealthy();
 
-      return {
-        type: this.cacheConfig.type,
-        healthy,
-      };
+      return { healthy };
     } catch (error) {
-      return {
-        type: this.cacheConfig.type,
-        healthy: false,
-        error: (error as Error).message,
-      };
+      return { healthy: false, error: getErrorMessage(error) };
     }
   }
 
@@ -133,7 +101,7 @@ export class CacheFactoryService implements OnModuleDestroy {
     if (this.cacheService) {
       await this.cacheService.close();
       this.cacheService = null;
-      this.logger.log('Cache service closed');
+      this.logger.log('✅ 缓存服务已关闭');
     }
   }
 
@@ -148,14 +116,12 @@ export class CacheFactoryService implements OnModuleDestroy {
    * 构建缓存配置
    */
   private buildCacheConfig(): CacheConfig {
-    const redisEnabled = this.configService.get<boolean>('app.redis.enabled', false);
-
+    const redisEnabled = this.appConfig.redisConfig.enabled;
+    const redisCache = this.appConfig.redisConfig.cache;
     return {
-      type: redisEnabled ? CacheServiceType.REDIS : CacheServiceType.MEMORY,
-      enabled: this.configService.get<boolean>('app.redis.cache.enabled', true),
-      defaultTtl: this.configService.get<number>('app.redis.cache.defaultTtl', 3600),
-      keyPrefix: this.configService.get<string>('app.redis.cache.keyPrefix', 'app:cache:'),
-      maxSize: this.configService.get<number>('app.redis.cache.maxSize', 1000),
+      enabled: redisEnabled,
+      defaultTtl: redisCache.defaultTtl,
+      keyPrefix: redisCache.keyPrefix,
     };
   }
 
@@ -163,34 +129,24 @@ export class CacheFactoryService implements OnModuleDestroy {
    * 创建缓存服务实例
    */
   private async createCacheService(): Promise<ICacheService> {
-    switch (this.cacheConfig.type) {
-      case CacheServiceType.REDIS:
-        this.logger.log('⚙️  正在创建 Redis 缓存服务...');
-        const redisService = new RedisCacheService(this.configService);
-
-        try {
-          // 先初始化 Redis 连接
-          await redisService.initializeRedis();
-
-          // 测试 Redis 连接
-          const isHealthy = await redisService.isHealthy();
-          if (!isHealthy) {
-            await redisService.close();
-            throw new Error('Redis connection health check failed');
-          }
-
-          return redisService;
-        } catch (error) {
-          await redisService.close();
-          throw error;
-        }
-
-      case CacheServiceType.MEMORY:
-        this.logger.log('💾 正在创建内存缓存服务...');
-        return new MemoryCacheService(this.configService);
-
-      default:
-        throw new Error(`Unsupported cache service type: ${this.cacheConfig.type}`);
+    const enabled = this.appConfig.redisConfig.enabled;
+    if (!enabled) {
+      this.logger.warn('Redis 已禁用，使用 NoopCacheService');
+      return new NoopCacheService();
+    }
+    this.logger.log('⚙️  正在创建 Redis 缓存服务...');
+    const redisService = new RedisCacheService(this.appConfig);
+    try {
+      await redisService.initializeRedis();
+      const isHealthy = await redisService.isHealthy();
+      if (!isHealthy) {
+        await redisService.close();
+        throw new Error('❌ Redis 连接健康检查失败');
+      }
+      return redisService;
+    } catch (error) {
+      await redisService.close();
+      throw error;
     }
   }
 }

@@ -1,18 +1,20 @@
+import { EnumHelper } from '@/utils';
+
 /**
  * 状态枚举
  * 定义系统中通用的状态类型
  */
 export enum Status {
-  /** 禁用/停用 */
+  /** 禁用/停用/否 */
   DISABLED = 0,
-  /** 启用/激活 */
+  /** 启用/激活/是 */
   ENABLED = 1,
 }
 
 /**
  * 状态枚举的所有可能值
  */
-export const STATUS_VALUES = Object.values(Status).filter((v) => typeof v === 'number') as number[];
+export const STATUS_VALUES = EnumHelper.getValues(Status) as number[];
 
 /**
  * 状态枚举类型
@@ -49,7 +51,7 @@ export const STATUS_DESCRIPTIONS: Record<Status, string> = {
  * @returns 如果是有效的状态枚举值则返回 true
  */
 export function isValidStatus(value: unknown): value is Status {
-  return typeof value === 'number' && STATUS_VALUES.includes(value);
+  return EnumHelper.hasValue(Status, value);
 }
 
 /**
@@ -67,7 +69,7 @@ export function getStatusLabel(status: Status): string {
  * @returns 状态的键名
  */
 export function getStatusKey(status: Status): keyof typeof Status {
-  return STATUS_KEYS[status];
+  return EnumHelper.getKeyByValue(Status, status)!;
 }
 
 /**
@@ -118,11 +120,9 @@ export function getStatusOptions(): {
   key: string;
   description: string;
 }[] {
-  return STATUS_VALUES.map((status) => ({
-    value: status,
-    label: getStatusLabel(status),
-    key: getStatusKey(status),
-    description: getStatusDescription(status),
+  return EnumHelper.toOptions(Status, STATUS_LABELS).map((option) => ({
+    ...option,
+    description: getStatusDescription(option.value),
   }));
 }
 

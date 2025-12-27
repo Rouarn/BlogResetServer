@@ -2,8 +2,10 @@ import { Transform } from 'class-transformer';
 import { CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 /**
- * 时间戳管理基础实体类
- * 使用 TypeORM 内置装饰器自动管理创建时间和更新时间
+ * 基础实体类
+ *
+ * 提供所有实体共用的时间戳字段，使用 TypeORM 内置装饰器
+ * 自动管理创建时间和更新时间，确保数据审计的完整性。
  */
 export abstract class BaseEntity {
   /**

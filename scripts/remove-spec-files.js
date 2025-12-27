@@ -1,28 +1,7 @@
 /**
  * 测试文件清理脚本
  *
- * 功能说明：
- * - 递归删除项目中的所有 .spec.ts 测试文件
- * - 遍历整个项目目录结构（包括子目录）
- * - 提供删除过程的详细日志输出
- * - 包含错误处理，确保脚本稳定运行
- *
- * 使用场景：
- * - 生产环境部署前清理测试文件
- * - 减少项目体积和构建时间
- * - 清理不需要的测试代码
- * - 项目重构时批量删除测试文件
- *
- * 使用方法：
- * - 直接运行：node scripts/remove-spec-files.js
- * - npm 脚本：npm run clean:tests
- * - 批处理：scripts/remove-spec-files.bat (Windows)
- * - PowerShell：scripts/remove-spec-files.ps1 (Windows)
- *
- * 注意事项：
- * - 此操作不可逆，请确保已备份重要的测试文件
- * - 会删除整个项目目录下的所有 .spec.ts 文件
- * - 包括 src、test 等所有目录中的测试文件
+ * 递归删除项目中的所有 .spec.ts 测试文件
  */
 
 const fs = require('fs');

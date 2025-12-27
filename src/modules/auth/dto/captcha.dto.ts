@@ -1,5 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString, Length } from 'class-validator';
 
 /**
  * 验证码验证DTO
@@ -42,15 +42,6 @@ export class CaptchaVerifyDto {
   @IsNotEmpty({ message: '验证码不能为空' })
   @Length(4, 6, { message: '验证码长度必须在4-6个字符之间' })
   code: string;
-
-  @ApiPropertyOptional({
-    description: '验证码类型',
-    example: 'login',
-    enum: ['login', 'register', 'reset-password', 'change-password'],
-  })
-  @IsOptional()
-  @IsString({ message: '验证码类型必须是字符串' })
-  type?: string;
 }
 
 /**
@@ -61,7 +52,7 @@ export class CaptchaVerifyDto {
  * 字段说明：
  * - token: 验证码令牌
  * - image: 验证码图片（Base64编码）
- * - expiresIn: 过期时间（秒）
+ * - accessTokenTtl: 过期时间（秒）
  */
 export class CaptchaResponseDto {
   @ApiProperty({
@@ -75,12 +66,6 @@ export class CaptchaResponseDto {
     example: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...',
   })
   image: string;
-
-  @ApiProperty({
-    description: '过期时间（秒）',
-    example: 300,
-  })
-  expiresIn: number;
 }
 
 /**
@@ -95,20 +80,8 @@ export class CaptchaResponseDto {
  */
 export class CaptchaVerifyResponseDto {
   @ApiProperty({
-    description: '验证是否成功',
-    example: true,
-  })
-  success: boolean;
-
-  @ApiProperty({
     description: '验证结果消息',
     example: '验证码验证成功',
   })
   message: string;
-
-  @ApiPropertyOptional({
-    description: '剩余尝试次数',
-    example: 2,
-  })
-  remainingAttempts?: number;
 }

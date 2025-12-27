@@ -1,3 +1,4 @@
+import { formatDate } from '@/utils';
 import XLSX from 'xlsx';
 import type {
   ExportConfig,
@@ -210,7 +211,7 @@ export class ImportExportService {
   }
 
   private defaultFileName(format: SupportedFormat): string {
-    const ts = new Date().toISOString().replace(/[:.]/g, '-');
+    const ts = formatDate(new Date(), 'YYYY-MM-DD_HH-mm-ss');
     if (format === 'xlsx') return `export-${ts}.xlsx`;
     if (format === 'csv') return `export-${ts}.csv`;
     return `export-${ts}.json`;

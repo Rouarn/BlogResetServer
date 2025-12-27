@@ -1,14 +1,20 @@
 /**
  * 业务异常封装
- * 统一将 NestJS 的 `HttpException` 转为规范化的业务错误响应体，便于前后端约定与日志采集。
+ *
+ * 统一将 NestJS 的 `HttpException` 转为规范化的业务错误响应体，
+ * 便于前后端约定与日志采集。
+ *
  * 使用场景：服务端主动抛出可预期的错误（校验失败、权限不足、资源不存在、冲突等）。
  */
-import { HttpException, HttpStatus } from '@nestjs/common';
-import { formatTimestamp } from 'src/utils/helpers';
 import type { ErrorResponse } from '@/common/interfaces';
+import { formatTimestamp } from '@/utils';
+import { HttpException, HttpStatus } from '@nestjs/common';
 
 /**
+ * 业务异常类
+ *
  * 继承自 `HttpException`，封装标准的错误响应结构。
+ *
  * 字段说明：
  * - `code`: HTTP 状态码
  * - `message`: 错误信息（可为字符串或字符串数组，支持多条提示）
@@ -50,7 +56,7 @@ export class BusinessExceptionFactory {
    * @param details 额外上下文（可选）
    */
   static validation(target: string, details?: unknown): BusinessException {
-    return new BusinessException(`${target}验证失败`, HttpStatus.BAD_REQUEST, details);
+    return new BusinessException(`${target} - 验证失败`, HttpStatus.BAD_REQUEST, details);
   }
 
   /**
@@ -59,7 +65,7 @@ export class BusinessExceptionFactory {
    * @param details 额外上下文（可选）
    */
   static invalidParameter(target: string, details?: unknown): BusinessException {
-    return new BusinessException(`${target}参数不合法`, HttpStatus.BAD_REQUEST, details);
+    return new BusinessException(`${target} - 参数不合法`, HttpStatus.BAD_REQUEST, details);
   }
 
   /**
@@ -68,7 +74,7 @@ export class BusinessExceptionFactory {
    * @param details 额外上下文（可选）
    */
   static unauthorized(target: string, details?: unknown): BusinessException {
-    return new BusinessException(`${target}未授权`, HttpStatus.UNAUTHORIZED, details);
+    return new BusinessException(`${target} - 未授权`, HttpStatus.UNAUTHORIZED, details);
   }
 
   /**
@@ -77,7 +83,7 @@ export class BusinessExceptionFactory {
    * @param details 额外上下文（可选）
    */
   static forbidden(target: string, details?: unknown): BusinessException {
-    return new BusinessException(`${target}无权限`, HttpStatus.FORBIDDEN, details);
+    return new BusinessException(`${target} - 无权限`, HttpStatus.FORBIDDEN, details);
   }
 
   /**
@@ -86,7 +92,7 @@ export class BusinessExceptionFactory {
    * @param details 额外上下文（可选）
    */
   static notFound(target: string, details?: unknown): BusinessException {
-    return new BusinessException(`${target}不存在`, HttpStatus.NOT_FOUND, details);
+    return new BusinessException(`${target} - 不存在`, HttpStatus.NOT_FOUND, details);
   }
 
   /**
@@ -95,7 +101,7 @@ export class BusinessExceptionFactory {
    * @param details 额外上下文（可选）
    */
   static conflict(target: string, details?: unknown): BusinessException {
-    return new BusinessException(`${target}冲突`, HttpStatus.CONFLICT, details);
+    return new BusinessException(`${target} - 冲突`, HttpStatus.CONFLICT, details);
   }
 
   /**

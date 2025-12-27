@@ -1,123 +1,163 @@
-import { CACHE_PREFIXES, CACHE_TOKENS, CACHE_TTL } from '@/common/constants';
-import { GENDER_LABELS } from '@/common/enums/gender.enum';
-import { BusinessException, BusinessExceptionFactory } from '@/common/exceptions';
-import { jwtOptions } from '@/config';
-import { AuthMessageResponse, AuthUserInfo } from '@/modules/auth/auth.types';
-import { Cache, ICacheService } from '@/shared/cache';
+import { CACHE_PREFIXES, CACHE_TOKENS, JWT_CONSTANTS } from '@/common/constants';
+import { isEnabled, Role } from '@/common/enums';
+import { BusinessExceptionFactory } from '@/common/exceptions';
+import { CurrentUser } from '@/common/interfaces';
+import { AppConfigService } from '@/config';
+import { ICacheService } from '@/shared/cache';
+import { getCurrentTimestamp, uuid4 } from '@/utils';
 import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
-import { isEnabled } from 'src/common/enums';
 import * as svgCaptcha from 'svg-captcha';
-import { Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
+import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import type {
   CaptchaResponseDto,
   CaptchaVerifyDto,
   CaptchaVerifyResponseDto,
-} from './dto/captcha-verify.dto';
-import type { LoginDto, LoginResponseDto } from './dto/login.dto';
-import type {
-  ChangePasswordDto,
-  RegisterDto,
-  RegisterResponseDto,
-  ResetPasswordDto,
-} from './dto/register.dto';
-import type {
-  JwtPayloadDto,
-  LogoutDto,
-  LogoutResponseDto,
-  RefreshTokenDto,
-  TokenResponseDto,
-  ValidateTokenDto,
-  ValidateTokenResponseDto,
-} from './dto/token.dto';
+} from './dto/captcha.dto';
+import type { LoginDto } from './dto/login.dto';
+import { ChangePasswordDto } from './dto/password.dto';
+import { AuthCreateUserResponse, RegisterDto } from './dto/register.dto';
+import type { RefreshTokenDto, TokenResponseDto } from './dto/token.dto';
 import { Auth } from './entities/auth.entity';
 
 /**
  * 认证服务（AuthService）
- *
  * 专注于用户认证相关的核心业务逻辑，与用户管理功能完全分离。
- *
- * 核心功能：
- * - 用户登录验证：校验用户名密码，生成JWT令牌
- * - 用户注册：创建新认证账号，与用户资料分离
- * - 密码管理：修改密码、重置密码等安全操作
- * - 验证码生成与校验：提供图形验证码防护
- * - JWT令牌管理：生成、刷新、验证、撤销访问令牌
- * - 登录安全：登录尝试次数限制、账号锁定等
- *
- * 架构设计：
- * - 仅处理认证相关逻辑，不涉及用户资料管理
- * - 通过UsersService协作处理用户资料操作
- * - Auth实体专注于认证信息存储
- * - 支持一对一关联到User实体
- *
- * 依赖项：
- * - Repository<Auth>: 认证数据仓库
- * - JwtService: JWT令牌服务
- * - UsersService: 用户管理服务（协作）
- * - ICacheService: 缓存服务
- *
- * 安全特性：
- * - bcrypt密码加密存储
- * - 盐值随机生成
- * - JWT令牌过期管理
- * - 登录失败次数限制
- * - 账号自动锁定机制
- * - 验证码防机器人攻击
- * - 刷新令牌轮换
  */
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(Auth)
     private readonly authRepository: Repository<Auth>,
+    private readonly dataSource: DataSource,
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
+    private readonly appConfig: AppConfigService,
     @Inject(CACHE_TOKENS.I_CACHE_SERVICE)
     private readonly cacheService: ICacheService,
   ) {}
 
   /**
-   * 获取认证用户详细信息
+   * 生成验证码
    *
-   * 从数据库查询认证用户的详细信息，包含所有非敏感字段
+   * 生成SVG格式的验证码图片和对应的令牌，支持多种验证码类型
    *
-   * @param auth 认证实体（仅用于获取ID）
-   * @returns 包含用户ID、用户名、昵称、头像、角色、邮箱、性别、手机号等信息
+   * @returns 包含验证码图片、令牌、过期时间等信息
    */
-  @Cache({ key: `${CACHE_PREFIXES.USER_INFO}:\${0.id}`, ttl: CACHE_TTL.USER_INFO })
-  async getAuthInfo(auth: Auth): Promise<AuthUserInfo> {
-    // 从数据库查询完整的认证和用户信息
-    const authWithUser = await this.authRepository.findOne({
-      where: { id: auth.id },
-      relations: ['user'],
+  async generateCaptcha(): Promise<CaptchaResponseDto> {
+    // 创建验证码，设置选项使其更安全
+    const captcha = svgCaptcha.create({
+      size: 4, // 验证码长度
+      ignoreChars: '0o1il', // 排除容易混淆的字符
+      noise: 3, // 干扰线条数量
+      color: true, // 文字颜色
+      background: '#f0f0f0', // 背景色
+      width: 120,
+      height: 40,
+      fontSize: 36,
     });
 
-    if (!authWithUser) {
-      throw BusinessExceptionFactory.notFound('用户信息', { authId: auth.id });
-    }
+    const captchaToken = `captcha_${crypto.createHash('md5').update(captcha.text.toLowerCase()).digest('hex')}_${crypto.randomBytes(16).toString('hex')}`;
+
+    // 将SVG验证码转换为base64格式的图片
+    const captchaImage = `data:image/svg+xml;base64,${Buffer.from(captcha.data).toString('base64')}`;
 
     return {
-      userId: authWithUser.user?.id || authWithUser.id,
-      username: authWithUser.username,
-      nickname: authWithUser.user?.nickname || authWithUser.username,
-      avatar: authWithUser.user?.avatar || '',
-      roles: authWithUser.user?.roles || 'USER',
-      email: authWithUser.user?.email || '',
-      gender: authWithUser.user?.gender !== undefined ? String(authWithUser.user.gender) : '',
-      mobile: authWithUser.user?.mobile || '',
-      bio: authWithUser.user?.bio || '',
-      birthday: authWithUser.user?.birthday,
-      city: authWithUser.user?.city || '',
-      profession: authWithUser.user?.profession || '',
-      authId: authWithUser.id,
-      lastLoginAt: authWithUser.lastLoginAt,
-      lastLoginIp: authWithUser.lastLoginIp ?? '',
+      image: captchaImage,
+      token: captchaToken,
     };
+  }
+
+  /**
+   * 验证验证码
+   *
+   * 校验用户输入的验证码是否正确
+   *
+   * @param captchaVerifyDto 验证码验证数据
+   * @returns 验证结果
+   */
+  async verifyCaptcha(captchaVerifyDto: CaptchaVerifyDto): Promise<CaptchaVerifyResponseDto> {
+    // 验证验证码逻辑
+    const { token, code } = captchaVerifyDto;
+
+    if (!token || !code) {
+      throw BusinessExceptionFactory.invalidParameter('验证码token和code不能为空');
+    }
+
+    // 从token中提取验证码文本
+    const storedToken = token.split('_')[1];
+
+    // 比较验证码文本是否匹配
+    if (storedToken !== crypto.createHash('md5').update(code.toLowerCase()).digest('hex')) {
+      throw BusinessExceptionFactory.validation('验证码错误');
+    }
+
+    return { message: '验证成功' };
+  }
+
+  /**
+   * 用户注册
+   *
+   * 创建新认证账号，支持同时创建关联的用户资料
+   *
+   * @param registerDto 包含用户注册信息的数据传输对象
+   * @returns 注册结果消息
+   * @throws ConflictException 用户名已存在
+   * @throws BadRequestException 注册数据验证失败
+   */
+  async register(registerDto: RegisterDto): Promise<AuthCreateUserResponse> {
+    return await this.dataSource.transaction(async (manager) => {
+      // 检查用户名是否已存在
+      const existingAuth = await manager.findOne(Auth, {
+        where: { username: registerDto.username },
+      });
+
+      if (existingAuth) {
+        throw BusinessExceptionFactory.conflict('用户名已存在', { username: registerDto.username });
+      }
+
+      // 创建认证记录
+      const { salt, hashedPassword } = this.encryptPassword(registerDto.password);
+      const auth = manager.create(Auth, {
+        username: registerDto.username,
+        password: hashedPassword,
+        salt,
+        passwordChangedAt: new Date(),
+        loginAttempts: 0,
+      });
+
+      const savedAuth = await manager.save(auth);
+
+      // 检查是否已存在相同邮箱的用户
+      if (registerDto.email) {
+        const existingUser = await manager.findOne(User, {
+          where: { email: registerDto.email },
+        });
+        if (existingUser) {
+          throw BusinessExceptionFactory.conflict('邮箱已被使用', { email: registerDto.email });
+        }
+      }
+
+      // 创建关联的用户记录
+      const user = manager.create(User, {
+        authId: savedAuth.id,
+        nickname: registerDto.nickname ?? savedAuth.username,
+        email: registerDto.email,
+        avatar: registerDto.avatar,
+        gender: registerDto.gender,
+        mobile: registerDto.mobile,
+        roles: Role.USER, // 默认为普通用户
+      });
+
+      await manager.save(user);
+
+      return { message: '注册成功' };
+    });
   }
 
   /**
@@ -126,16 +166,19 @@ export class AuthService {
    * 验证用户凭据并生成JWT令牌，包含登录安全控制
    *
    * @param loginDto 包含用户名、密码等登录数据
+   * @param clientIp 客户端IP
    * @returns 成功时返回完整的登录响应信息
    * @throws UnauthorizedException 认证失败
    * @throws BadRequestException 账号被锁定或其他业务错误
    */
-  async login(loginDto: LoginDto, clientIp?: string): Promise<LoginResponseDto> {
-    // 查找认证记录，包含关联的用户信息
-    const auth = await this.authRepository.findOne({
-      where: { username: loginDto.username },
-      relations: ['user'],
-    });
+  async login(loginDto: LoginDto, clientIp?: string): Promise<TokenResponseDto> {
+    // 查找认证记录，包含关联的用户信息，并显式选择密码和盐值
+    const auth = await this.authRepository
+      .createQueryBuilder('auth')
+      .leftJoinAndSelect('auth.user', 'user')
+      .addSelect(['auth.password', 'auth.salt'])
+      .where('auth.username = :username', { username: loginDto.username })
+      .getOne();
 
     if (!auth) {
       // 记录登录失败尝试（可选：防止用户名枚举攻击）
@@ -143,40 +186,45 @@ export class AuthService {
     }
 
     // 检查账号是否被锁定
-    if (auth.isLocked()) {
-      if (auth.lockedAt) {
-        const lockTime = new Date(auth.lockedAt.getTime() + 30 * 60 * 1000); // 30分钟锁定
-        if (new Date() < lockTime) {
-          throw BusinessExceptionFactory.systemBusy({
-            message: '账号已被锁定，请稍后重试',
-            lockTime: lockTime.toLocaleString(),
-            locked: true,
-          });
-        } else {
-          // 锁定时间已过，解锁账号
-          await this.unlockAccount(auth.id);
-          auth.unlock();
-        }
+    if (this.isAccountLocked(auth)) {
+      const lockDuration = this.calculateLockDuration(auth.loginAttempts);
+      const lockTime = new Date(auth.lockedAt!.getTime() + lockDuration);
+
+      if (new Date() < lockTime) {
+        const remainingMs = lockTime.getTime() - new Date().getTime();
+        const remainingMinutes = Math.ceil(remainingMs / 60000);
+
+        throw BusinessExceptionFactory.systemBusy({
+          message: `账号已被锁定，请 ${remainingMinutes} 分钟后再试`,
+          lockTime: lockTime.toLocaleString(),
+          locked: true,
+          remainingMinutes,
+        });
       }
+      // 锁定时间已过，允许尝试（不重置loginAttempts，保持指数退避基数）
+      // 只有在登录成功时才重置
     }
 
     // 验证密码
-    const isPasswordValid = await this.validatePassword(
-      loginDto.password,
-      auth.salt,
-      auth.password,
-    );
+    const isPasswordValid = await this.validatePassword(loginDto.password, auth.password);
 
     if (!isPasswordValid) {
       // 增加登录失败次数
       await this.incrementLoginAttempts(auth.id);
 
-      // 检查是否需要锁定账号（5次失败后锁定）
-      if (auth.loginAttempts + 1 >= 5) {
+      // 更新auth对象的loginAttempts用于后续判断
+      const currentAttempts = auth.loginAttempts + 1;
+      const { maxLoginAttempts } = this.appConfig.authSecurityOptions;
+
+      // 检查是否需要锁定账号
+      if (currentAttempts >= maxLoginAttempts) {
         await this.lockAccount(auth.id);
+        const duration = this.calculateLockDuration(currentAttempts);
+
         throw BusinessExceptionFactory.systemBusy({
+          message: `账号已被锁定，请 ${Math.ceil(duration / 60000)} 分钟后再试`,
           locked: true,
-          durationMinutes: 30,
+          durationMinutes: Math.ceil(duration / 60000),
         });
       }
 
@@ -191,307 +239,60 @@ export class AuthService {
       });
     }
 
-    // 登录成功，重置登录失败次数
-    await this.resetLoginAttempts(auth.id);
+    // 登录成功，重置登录失败次数和锁定状态
+    await this.unlockAccount(auth.id);
 
     // 更新最后登录时间
     await this.updateLastLogin(auth.id, clientIp);
 
     // 生成JWT令牌
     const payload = {
-      sub: auth.id,
       username: auth.username,
       authId: auth.id,
-      roles: auth.user?.roles || 'USER',
+      userId: auth.user?.id || auth.id,
+      roles: auth.user?.roles || Role.USER,
+      jti: uuid4(),
     };
+
+    // 单点登录控制：检查并移除旧的令牌
+    const existingJti = await this.cacheService.get(`${CACHE_PREFIXES.USER_TOKENS}${auth.id}`);
+    if (existingJti) {
+      // 将旧令牌加入黑名单
+      await this.cacheService.set(
+        `${CACHE_PREFIXES.BLACKLIST}${auth.id}:${existingJti}`,
+        getCurrentTimestamp(),
+        {
+          ttl: this.appConfig.jwtOptions.accessTokenTtl,
+        },
+      );
+    }
 
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = await this.generateRefreshToken(auth.id);
 
-    // 缓存刷新令牌
-    await this.cacheService.set(`${CACHE_PREFIXES.REFRESH_TOKEN}:${auth.id}`, refreshToken, {
-      ttl: CACHE_TTL.REFRESH_TOKEN,
+    // 存储 UserToken 到缓存
+    await this.cacheService.set(`${CACHE_PREFIXES.USER_TOKENS}${auth.id}`, payload.jti, {
+      ttl: this.appConfig.jwtOptions.accessTokenTtl,
+    });
+
+    // 存储 RefreshToken 到缓存
+    await this.cacheService.set(`${CACHE_PREFIXES.REFRESH_TOKENS}${auth.id}`, refreshToken, {
+      ttl: this.appConfig.jwtOptions.refreshTokenTtl,
     });
 
     return {
       accessToken,
       refreshToken,
-      tokenType: 'Bearer',
-      expiresIn: jwtOptions.expiresIn,
-      refreshExpiresIn: CACHE_TTL.REFRESH_TOKEN,
+      tokenType: JWT_CONSTANTS.TOKEN_PREFIX,
+      accessTokenTtl: this.appConfig.jwtOptions.accessTokenTtl,
+      refreshTokenTtl: this.appConfig.jwtOptions.refreshTokenTtl, // 7 days
     };
-  }
-
-  /**
-   * 用户注册
-   *
-   * 创建新认证账号，支持同时创建关联的用户资料
-   *
-   * @param registerDto 包含用户注册信息的数据传输对象
-   * @returns 注册结果消息
-   * @throws ConflictException 用户名已存在
-   * @throws BadRequestException 注册数据验证失败
-   */
-  async register(registerDto: RegisterDto): Promise<RegisterResponseDto> {
-    // 检查用户名是否已存在
-    const existingAuth = await this.authRepository.findOne({
-      where: { username: registerDto.username },
-    });
-
-    if (existingAuth) {
-      throw BusinessExceptionFactory.conflict('用户名已存在', { username: registerDto.username });
-    }
-
-    // 创建认证记录（密码将通过@BeforeInsert钩子自动加密）
-    const auth = this.authRepository.create({
-      username: registerDto.username,
-      password: registerDto.password, // 原始密码，将被@BeforeInsert钩子加密
-      isLocked: false,
-      loginAttempts: 0,
-    });
-
-    const savedAuth = await this.authRepository.save(auth);
-
-    // 总是创建关联的用户记录，确保两个表的数据一致性
-    const createdUser = await this.usersService.create({
-      authId: savedAuth.id,
-      nickname: registerDto.nickname ?? savedAuth.username, // 如果没有昵称，使用用户名
-      email: registerDto.email,
-      avatar: registerDto.avatar,
-      gender: registerDto.gender,
-      mobile: registerDto.mobile,
-    });
-
-    // 清除相关缓存
-    await this.cacheService.del(`${CACHE_PREFIXES.USER_INFO}:${savedAuth.id}`);
-    await this.cacheService.del(`${CACHE_PREFIXES.USERS}:*`);
-
-    return {
-      message: '注册成功',
-      userId: savedAuth.id,
-      username: savedAuth.username,
-      nickname: createdUser.nickname,
-      avatar: createdUser.avatar,
-      email: createdUser.email,
-      gender: createdUser.gender !== undefined ? GENDER_LABELS[createdUser.gender] : '',
-      mobile: createdUser.mobile,
-      needLogin: true,
-    };
-  }
-
-  /**
-   * 生成验证码
-   *
-   * 生成SVG格式的验证码图片和对应的令牌，支持多种验证码类型
-   *
-   * @param clientInfo 客户端信息（IP、User-Agent等）
-   * @param type 验证码类型（login, register, reset等）
-   * @returns 包含验证码图片、令牌、过期时间等信息
-   */
-  async generateCaptcha(
-    clientInfo: Record<string, unknown>,
-    _type: string = 'login',
-  ): Promise<CaptchaResponseDto> {
-    // 创建验证码，设置选项使其更安全
-    const captcha = svgCaptcha.create({
-      size: 4, // 验证码长度
-      ignoreChars: '0o1il', // 排除容易混淆的字符
-      noise: 3, // 干扰线条数量
-      color: true, // 文字颜色
-      background: '#f0f0f0', // 背景色
-      width: 120,
-      height: 40,
-      fontSize: 36,
-    });
-
-    const captchaCode = captcha.text; // 验证码文本
-    const captchaToken = `captcha_${crypto.randomBytes(16).toString('hex')}`;
-
-    // 使用缓存存储验证码信息，替代 JWT token 方式
-    const captchaData = {
-      code: captchaCode.toLowerCase(),
-      clientInfo,
-      timestamp: Date.now(),
-    };
-
-    // 存储到缓存中，5分钟过期
-    await this.cacheService.set(`${CACHE_PREFIXES.CAPTCHA}:${captchaToken}`, captchaData, {
-      ttl: CACHE_TTL.CAPTCHA,
-    });
-
-    // 将SVG验证码转换为base64格式的图片
-    const captchaImage = `data:image/svg+xml;base64,${Buffer.from(captcha.data).toString('base64')}`;
-
-    return {
-      image: captchaImage,
-      token: captchaToken,
-      expiresIn: CACHE_TTL.CAPTCHA, // 5分钟
-    };
-  }
-
-  /**
-   * 验证验证码
-   *
-   * 校验用户输入的验证码是否正确
-   *
-   * @param captchaVerifyDto 验证码验证数据
-   * @returns 验证结果
-   */
-  async verifyCaptcha(captchaVerifyDto: CaptchaVerifyDto): Promise<CaptchaVerifyResponseDto> {
-    try {
-      // 从缓存中获取验证码信息
-      const captchaData = await this.cacheService.get<{
-        code: string;
-        clientInfo: Record<string, unknown>;
-        timestamp: number;
-      }>(`${CACHE_PREFIXES.CAPTCHA}:${captchaVerifyDto.token}`);
-
-      if (!captchaData) {
-        throw BusinessExceptionFactory.systemBusy({
-          message: '验证码无效或已过期',
-        });
-      }
-
-      // 验证验证码
-      if (captchaData.code !== captchaVerifyDto.code.toLowerCase()) {
-        throw BusinessExceptionFactory.validation('验证码错误');
-      }
-
-      // 验证时间戳（防止重放攻击）
-      const now = Date.now();
-      if (now - captchaData.timestamp > CACHE_TTL.CAPTCHA * 1000) {
-        // 验证码过期
-        await this.cacheService.del(`${CACHE_PREFIXES.CAPTCHA}:${captchaVerifyDto.token}`);
-        throw BusinessExceptionFactory.validation('验证码已过期');
-      }
-
-      // 验证成功后删除缓存，防止重复使用
-      await this.cacheService.del(`${CACHE_PREFIXES.CAPTCHA}:${captchaVerifyDto.token}`);
-
-      return { success: true, message: '验证成功' };
-    } catch (error) {
-      if (error instanceof BusinessException) {
-        throw error;
-      }
-      throw BusinessExceptionFactory.systemBusy({
-        message: '验证码验证失败',
-      });
-    }
-  }
-
-  /**
-   * 修改密码
-   *
-   * 验证旧密码并设置新密码
-   *
-   * @param changePasswordDto 修改密码数据
-   * @param authId 认证ID
-   * @returns 修改结果
-   */
-  async changePassword(
-    changePasswordDto: ChangePasswordDto,
-    authId: string,
-  ): Promise<AuthMessageResponse> {
-    const auth = await this.authRepository.findOne({ where: { id: authId } });
-    if (!auth) {
-      throw BusinessExceptionFactory.notFound('认证记录', { authId });
-    }
-
-    // 验证旧密码
-    const isOldPasswordValid = await this.validatePassword(
-      changePasswordDto.oldPassword,
-      auth.salt,
-      auth.password,
-    );
-
-    if (!isOldPasswordValid) {
-      throw BusinessExceptionFactory.validation('旧密码错误');
-    }
-
-    // 生成新的盐值和密码哈希
-    const salt = bcrypt.genSaltSync(10);
-    const hashedPassword = bcrypt.hashSync(changePasswordDto.newPassword, salt);
-
-    // 更新密码
-    await this.authRepository.update(authId, {
-      password: hashedPassword,
-      salt,
-      passwordChangedAt: new Date(),
-    });
-
-    // 清除相关缓存
-    await this.cacheService.del(`${CACHE_PREFIXES.USER_INFO}:${authId}`);
-    await this.cacheService.del(`${CACHE_PREFIXES.REFRESH_TOKEN}:${authId}`);
-
-    return { message: '密码修改成功' };
-  }
-
-  /**
-   * 重置密码
-   *
-   * 通过重置令牌重置用户密码
-   *
-   * @param resetPasswordDto 重置密码数据
-   * @returns 重置结果
-   */
-  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<AuthMessageResponse> {
-    // 验证重置令牌
-    const tokenData = await this.cacheService.get<{
-      authId: string;
-      username: string;
-      timestamp: number;
-    }>(`${CACHE_PREFIXES.RESET_TOKEN}:${resetPasswordDto.resetToken}`);
-
-    if (!tokenData) {
-      throw BusinessExceptionFactory.invalidParameter('重置令牌', {
-        token: resetPasswordDto.resetToken,
-        status: 'invalid_or_expired',
-      });
-    }
-
-    // 检查令牌是否过期（30分钟有效期）
-    const now = Date.now();
-    if (now - tokenData.timestamp > 30 * 60 * 1000) {
-      await this.cacheService.del(`${CACHE_PREFIXES.RESET_TOKEN}:${resetPasswordDto.resetToken}`);
-      throw BusinessExceptionFactory.invalidParameter('重置令牌', {
-        token: resetPasswordDto.resetToken,
-        status: 'expired',
-      });
-    }
-
-    // 验证用户名是否匹配
-    if (tokenData.username !== resetPasswordDto.username) {
-      throw BusinessExceptionFactory.invalidParameter('用户名', {
-        tokenUsername: tokenData.username,
-        inputUsername: resetPasswordDto.username,
-      });
-    }
-
-    // 生成新的盐值和密码哈希
-    const salt = bcrypt.genSaltSync(10);
-    const hashedPassword = bcrypt.hashSync(resetPasswordDto.newPassword, salt);
-
-    // 更新密码并解锁账号
-    await this.authRepository.update(tokenData.authId, {
-      password: hashedPassword,
-      salt,
-      isLocked: false,
-      loginAttempts: 0,
-      passwordChangedAt: new Date(),
-    });
-
-    // 清除重置令牌和相关缓存
-    await this.cacheService.del(`${CACHE_PREFIXES.RESET_TOKEN}:${resetPasswordDto.resetToken}`);
-    await this.cacheService.del(`${CACHE_PREFIXES.USER_INFO}:${tokenData.authId}`);
-    await this.cacheService.del(`${CACHE_PREFIXES.REFRESH_TOKEN}:${tokenData.authId}`);
-
-    return { message: '密码重置成功' };
   }
 
   /**
    * 刷新访问令牌
    *
-   * 使用有效的刷新令牌生成新的访问令牌
+   * 使用有效地刷新令牌生成新的访问令牌
    *
    * @param refreshTokenDto 刷新令牌数据
    * @returns 新的令牌信息
@@ -499,10 +300,10 @@ export class AuthService {
   async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<TokenResponseDto> {
     const { refreshToken } = refreshTokenDto;
 
-    // 从缓存中验证刷新令牌
+    // 验证刷新令牌
     const authId = await this.validateRefreshToken(refreshToken);
     if (!authId) {
-      throw BusinessExceptionFactory.forbidden('令牌刷新', { status: 'invalid_or_expired' });
+      throw BusinessExceptionFactory.unauthorized('令牌刷新');
     }
 
     // 获取认证信息
@@ -516,7 +317,7 @@ export class AuthService {
     }
 
     // 检查账号状态
-    if (auth.isLocked()) {
+    if (this.isAccountLocked(auth)) {
       throw BusinessExceptionFactory.forbidden('账户被锁定', {
         authId,
         locked: true,
@@ -532,88 +333,107 @@ export class AuthService {
 
     // 生成新的访问令牌
     const payload = {
-      sub: auth.id,
-      username: auth.username,
       authId: auth.id,
-      roles: 'USER',
+      username: auth.username,
+      userId: auth.user?.id || auth.id,
+      roles: auth.user?.roles || Role.USER,
+      jti: uuid4(),
     };
 
     const accessToken = this.jwtService.sign(payload);
     const newRefreshToken = await this.generateRefreshToken(auth.id);
 
-    // 更新缓存中的刷新令牌
-    await this.cacheService.del(`${CACHE_PREFIXES.REFRESH_TOKEN}:${auth.id}`);
-    await this.cacheService.set(`${CACHE_PREFIXES.REFRESH_TOKEN}:${auth.id}`, newRefreshToken, {
-      ttl: CACHE_TTL.REFRESH_TOKEN,
+    // 更新 UserToken 到缓存
+    await this.cacheService.set(`${CACHE_PREFIXES.USER_TOKENS}${auth.id}`, payload.jti, {
+      ttl: this.appConfig.jwtOptions.accessTokenTtl,
+    });
+
+    // 更新 RefreshToken 到缓存
+    await this.cacheService.set(`${CACHE_PREFIXES.REFRESH_TOKENS}${auth.id}`, newRefreshToken, {
+      ttl: this.appConfig.jwtOptions.refreshTokenTtl,
     });
 
     return {
       accessToken,
       refreshToken: newRefreshToken,
-      tokenType: 'Bearer',
-      expiresIn: jwtOptions.expiresIn,
-      refreshExpiresIn: CACHE_TTL.REFRESH_TOKEN,
+      tokenType: JWT_CONSTANTS.TOKEN_PREFIX,
+      accessTokenTtl: this.appConfig.jwtOptions.accessTokenTtl,
+      refreshTokenTtl: this.appConfig.jwtOptions.refreshTokenTtl, // 7天
     };
   }
 
   /**
-   * 验证JWT令牌
+   * 获取认证用户详细信息
    *
-   * 验证访问令牌的有效性
+   * 从数据库查询认证用户的详细信息，包含所有非敏感字段
    *
-   * @param validateTokenDto 令牌验证数据
-   * @returns 验证结果和用户信息
+   * @param auth 认证实体（仅用于获取ID）
+   * @returns 包含用户ID、用户名、昵称、头像、角色、邮箱、性别、手机号等信息
    */
-  async validateToken(validateTokenDto: ValidateTokenDto): Promise<ValidateTokenResponseDto> {
-    try {
-      const { token } = validateTokenDto;
-      const payload = this.jwtService.verify<JwtPayloadDto>(token);
-
-      // 获取认证信息
-      const auth = await this.authRepository.findOne({
-        where: { id: payload.authId },
-        relations: ['user'],
-      });
-
-      if (!auth) {
-        throw BusinessExceptionFactory.notFound('认证记录', { authId: payload.authId });
-      }
-
-      // 检查账号状态
-      if (auth.isLocked()) {
-        throw BusinessExceptionFactory.systemBusy({
-          valid: false,
-          expired: false,
-          message: '账号已被锁定',
-        });
-      }
-
-      if (!isEnabled(auth.status)) {
-        throw BusinessExceptionFactory.systemBusy({
-          valid: false,
-          expired: false,
-          message: '用户已被禁用',
-        });
-      }
-
-      return {
-        valid: true,
-        expired: false,
-        message: '令牌有效',
-        user: {
-          id: auth.id,
-          username: auth.username,
-          email: auth.user?.email || '',
-        },
-        payload,
-      };
-    } catch (error) {
-      throw BusinessExceptionFactory.systemBusy({
-        valid: false,
-        expired: true,
-        message: '令牌无效或已过期',
-      });
+  async getAuthInfo(auth: CurrentUser): Promise<User> {
+    // 使用 UsersService 获取用户信息，利用其缓存机制
+    if (auth.userId) {
+      return await this.usersService.findById(auth.userId);
     }
+
+    // 如果没有 userId（理论上不应该发生），降级为直接查询
+    const authWithUser = await this.authRepository.findOne({
+      where: { id: auth.authId },
+      relations: ['user'],
+    });
+
+    if (!authWithUser?.user) {
+      throw BusinessExceptionFactory.notFound('用户信息', { authId: auth.authId });
+    }
+
+    return authWithUser.user;
+  }
+
+  /**
+   * 修改密码
+   *
+   * 验证旧密码并设置新密码
+   *
+   * @param changePasswordDto 修改密码数据
+   * @param authId 认证ID
+   * @returns 修改结果
+   */
+  async changePassword(
+    changePasswordDto: ChangePasswordDto,
+    authId: string,
+  ): Promise<{ message: string }> {
+    // 显式选择密码和盐值用于验证
+    const auth = await this.authRepository
+      .createQueryBuilder('auth')
+      .addSelect(['auth.password', 'auth.salt'])
+      .where('auth.id = :id', { id: authId })
+      .getOne();
+
+    if (!auth) {
+      throw BusinessExceptionFactory.notFound('认证记录', { authId });
+    }
+
+    // 验证旧密码
+    const isOldPasswordValid = await this.validatePassword(
+      changePasswordDto.oldPassword,
+      auth.password,
+    );
+
+    if (!isOldPasswordValid) {
+      throw BusinessExceptionFactory.validation('旧密码错误');
+    }
+
+    // 生成新的盐值和密码哈希
+    const { salt, hashedPassword } = this.encryptPassword(changePasswordDto.newPassword);
+
+    // 更新密码
+    await this.authRepository.update(authId, {
+      password: hashedPassword,
+      salt,
+      passwordChangedAt: new Date(),
+    });
+
+    return { message: '密码修改成功' };
   }
 
   /**
@@ -621,39 +441,89 @@ export class AuthService {
    *
    * 撤销用户的访问令牌和刷新令牌
    *
-   * @param logoutDto 登出数据
-   * @param authId 认证ID
    * @returns 登出结果
+   * @param token
    */
-  async logout(logoutDto: LogoutDto, authId: string): Promise<LogoutResponseDto> {
-    // 清除刷新令牌缓存
-    await this.cacheService.del(`${CACHE_PREFIXES.REFRESH_TOKEN}:${authId}`);
+  async logout(token: string): Promise<{ message: string }> {
+    const tokenPayload = this.jwtService.decode<
+      CurrentUser & { jti: string; exp: number; iat: number }
+    >(token);
 
-    // 清除用户信息缓存
-    await this.cacheService.del(`${CACHE_PREFIXES.USER_INFO}:${authId}`);
-
-    // 如果提供了访问令牌，将其加入黑名单
-    if (logoutDto.accessToken) {
-      try {
-        const payload = this.jwtService.verify<JwtPayloadDto>(logoutDto.accessToken);
-        const remainingTtl = payload.exp - Math.floor(Date.now() / 1000);
-
-        if (remainingTtl > 0) {
-          await this.cacheService.set(
-            `${CACHE_PREFIXES.BLACKLIST_TOKEN}:${logoutDto.accessToken}`,
-            'blacklisted',
-            { ttl: remainingTtl },
-          );
-        }
-      } catch (error) {
-        // 令牌无效或已过期，无需加入黑名单
-      }
+    if (!tokenPayload) {
+      throw BusinessExceptionFactory.unauthorized('令牌无效');
     }
 
-    return {
-      message: '登出成功',
-      loggedOut: true,
-    };
+    // 计算过期时间
+    const accessTokenTtl = tokenPayload.exp - tokenPayload.iat;
+
+    await this.cacheService.set(
+      `${CACHE_PREFIXES.BLACKLIST}${tokenPayload.authId}:${tokenPayload.jti}`,
+      getCurrentTimestamp(),
+      {
+        ttl: accessTokenTtl,
+      },
+    );
+
+    // 清除 Refresh Token
+    await this.cacheService.del(`${CACHE_PREFIXES.REFRESH_TOKENS}${tokenPayload.authId}`);
+
+    return { message: '退出登录成功' };
+  }
+
+  /**
+   * 获取所有当前登录用户
+   *
+   * @returns 当前在线的用户列表
+   */
+  async getActiveUsers(): Promise<User[]> {
+    // 获取所有用户令牌键
+    const keys = await this.cacheService.keys(`${CACHE_PREFIXES.USER_TOKENS}*`);
+
+    if (!keys || keys.length === 0) {
+      return [];
+    }
+
+    // 从键中提取 authId
+    const authIds = keys.map((key) => {
+      return key.replace(CACHE_PREFIXES.USER_TOKENS, '');
+    });
+
+    if (authIds.length === 0) {
+      return [];
+    }
+
+    // 查询对应的用户信息
+    const auths = await this.authRepository.find({
+      where: { id: In(authIds) },
+      relations: ['user'],
+    });
+
+    // 提取并返回用户实体
+    return auths.map((auth) => auth.user).filter((user) => !!user);
+  }
+
+  /**
+   * 踢出指定用户 (管理员操作)
+   *
+   * @param authId 认证ID
+   */
+  async kickOutUserById(authId: string): Promise<void> {
+    const currentJti = await this.cacheService.get(`${CACHE_PREFIXES.USER_TOKENS}${authId}`);
+
+    if (currentJti) {
+      await this.cacheService.set(
+        `${CACHE_PREFIXES.BLACKLIST}${authId}:${currentJti}`,
+        getCurrentTimestamp(),
+        {
+          ttl: this.appConfig.jwtOptions.accessTokenTtl,
+        },
+      );
+      // 清除用户当前令牌记录
+      await this.cacheService.del(`${CACHE_PREFIXES.USER_TOKENS}${authId}`);
+    }
+
+    // 清除 Refresh Token，防止用户立即刷新令牌
+    await this.cacheService.del(`${CACHE_PREFIXES.REFRESH_TOKENS}${authId}`);
   }
 
   /**
@@ -664,7 +534,6 @@ export class AuthService {
    * @param authId 认证ID
    * @returns 认证信息或抛出异常
    */
-  @Cache({ key: `${CACHE_PREFIXES.USER_INFO}:\${0}`, ttl: CACHE_TTL.USER_INFO })
   async getAuthById(authId: string): Promise<Auth> {
     const auth = await this.authRepository.findOne({
       where: { id: authId },
@@ -677,47 +546,74 @@ export class AuthService {
   }
 
   /**
-   * 根据用户名获取认证信息
-   *
-   * @param username 用户名
-   * @returns 认证信息或null
-   */
-  async getAuthByUsername(username: string): Promise<Auth | null> {
-    return this.authRepository.findOne({
-      where: { username: username },
-      relations: ['user'],
-    });
-  }
-
-  /**
-   * 检查用户名是否已存在
-   *
-   * @param username 用户名
-   * @returns 是否存在
-   */
-  async isUsernameExists(username: string): Promise<boolean> {
-    const count = await this.authRepository.count({
-      where: { username: username },
-    });
-    return count > 0;
-  }
-
-  /**
    * 验证密码
    *
    * 使用bcrypt验证输入密码与存储密码是否匹配
    *
    * @param inputPassword 用户输入的密码
-   * @param storedSalt 存储的盐值
    * @param storedPassword 存储的加密密码
    * @returns 密码是否匹配
    */
-  private async validatePassword(
-    inputPassword: string,
-    storedSalt: string,
-    storedPassword: string,
-  ): Promise<boolean> {
+  private async validatePassword(inputPassword: string, storedPassword: string): Promise<boolean> {
     return await bcrypt.compare(inputPassword, storedPassword);
+  }
+
+  /**
+   * 加密密码
+   *
+   * @param password 原始密码
+   * @returns 包含盐值和哈希密码的对象
+   */
+  private encryptPassword(password: string): { salt: string; hashedPassword: string } {
+    const salt = bcrypt.genSaltSync(this.appConfig.bcryptSaltRounds);
+    const hashedPassword = bcrypt.hashSync(password, salt);
+    return { salt, hashedPassword };
+  }
+
+  /**
+   * 计算当前锁定持续时间（指数退避）
+   *
+   * @param loginAttempts 当前失败次数
+   * @returns 锁定持续时间（毫秒）
+   */
+  private calculateLockDuration(loginAttempts: number): number {
+    const { maxLoginAttempts, baseLockDuration, maxLockDuration } =
+      this.appConfig.authSecurityOptions;
+
+    // 基础锁定时间（毫秒）
+    const baseDurationMs = baseLockDuration * 1000;
+    const maxDurationMs = maxLockDuration * 1000;
+
+    // 超过最大尝试次数的额外次数
+    const extraAttempts = Math.max(0, loginAttempts - maxLoginAttempts);
+
+    // 指数退避计算: base * (2 ^ extraAttempts)
+    // 例如: max=5, base=30m
+    // attempts=5 -> extra=0 -> 30m
+    // attempts=6 -> extra=1 -> 60m
+    // attempts=7 -> extra=2 -> 120m
+    const duration = baseDurationMs * Math.pow(2, extraAttempts);
+
+    return Math.min(duration, maxDurationMs);
+  }
+
+  /**
+   * 检查账号是否被锁定
+   *
+   * @param auth 认证实体
+   * @returns 是否被锁定
+   */
+  public isAccountLocked(auth: Auth): boolean {
+    if (!auth.lockedAt) return false;
+
+    // 动态计算锁定时间
+    const lockDuration = this.calculateLockDuration(auth.loginAttempts);
+    const now = new Date();
+    const lockedAtDate = auth.lockedAt;
+
+    if (Number.isNaN(lockedAtDate.getTime())) return false;
+
+    return now.getTime() - lockedAtDate.getTime() < lockDuration;
   }
 
   /**
@@ -730,7 +626,7 @@ export class AuthService {
    */
   private async generateRefreshToken(authId: string): Promise<string> {
     const randomBytes = crypto.randomBytes(32);
-    const timestamp = Date.now().toString();
+    const timestamp = getCurrentTimestamp().toString();
     const payload = `${authId}:${timestamp}:${randomBytes.toString('hex')}`;
     return Buffer.from(payload).toString('base64url');
   }
@@ -744,28 +640,22 @@ export class AuthService {
    * @returns 认证ID或null
    */
   private async validateRefreshToken(refreshToken: string): Promise<string | null> {
-    try {
-      // 解码刷新令牌
-      const decoded = Buffer.from(refreshToken, 'base64url').toString();
-      const [authId] = decoded.split(':');
+    // 解码刷新令牌
+    const decoded = Buffer.from(refreshToken, 'base64url').toString();
+    const [authId] = decoded.split(':');
 
-      if (!authId) {
-        return null;
-      }
-
-      // 从缓存中验证令牌
-      const cachedToken = await this.cacheService.get<string>(
-        `${CACHE_PREFIXES.REFRESH_TOKEN}:${authId}`,
-      );
-
-      if (cachedToken !== refreshToken) {
-        return null;
-      }
-
-      return authId;
-    } catch (error) {
+    if (!authId) {
       return null;
     }
+
+    // 验证是否与缓存中的令牌一致
+    const storedToken = await this.cacheService.get(`${CACHE_PREFIXES.REFRESH_TOKENS}${authId}`);
+
+    if (!storedToken || storedToken !== refreshToken) {
+      return null;
+    }
+
+    return authId;
   }
 
   /**
@@ -775,17 +665,6 @@ export class AuthService {
    */
   private async incrementLoginAttempts(authId: string): Promise<void> {
     await this.authRepository.increment({ id: authId }, 'loginAttempts', 1);
-  }
-
-  /**
-   * 重置登录失败次数
-   *
-   * @param authId 认证ID
-   */
-  private async resetLoginAttempts(authId: string): Promise<void> {
-    await this.authRepository.update(authId, {
-      loginAttempts: 0,
-    });
   }
 
   /**
@@ -815,6 +694,7 @@ export class AuthService {
    * 更新最后登录时间
    *
    * @param authId 认证ID
+   * @param clientIp
    */
   private async updateLastLogin(authId: string, clientIp?: string): Promise<void> {
     const updateData: Partial<Auth> = {

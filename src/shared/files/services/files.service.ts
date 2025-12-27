@@ -1,9 +1,11 @@
+import { Status } from '@/common/enums';
+import { BusinessExceptionFactory } from '@/common/exceptions';
+import { formatDatePath, getErrorMessage } from '@/utils';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as path from 'path';
-import { formatDatePath } from 'src/utils';
-import type { Repository } from 'typeorm';
-import { BusinessExceptionFactory } from '../../../common/exceptions';
+import sharp from 'sharp';
+import { In, Repository } from 'typeorm';
 import type { FileQueryDto, FileUploadDto } from '../dto';
 import { File } from '../entities';
 import type { BatchUploadResult, FileUploadResult } from '../interfaces';
@@ -60,7 +62,7 @@ export class FilesService {
       userId,
       fileType,
       description: uploadDto.description,
-      isPublic: uploadDto.isPublic ?? false,
+      isPublic: Number(uploadDto.isPublic) === Status.ENABLED ? Status.ENABLED : Status.DISABLED,
       uploadProtocol: uploadDto.protocol,
     });
 
@@ -88,16 +90,33 @@ export class FilesService {
       failureCount: 0,
     };
 
+    // 预先计算所有文件的哈希值
+    const fileHashes = files.map((file) => this.validationService.generateFileHash(file.buffer));
+
+    // 批量查询已存在的文件
+    const existingFiles = await this.fileRepository.findBy({ hash: In(fileHashes) });
+    const existingFilesMap = new Map(existingFiles.map((file) => [file.hash, file]));
+
     // 并发处理文件上传
-    const uploadPromises = files.map(async (file) => {
+    const uploadPromises = files.map(async (file, index) => {
       try {
+        const fileHash = fileHashes[index];
+        const existingFile = existingFilesMap.get(fileHash);
+
+        if (existingFile) {
+          const result = this.mapToUploadResult(existingFile);
+          results.successful.push(result);
+          results.successCount++;
+          return;
+        }
+
         const result = await this.uploadSingleFile(file, uploadDto, userId);
         results.successful.push(result);
         results.successCount++;
       } catch (error) {
         results.failed.push({
           filename: file.originalname,
-          error: (error as Error).message,
+          error: getErrorMessage(error),
         });
         results.failureCount++;
         this.logger.error(`❌ 文件上传失败: ${file.originalname}`, error);
@@ -118,11 +137,12 @@ export class FilesService {
 
     // 基础过滤条件
     if (!publicOnly && userId) {
-      queryBuilder.where('file.userId = :userId OR file.isPublic = true', {
+      queryBuilder.where('file.userId = :userId OR file.isPublic = :isPublic', {
         userId,
+        isPublic: Status.ENABLED,
       });
     } else if (publicOnly) {
-      queryBuilder.where('file.isPublic = true');
+      queryBuilder.where('file.isPublic = :isPublic', { isPublic: Status.ENABLED });
     }
 
     // 类型过滤
@@ -163,7 +183,7 @@ export class FilesService {
 
     // 检查访问权限
     if (!this.canAccessFile(file, userId)) {
-      throw BusinessExceptionFactory.forbidden('无权限访问该文件', { id });
+      throw BusinessExceptionFactory.forbidden('禁止访问该文件', { id });
     }
 
     return file;
@@ -194,15 +214,38 @@ export class FilesService {
     return true;
   }
 
-  async getFileBuffer(id: string, userId?: string): Promise<{ file: File; buffer: Buffer }> {
+  async getFileBuffer(
+    id: string,
+    userId?: string,
+    size?: string,
+  ): Promise<{ file: File; buffer: Buffer }> {
     const file = await this.findFileById(id, userId);
-    const buffer = await this.storageService.download(file.path);
+    let buffer = await this.storageService.download(file.path);
+
+    if (size && file.mimeType.startsWith('image/')) {
+      try {
+        const [width, height] = size.split('x').map((s) => parseInt(s, 10));
+
+        if (!isNaN(width) && !isNaN(height)) {
+          buffer = await sharp(buffer)
+            .resize(width, height, {
+              fit: 'cover',
+              position: 'center',
+            })
+            .toBuffer();
+        }
+      } catch (error) {
+        this.logger.warn(`图片缩放失败: ${error}`);
+        // 缩放失败时返回原图
+      }
+    }
+
     return { file, buffer };
   }
 
   private canAccessFile(file: File, userId?: string): boolean {
     // 公开文件任何人都可以访问
-    if (file.isPublic) {
+    if (file.isPublic === Status.ENABLED) {
       return true;
     }
 
@@ -214,8 +257,26 @@ export class FilesService {
     return false;
   }
 
+  async updateFilePublicStatus(id: string, isPublic: Status, userId?: string): Promise<File> {
+    const file = await this.fileRepository.findOne({ where: { id } });
+
+    if (!file) {
+      throw BusinessExceptionFactory.notFound('文件不存在', { id });
+    }
+
+    // 只有文件所有者可以修改文件状态
+    if (userId && file.userId !== userId) {
+      throw BusinessExceptionFactory.forbidden('只有文件所有者可以修改文件状态', { id });
+    }
+
+    file.isPublic = isPublic;
+    await this.fileRepository.save(file);
+
+    this.logger.log(`🔒 文件公开状态更新: ${file.originalName} (${id}) - ${isPublic}`);
+    return file;
+  }
+
   private mapToUploadResult(file: File): FileUploadResult {
-    console.log('file: ', file);
     return {
       fileId: file.id,
       filename: file.filename,

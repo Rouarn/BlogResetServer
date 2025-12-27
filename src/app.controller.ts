@@ -15,10 +15,49 @@
  * @version 1.0.0
  */
 
+import { Public } from '@/common/decorators';
 import { Controller, Get } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Public } from 'src/common/decorators';
+import {
+  ApiOperation,
+  ApiProperty,
+  ApiPropertyOptional,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AppService } from './app.service';
+
+class HelloResponseDto {
+  @ApiProperty({ description: '欢迎消息', example: 'Hello NestJS-Template' })
+  message: string;
+}
+
+class VersionResponseDto {
+  @ApiProperty({ description: '版本号', example: '1.0.0' })
+  version: string;
+
+  @ApiProperty({ description: '应用名称', example: 'NestJS-Template' })
+  name: string;
+
+  @ApiPropertyOptional({ description: '应用描述', example: 'NestJS 应用模板' })
+  description?: string;
+}
+
+class AppInfoResponseDto {
+  @ApiProperty({ description: '版本号', example: '1.0.0' })
+  version: string;
+
+  @ApiProperty({ description: '应用名称', example: 'NestJS-Template' })
+  name: string;
+
+  @ApiPropertyOptional({ description: '应用描述', example: 'NestJS 应用模板' })
+  description?: string;
+
+  @ApiPropertyOptional({ description: '作者', example: 'NestJS Template' })
+  author?: string;
+
+  @ApiPropertyOptional({ description: '许可证', example: 'MIT' })
+  license?: string;
+}
 
 /**
  * 应用根控制器
@@ -43,17 +82,10 @@ export class AppController {
     summary: '获取欢迎信息',
     description: '返回应用的欢迎信息，用于健康检查和状态验证',
   })
-  @ApiResponse({
-    status: 200,
-    description: '成功返回欢迎信息',
-    schema: {
-      type: 'string',
-      example: 'Hello NestJS-Template',
-    },
-  })
+  @ApiResponse({ status: 200, description: '成功返回欢迎信息', type: HelloResponseDto })
   @Public() // 公共接口，无需认证
   @Get()
-  getHello(): { message: string } {
+  getHello(): HelloResponseDto {
     return this.appService.getHello();
   }
 
@@ -71,21 +103,10 @@ export class AppController {
     summary: '获取版本信息',
     description: '返回应用的版本号和构建信息',
   })
-  @ApiResponse({
-    status: 200,
-    description: '成功返回版本信息',
-    schema: {
-      type: 'object',
-      example: {
-        version: '1.0.0',
-        name: 'NestJS-Template',
-        description: 'NestJS 应用模板',
-      },
-    },
-  })
+  @ApiResponse({ status: 200, description: '成功返回版本信息', type: VersionResponseDto })
   @Public() // 公共接口，无需认证
   @Get('version')
-  getVersion(): { version: string; name: string; description?: string } {
+  getVersion(): VersionResponseDto {
     return this.appService.getVersion();
   }
 
@@ -103,29 +124,10 @@ export class AppController {
     summary: '获取应用完整信息',
     description: '返回应用的完整信息，包含版本、描述、作者等详细信息',
   })
-  @ApiResponse({
-    status: 200,
-    description: '成功返回应用完整信息',
-    schema: {
-      type: 'object',
-      example: {
-        version: '1.0.0',
-        name: 'NestJS-Template',
-        description: 'NestJS 应用模板',
-        author: 'NestJS Template',
-        license: 'MIT',
-      },
-    },
-  })
+  @ApiResponse({ status: 200, description: '成功返回应用完整信息', type: AppInfoResponseDto })
   @Public() // 公共接口，无需认证
   @Get('info')
-  getAppInfo(): {
-    version: string;
-    name: string;
-    description?: string;
-    author?: string;
-    license?: string;
-  } {
+  getAppInfo(): AppInfoResponseDto {
     return this.appService.getAppInfo();
   }
 }

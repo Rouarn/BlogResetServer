@@ -6,5 +6,5 @@
  */
 
 export { RedisCacheService } from './redis-cache.service';
-export { MemoryCacheService } from './memory-cache.service';
 export { CacheFactoryService } from './cache-factory.service';
+export { NoopCacheService } from './noop-cache.service';

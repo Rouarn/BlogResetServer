@@ -1,4 +1,5 @@
-import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
+import { Gender, Role, Status } from '@/common/enums';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   ArrayNotEmpty,
@@ -12,8 +13,6 @@ import {
   Length,
   Matches,
 } from 'class-validator';
-import { Gender, Status } from 'src/common/enums';
-import { CreateUserDto } from './create-user.dto';
 
 /**
  * 更新用户DTO
@@ -26,10 +25,7 @@ import { CreateUserDto } from './create-user.dto';
  * - 排除authId字段（不允许更改关联关系）
  * - 保持与创建DTO相同的验证规则
  */
-export class UpdateUserDto extends PartialType(
-  // 排除authId字段，因为不允许更改用户与认证的关联关系
-  class extends OmitType(CreateUserDto, ['authId'] as const) {},
-) {
+export class UpdateUserDto {
   @ApiPropertyOptional({
     description: '用户昵称',
     example: '李四',
@@ -119,11 +115,11 @@ export class UpdateUserDto extends PartialType(
 
   @ApiPropertyOptional({
     description: '用户角色',
-    example: 'ADMIN',
+    example: Role.USER,
   })
   @IsOptional()
-  @IsString()
-  roles?: string;
+  @IsEnum(Role, { message: '角色值无效' })
+  roles?: Role;
 }
 
 /**

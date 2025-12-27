@@ -17,7 +17,6 @@
  * @version 1.0.0
  */
 import { Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core/constants';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -25,14 +24,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HttpExceptionFilter } from './common/filters';
-import { GlobalGuard, JwtAuthGuard, RolesGuard } from './common/guards';
+import { JwtAuthGuard, RolesGuard } from './common/guards';
 // 公共组件导入
 import { ResponseInterceptor } from './common/interceptors';
 import { CustomValidationPipe } from './common/pipes';
-import { JwtAuthStrategy } from './common/strategies';
 // 配置模块导入
 import { ConfigModule as AppConfigModule, AppConfigService } from './config';
-// 时间戳管理模块
+// 时间管理模块
 import {
   DATABASE_CONFIG,
   DatabaseConfig,
@@ -40,7 +38,7 @@ import {
   DatabaseNamingStrategy,
 } from './database';
 // 业务模块导入
-import { CacheInterceptor, CacheModule } from '@/shared/cache';
+import { CacheModule } from '@/shared/cache';
 import { FilesModule } from '@/shared/files/files.module';
 import { ArticleCategoriesModule } from './modules/article_categories/article_categories.module';
 import { ArticleFilesModule } from './modules/article_files/article_files.module';
@@ -71,16 +69,19 @@ import { UsersModule } from './modules/users/users.module';
     // =============================================================================
     JwtModule.registerAsync({
       global: true, // 全局可用，无需在每个模块中重复导入
-      inject: [ConfigService], // 注入配置服务
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('NEST_JWT_SECRET'), // JWT 签名密钥
-        signOptions: {
-          expiresIn: configService.get<number>( // JWT 过期时间
-            'NEST_JWT_ACCESS_TOKEN_TTL',
-            3600, // 默认 1 天
-          ),
-        },
-      }),
+      inject: [AppConfigService], // 注入配置服务
+      useFactory: (appConfig: AppConfigService) => {
+        return {
+          secret: appConfig.jwtOptions.secret, // JWT 签名密钥
+          signOptions: {
+            expiresIn: appConfig.jwtOptions.accessTokenTtl, // JWT 过期时间
+            algorithm: 'HS256',
+          },
+          verifyOptions: {
+            algorithms: ['HS256'],
+          },
+        };
+      },
     }),
 
     // =============================================================================
@@ -100,13 +101,16 @@ import { UsersModule } from './modules/users/users.module';
     // =============================================================================
     // 数据库管理模块 - 自动时间戳功能
     // =============================================================================
-    DatabaseModule.forRoot({
-      enableTimestamps: true, // 启用时间戳功能
-      fieldNames: {
-        createTime: 'createTime',
-        updateTime: 'updateTime',
-      },
-      tablePrefix: process.env.NEST_DATABASE_TABLE_PREFIX ?? '',
+    DatabaseModule.forRootAsync({
+      inject: [AppConfigService],
+      useFactory: (appConfig: AppConfigService) => ({
+        enableTimestamps: true, // 启用时间戳功能
+        fieldNames: {
+          createTime: 'createTime',
+          updateTime: 'updateTime',
+        },
+        tablePrefix: appConfig.databaseConfig.tablePrefix,
+      }),
     }),
 
     // =============================================================================
@@ -141,15 +145,10 @@ import { UsersModule } from './modules/users/users.module';
   providers: [
     // 应用核心服务
     AppService, // 应用根服务
-    JwtAuthStrategy, // JWT 认证策略
 
     // =============================================================================
     // 全局守卫配置 - 按优先级顺序执行
     // =============================================================================
-    {
-      provide: APP_GUARD,
-      useClass: GlobalGuard, // 全局限流守卫 (优先执行限流检查)
-    },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard, // JWT 认证守卫 (验证访问令牌)
@@ -162,10 +161,6 @@ import { UsersModule } from './modules/users/users.module';
     // =============================================================================
     // 全局拦截器 - 统一响应格式化和请求追踪
     // =============================================================================
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: CacheInterceptor, // 缓存拦截器 (支持 @Cache 和 @CacheEvict 装饰器)
-    },
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseInterceptor, // 响应格式化拦截器 (统一响应格式)

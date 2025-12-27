@@ -1,5 +1,6 @@
+import { Status } from '@/common/enums';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class FileUploadDto {
   @ApiProperty({ description: '文件描述' })
@@ -7,10 +8,10 @@ export class FileUploadDto {
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional({ description: '是否公开', default: false })
+  @ApiPropertyOptional({ description: '是否公开', default: Status.DISABLED })
   @IsOptional()
-  @IsBoolean()
-  isPublic?: boolean;
+  @IsEnum(Status)
+  isPublic?: Status;
 
   @ApiPropertyOptional({ description: '上传协议', default: 'HTTP' })
   @IsOptional()

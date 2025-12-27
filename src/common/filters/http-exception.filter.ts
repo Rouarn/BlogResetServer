@@ -4,7 +4,7 @@
  * 建议在 `main.ts` 中通过 `app.useGlobalFilters(new HttpExceptionFilter())` 注册。
  */
 import type { ErrorResponse } from '@/common/interfaces';
-import { BusinessException } from '@/common/exceptions';
+import { formatTimestamp } from '@/utils';
 import {
   ArgumentsHost,
   Catch,
@@ -14,7 +14,6 @@ import {
   Injectable,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import { formatTimestamp } from 'src/utils/helpers';
 
 @Injectable()
 @Catch(HttpException)
@@ -35,7 +34,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     const originalStatus = exception.getStatus?.() ?? HttpStatus.INTERNAL_SERVER_ERROR;
-    const isBusiness = exception instanceof BusinessException;
     const raw = exception.getResponse() as unknown;
 
     let message: string | string[] = '请求失败';
@@ -68,10 +66,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       path: request.path,
     };
 
-    // 业务异常统一以 200 传输，避免前端 axios 将其当作网络错误拦截
-    // 同时在响应体的 `code` 字段保留真实业务状态码，前端据此判断与提示
-    const transportStatus = isBusiness ? HttpStatus.OK : originalStatus;
-    response.status(transportStatus).json(body);
+    response.status(originalStatus).json(body);
   }
 }
 

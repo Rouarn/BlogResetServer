@@ -7,16 +7,17 @@
  * @version 1.0.0
  */
 
-import { VersioningType } from '@nestjs/common';
+import { Logger, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import compression from 'compression';
 import cors from 'cors';
 import * as fs from 'fs';
 import * as path from 'path';
 import { AppModule } from './app.module';
-import { BootstrapLoggerService } from './common/services';
-import { appConfig } from './config';
+import { BootstrapLogHelper } from './common/helpers';
+import { AppConfigService } from './config';
 
 /**
  * 解析静态资源路径
@@ -26,15 +27,16 @@ function resolveStaticPath(staticConfig: { root: string }): string {
     return staticConfig.root;
   }
 
-  const isProduction = process.env.NODE_ENV === 'production';
-  const baseDir = isProduction ? process.cwd() : path.join(process.cwd(), 'dist');
-  return path.resolve(baseDir, staticConfig.root);
+  return path.resolve(process.cwd(), staticConfig.root);
 }
 
 /**
  * 配置应用基础设置
  */
-function configureApp(app: NestExpressApplication): void {
+function configureApp(app: NestExpressApplication, appConfig: AppConfigService): void {
+  // 启用 GZIP 压缩 Accept-Encoding: gzip
+  app.use(compression());
+
   // 配置CORS跨域策略
   app.use(cors(appConfig.corsOptions));
 }
@@ -42,27 +44,33 @@ function configureApp(app: NestExpressApplication): void {
 /**
  * 配置API版本控制
  */
-function configureVersioning(app: NestExpressApplication): void {
+function configureVersioning(app: NestExpressApplication, appConfig: AppConfigService): void {
   const versionConfig = appConfig.apiVersioning;
 
-  app.enableVersioning({
-    type: VersioningType.URI,
-    prefix: `${versionConfig.prefix}/v`,
-    defaultVersion: versionConfig.defaultVersion,
-  });
+  if (versionConfig.type === 'uri') {
+    app.enableVersioning({
+      type: VersioningType.URI,
+      prefix: `${versionConfig.prefix}/v`,
+      defaultVersion: versionConfig.defaultVersion,
+    });
+  } else if (versionConfig.type === 'header') {
+    app.setGlobalPrefix(versionConfig.prefix);
+    app.enableVersioning({
+      type: VersioningType.HEADER,
+      header: versionConfig.header,
+      defaultVersion: versionConfig.defaultVersion,
+    });
+  }
 }
 
 /**
  * 配置静态资源服务
  */
-function configureStaticAssets(
-  app: NestExpressApplication,
-  logger: BootstrapLoggerService,
-): string {
+function configureStaticAssets(app: NestExpressApplication, appConfig: AppConfigService): string {
   const staticConfig = appConfig.staticAssetsOptions;
   const staticPath = resolveStaticPath(staticConfig);
 
-  logger.logStaticResourceConfig(staticConfig, staticPath);
+  BootstrapLogHelper.logStaticResourceConfig(staticConfig, staticPath);
   app.useStaticAssets(staticPath, staticConfig.options);
 
   return staticPath;
@@ -74,24 +82,23 @@ function configureStaticAssets(
 function configureSwagger(
   app: NestExpressApplication,
   staticPath: string,
-  logger: BootstrapLoggerService,
+  appConfig: AppConfigService,
 ): void {
-  if (!appConfig.swaggerOptions.enabled) return;
-
-  const swaggerConfig = appConfig.swaggerOptions;
+  const swaggerOptions = appConfig.swaggerOptions;
+  if (!swaggerOptions.enabled) return;
 
   const options = new DocumentBuilder()
     .addBearerAuth()
-    .setTitle(swaggerConfig.title)
-    .setDescription(swaggerConfig.description)
-    .setVersion(swaggerConfig.version)
+    .setTitle(swaggerOptions.title)
+    .setDescription(swaggerOptions.description)
+    .setVersion(swaggerOptions.version)
     .build();
 
   const document = SwaggerModule.createDocument(app, options);
-  SwaggerModule.setup(swaggerConfig.prefix, app, document);
+  SwaggerModule.setup(swaggerOptions.prefix, app, document);
 
   // 导出API文档为JSON
-  const apiDocPath = path.join(staticPath, 'api-docs.json');
+  const apiDocPath = path.join(staticPath, swaggerOptions.filename);
 
   if (!fs.existsSync(staticPath)) {
     fs.mkdirSync(staticPath, { recursive: true });
@@ -103,49 +110,50 @@ function configureSwagger(
 
   fs.writeFileSync(apiDocPath, JSON.stringify(document, null, 2));
 
-  logger.logApiDocumentSaved(
+  BootstrapLogHelper.logApiDocumentSaved(
     apiDocPath,
     appConfig.baseUrl,
     appConfig.staticAssetsOptions.options.prefix,
+    swaggerOptions.filename,
   );
 }
 
-/**
- * 应用程序启动函数
- */
 async function bootstrap(): Promise<void> {
+  // 初始化日志服务
+  const logger = new Logger('Bootstrap');
+
   try {
-    const app = await NestFactory.create<NestExpressApplication>(AppModule);
-    const logger = new BootstrapLoggerService();
+    // 创建应用实例
+    const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+      bufferLogs: true, // 缓存日志直到 Logger 初始化完成
+    });
 
-    // 配置应用基础设置
-    configureApp(app);
+    // 获取配置服务
+    const appConfig = app.get(AppConfigService);
 
-    // 配置API版本控制
-    configureVersioning(app);
+    app.useLogger(logger);
 
-    // 配置静态资源服务
-    const staticPath = configureStaticAssets(app, logger);
+    // 配置应用组件
+    configureApp(app, appConfig);
+    configureVersioning(app, appConfig);
+    const staticPath = configureStaticAssets(app, appConfig);
+    configureSwagger(app, staticPath, appConfig);
 
-    // 配置Swagger文档
-    configureSwagger(app, staticPath, logger);
+    // 启动应用
+    const port = appConfig.port;
+    await app.listen(port);
 
-    // 启动服务器
-    await app.listen(appConfig.port);
-
-    // 记录启动信息
-    await logger.logApplicationStartup(
+    // 打印启动完成信息
+    await BootstrapLogHelper.logApplicationStartup(
       app,
       appConfig,
       appConfig.apiVersioning,
       appConfig.staticAssetsOptions,
     );
   } catch (error) {
-    const logger = new BootstrapLoggerService();
-    logger.logApplicationError(error);
+    BootstrapLogHelper.logApplicationError(error);
     process.exit(1);
   }
 }
 
-// 启动应用
 void bootstrap();
