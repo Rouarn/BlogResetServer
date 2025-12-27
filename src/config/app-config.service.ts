@@ -22,7 +22,8 @@ export class AppConfigService {
       production: ' - 生产环境',
     };
 
-    const baseTitle = this.configService.get<string>('app.title', 'NestJS Template');
+    const baseTitle = this.configService.get<string>('app.title')!;
+    console.log('baseTitle: ', baseTitle);
     const environment = this.environment as Environment;
     const suffix = suffixMap[environment] ?? '';
 
@@ -30,15 +31,15 @@ export class AppConfigService {
   }
 
   get port(): number {
-    return this.configService.get<number>('app.port', 3000);
+    return this.configService.get<number>('app.port')!;
   }
 
   get environment(): string {
-    return this.configService.get<string>('app.environment', 'development');
+    return this.configService.get<string>('app.environment')!;
   }
 
   get baseUrl(): string {
-    return this.configService.get<string>('app.baseUrl', `http://localhost:${this.port}`);
+    return this.configService.get<string>('app.baseUrl')!;
   }
 
   get isDevelopment(): boolean {
@@ -51,20 +52,20 @@ export class AppConfigService {
 
   // JWT 认证配置
   get jwtOptions(): {
-    secret: string | undefined;
+    secret: string;
     accessTokenTtl: number;
     refreshTokenTtl: number;
   } {
     return {
-      secret: this.configService.get<string>('app.jwt.secret'),
-      accessTokenTtl: this.configService.get<number>('app.jwt.accessTokenTtl', 3600),
-      refreshTokenTtl: this.configService.get<number>('app.jwt.refreshTokenTtl', 604800),
+      secret: this.configService.get<string>('app.jwt.secret')!,
+      accessTokenTtl: this.configService.get<number>('app.jwt.accessTokenTtl')!,
+      refreshTokenTtl: this.configService.get<number>('app.jwt.refreshTokenTtl')!,
     };
   }
 
   // Bcrypt 加密配置
   get bcryptSaltRounds(): number {
-    return this.configService.get<number>('app.bcrypt.saltRounds', 10);
+    return this.configService.get<number>('app.bcrypt.saltRounds')!;
   }
 
   // 认证安全配置
@@ -74,9 +75,9 @@ export class AppConfigService {
     maxLockDuration: number;
   } {
     return {
-      maxLoginAttempts: this.configService.get<number>('app.auth.maxLoginAttempts', 5),
-      baseLockDuration: this.configService.get<number>('app.auth.baseLockDuration', 1800),
-      maxLockDuration: this.configService.get<number>('app.auth.maxLockDuration', 86400),
+      maxLoginAttempts: this.configService.get<number>('app.auth.maxLoginAttempts')!,
+      baseLockDuration: this.configService.get<number>('app.auth.baseLockDuration')!,
+      maxLockDuration: this.configService.get<number>('app.auth.maxLockDuration')!,
     };
   }
 
@@ -86,21 +87,21 @@ export class AppConfigService {
     options: ServeStaticOptions & FileUploadOptions;
   } {
     return {
-      root: this.configService.get<string>('app.static.root', './static'),
+      root: this.configService.get<string>('app.static.root')!,
       options: {
-        prefix: this.configService.get<string>('app.static.prefix', '/static'),
-        maxAge: this.configService.get<number>('app.static.maxAge', 86400).toString(),
-        uploadsPath: this.configService.get<string>('app.static.uploadsPath', './static/uploads'),
-        uploadsMaxSize: this.configService.get<number>('app.static.uploadsMaxSize', 10485760),
-        uploadsAllowedTypes: this.configService.get<string[]>('app.static.uploadsAllowedTypes', []),
-        uploadsMaxFiles: this.configService.get<number>('app.static.uploadsMaxFiles', 10),
+        prefix: this.configService.get<string>('app.static.prefix')!,
+        maxAge: this.configService.get<number>('app.static.maxAge')!.toString(),
+        uploadsPath: this.configService.get<string>('app.static.uploadsPath')!,
+        uploadsMaxSize: this.configService.get<number>('app.static.uploadsMaxSize')!,
+        uploadsAllowedTypes: this.configService.get<string[]>('app.static.uploadsAllowedTypes')!,
+        uploadsMaxFiles: this.configService.get<number>('app.static.uploadsMaxFiles')!,
       } as ServeStaticOptions & FileUploadOptions,
     };
   }
 
   // CORS 跨域配置
   get corsOptions(): CorsOptions {
-    const allowList = this.configService.get<string[]>('app.cors.origin', []);
+    const allowList = this.configService.get<string[]>('app.cors.origin')!;
 
     // 生产环境：严格检查 Origin
     if (this.isProduction) {
@@ -168,16 +169,16 @@ export class AppConfigService {
     const environment = this.environment as Environment;
     const suffix = suffixMap[environment] ?? '';
 
-    const baseTitle = this.configService.get<string>('app.swagger.title', 'API Documentation');
-    const description = this.configService.get<string>('app.swagger.description', 'API文档');
+    const baseTitle = this.configService.get<string>('app.swagger.title')!;
+    const description = this.configService.get<string>('app.swagger.description')!;
     const title = `${baseTitle}${suffix}`;
 
     return {
       title,
       description,
-      version: `V${this.configService.get<string>('app.api.version', '1')}`,
-      prefix: this.configService.get<string>('app.swagger.prefix', '/api-docs'),
-      filename: this.configService.get<string>('app.swagger.filename', 'api-docs.json'),
+      version: `V${this.configService.get<string>('app.api.version')!}`,
+      prefix: this.configService.get<string>('app.swagger.prefix')!,
+      filename: this.configService.get<string>('app.swagger.filename')!,
       enabled: environment !== 'production',
     };
   }
@@ -204,32 +205,27 @@ export class AppConfigService {
     };
   } {
     return {
-      enabled: this.configService.get<boolean>('app.redis.enabled', false),
-      host: this.configService.get<string>('app.redis.host', 'localhost'),
-      port: this.configService.get<number>('app.redis.port', 6379),
+      enabled: this.configService.get<boolean>('app.redis.enabled')!,
+      host: this.configService.get<string>('app.redis.host')!,
+      port: this.configService.get<number>('app.redis.port')!,
       password: this.configService.get<string>('app.redis.password'),
-      db: this.configService.get<number>('app.redis.db', 0),
+      db: this.configService.get<number>('app.redis.db')!,
       options: {
         retryDelayOnFailover: this.configService.get<number>(
           'app.redis.options.retryDelayOnFailover',
-          100,
-        ),
-        enableReadyCheck: this.configService.get<boolean>(
-          'app.redis.options.enableReadyCheck',
-          false,
-        ),
+        )!,
+        enableReadyCheck: this.configService.get<boolean>('app.redis.options.enableReadyCheck')!,
         maxRetriesPerRequest: this.configService.get<number>(
           'app.redis.options.maxRetriesPerRequest',
-          3,
-        ),
-        lazyConnect: this.configService.get<boolean>('app.redis.options.lazyConnect', true),
-        keepAlive: this.configService.get<number>('app.redis.options.keepAlive', 30000),
-        connectTimeout: this.configService.get<number>('app.redis.options.connectTimeout', 10000),
-        commandTimeout: this.configService.get<number>('app.redis.options.commandTimeout', 5000),
+        )!,
+        lazyConnect: this.configService.get<boolean>('app.redis.options.lazyConnect')!,
+        keepAlive: this.configService.get<number>('app.redis.options.keepAlive')!,
+        connectTimeout: this.configService.get<number>('app.redis.options.connectTimeout')!,
+        commandTimeout: this.configService.get<number>('app.redis.options.commandTimeout')!,
       },
       cache: {
-        defaultTtl: this.configService.get<number>('app.redis.cache.defaultTtl', 3600),
-        keyPrefix: this.configService.get<string>('app.redis.cache.keyPrefix', 'nestjs:'),
+        defaultTtl: this.configService.get<number>('app.redis.cache.defaultTtl')!,
+        keyPrefix: this.configService.get<string>('app.redis.cache.keyPrefix')!,
       },
     };
   }
@@ -249,14 +245,14 @@ export class AppConfigService {
   } {
     return {
       type: 'mysql' as const,
-      host: this.configService.get<string>('app.database.host', 'localhost'),
-      port: this.configService.get<number>('app.database.port', 3306),
+      host: this.configService.get<string>('app.database.host')!,
+      port: this.configService.get<number>('app.database.port')!,
       username: this.configService.get<string>('app.database.username'),
       password: this.configService.get<string>('app.database.password'),
       database: this.configService.get<string>('app.database.database'),
-      tablePrefix: this.configService.get<string>('app.database.tablePrefix', ''),
-      synchronize: this.configService.get<boolean>('app.database.synchronize', false),
-      logging: this.configService.get<boolean>('app.database.logging', false),
+      tablePrefix: this.configService.get<string>('app.database.tablePrefix')!,
+      synchronize: this.configService.get<boolean>('app.database.synchronize')!,
+      logging: this.configService.get<boolean>('app.database.logging')!,
       logger: 'simple-console' as const,
     };
   }
@@ -269,10 +265,10 @@ export class AppConfigService {
     header: string;
   } {
     return {
-      prefix: this.configService.get<string>('app.api.prefix', 'api'),
-      defaultVersion: this.configService.get<string>('app.api.version', '1'),
-      type: this.configService.get<'uri' | 'header'>('app.api.type', 'header'),
-      header: this.configService.get<string>('app.api.header', 'X-Api-Version'),
+      prefix: this.configService.get<string>('app.api.prefix')!,
+      defaultVersion: this.configService.get<string>('app.api.version')!,
+      type: this.configService.get<'uri' | 'header'>('app.api.type')!,
+      header: this.configService.get<string>('app.api.header')!,
     };
   }
 }
