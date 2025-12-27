@@ -23,7 +23,6 @@ export class AppConfigService {
     };
 
     const baseTitle = this.configService.get<string>('app.title')!;
-    console.log('baseTitle: ', baseTitle);
     const environment = this.environment as Environment;
     const suffix = suffixMap[environment] ?? '';
 
