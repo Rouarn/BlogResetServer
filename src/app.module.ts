@@ -35,6 +35,7 @@ import { CacheModule } from '@/shared/cache';
 import { FilesModule } from '@/shared/files/files.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
+import { ArticleModule } from './modules/article/article.module';
 
 /**
  * 应用根模块配置
@@ -81,6 +82,7 @@ import { UsersModule } from './modules/users/users.module';
     UsersModule, // 用户管理模块 (用户资料、状态管理、CRUD)
     FilesModule, // 文件管理模块 (上传、下载、存储)
     CacheModule, // 缓存模块 (Redis/内存缓存，支持装饰器)
+    ArticleModule, // 文章模块 (文章发布、编辑、删除)
   ],
 
   // =============================================================================

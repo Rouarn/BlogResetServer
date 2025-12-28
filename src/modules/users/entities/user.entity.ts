@@ -1,7 +1,8 @@
 import { Gender, Role } from '@/common/enums';
 import { BaseEntity } from '@/database';
+import { Article } from '@/modules/article/entities/article.entity';
 import { Auth } from '@/modules/auth/entities/auth.entity';
-import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 /**
  * 用户信息实体
@@ -58,4 +59,8 @@ export class User extends BaseEntity {
   @OneToOne(() => Auth, (auth) => auth.user)
   @JoinColumn()
   auth: Auth;
+
+  // 文章列表
+  @OneToMany(() => Article, (article) => article.author)
+  articles: Article[];
 }
