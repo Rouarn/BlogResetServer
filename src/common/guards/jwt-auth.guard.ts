@@ -62,7 +62,7 @@ export class JwtAuthGuard implements CanActivate {
       const payload = await this.jwtService.verifyAsync<
         CurrentUser & { jti: string; exp?: number; iat?: number }
       >(token, {
-        secret: this.appConfig.jwtOptions.secret as string,
+        secret: this.appConfig.jwtOptions.secret,
         algorithms: ['HS256'],
         clockTolerance: 5, // 允许5秒时间差，解决时钟不同步问题
       });
@@ -102,7 +102,7 @@ export class JwtAuthGuard implements CanActivate {
       }
 
       // 8. 注入用户信息到请求对象
-      request.user = {
+      request['user'] = {
         authId: authInfo.id,
         userId: authInfo.user?.id || authInfo.id,
         username: authInfo.username,

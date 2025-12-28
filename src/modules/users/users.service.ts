@@ -33,7 +33,7 @@ export class UsersService {
     const queryBuilder = this.userRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.auth', 'auth')
-      .orderBy('user.createTime', 'DESC')
+      .orderBy('user.createdAt', 'DESC')
       .skip((current - 1) * size)
       .take(size);
 
@@ -58,6 +58,7 @@ export class UsersService {
       where: { id },
       relations: ['auth'],
     });
+
     if (!user) {
       throw BusinessExceptionFactory.notFound('用户', { id });
     }

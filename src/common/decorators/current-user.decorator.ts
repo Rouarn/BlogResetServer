@@ -17,16 +17,6 @@ export const GetCurrentUser = createParamDecorator(
     const request = ctx.switchToHttp().getRequest<Request>();
     const user: CurrentUser | undefined = request.user;
 
-    if (!user) {
-      return undefined;
-    }
-
-    // 如果指定了特定字段，返回该字段的值
-    if (field) {
-      return user[field];
-    }
-
-    // 否则返回完整的用户认证信息
-    return user;
+    return field ? user?.[field] : user;
   },
 );

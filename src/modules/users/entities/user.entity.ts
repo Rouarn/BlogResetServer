@@ -56,9 +56,6 @@ export class User extends BaseEntity {
 
   // 一对一关联认证信息
   @OneToOne(() => Auth, (auth) => auth.user)
-  @JoinColumn({ name: 'auth_id' })
+  @JoinColumn()
   auth: Auth;
-
-  @Column({ name: 'auth_id', type: 'uuid', comment: '关联的认证ID' })
-  authId: string;
 }

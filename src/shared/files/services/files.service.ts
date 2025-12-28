@@ -159,7 +159,8 @@ export class FilesService {
 
     // 排序
     const allowedSortFields = ['createTime', 'size', 'filename'];
-    const sortField = sortBy && allowedSortFields.includes(sortBy) ? sortBy : 'createTime';
+    const inputSortBy = sortBy && allowedSortFields.includes(sortBy) ? sortBy : 'createTime';
+    const sortField = inputSortBy === 'createTime' ? 'createdAt' : inputSortBy;
     const order = sortOrder === 'ASC' ? 'ASC' : 'DESC';
     queryBuilder.orderBy(`file.${sortField}`, order);
 

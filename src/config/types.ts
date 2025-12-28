@@ -89,6 +89,11 @@ export interface DatabaseConfig {
   password: string;
   database: string;
   tablePrefix: string;
+  timestamps: {
+    enabled: boolean;
+    createdAt: string;
+    updatedAt: string;
+  };
   synchronize: boolean;
   logging: boolean;
   logNotifications: boolean;
