@@ -1,10 +1,15 @@
 import type { NamingStrategyInterface } from 'typeorm';
 import { DefaultNamingStrategy } from 'typeorm';
 
+/**
+ * 命名策略配置选项
+ */
 export interface NamingStrategyOptions {
-  fieldPrefix?: string;
+  /** 时间戳字段名配置 */
   timestamps: {
+    /** 创建时间字段名 */
     createTime: string;
+    /** 更新时间字段名 */
     updateTime: string;
   };
 }
@@ -12,9 +17,12 @@ export interface NamingStrategyOptions {
 /**
  * 自定义数据库命名策略
  *
- * 实现以下功能：
- * 1. 自动添加字段前缀
- * 2. 自定义时间戳字段名
+ * @description
+ * 扩展 TypeORM 的默认命名策略，实现以下特定的数据库命名规范：
+ * 1. 自动处理时间戳字段（createdAt, updatedAt）的数据库列名映射。
+ * 2. 规范化关联列（Join Column）和关联表（Join Table）的命名。
+ *
+ * @see {@link DefaultNamingStrategy}
  */
 export class CustomNamingStrategy extends DefaultNamingStrategy implements NamingStrategyInterface {
   constructor(private readonly options: NamingStrategyOptions) {
@@ -22,15 +30,16 @@ export class CustomNamingStrategy extends DefaultNamingStrategy implements Namin
   }
 
   /**
-   * 表名命名策略
-   * 注意：表前缀由 TypeOrmModuleOptions 的 entityPrefix 处理
-   */
-  tableName(targetName: string, userSpecifiedName: string | undefined): string {
-    return userSpecifiedName ?? targetName;
-  }
-
-  /**
    * 列名命名策略
+   *
+   * @description
+   * 决定实体属性在数据库中对应的列名。
+   * 特别处理了 `createdAt` 和 `updatedAt` 字段，使其根据配置映射到指定的数据库字段名。
+   *
+   * @param propertyName 实体属性名
+   * @param customName 用户在 @Column 装饰器中指定的列名
+   * @param embeddedPrefixes 嵌入式实体的列名前缀数组
+   * @returns 数据库列名
    */
   columnName(
     propertyName: string,
@@ -53,30 +62,15 @@ export class CustomNamingStrategy extends DefaultNamingStrategy implements Namin
     return this.formatColumnName(name, embeddedPrefixes);
   }
 
-  relationName(propertyName: string): string {
-    return propertyName;
-  }
-
-  joinColumnName(relationName: string, referencedColumnName: string): string {
-    // 关系列名通常是 "property_id" 形式，如果直接加前缀可能会导致与手动定义的列名冲突
-    // 这里我们只应用前缀，但不重复添加
-    const name = relationName;
-    return this.formatColumnName(`${name}_${referencedColumnName}`, []);
-  }
-
-  joinTableColumnName(tableName: string, propertyName: string, columnName?: string): string {
-    return this.formatColumnName(`${tableName}_${columnName ?? propertyName}`, []);
-  }
-
-  classTableInheritanceParentColumnName(
-    parentTableName: string,
-    parentTableIdPropertyName: string,
-  ): string {
-    return this.formatColumnName(`${parentTableName}_${parentTableIdPropertyName}`, []);
-  }
-
   /**
-   * 格式化列名：嵌入前缀 -> 字段前缀
+   * 格式化列名
+   *
+   * @description
+   * 内部辅助方法，用于组合嵌入式前缀和字段名。
+   *
+   * @param name 字段基础名称
+   * @param embeddedPrefixes 嵌入式前缀列表
+   * @private
    */
   private formatColumnName(name: string, embeddedPrefixes: string[]): string {
     let formattedName = name;
