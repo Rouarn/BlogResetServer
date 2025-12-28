@@ -38,7 +38,6 @@ export class DatabaseConfigService implements TypeOrmOptionsFactory {
 
       // 自定义命名策略 (处理字段前缀、蛇形命名、时间戳字段名)
       namingStrategy: new CustomNamingStrategy({
-        fieldPrefix: dbConfig.fieldPrefix,
         snakeCase: dbConfig.snakeCase,
         timestamps: {
           createTime: dbConfig.timestamps.createdAt,

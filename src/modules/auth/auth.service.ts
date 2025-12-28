@@ -246,11 +246,15 @@ export class AuthService {
     await this.updateLastLogin(auth.id, clientIp);
 
     // 生成JWT令牌
+    if (!auth.user) {
+      throw BusinessExceptionFactory.notFound('用户数据异常：缺少关联的用户信息');
+    }
+
     const payload = {
       username: auth.username,
       authId: auth.id,
-      userId: auth.user?.id || auth.id,
-      roles: auth.user?.roles || Role.USER,
+      userId: auth.user.id,
+      roles: auth.user.roles || Role.USER,
       jti: uuid4(),
     };
 

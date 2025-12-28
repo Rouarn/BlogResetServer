@@ -102,7 +102,7 @@ export class JwtAuthGuard implements CanActivate {
       }
 
       // 8. 注入用户信息到请求对象
-      request.user = {
+      request['user'] = {
         authId: authInfo.id,
         userId: authInfo.user?.id || authInfo.id,
         username: authInfo.username,

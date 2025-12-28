@@ -238,7 +238,6 @@ export class AppConfigService {
     password: string | undefined;
     database: string | undefined;
     tablePrefix: string;
-    fieldPrefix: string;
     snakeCase: boolean;
     timestamps: {
       enabled: boolean;
@@ -257,7 +256,6 @@ export class AppConfigService {
       password: this.configService.get<string>('app.database.password'),
       database: this.configService.get<string>('app.database.database'),
       tablePrefix: this.configService.get<string>('app.database.tablePrefix')!,
-      fieldPrefix: this.configService.get<string>('app.database.fieldPrefix')!,
       snakeCase: this.configService.get<boolean>('app.database.snakeCase')!,
       timestamps: {
         enabled: this.configService.get<boolean>('app.database.timestamps.enabled')!,

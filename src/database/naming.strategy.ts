@@ -2,8 +2,8 @@ import type { NamingStrategyInterface } from 'typeorm';
 import { DefaultNamingStrategy } from 'typeorm';
 
 export interface NamingStrategyOptions {
-  fieldPrefix: string;
   snakeCase: boolean;
+  fieldPrefix?: string;
   timestamps: {
     createTime: string;
     updateTime: string;
@@ -93,16 +93,6 @@ export class CustomNamingStrategy extends DefaultNamingStrategy implements Namin
     // 2. 处理蛇形命名
     if (this.options.snakeCase) {
       formattedName = this.toSnakeCase(formattedName);
-    }
-
-    // 3. 处理字段统一前缀
-    // 注意：如果是用户指定了 customName，通常也应该遵循前缀规则，
-    // 除非我们认为 customName 是绝对名称。这里我们选择统一添加前缀以保持一致性。
-    if (this.options.fieldPrefix) {
-      // 避免重复添加前缀 (简单的检查)
-      if (!formattedName.startsWith(this.options.fieldPrefix)) {
-        formattedName = `${this.options.fieldPrefix}${formattedName}`;
-      }
     }
 
     return formattedName;

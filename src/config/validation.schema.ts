@@ -64,7 +64,6 @@ export const validationSchema = Joi.object({
   NEST_DATABASE_PASSWORD: Joi.string().required(),
   NEST_DATABASE_NAME: Joi.string().required(),
   NEST_DATABASE_TABLE_PREFIX: Joi.string().allow('').optional().default('ra_'),
-  NEST_DATABASE_FIELD_PREFIX: Joi.string().allow('').optional().default('vk_'),
   NEST_DATABASE_SNAKE_CASE: Joi.boolean().default(true),
   NEST_DATABASE_ENABLE_TIMESTAMPS: Joi.boolean().default(true),
   NEST_DATABASE_CREATE_TIME: Joi.string().default('create_time'),

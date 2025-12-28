@@ -36,7 +36,7 @@ function genTemplates(resourceRaw) {
   const entity = `import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntity } from '@/database';
 
-@Entity('ra_${resource}')
+@Entity('${resource}')
 export class ${PascalSingular} extends BaseEntity {
   @PrimaryGeneratedColumn('uuid', { comment: 'ID' })
   id: string;

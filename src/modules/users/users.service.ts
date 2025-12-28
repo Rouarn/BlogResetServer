@@ -58,7 +58,7 @@ export class UsersService {
       where: { id },
       relations: ['auth'],
     });
-    console.log('user: ', user);
+
     if (!user) {
       throw BusinessExceptionFactory.notFound('用户', { id });
     }
