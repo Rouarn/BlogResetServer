@@ -21,6 +21,8 @@ export abstract class BaseEntity {
    */
   @CreateDateColumn({
     comment: '创建时间',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP(6)',
   })
   createdAt: Date;
 
@@ -34,6 +36,9 @@ export abstract class BaseEntity {
    */
   @UpdateDateColumn({
     comment: '更新时间',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP(6)',
+    onUpdate: 'CURRENT_TIMESTAMP(6)',
   })
   updatedAt: Date;
 }

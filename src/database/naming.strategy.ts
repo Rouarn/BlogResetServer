@@ -48,38 +48,20 @@ export class CustomNamingStrategy extends DefaultNamingStrategy implements Namin
   ): string {
     // 1. 处理时间戳字段映射
     if (propertyName === 'createdAt' && !customName) {
-      // 时间戳字段名也需要经过格式化（前缀+蛇形）
-      return this.formatColumnName(this.options.timestamps.createTime, []);
+      return this.options.timestamps.createTime;
     }
     if (propertyName === 'updatedAt' && !customName) {
-      return this.formatColumnName(this.options.timestamps.updateTime, []);
+      return this.options.timestamps.updateTime;
     }
 
     // 2. 获取基础名称
     const name = customName ?? propertyName;
 
-    // 3. 格式化列名
-    return this.formatColumnName(name, embeddedPrefixes);
-  }
-
-  /**
-   * 格式化列名
-   *
-   * @description
-   * 内部辅助方法，用于组合嵌入式前缀和字段名。
-   *
-   * @param name 字段基础名称
-   * @param embeddedPrefixes 嵌入式前缀列表
-   * @private
-   */
-  private formatColumnName(name: string, embeddedPrefixes: string[]): string {
-    let formattedName = name;
-
-    // 1. 处理嵌入前缀
+    // 3. 处理嵌入式前缀 (保留 TypeORM 默认行为，避免嵌入式实体字段名冲突)
     if (embeddedPrefixes.length > 0) {
-      formattedName = `${embeddedPrefixes.join('_')}_${formattedName}`;
+      return `${embeddedPrefixes.join('_')}_${name}`;
     }
 
-    return formattedName;
+    return name;
   }
 }
