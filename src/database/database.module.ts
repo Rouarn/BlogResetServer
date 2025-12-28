@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DatabaseConfigService } from './database.config';
 import { DatabaseService } from './database.service';
+import { DatabaseSubscriber } from './database.subscriber';
 
 /**
  * 数据库核心模块
@@ -14,7 +15,8 @@ import { DatabaseService } from './database.service';
  * 主要功能：
  * 1. 导入 TypeOrmModule 并使用 forRootAsync 异步配置数据库连接。
  * 2. 注入 DatabaseConfigService 以获取动态配置。
- * 3. 导出 DatabaseService 供其他模块使用。
+ * 3. 注册 DatabaseSubscriber 以处理时间戳自动更新逻辑。
+ * 4. 导出 DatabaseService 供其他模块使用。
  *
  * @module DatabaseModule
  */
@@ -25,7 +27,7 @@ import { DatabaseService } from './database.service';
       useClass: DatabaseConfigService,
     }),
   ],
-  providers: [DatabaseConfigService, DatabaseService],
+  providers: [DatabaseConfigService, DatabaseService, DatabaseSubscriber],
   exports: [DatabaseService],
 })
 export class DatabaseModule {}
