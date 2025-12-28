@@ -89,7 +89,6 @@ export interface DatabaseConfig {
   password: string;
   database: string;
   tablePrefix: string;
-  snakeCase: boolean;
   timestamps: {
     enabled: boolean;
     createdAt: string;

@@ -2,7 +2,6 @@ import type { NamingStrategyInterface } from 'typeorm';
 import { DefaultNamingStrategy } from 'typeorm';
 
 export interface NamingStrategyOptions {
-  snakeCase: boolean;
   fieldPrefix?: string;
   timestamps: {
     createTime: string;
@@ -14,9 +13,8 @@ export interface NamingStrategyOptions {
  * 自定义数据库命名策略
  *
  * 实现以下功能：
- * 1. 自动转换蛇形命名 (snake_case)
- * 2. 自动添加字段前缀
- * 3. 自定义时间戳字段名
+ * 1. 自动添加字段前缀
+ * 2. 自定义时间戳字段名
  */
 export class CustomNamingStrategy extends DefaultNamingStrategy implements NamingStrategyInterface {
   constructor(private readonly options: NamingStrategyOptions) {
@@ -28,9 +26,7 @@ export class CustomNamingStrategy extends DefaultNamingStrategy implements Namin
    * 注意：表前缀由 TypeOrmModuleOptions 的 entityPrefix 处理
    */
   tableName(targetName: string, userSpecifiedName: string | undefined): string {
-    return (
-      userSpecifiedName ?? (this.options.snakeCase ? this.toSnakeCase(targetName) : targetName)
-    );
+    return userSpecifiedName ?? targetName;
   }
 
   /**
@@ -58,13 +54,13 @@ export class CustomNamingStrategy extends DefaultNamingStrategy implements Namin
   }
 
   relationName(propertyName: string): string {
-    return this.options.snakeCase ? this.toSnakeCase(propertyName) : propertyName;
+    return propertyName;
   }
 
   joinColumnName(relationName: string, referencedColumnName: string): string {
     // 关系列名通常是 "property_id" 形式，如果直接加前缀可能会导致与手动定义的列名冲突
-    // 这里我们只应用蛇形命名和前缀，但不重复添加
-    const name = this.options.snakeCase ? this.toSnakeCase(relationName) : relationName;
+    // 这里我们只应用前缀，但不重复添加
+    const name = relationName;
     return this.formatColumnName(`${name}_${referencedColumnName}`, []);
   }
 
@@ -80,7 +76,7 @@ export class CustomNamingStrategy extends DefaultNamingStrategy implements Namin
   }
 
   /**
-   * 格式化列名：嵌入前缀 -> 蛇形转换 -> 字段前缀
+   * 格式化列名：嵌入前缀 -> 字段前缀
    */
   private formatColumnName(name: string, embeddedPrefixes: string[]): string {
     let formattedName = name;
@@ -90,18 +86,6 @@ export class CustomNamingStrategy extends DefaultNamingStrategy implements Namin
       formattedName = `${embeddedPrefixes.join('_')}_${formattedName}`;
     }
 
-    // 2. 处理蛇形命名
-    if (this.options.snakeCase) {
-      formattedName = this.toSnakeCase(formattedName);
-    }
-
     return formattedName;
-  }
-
-  private toSnakeCase(str: string): string {
-    return str
-      .replace(/([A-Z])/g, '_$1')
-      .toLowerCase()
-      .replace(/^_/, '');
   }
 }
