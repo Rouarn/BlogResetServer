@@ -145,7 +145,7 @@ export class AuthService {
 
       // 创建关联的用户记录
       const user = manager.create(User, {
-        authId: savedAuth.id,
+        auth: savedAuth,
         nickname: registerDto.nickname ?? savedAuth.username,
         email: registerDto.email,
         avatar: registerDto.avatar,

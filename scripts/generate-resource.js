@@ -125,7 +125,7 @@ export class ${PascalPlural}Service {
     const [data, total] = await this.repo.findAndCount({
       skip: (current - 1) * size,
       take: size,
-      order: { createTime: 'DESC' },
+      order: { createdAt: 'DESC' },
     });
     const result = { data, total };
     await this.cacheService.set(cacheKey, result);

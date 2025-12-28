@@ -2,8 +2,8 @@ import type { FileUploadOptions } from '@/shared/files/interfaces';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { ServeStaticOptions } from '@nestjs/platform-express/interfaces/serve-static-options.interface';
-import type { Environment } from './types';
 import { CorsOptions } from 'cors';
+import type { Environment } from './types';
 
 /**
  * 应用配置服务
@@ -238,6 +238,13 @@ export class AppConfigService {
     password: string | undefined;
     database: string | undefined;
     tablePrefix: string;
+    fieldPrefix: string;
+    snakeCase: boolean;
+    timestamps: {
+      enabled: boolean;
+      createdAt: string;
+      updatedAt: string;
+    };
     synchronize: boolean;
     logging: boolean;
     logger: 'simple-console';
@@ -250,6 +257,13 @@ export class AppConfigService {
       password: this.configService.get<string>('app.database.password'),
       database: this.configService.get<string>('app.database.database'),
       tablePrefix: this.configService.get<string>('app.database.tablePrefix')!,
+      fieldPrefix: this.configService.get<string>('app.database.fieldPrefix')!,
+      snakeCase: this.configService.get<boolean>('app.database.snakeCase')!,
+      timestamps: {
+        enabled: this.configService.get<boolean>('app.database.timestamps.enabled')!,
+        createdAt: this.configService.get<string>('app.database.timestamps.createdAt')!,
+        updatedAt: this.configService.get<string>('app.database.timestamps.updatedAt')!,
+      },
       synchronize: this.configService.get<boolean>('app.database.synchronize')!,
       logging: this.configService.get<boolean>('app.database.logging')!,
       logger: 'simple-console' as const,

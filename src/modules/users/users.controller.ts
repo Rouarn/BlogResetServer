@@ -1,7 +1,6 @@
 import { Roles } from '@/common/decorators';
 import { Role } from '@/common/enums';
 import { RolesGuard } from '@/common/guards';
-import { DisableTimestamps } from '@/database';
 import {
   Body,
   Controller,
@@ -107,7 +106,6 @@ export class UsersController {
     status: HttpStatus.CONFLICT,
     description: '邮箱已被使用',
   })
-  @DisableTimestamps()
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<void> {
     return await this.usersService.update(id, updateUserDto);
   }

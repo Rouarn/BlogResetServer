@@ -19,7 +19,6 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core/constants';
 import { JwtModule } from '@nestjs/jwt';
-import { TypeOrmModule } from '@nestjs/typeorm';
 // 应用核心组件
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -30,14 +29,8 @@ import { ResponseInterceptor } from './common/interceptors';
 import { CustomValidationPipe } from './common/pipes';
 // 配置模块导入
 import { ConfigModule as AppConfigModule, AppConfigService } from './config';
-// 时间管理模块
-import {
-  DATABASE_CONFIG,
-  DatabaseConfig,
-  DatabaseModule,
-  DatabaseNamingStrategy,
-} from './database';
 // 业务模块导入
+import { DatabaseModule } from '@/database';
 import { CacheModule } from '@/shared/cache';
 import { FilesModule } from '@/shared/files/files.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -76,33 +69,9 @@ import { UsersModule } from './modules/users/users.module';
     }),
 
     // =============================================================================
-    // 数据库模块 - TypeORM 配置
+    // 数据库模块 - TypeORM 配置 (统一在 DatabaseModule 中管理)
     // =============================================================================
-    TypeOrmModule.forRootAsync({
-      inject: [AppConfigService, DATABASE_CONFIG],
-      useFactory: (configService: AppConfigService, dbConfig: DatabaseConfig) => ({
-        ...configService.databaseConfig,
-        namingStrategy: new DatabaseNamingStrategy(dbConfig.fieldNames, dbConfig.tablePrefix),
-        autoLoadEntities: true,
-        retryDelay: 500,
-        retryAttempts: 10,
-      }),
-    }),
-
-    // =============================================================================
-    // 数据库管理模块 - 自动时间戳功能
-    // =============================================================================
-    DatabaseModule.forRootAsync({
-      inject: [AppConfigService],
-      useFactory: (appConfig: AppConfigService) => ({
-        enableTimestamps: true, // 启用时间戳功能
-        fieldNames: {
-          createTime: 'createTime',
-          updateTime: 'updateTime',
-        },
-        tablePrefix: appConfig.databaseConfig.tablePrefix,
-      }),
-    }),
+    DatabaseModule,
 
     // =============================================================================
     // 业务模块 - 应用功能模块
