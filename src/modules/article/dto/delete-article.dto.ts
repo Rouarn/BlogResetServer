@@ -1,12 +1,13 @@
-import { IsOptional, IsUUID, IsArray, ArrayNotEmpty } from 'class-validator';
+import { ArrayNotEmpty, IsArray, IsOptional, IsString } from 'class-validator';
 
 export class DeleteArticleDto {
   @IsOptional()
-  @IsUUID()
+  @IsString()
   id?: string;
 
   @IsOptional()
   @IsArray()
   @ArrayNotEmpty()
+  @IsString({ each: true })
   ids?: string[];
 }

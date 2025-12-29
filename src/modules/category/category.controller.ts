@@ -8,7 +8,7 @@ import { QueryCategoryDto } from './dto/query-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category } from './entities/category.entity';
 
-@ApiTags('Category')
+@ApiTags('类别')
 @Controller('categories')
 export class CategoryController {
   constructor(private readonly service: CategoryService) {}
@@ -43,20 +43,6 @@ export class CategoryController {
   async list(
     @Query() query: QueryCategoryDto,
   ): Promise<CategoryWithCount[] | { data: Category[]; total: number }> {
-    // If it's a simple list request without pagination params, return all with counts
-    // But since QueryCategoryDto has defaults, we might want to check logic.
-    // However, the frontend requirement is GET /categories -> Array<Category & { count: number }>
-    // Let's assume if query params are default or empty, we return the full list with counts for frontend.
-    // Or we can differentiate by a flag. But given the design doc:
-    // GET /categories -> Array<Category & { count: number }>
-    // So let's prioritize that for the main endpoint.
-    // But we also need admin pagination.
-    // Let's return the list with counts if no pagination is explicitly requested or if it's a specific flag?
-    // Actually, standard REST: GET /categories usually returns list.
-    // Let's implement a specific logic: if no pagination params provided (or we just override for now as the design doc implies this is the main usage).
-    // The design doc says: GET /categories -> Array<Category & { count: number }>
-    // So let's return that.
-
     // Check if it's an admin table query (usually has page/size)
     if (query.current && query.size) {
       return this.service.findAll(query.current, query.size);

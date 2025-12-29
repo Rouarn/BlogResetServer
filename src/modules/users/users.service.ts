@@ -83,6 +83,7 @@ export class UsersService {
 
     // 否则查找任意用户 (Fallback)
     user ??= await this.userRepository.findOne({
+      where: {},
       order: { createdAt: 'ASC' },
     });
 

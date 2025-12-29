@@ -1,4 +1,4 @@
-import { ArticleStatus } from '@/common/enums';
+import { ArticleStatus, Status } from '@/common/enums';
 import { BaseEntity } from '@/database';
 import { Category } from '@/modules/category/entities/category.entity';
 import { User } from '@/modules/users/entities/user.entity';
@@ -35,8 +35,8 @@ export class Article extends BaseEntity {
   @JoinColumn({ name: 'authorId' })
   author: User;
 
-  @Column({ default: false, comment: '是否推荐' })
-  isFeatured: boolean;
+  @Column({ type: 'enum', enum: Status, default: Status.DISABLED, comment: '是否推荐' })
+  isFeatured: Status;
 
   @Column({ default: 0, comment: '阅读数' })
   views: number;
@@ -45,7 +45,7 @@ export class Article extends BaseEntity {
     type: 'enum',
     enum: ArticleStatus,
     default: ArticleStatus.DRAFT,
-    comment: '状态 (draft, published)',
+    comment: '状态 (草稿, 已发布)',
   })
   status: ArticleStatus;
 

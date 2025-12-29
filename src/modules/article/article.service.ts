@@ -1,5 +1,7 @@
 import { CACHE_TOKENS } from '@/common/constants';
+import { Status } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
+import { Category } from '@/modules/category/entities/category.entity';
 import { ICacheService } from '@/shared/cache';
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -30,17 +32,38 @@ export class ArticleService {
   constructor(
     @InjectRepository(Article)
     private readonly repo: Repository<Article>,
+    @InjectRepository(Category)
+    private readonly categoryRepo: Repository<Category>,
     @Inject(CACHE_TOKENS.I_CACHE_SERVICE)
     private readonly cacheService: ICacheService,
   ) {}
 
-  async create(dto: CreateArticleDto): Promise<void> {
-    const entity = this.repo.create(dto as unknown as Article);
-    // TODO: Set authorId from current user context if available
-    // entity.authorId = ...
-    await this.repo.save(entity);
-    await this.clearCache();
-    return;
+  async create(dto: CreateArticleDto, userId?: string): Promise<void> {
+    try {
+      // 校验分类是否存在
+      if (dto.categoryId) {
+        const categoryExists = await this.categoryRepo.existsBy({ id: dto.categoryId });
+        if (!categoryExists) {
+          throw BusinessExceptionFactory.notFound('分类', { id: dto.categoryId });
+        }
+      }
+
+      const { isFeatured, ...createDto } = dto;
+
+      // 显式创建实体，避免直接转换带来的潜在问题
+      const entity = this.repo.create({
+        ...createDto,
+        // 如果有其他默认值或需要处理的字段，可以在这里处理
+        isFeatured: isFeatured ? Status.ENABLED : Status.DISABLED,
+        views: 0,
+        authorId: userId,
+      });
+
+      await this.repo.save(entity);
+      await this.clearCache();
+    } catch (error) {
+      throw error; // 抛出错误以便全局异常过滤器处理
+    }
   }
 
   async findAll(query: QueryArticleDto): Promise<{ data: Article[]; total: number }> {
@@ -164,8 +187,13 @@ export class ArticleService {
   }
 
   async findById(id: string): Promise<ArticleDetail> {
+    const articleId = +id;
+    if (isNaN(articleId)) {
+      throw BusinessExceptionFactory.invalidParameter('文章 ID');
+    }
+
     const entity = await this.repo.findOne({
-      where: { id: +id },
+      where: { id: articleId },
       relations: ['category', 'author'],
     });
 
@@ -174,17 +202,17 @@ export class ArticleService {
     }
 
     // Increment views (Async, don't await to block response)
-    this.repo.increment({ id: +id }, 'views', 1).catch((e) => console.error(e));
+    this.repo.increment({ id: articleId }, 'views', 1).catch((e) => console.error(e));
 
     // Find Prev/Next
     const prev = await this.repo.findOne({
-      where: { id: LessThan(+id) },
+      where: { id: LessThan(articleId) },
       order: { id: 'DESC' },
       select: ['id', 'title'],
     });
 
     const next = await this.repo.findOne({
-      where: { id: MoreThan(+id) },
+      where: { id: MoreThan(articleId) },
       order: { id: 'ASC' },
       select: ['id', 'title'],
     });
@@ -197,14 +225,38 @@ export class ArticleService {
   }
 
   async update(id: string, dto: UpdateArticleDto): Promise<void> {
-    const entity = await this.repo.findOneBy({ id: +id });
-    if (!entity) throw BusinessExceptionFactory.notFound('Article', { id });
+    const articleId = +id;
+    if (isNaN(articleId)) {
+      throw BusinessExceptionFactory.invalidParameter('文章 ID');
+    }
 
-    Object.assign(entity, dto);
-    await this.repo.save(entity);
-    await this.clearCache(); // Invalidate list caches
-    await this.cacheService.del('article:item:' + id);
-    return;
+    try {
+      // 校验分类是否存在
+      if (dto.categoryId) {
+        const categoryExists = await this.categoryRepo.exist({ where: { id: dto.categoryId } });
+        if (!categoryExists) {
+          throw BusinessExceptionFactory.notFound('分类', { id: dto.categoryId });
+        }
+      }
+
+      const entity = await this.repo.findOneBy({ id: articleId });
+      if (!entity) {
+        throw BusinessExceptionFactory.notFound('Article', { id });
+      }
+
+      Object.assign(entity, {
+        ...dto,
+        ...(dto.isFeatured !== undefined
+          ? { isFeatured: dto.isFeatured ? Status.ENABLED : Status.DISABLED }
+          : {}),
+      });
+      await this.repo.save(entity);
+      await this.clearCache(); // Invalidate list caches
+      await this.cacheService.del('article:item:' + id);
+    } catch (error) {
+      console.error('Update article failed:', error);
+      throw error;
+    }
   }
 
   async remove(dto: DeleteArticleDto): Promise<{ message: string }> {

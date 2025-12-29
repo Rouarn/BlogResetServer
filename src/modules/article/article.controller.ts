@@ -1,6 +1,6 @@
-import { Public } from '@/common/decorators';
+import { GetCurrentUser, Public } from '@/common/decorators';
 import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ArchiveItem, ArticleDetail, ArticleService } from './article.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { DeleteArticleDto } from './dto/delete-article.dto';
@@ -8,15 +8,15 @@ import { QueryArticleDto } from './dto/query-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { Article } from './entities/article.entity';
 
-@ApiTags('Article')
+@ApiTags('文章')
 @Controller('articles')
 export class ArticleController {
   constructor(private readonly service: ArticleService) {}
 
   @Post()
   @ApiOperation({ summary: '创建文章' })
-  create(@Body() dto: CreateArticleDto): Promise<void> {
-    return this.service.create(dto);
+  create(@Body() dto: CreateArticleDto, @GetCurrentUser('userId') userId: string): Promise<void> {
+    return this.service.create(dto, userId);
   }
 
   @Delete()
@@ -27,6 +27,7 @@ export class ArticleController {
 
   @Put(':id')
   @ApiOperation({ summary: '更新文章' })
+  @ApiBody({ type: UpdateArticleDto })
   update(@Param('id') id: string, @Body() dto: UpdateArticleDto): Promise<void> {
     return this.service.update(id, dto);
   }

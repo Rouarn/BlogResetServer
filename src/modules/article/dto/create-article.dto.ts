@@ -1,6 +1,6 @@
-import { ArticleStatus } from '@/common/enums';
+import { ArticleStatus, Status } from '@/common/enums';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateArticleDto {
   @ApiProperty({ description: '文章标题' })
@@ -28,10 +28,10 @@ export class CreateArticleDto {
   @IsInt()
   categoryId?: number;
 
-  @ApiPropertyOptional({ description: '是否推荐' })
+  @ApiPropertyOptional({ description: '是否推荐', enum: Status })
   @IsOptional()
-  @IsBoolean()
-  isFeatured?: boolean;
+  @IsEnum(Status)
+  isFeatured?: Status;
 
   @ApiPropertyOptional({ description: '文章状态', enum: ArticleStatus })
   @IsOptional()

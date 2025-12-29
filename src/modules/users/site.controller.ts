@@ -4,7 +4,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 
-@ApiTags('Site')
+@ApiTags('站点')
 @Controller('site')
 export class SiteController {
   constructor(private readonly usersService: UsersService) {}
