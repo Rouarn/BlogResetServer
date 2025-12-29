@@ -1,22 +1,18 @@
-import { GetCurrentUser, Public, Roles } from '@/common/decorators';
+﻿import { GetCurrentUser, Public } from '@/common/decorators';
 import { CurrentUser } from '@/common/interfaces';
-import { Role } from '@/common/enums';
 import {
   Body,
   ClassSerializerInterceptor,
   Controller,
   Get,
   Ip,
-  Param,
   Post,
   Put,
   Req,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
-import { RolesGuard } from '@/common/guards';
 import { User } from '../users/entities/user.entity';
 import { AuthService } from './auth.service';
 import { CaptchaResponseDto, CaptchaVerifyDto, CaptchaVerifyResponseDto } from './dto/captcha.dto';
@@ -199,40 +195,5 @@ export class AuthController {
   async logout(@Req() req: Request): Promise<{ message: string }> {
     const token = req.headers.authorization?.split(' ')[1] ?? '';
     return this.authService.logout(token);
-  }
-
-  /**
-   * 获取所有在线用户
-   * @returns 在线用户列表
-   */
-  @ApiOperation({
-    summary: '获取在线用户',
-    description: '获取所有当前在线的用户列表（仅系统管理员可用）',
-  })
-  @ApiResponse({ status: 200, description: '成功获取在线用户列表', type: [User] })
-  @ApiBearerAuth()
-  @Roles(Role.SYSTEM_ADMIN)
-  @UseGuards(RolesGuard)
-  @Get('active-users')
-  async getActiveUsers(): Promise<User[]> {
-    return await this.authService.getActiveUsers();
-  }
-
-  /**
-   * 踢出指定用户
-   * @param id 认证ID
-   */
-  @ApiOperation({
-    summary: '踢出指定用户',
-    description: '管理员强制指定用户下线',
-  })
-  @ApiResponse({ status: 200, description: '操作成功' })
-  @ApiBearerAuth()
-  @Roles(Role.SYSTEM_ADMIN)
-  @UseGuards(RolesGuard)
-  @Post('kickout/:id')
-  async kickOutUser(@Param('id') id: string): Promise<{ message: string }> {
-    await this.authService.kickOutUserById(id);
-    return { message: '用户已踢出' };
   }
 }

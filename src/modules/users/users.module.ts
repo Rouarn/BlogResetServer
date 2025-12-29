@@ -1,8 +1,9 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@/shared/cache';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
+import { SiteController } from './site.controller';
 import { User } from './entities/user.entity';
 
 /**
@@ -45,6 +46,7 @@ import { User } from './entities/user.entity';
   controllers: [
     // 用户管理API控制器
     UsersController,
+    SiteController,
   ],
   providers: [
     // 用户业务逻辑服务

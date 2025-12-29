@@ -1,47 +1,54 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ArticleService } from './article.service';
-import { Article } from './entities/article.entity';
+import { Public } from '@/common/decorators';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ArchiveItem, ArticleDetail, ArticleService } from './article.service';
 import { CreateArticleDto } from './dto/create-article.dto';
-import { UpdateArticleDto } from './dto/update-article.dto';
-import { QueryArticleDto } from './dto/query-article.dto';
 import { DeleteArticleDto } from './dto/delete-article.dto';
+import { QueryArticleDto } from './dto/query-article.dto';
+import { UpdateArticleDto } from './dto/update-article.dto';
+import { Article } from './entities/article.entity';
 
-@ApiTags('文章管理')
-@ApiBearerAuth()
-@Controller('article')
+@ApiTags('Article')
+@Controller('articles')
 export class ArticleController {
   constructor(private readonly service: ArticleService) {}
 
   @Post()
-  @ApiOperation({ summary: '创建记录' })
-  @ApiResponse({ status: 201, type: Article })
-  async create(@Body() dto: CreateArticleDto): Promise<void> {
-    return await this.service.create(dto);
-  }
-
-  @Get()
-  @ApiOperation({ summary: '查询全表' })
-  async findAll(@Query() query: QueryArticleDto): Promise<{ data: Article[]; total: number }> {
-    const { current, size } = query;
-    return await this.service.findAll(current, size);
-  }
-
-  @Get(':id')
-  @ApiOperation({ summary: '查询单条' })
-  async findOne(@Param('id') id: string): Promise<Article> {
-    return await this.service.findById(id);
-  }
-
-  @Patch(':id')
-  @ApiOperation({ summary: '修改单条' })
-  async update(@Param('id') id: string, @Body() dto: UpdateArticleDto): Promise<void> {
-    return await this.service.update(id, dto);
+  @ApiOperation({ summary: '创建文章' })
+  create(@Body() dto: CreateArticleDto): Promise<void> {
+    return this.service.create(dto);
   }
 
   @Delete()
-  @ApiOperation({ summary: '删除记录' })
-  async delete(@Query() query: DeleteArticleDto): Promise<{ message: string }> {
-    return await this.service.remove(query);
+  @ApiOperation({ summary: '删除文章' })
+  remove(@Body() dto: DeleteArticleDto): Promise<{ message: string }> {
+    return this.service.remove(dto);
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: '更新文章' })
+  update(@Param('id') id: string, @Body() dto: UpdateArticleDto): Promise<void> {
+    return this.service.update(id, dto);
+  }
+
+  @Get('archive')
+  @Public()
+  @ApiOperation({ summary: '文章归档' })
+  getArchive(): Promise<ArchiveItem[]> {
+    return this.service.getArchive();
+  }
+
+  @Get(':id')
+  @Public()
+  @ApiOperation({ summary: '查询文章详情' })
+  getDetail(@Param('id') id: string): Promise<ArticleDetail> {
+    return this.service.findById(id);
+  }
+
+  @Get()
+  @Public()
+  @ApiOperation({ summary: '查询文章列表' })
+  list(@Query() query: QueryArticleDto): Promise<{ data: Article[]; total: number }> {
+    return this.service.findAll(query);
   }
 }

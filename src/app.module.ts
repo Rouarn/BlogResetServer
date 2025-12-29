@@ -1,22 +1,4 @@
-/**
- * NestJS 应用根模块
- *
- * 功能说明:
- * - 配置应用的核心模块和依赖注入
- * - 设置全局守卫、拦截器、管道和过滤器
- * - 集成数据库、JWT认证、配置管理等基础服务
- * - 注册业务模块（认证、文件管理等）
- *
- * 架构特点:
- * - 模块化设计，职责分离
- * - 全局服务统一配置
- * - 依赖注入和配置驱动
- * - 支持热重载和环境切换
- *
- * @author NestJS Template
- * @version 1.0.0
- */
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core/constants';
 import { JwtModule } from '@nestjs/jwt';
 // 应用核心组件
@@ -36,6 +18,7 @@ import { FilesModule } from '@/shared/files/files.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { ArticleModule } from './modules/article/article.module';
+import { CategoryModule } from './modules/category/category.module';
 
 /**
  * 应用根模块配置
@@ -83,6 +66,7 @@ import { ArticleModule } from './modules/article/article.module';
     FilesModule, // 文件管理模块 (上传、下载、存储)
     CacheModule, // 缓存模块 (Redis/内存缓存，支持装饰器)
     ArticleModule, // 文章模块 (文章发布、编辑、删除)
+    CategoryModule,
   ],
 
   // =============================================================================

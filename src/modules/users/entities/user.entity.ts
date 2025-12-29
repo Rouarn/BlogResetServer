@@ -1,4 +1,5 @@
-import { Gender, Role } from '@/common/enums';
+import { Gender, Role, Status } from '@/common/enums';
+import { SocialLink } from '@/common/interfaces';
 import { BaseEntity } from '@/database';
 import { Article } from '@/modules/article/entities/article.entity';
 import { Auth } from '@/modules/auth/entities/auth.entity';
@@ -18,8 +19,14 @@ export class User extends BaseEntity {
   @Column({ length: 100, nullable: true, default: '用户', comment: '昵称' })
   nickname: string;
 
+  @Column({ length: 100, nullable: true, comment: '职业/头衔' })
+  title: string;
+
   @Column({ nullable: true, comment: '头像URL' })
   avatar: string;
+
+  @Column({ length: 255, nullable: true, comment: '个人主页/侧边栏背景图' })
+  cover: string;
 
   @Column('simple-enum', {
     enum: Gender,
@@ -42,6 +49,19 @@ export class User extends BaseEntity {
 
   @Column({ type: 'text', nullable: true, comment: '个人简介' })
   bio: string;
+
+  @Column({ length: 100, nullable: true, comment: '当前状态' })
+  currentStatus: string;
+
+  @Column('simple-enum', {
+    enum: Status,
+    default: Status.ENABLED,
+    comment: '账号状态',
+  })
+  status: Status;
+
+  @Column({ type: 'json', nullable: true, comment: '社交链接配置' })
+  socialLinks: SocialLink[];
 
   @Column({ nullable: true, comment: '邮箱地址' })
   email: string;

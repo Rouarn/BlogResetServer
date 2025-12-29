@@ -1,5 +1,5 @@
 import { CACHE_PREFIXES, CACHE_TOKENS, CACHE_TTL } from '@/common/constants';
-import { Status, toggleStatus } from '@/common/enums';
+import { Role, Status } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { ICacheService } from '@/shared/cache/interfaces';
 import { Inject, Injectable } from '@nestjs/common';
@@ -48,7 +48,7 @@ export class UsersService {
    * @returns 用户信息
    */
   async findById(id: string): Promise<User> {
-    const cacheKey = `${CACHE_PREFIXES.USER_PROFILE}${id}`;
+    const cacheKey = CACHE_PREFIXES.USER_PROFILE + id;
     const cachedUser = await this.cacheService.get<User>(cacheKey);
     if (cachedUser) {
       return cachedUser;
@@ -64,6 +64,30 @@ export class UsersService {
     }
 
     // 缓存用户信息，设置1小时过期
+    await this.cacheService.set(cacheKey, user, { ttl: CACHE_TTL.USER_PROFILE });
+    return user;
+  }
+
+  /**
+   * 获取管理员资料 (用于 /site/profile)
+   */
+  async findAdminProfile(): Promise<User> {
+    const cacheKey = 'site:profile';
+    const cached = await this.cacheService.get<User>(cacheKey);
+    if (cached) return cached;
+
+    // 优先查找 System Admin
+    let user = await this.userRepository.findOne({
+      where: { roles: Role.SYSTEM_ADMIN },
+    });
+
+    // 否则查找任意用户 (Fallback)
+    user ??= await this.userRepository.findOne({
+      order: { createdAt: 'ASC' },
+    });
+
+    user ??= new User();
+
     await this.cacheService.set(cacheKey, user, { ttl: CACHE_TTL.USER_PROFILE });
     return user;
   }
@@ -91,67 +115,54 @@ export class UsersService {
 
     await this.userRepository.save(user);
     // 清除缓存
-    await this.cacheService.del(`${CACHE_PREFIXES.USER_PROFILE}${id}`);
+    await this.clearUserCache(id);
 
     return;
   }
 
   /**
-   * 切换用户状态（通过关联的认证实体）
-   * 注意：这个方法需要与认证服务协作
+   * 切换用户状态
    * @param id 用户ID
    * @param status 目标状态
-   * @returns 更新后的用户信息
    */
-  async toggleUserStatus(id: string, status?: Status): Promise<User> {
+  async toggleUserStatus(id: string, status: Status): Promise<User> {
     const user = await this.findById(id);
-
-    if (!user.auth) {
-      throw BusinessExceptionFactory.notFound('用户认证信息', { id, hasAuth: false });
-    }
-
-    // 更新认证状态
-    user.auth.status = status ?? toggleStatus(user.auth.status);
+    user.status = status;
     await this.userRepository.save(user);
-
-    // 清除缓存
-    await this.cacheService.del(`${CACHE_PREFIXES.USER_PROFILE}${id}`);
-
+    await this.clearUserCache(id);
     return user;
   }
 
   /**
    * 删除用户
    * @param id 用户ID
-   * @returns 删除结果消息
    */
   async remove(id: string): Promise<{ message: string }> {
     const user = await this.findById(id);
     await this.userRepository.remove(user);
-    // 清除缓存
-    await this.cacheService.del(`${CACHE_PREFIXES.USER_PROFILE}${id}`);
+    await this.clearUserCache(id);
     return { message: '用户删除成功' };
   }
 
   /**
    * 批量删除用户
-   * @param batchDeleteDto 批量删除DTO
-   * @returns 删除结果
+   * @param dto 批量删除DTO
    */
-  async batchRemove(batchDeleteDto: BatchDeleteUserDto): Promise<{ message: string }> {
-    const { ids } = batchDeleteDto;
-
-    const users = await this.userRepository.findBy({ id: In(ids) });
-    if (users.length === 0) {
-      throw BusinessExceptionFactory.notFound('要删除的用户', { ids });
+  async batchRemove(dto: BatchDeleteUserDto): Promise<{ message: string }> {
+    if (!dto.ids || dto.ids.length === 0) {
+      return { message: '未选择任何用户' };
     }
-
-    await this.userRepository.remove(users);
-
-    // 批量清除缓存
-    const cacheKeys = users.map((user) => `${CACHE_PREFIXES.USER_PROFILE}${user.id}`);
-    await this.cacheService.delMany(cacheKeys);
-
+    const users = await this.userRepository.findBy({ id: In(dto.ids) });
+    if (users.length > 0) {
+      await this.userRepository.remove(users);
+      // Clear cache for all deleted users
+      await Promise.all(users.map((u) => this.clearUserCache(u.id)));
+    }
     return { message: `成功删除 ${users.length} 个用户` };
+  }
+
+  private async clearUserCache(userId: string): Promise<void> {
+    await this.cacheService.del(CACHE_PREFIXES.USER_PROFILE + userId);
+    await this.cacheService.del('site:profile');
   }
 }

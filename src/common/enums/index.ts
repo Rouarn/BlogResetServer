@@ -7,3 +7,4 @@
 export * from './gender.enum';
 export * from './role.enum';
 export * from './status.enum';
+export * from './article-status.enum';

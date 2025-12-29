@@ -1,17 +1,20 @@
 import { Gender, Role, Status } from '@/common/enums';
+import { SocialLink } from '@/common/interfaces';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayNotEmpty,
   IsArray,
   IsDateString,
   IsEmail,
   IsEnum,
+  IsInt,
   IsOptional,
   IsString,
   IsUUID,
   Length,
   Matches,
+  Min,
 } from 'class-validator';
 
 /**
@@ -38,12 +41,30 @@ export class UpdateUserDto {
   nickname?: string;
 
   @ApiPropertyOptional({
+    description: '职业/头衔',
+    example: '高级软件工程师',
+    maxLength: 100,
+  })
+  @IsOptional()
+  @IsString()
+  @Length(0, 100, { message: '职业/头衔不能超过100个字符' })
+  title?: string;
+
+  @ApiPropertyOptional({
     description: '用户头像URL',
     example: 'https://example.com/new-avatar.jpg',
   })
   @IsOptional()
   @IsString()
   avatar?: string;
+
+  @ApiPropertyOptional({
+    description: '个人主页/侧边栏背景图',
+    example: 'https://example.com/cover.jpg',
+  })
+  @IsOptional()
+  @IsString()
+  cover?: string;
 
   @ApiPropertyOptional({
     description: '用户性别',
@@ -80,8 +101,24 @@ export class UpdateUserDto {
   })
   @IsOptional()
   @IsString()
-  @Length(0, 200, { message: '个人简介不能超过200个字符' })
   bio?: string;
+
+  @ApiPropertyOptional({
+    description: '当前状态',
+    example: 'Open to work',
+    maxLength: 100,
+  })
+  @IsOptional()
+  @IsString()
+  @Length(0, 100, { message: '当前状态不能超过100个字符' })
+  currentStatus?: string;
+
+  @ApiPropertyOptional({
+    description: '社交链接配置',
+    example: { twitter: '...', github: '...' },
+  })
+  @IsOptional()
+  socialLinks?: SocialLink[];
 
   @ApiPropertyOptional({
     description: '生日',
@@ -159,14 +196,13 @@ export class BatchDeleteUserDto {
  * - status: 可选的状态枚举值
  */
 export class ToggleUserStatusDto {
-  @ApiPropertyOptional({
-    description: '目标状态（可选，不提供则自动切换）',
+  @ApiProperty({
+    description: '目标状态',
     enum: Status,
     example: Status.ENABLED,
   })
-  @IsOptional()
   @IsEnum(Status, { message: '状态值无效' })
-  status?: Status;
+  status: Status;
 }
 
 /**
@@ -189,6 +225,9 @@ export class QueryUserDto {
     default: 1,
   })
   @IsOptional()
+  @Type(() => Number)
+  @IsInt({ message: '页码必须是整数' })
+  @Min(1, { message: '页码必须大于0' })
   current?: number = 1;
 
   @ApiPropertyOptional({
@@ -197,11 +236,14 @@ export class QueryUserDto {
     default: 10,
   })
   @IsOptional()
+  @Type(() => Number)
+  @IsInt({ message: '每页数量必须是整数' })
+  @Min(1, { message: '每页数量必须大于0' })
   size?: number = 10;
 
   @ApiPropertyOptional({
     description: '昵称模糊搜索',
-    example: '张',
+    example: '李',
   })
   @IsOptional()
   @IsString()
@@ -209,7 +251,7 @@ export class QueryUserDto {
 
   @ApiPropertyOptional({
     description: '邮箱模糊搜索',
-    example: 'user@',
+    example: 'example.com',
   })
   @IsOptional()
   @IsString()
@@ -217,11 +259,12 @@ export class QueryUserDto {
 
   @ApiPropertyOptional({
     description: '角色筛选',
-    example: 'ADMIN',
+    enum: Role,
+    example: Role.USER,
   })
   @IsOptional()
-  @IsString()
-  roles?: string;
+  @IsEnum(Role, { message: '角色值无效' })
+  roles?: Role;
 
   @ApiPropertyOptional({
     description: '状态筛选',
