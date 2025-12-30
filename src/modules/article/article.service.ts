@@ -23,8 +23,14 @@ export interface ArchiveItem {
 }
 
 export interface ArticleDetail extends Article {
-  prevId: number | null;
-  nextId: number | null;
+  prev: {
+    id: number | null;
+    title: string | null;
+  };
+  next: {
+    id: number | null;
+    title: string | null;
+  };
 }
 
 @Injectable()
@@ -219,8 +225,14 @@ export class ArticleService {
 
     return {
       ...entity,
-      prevId: prev?.id ?? null,
-      nextId: next?.id ?? null,
+      prev: {
+        id: prev?.id ?? null,
+        title: prev?.title ?? null,
+      },
+      next: {
+        id: next?.id ?? null,
+        title: next?.title ?? null,
+      },
     };
   }
 
