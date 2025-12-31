@@ -1,5 +1,4 @@
 import { CACHE_PREFIXES, CACHE_TOKENS, CACHE_TTL } from '@/common/constants';
-import { Role, Status } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { ICacheService } from '@/shared/cache/interfaces';
 import { Inject, Injectable } from '@nestjs/common';
@@ -69,31 +68,6 @@ export class UsersService {
   }
 
   /**
-   * 获取管理员资料 (用于 /site/profile)
-   */
-  async findAdminProfile(): Promise<User> {
-    const cacheKey = 'site:profile';
-    const cached = await this.cacheService.get<User>(cacheKey);
-    if (cached) return cached;
-
-    // 优先查找 System Admin
-    let user = await this.userRepository.findOne({
-      where: { roles: Role.SYSTEM_ADMIN },
-    });
-
-    // 否则查找任意用户 (Fallback)
-    user ??= await this.userRepository.findOne({
-      where: {},
-      order: { createdAt: 'ASC' },
-    });
-
-    user ??= new User();
-
-    await this.cacheService.set(cacheKey, user, { ttl: CACHE_TTL.USER_PROFILE });
-    return user;
-  }
-
-  /**
    * 更新用户信息
    * @param id 用户ID
    * @param updateUserDto 更新用户DTO
@@ -119,19 +93,6 @@ export class UsersService {
     await this.clearUserCache(id);
 
     return;
-  }
-
-  /**
-   * 切换用户状态
-   * @param id 用户ID
-   * @param status 目标状态
-   */
-  async toggleUserStatus(id: string, status: Status): Promise<User> {
-    const user = await this.findById(id);
-    user.status = status;
-    await this.userRepository.save(user);
-    await this.clearUserCache(id);
-    return user;
   }
 
   /**

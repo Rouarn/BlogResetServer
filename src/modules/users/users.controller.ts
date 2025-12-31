@@ -21,12 +21,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import {
-  BatchDeleteUserDto,
-  QueryUserDto,
-  ToggleUserStatusDto,
-  UpdateUserDto,
-} from './dto/update-user.dto';
+import { BatchDeleteUserDto, QueryUserDto, UpdateUserDto } from './dto/update-user.dto';
 import { UserListResponseDto } from './dto/users.responses.dto';
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
@@ -108,31 +103,6 @@ export class UsersController {
   })
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<void> {
     return await this.usersService.update(id, updateUserDto);
-  }
-
-  /**
-   * 切换用户状态
-   * 仅管理员可操作
-   */
-  @Patch(':id/status')
-  @UseGuards(RolesGuard)
-  @Roles(Role.SYSTEM_ADMIN, Role.ORG_ADMIN)
-  @ApiOperation({ summary: '切换用户状态', description: '切换用户启用/禁用状态' })
-  @ApiParam({ name: 'id', description: '用户ID', example: 'uuid-123' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: '用户状态切换成功',
-    type: User,
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: '用户不存在',
-  })
-  async toggleStatus(
-    @Param('id') id: string,
-    @Body() toggleDto: ToggleUserStatusDto,
-  ): Promise<User> {
-    return await this.usersService.toggleUserStatus(id, toggleDto.status);
   }
 
   /**
