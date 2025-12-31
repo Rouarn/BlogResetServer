@@ -15,7 +15,7 @@ export class CategoryController {
 
   @Post()
   @ApiOperation({ summary: '创建分类' })
-  create(@Body() dto: CreateCategoryDto): Promise<void> {
+  create(@Body() dto: CreateCategoryDto): Promise<Category> {
     return this.service.create(dto);
   }
 
@@ -27,7 +27,7 @@ export class CategoryController {
 
   @Put(':id')
   @ApiOperation({ summary: '更新分类' })
-  update(@Param('id') id: string, @Body() dto: UpdateCategoryDto): Promise<void> {
+  update(@Param('id') id: string, @Body() dto: UpdateCategoryDto): Promise<Category> {
     return this.service.update(id, dto);
   }
 
@@ -38,12 +38,11 @@ export class CategoryController {
   }
 
   @Get()
-  @Public() // Public access for frontend
+  @Public()
   @ApiOperation({ summary: '查询分类列表 (支持统计)' })
   async list(
     @Query() query: QueryCategoryDto,
   ): Promise<CategoryWithCount[] | { data: Category[]; total: number }> {
-    // Check if it's an admin table query (usually has page/size)
     if (query.current && query.size) {
       return this.service.findAll(query.current, query.size);
     }

@@ -15,20 +15,23 @@ export class ArticleController {
 
   @Post()
   @ApiOperation({ summary: '创建文章' })
-  create(@Body() dto: CreateArticleDto, @GetCurrentUser('userId') userId: string): Promise<void> {
+  create(
+    @Body() dto: CreateArticleDto,
+    @GetCurrentUser('userId') userId: string,
+  ): Promise<Article> {
     return this.service.create(dto, userId);
   }
 
   @Delete()
   @ApiOperation({ summary: '删除文章' })
-  remove(@Body() dto: DeleteArticleDto): Promise<{ message: string }> {
+  remove(@Body() dto: DeleteArticleDto): Promise<Article[]> {
     return this.service.remove(dto);
   }
 
   @Put(':id')
   @ApiOperation({ summary: '更新文章' })
   @ApiBody({ type: UpdateArticleDto })
-  update(@Param('id') id: string, @Body() dto: UpdateArticleDto): Promise<void> {
+  update(@Param('id') id: string, @Body() dto: UpdateArticleDto): Promise<Article> {
     return this.service.update(id, dto);
   }
 

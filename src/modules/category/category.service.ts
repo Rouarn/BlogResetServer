@@ -27,11 +27,11 @@ export class CategoryService {
     private readonly cacheService: ICacheService,
   ) {}
 
-  async create(dto: CreateCategoryDto): Promise<void> {
+  async create(dto: CreateCategoryDto): Promise<Category> {
     const entity = this.repo.create(dto as Category);
     await this.repo.save(entity);
     await this.clearCache();
-    return;
+    return entity;
   }
 
   async findAllWithCount(): Promise<CategoryWithCount[]> {
@@ -103,12 +103,12 @@ export class CategoryService {
     return entity;
   }
 
-  async update(id: string, dto: UpdateCategoryDto): Promise<void> {
+  async update(id: string, dto: UpdateCategoryDto): Promise<Category> {
     const entity = await this.findById(id);
     Object.assign(entity, dto);
     await this.repo.save(entity);
     await this.clearCache(id);
-    return;
+    return entity;
   }
 
   async remove(dto: DeleteCategoryDto): Promise<{ message: string }> {
@@ -116,7 +116,7 @@ export class CategoryService {
       const entity = await this.findById(dto.id);
       await this.repo.remove(entity);
       await this.clearCache(dto.id);
-      return { message: '删除成功' };
+      return { message: '成功删除 1 条记录' };
     }
     if (dto.ids?.length) {
       const ids = dto.ids.map((id) => +id);

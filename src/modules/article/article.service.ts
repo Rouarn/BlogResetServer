@@ -5,7 +5,7 @@ import { Category } from '@/modules/category/entities/category.entity';
 import { ICacheService } from '@/shared/cache';
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, LessThan, MoreThan, Repository } from 'typeorm';
+import { FindOptionsWhere, In, LessThan, MoreThan, Repository } from 'typeorm';
 import type { CreateArticleDto } from './dto/create-article.dto';
 import type { DeleteArticleDto } from './dto/delete-article.dto';
 import type { QueryArticleDto } from './dto/query-article.dto';
@@ -44,21 +44,22 @@ export class ArticleService {
     private readonly cacheService: ICacheService,
   ) {}
 
-  async create(dto: CreateArticleDto, userId?: string): Promise<void> {
+  async create(dto: CreateArticleDto, userId?: string): Promise<Article> {
     try {
+      const { isFeatured, categoryId = 0, ...createDto } = dto;
+
       // 校验分类是否存在
-      if (dto.categoryId) {
-        const categoryExists = await this.categoryRepo.existsBy({ id: dto.categoryId });
-        if (!categoryExists) {
-          throw BusinessExceptionFactory.notFound('分类', { id: dto.categoryId });
+      if (!isNaN(categoryId)) {
+        const category = await this.categoryRepo.findOneBy({ id: categoryId });
+        if (!category) {
+          throw BusinessExceptionFactory.notFound('分类', { id: categoryId });
         }
       }
-
-      const { isFeatured, ...createDto } = dto;
 
       // 显式创建实体，避免直接转换带来的潜在问题
       const entity = this.repo.create({
         ...createDto,
+        categoryId: categoryId ?? undefined,
         // 如果有其他默认值或需要处理的字段，可以在这里处理
         isFeatured: isFeatured ? Status.ENABLED : Status.DISABLED,
         views: 0,
@@ -67,6 +68,7 @@ export class ArticleService {
 
       await this.repo.save(entity);
       await this.clearCache();
+      return entity;
     } catch (error) {
       throw error; // 抛出错误以便全局异常过滤器处理
     }
@@ -236,8 +238,8 @@ export class ArticleService {
     };
   }
 
-  async update(id: string, dto: UpdateArticleDto): Promise<void> {
-    const articleId = +id;
+  async update(id: string, dto: UpdateArticleDto): Promise<Article> {
+    const articleId = Number(id);
     if (isNaN(articleId)) {
       throw BusinessExceptionFactory.invalidParameter('文章 ID');
     }
@@ -256,8 +258,11 @@ export class ArticleService {
         throw BusinessExceptionFactory.notFound('Article', { id });
       }
 
+      const { categoryId, ...updateDto } = dto;
+
       Object.assign(entity, {
-        ...dto,
+        ...updateDto,
+        ...(categoryId !== undefined ? { categoryId: categoryId || null } : {}),
         ...(dto.isFeatured !== undefined
           ? { isFeatured: dto.isFeatured ? Status.ENABLED : Status.DISABLED }
           : {}),
@@ -265,22 +270,31 @@ export class ArticleService {
       await this.repo.save(entity);
       await this.clearCache(); // Invalidate list caches
       await this.cacheService.del('article:item:' + id);
+      return entity;
     } catch (error) {
       console.error('Update article failed:', error);
       throw error;
     }
   }
 
-  async remove(dto: DeleteArticleDto): Promise<{ message: string }> {
+  async remove(dto: DeleteArticleDto): Promise<Article[]> {
     if (dto.id) {
-      await this.repo.delete(dto.id);
+      const entity = await this.repo.findOneBy({ id: Number(dto.id) });
+      if (!entity) {
+        throw BusinessExceptionFactory.notFound('Article', { id: dto.id });
+      }
+      await this.repo.delete(Number(dto.id));
       await this.clearCache();
-      return { message: '删除成功' };
+      return [entity];
     }
     if (dto.ids?.length) {
-      await this.repo.delete(dto.ids);
+      const list = await this.repo.findBy({ id: In(dto.ids.map((id) => Number(id))) });
+      if (list.length === 0) {
+        throw BusinessExceptionFactory.notFound('要删除的记录', { ids: dto.ids });
+      }
+      await this.repo.remove(list);
       await this.clearCache();
-      return { message: '成功删除 ' + dto.ids.length + ' 条记录' };
+      return list;
     }
     throw BusinessExceptionFactory.invalidParameter('缺少删除参数', {
       reason: '必须提供要删除的记录 ID 或 ID 列表',
