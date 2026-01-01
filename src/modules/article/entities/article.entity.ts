@@ -50,5 +50,5 @@ export class Article extends BaseEntity {
   status: ArticleStatus;
 
   @Column({ type: 'timestamp', nullable: true, comment: '发布时间' })
-  publishedAt: Date;
+  publishedAt: Date | null;
 }

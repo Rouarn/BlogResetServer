@@ -1,5 +1,5 @@
 import { CACHE_TOKENS } from '@/common/constants';
-import { Status } from '@/common/enums';
+import { ArticleStatus, Status } from '@/common/enums';
 import { BusinessExceptionFactory } from '@/common/exceptions';
 import { Category } from '@/modules/category/entities/category.entity';
 import { ICacheService } from '@/shared/cache';
@@ -46,7 +46,7 @@ export class ArticleService {
 
   async create(dto: CreateArticleDto, userId?: string): Promise<Article> {
     try {
-      const { isFeatured, categoryId = 0, ...createDto } = dto;
+      const { isFeatured, categoryId = 0, status, ...createDto } = dto;
 
       // 校验分类是否存在
       if (!isNaN(categoryId)) {
@@ -56,11 +56,14 @@ export class ArticleService {
         }
       }
 
+      const finalStatus = status ?? ArticleStatus.DRAFT;
+
       // 显式创建实体，避免直接转换带来的潜在问题
       const entity = this.repo.create({
         ...createDto,
-        categoryId: categoryId ?? undefined,
-        // 如果有其他默认值或需要处理的字段，可以在这里处理
+        categoryId,
+        status: finalStatus,
+        publishedAt: finalStatus === ArticleStatus.PUBLISHED ? new Date() : null,
         isFeatured: isFeatured ? Status.ENABLED : Status.DISABLED,
         views: 0,
         authorId: userId,
@@ -195,7 +198,7 @@ export class ArticleService {
   }
 
   async findById(id: string): Promise<ArticleDetail> {
-    const articleId = +id;
+    const articleId = Number(id);
     if (isNaN(articleId)) {
       throw BusinessExceptionFactory.invalidParameter('文章 ID');
     }
@@ -258,7 +261,20 @@ export class ArticleService {
         throw BusinessExceptionFactory.notFound('Article', { id });
       }
 
-      const { categoryId, ...updateDto } = dto;
+      const { categoryId, status, ...updateDto } = dto;
+
+      let publishedAtUpdate = {};
+      if (status !== undefined) {
+        if (status === ArticleStatus.DRAFT) {
+          publishedAtUpdate = { status, publishedAt: null };
+        } else if (status === ArticleStatus.PUBLISHED) {
+          if (entity.status !== ArticleStatus.PUBLISHED || !entity.publishedAt) {
+            publishedAtUpdate = { status, publishedAt: new Date() };
+          } else {
+            publishedAtUpdate = { status };
+          }
+        }
+      }
 
       Object.assign(entity, {
         ...updateDto,
@@ -266,9 +282,10 @@ export class ArticleService {
         ...(dto.isFeatured !== undefined
           ? { isFeatured: dto.isFeatured ? Status.ENABLED : Status.DISABLED }
           : {}),
+        ...publishedAtUpdate,
       });
       await this.repo.save(entity);
-      await this.clearCache(); // Invalidate list caches
+      await this.clearCache();
       await this.cacheService.del('article:item:' + id);
       return entity;
     } catch (error) {
