@@ -1,5 +1,5 @@
 import { GetCurrentUser, Public } from '@/common/decorators';
-import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ArchiveItem, ArticleDetail, ArticleService } from './article.service';
 import { CreateArticleDto } from './dto/create-article.dto';
@@ -33,6 +33,13 @@ export class ArticleController {
   @ApiBody({ type: UpdateArticleDto })
   update(@Param('id') id: string, @Body() dto: UpdateArticleDto): Promise<Article> {
     return this.service.update(id, dto);
+  }
+
+  @Patch(':id/like')
+  @Public()
+  @ApiOperation({ summary: '点赞文章' })
+  like(@Param('id') id: string): Promise<number> {
+    return this.service.like(id);
   }
 
   @Get('archive')

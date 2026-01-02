@@ -87,9 +87,9 @@ export class ArticleService {
       ':size:' +
       size +
       ':k:' +
-      (keyword ?? '') +
+      (keyword ?? 'none') +
       ':c:' +
-      (categoryId ?? '');
+      (categoryId ?? 'none');
     const cached = await this.cacheService.get<{ data: Article[]; total: number }>(cacheKey);
     if (cached) {
       return cached;
@@ -198,37 +198,38 @@ export class ArticleService {
   }
 
   async findById(id: string): Promise<ArticleDetail> {
-    const articleId = Number(id);
-    if (isNaN(articleId)) {
-      throw BusinessExceptionFactory.invalidParameter('文章 ID');
+    const cached = await this.cacheService.get<ArticleDetail>(`article:detail:${id}`);
+    if (cached) {
+      void this.incrementViews(id);
+      return cached;
     }
 
     const entity = await this.repo.findOne({
-      where: { id: articleId },
+      where: { id: +id },
       relations: ['category', 'author'],
     });
 
     if (!entity) {
-      throw BusinessExceptionFactory.notFound('Article', { id });
+      throw BusinessExceptionFactory.notFound('文章', { id });
     }
 
-    // Increment views (Async, don't await to block response)
-    this.repo.increment({ id: articleId }, 'views', 1).catch((e) => console.error(e));
+    // Increment views asynchronously
+    void this.incrementViews(id);
 
-    // Find Prev/Next
+    // Get prev/next article
     const prev = await this.repo.findOne({
-      where: { id: LessThan(articleId) },
+      where: { id: LessThan(entity.id), status: ArticleStatus.PUBLISHED },
       order: { id: 'DESC' },
       select: ['id', 'title'],
     });
 
     const next = await this.repo.findOne({
-      where: { id: MoreThan(articleId) },
+      where: { id: MoreThan(entity.id), status: ArticleStatus.PUBLISHED },
       order: { id: 'ASC' },
       select: ['id', 'title'],
     });
 
-    return {
+    const result = {
       ...entity,
       prev: {
         id: prev?.id ?? null,
@@ -239,6 +240,26 @@ export class ArticleService {
         title: next?.title ?? null,
       },
     };
+
+    await this.cacheService.set(`article:detail:${id}`, result);
+    return result;
+  }
+
+  private async incrementViews(id: string): Promise<void> {
+    await this.repo.increment({ id: +id }, 'views', 1);
+  }
+
+  async like(id: string): Promise<number> {
+    const entity = await this.repo.findOneBy({ id: +id });
+    if (!entity) {
+      throw BusinessExceptionFactory.notFound('文章', { id });
+    }
+
+    await this.repo.increment({ id: +id }, 'likes', 1);
+    await this.clearCache();
+
+    // Return the new like count
+    return entity.likes + 1;
   }
 
   async update(id: string, dto: UpdateArticleDto): Promise<Article> {

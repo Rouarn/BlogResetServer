@@ -41,6 +41,9 @@ export class Article extends BaseEntity {
   @Column({ default: 0, comment: '阅读数' })
   views: number;
 
+  @Column({ default: 0, comment: '点赞数' })
+  likes: number;
+
   @Column({
     type: 'enum',
     enum: ArticleStatus,
