@@ -5,7 +5,7 @@ import { Category } from '@/modules/category/entities/category.entity';
 import { ICacheService } from '@/shared/cache';
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, In, LessThan, MoreThan, Repository } from 'typeorm';
+import { In, LessThan, MoreThan, Repository } from 'typeorm';
 import type { CreateArticleDto } from './dto/create-article.dto';
 import type { DeleteArticleDto } from './dto/delete-article.dto';
 import type { QueryArticleDto } from './dto/query-article.dto';
@@ -78,9 +78,9 @@ export class ArticleService {
   }
 
   async findAll(query: QueryArticleDto): Promise<{ data: Article[]; total: number }> {
-    const { current = 1, size = 10, keyword, categoryId } = query;
+    const { current = 1, size = 10, keyword, categoryId, authorId } = query;
 
-    // Cache key needs to include search params
+    // 缓存键需要包含搜索参数
     const cacheKey =
       'article:list:page:' +
       current +
@@ -89,71 +89,61 @@ export class ArticleService {
       ':k:' +
       (keyword ?? 'none') +
       ':c:' +
-      (categoryId ?? 'none');
+      (categoryId ?? 'none') +
+      ':a:' +
+      (authorId ?? 'none');
     const cached = await this.cacheService.get<{ data: Article[]; total: number }>(cacheKey);
     if (cached) {
       return cached;
     }
 
-    const where: FindOptionsWhere<Article> = {};
+    const qb = this.repo
+      .createQueryBuilder('article')
+      .leftJoinAndSelect('article.category', 'category')
+      .leftJoinAndSelect('article.author', 'author')
+      .skip((current - 1) * size)
+      .take(size);
+
+    // 1. 按作者ID筛选（用户中心 - 我的文章）
+    if (authorId) {
+      qb.andWhere('article.authorId = :authorId', { authorId });
+      // 按作者ID查询时，允许查看所有状态（包括草稿）
+    } else {
+      // 2. 公开视图：仅显示已发布文章
+      qb.andWhere('article.status = :status', { status: ArticleStatus.PUBLISHED });
+    }
+
+    // 3. 按分类筛选
     if (categoryId) {
-      where.categoryId = categoryId;
+      qb.andWhere('article.categoryId = :categoryId', { categoryId });
     }
 
-    // If keyword needs to match title OR summary, use QueryBuilder
+    // 4. 按关键词筛选（标题或摘要）
     if (keyword) {
-      const keywordParam = '%' + keyword + '%';
-      const qb = this.repo
-        .createQueryBuilder('article')
-        .leftJoinAndSelect('article.category', 'category')
-        .leftJoinAndSelect('article.author', 'author')
-        .where('article.categoryId = :categoryId', { categoryId })
-        .andWhere('(article.title LIKE :keyword OR article.summary LIKE :keyword)', {
-          keyword: keywordParam,
-        })
-        .skip((current - 1) * size)
-        .take(size)
-        .orderBy('article.isFeatured', 'DESC') // Recommend first
-        .addOrderBy('article.createdAt', 'DESC');
-
-      if (!categoryId) {
-        // Remove category condition if not provided
-        // Re-construct QB simpler
-        const qb2 = this.repo
-          .createQueryBuilder('article')
-          .leftJoinAndSelect('article.category', 'category')
-          .leftJoinAndSelect('article.author', 'author')
-          .where('(article.title LIKE :keyword OR article.summary LIKE :keyword)', {
-            keyword: keywordParam,
-          })
-          .skip((current - 1) * size)
-          .take(size)
-          .orderBy('article.isFeatured', 'DESC')
-          .addOrderBy('article.createdAt', 'DESC');
-
-        const [data, total] = await qb2.getManyAndCount();
-        const result = { data, total };
-        await this.cacheService.set(cacheKey, result);
-        return result;
-      }
-
-      const [data, total] = await qb.getManyAndCount();
-      const result = { data, total };
-      await this.cacheService.set(cacheKey, result);
-      return result;
+      qb.andWhere('(article.title LIKE :keyword OR article.summary LIKE :keyword)', {
+        keyword: `%${keyword}%`,
+      });
     }
 
-    // Standard find with relations
-    const [data, total] = await this.repo.findAndCount({
-      where,
-      relations: ['category', 'author'],
-      skip: (current - 1) * size,
-      take: size,
-      order: { isFeatured: 'DESC', createdAt: 'DESC' },
-    });
+    // 自定义排序逻辑：
+    // 1. 置顶文章优先（isFeatured 倒序）
+    // 2. 对于置顶文章：按更新时间倒序（最近修改的在前）
+    // 3. 对于普通文章：按创建时间倒序（正常时间顺序）
+    qb.addSelect(
+      `CASE WHEN article.isFeatured = ${Status.ENABLED} THEN article.updatedAt ELSE article.createdAt END`,
+      'sort_time',
+    );
+    qb.orderBy('article.isFeatured', 'DESC');
+    qb.addOrderBy('sort_time', 'DESC');
 
+    const [data, total] = await qb.getManyAndCount();
     const result = { data, total };
-    await this.cacheService.set(cacheKey, result);
+
+    // 仅缓存公开列表（不缓存特定作者ID的查询，以避免缓存污染或通过缓存泄露隐私）
+    if (!authorId) {
+      await this.cacheService.set(cacheKey, result);
+    }
+
     return result;
   }
 
@@ -164,7 +154,7 @@ export class ArticleService {
       return cached;
     }
 
-    // Group by Year
+    // 按年份分组
     const qb = this.repo
       .createQueryBuilder('article')
       .select(['article.id', 'article.title', 'article.createdAt', 'article.categoryId'])
@@ -181,7 +171,7 @@ export class ArticleService {
       groups[year].push({
         id: article.id,
         title: article.title,
-        date: article.createdAt, // Frontend format
+        date: article.createdAt, // 前端格式
         categoryId: article.categoryId,
       });
     });

@@ -27,4 +27,9 @@ export class QueryArticleDto {
   @IsInt()
   @Transform(({ value }) => parseInt(value, 10))
   categoryId?: number;
+
+  @ApiPropertyOptional({ description: '作者ID' })
+  @IsOptional()
+  @IsString()
+  authorId?: string;
 }
