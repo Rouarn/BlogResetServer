@@ -13,8 +13,8 @@ export class Category extends BaseEntity {
   @Column({ length: 50, unique: true, comment: '英文标识' })
   code: string;
 
-  @Column({ length: 50, nullable: true, comment: 'Tailwind 颜色类' })
-  colorClass: string;
+  @Column({ length: 50, nullable: true, comment: '分类名文字颜色' })
+  color: string;
 
   @Column({ type: 'int', default: 0, comment: '排序权重' })
   sortOrder: number;

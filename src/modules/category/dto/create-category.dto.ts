@@ -1,5 +1,5 @@
-﻿import { IsString, IsInt, IsOptional } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+﻿import { ApiProperty } from '@nestjs/swagger';
+import { IsInt, IsOptional, IsString } from 'class-validator';
 
 export class CreateCategoryDto {
   @ApiProperty({ description: '分类名' })
@@ -13,7 +13,7 @@ export class CreateCategoryDto {
   @ApiProperty({ description: 'Tailwind 颜色类', required: false })
   @IsOptional()
   @IsString()
-  colorClass?: string;
+  color?: string;
 
   @ApiProperty({ description: '排序权重', required: false, default: 0 })
   @IsOptional()

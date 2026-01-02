@@ -13,7 +13,7 @@ export interface CategoryWithCount {
   id: number;
   name: string;
   code: string;
-  colorClass: string;
+  color: string;
   sortOrder: number;
   count: number;
 }
@@ -47,7 +47,7 @@ export class CategoryService {
         'category.id',
         'category.name',
         'category.code',
-        'category.colorClass',
+        'category.color',
         'category.sortOrder',
       ])
       .addSelect('COUNT(article.id)', 'count')
@@ -58,7 +58,7 @@ export class CategoryService {
       category_id: number;
       category_name: string;
       category_code: string;
-      category_colorClass: string;
+      category_color: string;
       category_sortOrder: number;
       count: string;
     }>();
@@ -68,7 +68,7 @@ export class CategoryService {
       id: +item.category_id,
       name: item.category_name,
       code: item.category_code,
-      colorClass: item.category_colorClass,
+      color: item.category_color,
       sortOrder: item.category_sortOrder,
       count: parseInt(item.count, 10) || 0,
     }));
