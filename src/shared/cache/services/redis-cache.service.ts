@@ -588,7 +588,7 @@ export class RedisCacheService implements ICacheService, OnModuleDestroy {
     return await this.safeExecute(
       async () => {
         const redisKey = this.getKey(key);
-        const values = await this.redis!.zrange(redisKey, start, stop);
+        const values = await this.redis!.zrange(redisKey, start, String(stop));
         return values.map((v) => deserialize<T>(v));
       },
       [],

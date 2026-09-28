@@ -313,7 +313,7 @@ export class AuthService {
     // 获取认证信息
     const auth = await this.authRepository.findOne({
       where: { id: authId },
-      relations: ['user'],
+      relations: { user: true },
     });
 
     if (!auth) {
@@ -383,7 +383,7 @@ export class AuthService {
     // 如果没有 userId（理论上不应该发生），降级为直接查询
     const authWithUser = await this.authRepository.findOne({
       where: { id: auth.authId },
-      relations: ['user'],
+      relations: { user: true },
     });
 
     if (!authWithUser?.user) {
@@ -499,7 +499,7 @@ export class AuthService {
     // 查询对应的用户信息
     const auths = await this.authRepository.find({
       where: { id: In(authIds) },
-      relations: ['user'],
+      relations: { user: true },
     });
 
     // 提取并返回用户实体
@@ -541,7 +541,7 @@ export class AuthService {
   async getAuthById(authId: string): Promise<Auth> {
     const auth = await this.authRepository.findOne({
       where: { id: authId },
-      relations: ['user'],
+      relations: { user: true },
     });
     if (!auth) {
       throw BusinessExceptionFactory.notFound('认证记录', { reason: `认证ID ${authId} 不存在` });

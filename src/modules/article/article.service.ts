@@ -196,7 +196,7 @@ export class ArticleService {
 
     const entity = await this.repo.findOne({
       where: { id: +id },
-      relations: ['category', 'author'],
+      relations: { category: true, author: true },
     });
 
     if (!entity) {
@@ -210,13 +210,13 @@ export class ArticleService {
     const prev = await this.repo.findOne({
       where: { id: LessThan(entity.id), status: ArticleStatus.PUBLISHED },
       order: { id: 'DESC' },
-      select: ['id', 'title'],
+      select: { id: true, title: true },
     });
 
     const next = await this.repo.findOne({
       where: { id: MoreThan(entity.id), status: ArticleStatus.PUBLISHED },
       order: { id: 'ASC' },
-      select: ['id', 'title'],
+      select: { id: true, title: true },
     });
 
     const result = {
@@ -261,7 +261,7 @@ export class ArticleService {
     try {
       // 校验分类是否存在
       if (dto.categoryId) {
-        const categoryExists = await this.categoryRepo.exist({ where: { id: dto.categoryId } });
+        const categoryExists = await this.categoryRepo.exists({ where: { id: dto.categoryId } });
         if (!categoryExists) {
           throw BusinessExceptionFactory.notFound('分类', { id: dto.categoryId });
         }
