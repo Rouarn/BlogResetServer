@@ -198,8 +198,7 @@ export class ImportExportService {
       return headers;
     }
     const set = new Set<string>();
-    for (const r of data)
-      Object.keys((r ?? {}) as Record<string, unknown>).forEach((k) => set.add(k));
+    for (const r of data) Object.keys(r ?? {}).forEach((k) => set.add(k));
     return Array.from(set);
   }
 

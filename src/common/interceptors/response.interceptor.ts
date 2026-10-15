@@ -48,7 +48,7 @@ export class ResponseInterceptor<T = unknown> implements NestInterceptor {
             message: message ?? SUCCESS_RESPONSE.message,
             timestamp: formatTimestamp(),
             data: paginatedData,
-          } as PaginatedResponse<T>;
+          };
         }
 
         // 处理普通响应

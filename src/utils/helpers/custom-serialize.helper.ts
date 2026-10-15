@@ -27,7 +27,7 @@ type Tagged =
  * 等效于 JSON.stringify，但会对特殊类型打标记
  */
 export function serialize(value: unknown): string {
-  return JSON.stringify(value, replacer as (this: unknown, key: string, value: unknown) => unknown);
+  return JSON.stringify(value, replacer);
 }
 
 /**
@@ -35,10 +35,7 @@ export function serialize(value: unknown): string {
  * 等效于 JSON.parse，但会恢复特殊类型到原始对象
  */
 export function deserialize<T>(value: string): T {
-  const out: unknown = JSON.parse(
-    value,
-    reviver as (this: unknown, key: string, value: unknown) => unknown,
-  );
+  const out: unknown = JSON.parse(value, reviver);
   return out as T;
 }
 
