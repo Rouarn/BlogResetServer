@@ -1,5 +1,9 @@
 #!/usr/bin/env node
 
+// @ts-check
+// 开启类型检查：本脚本调用 @vakao-ui/scripts-utils 的 log(message, type)，第二个参数
+// 必须是 LogType。由 tsconfig.scripts.json + `pnpm run type:check:scripts` 拦截非法值。
+
 const fs = require('fs');
 const path = require('path');
 const { log, showBanner, showSuccess, separator, handleError } = require('@vakao-ui/scripts-utils');
@@ -12,6 +16,10 @@ const projectRoot = path.resolve(__dirname, '..');
 const distPath = path.join(projectRoot, 'dist');
 const deployPath = path.join(projectRoot, 'deploy');
 
+/**
+ * 同步等待指定毫秒数（不依赖事件循环）
+ * @param {number} ms 等待毫秒数
+ */
 function sleep(ms) {
   try {
     const sab = new SharedArrayBuffer(4);
@@ -23,6 +31,11 @@ function sleep(ms) {
   }
 }
 
+/**
+ * 删除目录，遇到占用/只读文件时逐个重试
+ * @param {string} targetPath 目标目录
+ * @param {number} [maxRetries] 最大重试次数
+ */
 function removeDirRobust(targetPath, maxRetries = 5) {
   if (!fs.existsSync(targetPath)) return;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -73,7 +86,7 @@ try {
   log(`创建部署目录: ${deployPath}`, 'deploy');
 
   // 移动 dist 目录
-  log('移动 dist 目录...', 'move');
+  log('移动 dist 目录...', 'deploy');
   fs.renameSync(distPath, path.join(deployPath, 'dist'));
 
   // 动态生成生产环境 package.json
