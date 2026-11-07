@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { log, showBanner, showSuccess, separator, handleError } = require('@vakao-ui/scripts-utils');
+const { log, showBanner, showSuccess, separator, handleError } = require('@vakao/scripts-utils');
 const readline = require('readline');
 
 function toPascalCase(str) {

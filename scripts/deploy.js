@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 // @ts-check
-// 开启类型检查：本脚本调用 @vakao-ui/scripts-utils 的 log(message, type)，第二个参数
+// 开启类型检查：本脚本调用 @vakao/scripts-utils 的 log(message, type)，第二个参数
 // 必须是 LogType。由 tsconfig.scripts.json + `pnpm run type:check:scripts` 拦截非法值。
 
 const fs = require('fs');
 const path = require('path');
-const { log, showBanner, showSuccess, separator, handleError } = require('@vakao-ui/scripts-utils');
+const { log, showBanner, showSuccess, separator, handleError } = require('@vakao/scripts-utils');
 
 /**
  * 部署脚本 - 准备生产环境部署文件
