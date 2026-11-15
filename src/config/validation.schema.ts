@@ -41,7 +41,6 @@ export const validationSchema = Joi.object({
   // Swagger API 文档配置
   NEST_SWAGGER_TITLE: Joi.string().default('API Documentation'),
   NEST_SWAGGER_DESCRIPTION: Joi.string().default('API文档'),
-  NEST_SWAGGER_VERSION: Joi.string().default('1.0'),
   NEST_SWAGGER_PREFIX: Joi.string().default('/api-docs'),
   NEST_SWAGGER_FILENAME: Joi.string().default('api-docs.json'),
 

@@ -52,7 +52,6 @@ export interface CorsConfig {
 export interface SwaggerConfig {
   title: string;
   description: string;
-  version: string;
   prefix: string;
   filename: string;
   enabled: boolean;
@@ -66,7 +65,6 @@ export interface RedisCacheConfig {
   password?: string;
   db: number;
   options: {
-    retryDelayOnFailover: number;
     enableReadyCheck: boolean;
     maxRetriesPerRequest: number;
     lazyConnect: boolean;

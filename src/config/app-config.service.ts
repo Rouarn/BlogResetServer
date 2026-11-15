@@ -190,7 +190,6 @@ export class AppConfigService {
     password?: string;
     db: number;
     options: {
-      retryDelayOnFailover: number;
       enableReadyCheck: boolean;
       maxRetriesPerRequest: number;
       lazyConnect: boolean;
@@ -210,9 +209,6 @@ export class AppConfigService {
       password: this.configService.get<string>('app.redis.password'),
       db: this.configService.get<number>('app.redis.db')!,
       options: {
-        retryDelayOnFailover: this.configService.get<number>(
-          'app.redis.options.retryDelayOnFailover',
-        )!,
         enableReadyCheck: this.configService.get<boolean>('app.redis.options.enableReadyCheck')!,
         maxRetriesPerRequest: this.configService.get<number>(
           'app.redis.options.maxRetriesPerRequest',

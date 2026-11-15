@@ -25,8 +25,13 @@ export default registerAs('app', (): AppConfig => {
     }
 
     // 处理字符串数组类型
+    // 丢弃空项：env 里留空（KEY=）或多个逗号会切出空字符串，例如允许类型被解析成 ['']，
+    // 会让「空列表 = 不限制」的判断失效，进而拒绝所有上传
     if (Array.isArray(defaultValue)) {
-      return value.split(',').map((item) => item.trim()) as unknown as T;
+      return value
+        .split(',')
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0) as unknown as T;
     }
 
     return value as unknown as T;
@@ -90,7 +95,6 @@ export default registerAs('app', (): AppConfig => {
     swagger: {
       title: getEnvVar('NEST_SWAGGER_TITLE', 'API Documentation'),
       description: getEnvVar('NEST_SWAGGER_DESCRIPTION', 'API文档'),
-      version: getEnvVar('NEST_SWAGGER_VERSION', '1.0'),
       prefix: getEnvVar('NEST_SWAGGER_PREFIX', '/api-docs'),
       filename: getEnvVar('NEST_SWAGGER_FILENAME', 'api-docs.json'),
       enabled: environment !== 'production',
@@ -104,7 +108,6 @@ export default registerAs('app', (): AppConfig => {
       password: getEnvVar('NEST_REDIS_PASSWORD', undefined),
       db: getEnvVar('NEST_REDIS_DB', 0),
       options: {
-        retryDelayOnFailover: getEnvVar('NEST_REDIS_RETRY_DELAY', 100),
         enableReadyCheck: getEnvVar('NEST_REDIS_ENABLE_READY_CHECK', false),
         maxRetriesPerRequest: getEnvVar('NEST_REDIS_RETRIES', 3),
         lazyConnect: getEnvVar('NEST_REDIS_LAZY_CONNECT', true),

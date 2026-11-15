@@ -76,6 +76,19 @@ try {
     throw new Error('dist 目录不存在，请先运行 npm run build:prod');
   }
 
+  // 环境变量正本放在项目根目录，deploy/ 只是重建产物。
+  // 先校验再清理，避免把部署包删空后才发现没有配置可复制
+  const envSourceFiles = ['.env.production', '.env'];
+  const missingEnvFiles = envSourceFiles.filter(
+    (file) => !fs.existsSync(path.join(projectRoot, file)),
+  );
+  if (missingEnvFiles.some((file) => file === '.env.production')) {
+    throw new Error(`项目根目录缺少 .env.production，请先补齐密钥正本（deploy/ 会从根目录复制）`);
+  }
+  if (missingEnvFiles.length > 0) {
+    log(`未找到 ${missingEnvFiles.join(', ')}，将跳过复制`, 'info');
+  }
+
   // 创建部署目录
   if (fs.existsSync(deployPath)) {
     log('清理旧的部署目录...', 'clean');
@@ -128,16 +141,20 @@ try {
   const deployPackageJson = path.join(deployPath, 'package.json');
   fs.writeFileSync(deployPackageJson, JSON.stringify(productionPackageJson, null, 2));
 
-  // 复制环境配置文件
-  const envFiles = ['.env.production', '.env'];
-  for (const envFile of envFiles) {
+  // 复制环境配置文件（正本在项目根目录）
+  for (const envFile of envSourceFiles) {
     const srcEnv = path.join(projectRoot, envFile);
-    const destEnv = path.join(deployPath, envFile);
+    if (!fs.existsSync(srcEnv)) continue;
 
-    if (fs.existsSync(srcEnv)) {
-      log(`复制环境文件: ${envFile}`, 'copy');
-      fs.copyFileSync(srcEnv, destEnv);
-    }
+    log(`复制环境文件: ${envFile}`, 'copy');
+    fs.copyFileSync(srcEnv, path.join(deployPath, envFile));
+  }
+
+  // 随包带一份环境变量模板，方便在服务器上对照填写
+  const envExamplePath = path.join(projectRoot, '.env.example');
+  if (fs.existsSync(envExamplePath)) {
+    fs.copyFileSync(envExamplePath, path.join(deployPath, '.env.example'));
+    log('复制环境变量模板: .env.example', 'copy');
   }
 
   // 创建启动脚本 (Windows)
@@ -214,7 +231,7 @@ echo "依赖安装完成！"
 ## 📦 部署包内容
 
 - **应用文件**: 编译后的 NestJS 应用代码
-- **配置文件**: .env.production 环境配置
+- **配置文件**: .env（共享配置）与 .env.production（生产配置）
 - **启动脚本**: 适用于不同平台的启动脚本
 - **依赖文件**: package.json 和 package-lock.json
 
@@ -297,32 +314,38 @@ echo "依赖安装完成！"
 
 ## ⚙️ 配置说明
 
+### 环境变量来源
+
+- **密钥正本**: 项目根目录的 .env 与 .env.production（均不入库）
+- **本目录是重建产物**: 每次执行 pnpm run deploy 都会整体重建 deploy/，再从项目根目录复制上述两份文件，请勿在此目录直接改配置
+
 ### 端口配置
 
 - **默认端口**: 8848
-- **修改端口**: 编辑 .env.production 文件中的 PORT 变量
+- **修改端口**: 编辑 .env.production 文件中的 NEST_PORT 变量
 - **防火墙**: 确保已开放相应端口
 
 ### 环境变量
 
-应用会自动加载 .env.production 文件中的环境变量，主要配置项：
+应用会自动加载 .env.production 与 .env 两份文件（同名键以 .env.production 为准），主要配置项：
 
 \`\`\`env
 # 应用端口
-PORT=8848
+NEST_PORT=8848
 
 # 数据库配置
-DB_HOST=localhost
-DB_PORT=3306
-DB_USERNAME=your_username
-DB_PASSWORD=your_password
-DB_DATABASE=your_database
+NEST_DATABASE_HOST=127.0.0.1
+NEST_DATABASE_PORT=3306
+NEST_DATABASE_USER=your_username
+NEST_DATABASE_PASSWORD=your_password
+NEST_DATABASE_NAME=your_database
 
-# JWT 配置
-JWT_SECRET=your_jwt_secret
-JWT_EXPIRES_IN=7d
+# JWT 配置（密钥必填，两个过期时间单位是秒）
+NEST_JWT_SECRET=your_jwt_secret
+NEST_JWT_ACCESS_TOKEN_TTL=3600
+NEST_JWT_REFRESH_TOKEN_TTL=604800
 
-# 其他配置...
+# 其余配置按需补充
 \`\`\`
 
 ## 🔧 系统要求

@@ -28,9 +28,7 @@
 /node_modules
 # 其他构建输出
 /build
-/deploy/*
-# 部署包环境变量模板可入库（真实 env 仍被上面的规则忽略）
-!/deploy/.env.example
+/deploy
 # 静态资源目录
 /static
 # PNPM 锁文件
@@ -117,12 +115,12 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 .env.production.local
 
 # 敏感的环境特定配置文件 (包含数据库密码等)
-# .env.development
-# .env.production
+.env
+.env.development
+.env.production
 .env.test
 
-# 保留通用配置和示例文件
-# .env (通用配置，无敏感信息) - 允许提交
+# 保留示例文件
 # .env.example (配置示例) - 允许提交
 
 # ================================
