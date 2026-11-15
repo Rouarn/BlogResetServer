@@ -28,7 +28,9 @@
 /node_modules
 # 其他构建输出
 /build
-/deploy
+/deploy/*
+# 部署包环境变量模板可入库（真实 env 仍被上面的规则忽略）
+!/deploy/.env.example
 # 静态资源目录
 /static
 # PNPM 锁文件
