@@ -2,7 +2,7 @@
   "name": "nestjs-template",
   "version": "0.0.1",
   "description": "基于 NestJS 的现代化后端 API 系统，支持 JWT 认证、文件管理、数据库 ORM 等功能",
-  "author": "我与夏季",
+  "author": "VaKao <woyuxiaji@foxmail.com>",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
