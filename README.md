@@ -1,6 +1,6 @@
-# NestJS Template
+# blog-reset-server
 
-基于 NestJS 的现代化后端 API 项目模板，内置统一配置系统、JWT 认证、文件管理、缓存（Redis/内存）、数据库 ORM（TypeORM/MySQL）、版本化 API 与 Swagger 文档等能力，开箱即用、结构清晰、易于扩展。
+博客后端 API，提供统一配置系统、JWT 认证、用户/文章/分类管理、文件服务、缓存（Redis/Noop）、数据库 ORM（TypeORM/MySQL）、版本化 API 与 Swagger 文档。
 
 ## 特性
 
@@ -8,18 +8,18 @@
 - 环境文件映射：支持 `.env`、`.env.development`、`.env.production`，自动映射到结构化配置
 - 认证授权：JWT 登录、令牌黑名单、用户状态校验、自定义 `JwtAuthGuard`
 - 文件服务：静态资源托管、上传限制、类型校验、本地存储适配器
-- 缓存系统：Redis 优先，失败时自动降级为内存缓存，统一接口封装
+- 缓存系统：Redis 实现，或按配置禁用为 Noop 实现（读写空操作），统一接口封装
 - 数据库：TypeORM + MySQL，命名策略、时间戳字段支持
-- API 版本化：URI 版本（`/api/v1`），可通过配置切换前缀与版本
+- API 版本化：默认 Header 版本（`X-Api-Version`），可通过配置切换为 URI 版本（`/api/v1`）
 - Swagger 文档：UI 与 JSON 导出，开发/测试环境自动启用
 - 代码规范：ESLint + Prettier + `lint-staged` + Husky
 
 ## 技术栈
 
-- NestJS 11、TypeScript 5
-- TypeORM 0.3、MySQL 8
-- ioredis 5（缓存层）
-- Swagger 11（API 文档）
+- NestJS 12、TypeScript 6
+- TypeORM 1.1、MySQL 8
+- ioredis 6（缓存层）
+- Swagger 12（API 文档）
 - ESLint、Prettier、Husky（代码质量）
 
 ## 快速开始
@@ -79,12 +79,12 @@ src/
   common/
     guards/jwt-auth.guard.ts   // 自定义 JWT 守卫（黑名单/状态校验）
     services/bootstrap-logger.service.ts // 启动日志服务（自定义 ConsoleLogger）
-  shared/cache/                // 缓存系统（Redis/Memory）
+  shared/cache/                // 缓存系统（Redis/Noop）
     interfaces/                // 缓存接口定义
     services/
-      cache-factory.service.ts // 缓存工厂（选择实现、降级回退）
+      cache-factory.service.ts // 缓存工厂（按配置选择实现）
       redis-cache.service.ts   // Redis 缓存实现
-      memory-cache.service.ts  // 内存缓存实现
+      noop-cache.service.ts    // Noop 缓存实现（禁用缓存时使用）
   shared/files/                // 文件模块（上传/下载/存储）
     services/
       storage.service.ts       // 本地存储适配器
@@ -121,14 +121,15 @@ src/
 
 ## 缓存系统
 
-- 工厂服务：根据配置选择 Redis 或内存实现（降级容错）
+- 工厂服务：`NEST_REDIS_ENABLED` 为真时创建 Redis 实现，否则退化为 Noop 实现
   - `src/shared/cache/services/cache-factory.service.ts`
+  - Redis 连接后健康检查不通过会直接抛错，不会降级为 Noop
 - Redis 实现：`src/shared/cache/services/redis-cache.service.ts`
   - 连接事件监听，安全执行封装，键名前缀与 TTL 统一来源于配置
-- 内存实现：`src/shared/cache/services/memory-cache.service.ts`
-  - TTL 过期、LRU 淘汰、定期清理
+- Noop 实现：`src/shared/cache/services/noop-cache.service.ts`
+  - 所有操作返回空值或默认值（`null`、`0`、`false`、`[]`），不保存任何数据
 - 接口契约：`src/shared/cache/interfaces/cache.interface.ts`
-  - `CacheConfig` 作为缓存模块运行参数的投影（`type`, `enabled`, `defaultTtl`, `keyPrefix`, `maxSize`）
+  - `CacheConfig` 作为缓存模块运行参数的投影（`enabled`, `defaultTtl`, `keyPrefix`）
 
 ## 文件服务
 
@@ -225,6 +226,7 @@ NEST_DATABASE_LOGGING=false
 - 生产构建：`pnpm run build:prod`
 - 生产启动：`pnpm run start:prod`
 - 部署流程：`pnpm run deploy`（包括构建与资源生成）
+- 同步校验：`pnpm run check:deploy`（对比 `deploy/dist` 的构建指纹与当前源码，源码改动后未重新 deploy 会直接报错并列出变更文件）
 - 环境变量正本：项目根目录的 `.env` 与 `.env.production`（均不入库）；`deploy/` 是 `pnpm run deploy` 的重建产物，每次从根目录复制过去，不要直接在 `deploy/` 里改配置
 
 ## 约定与规范
