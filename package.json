@@ -1,7 +1,7 @@
 {
-  "name": "nestjs-template",
+  "name": "blog-reset-server",
   "version": "0.0.1",
-  "description": "基于 NestJS 的现代化后端 API 系统，支持 JWT 认证、文件管理、数据库 ORM 等功能",
+  "description": "博客后端 API：文章与分类管理、JWT 认证、文件上传与导入导出，基于 NestJS + TypeORM + MySQL",
   "author": "VaKao <woyuxiaji@foxmail.com>",
   "private": true,
   "license": "UNLICENSED",
@@ -29,6 +29,7 @@
     "deploy:prepare": "node scripts/deploy.js",
     "deploy:build": "pnpm run build:prod && pnpm run deploy:prepare",
     "deploy": "pnpm run code:fix && pnpm run deploy:build",
+    "check:deploy": "node scripts/check-deploy.js",
     "g:res": "node scripts/generate-resource.js",
     "prepare": "husky"
   },
