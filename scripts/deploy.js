@@ -7,6 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 const { log, showBanner, showSuccess, separator, handleError } = require('@vakao/scripts-utils');
+const { fingerprintSources } = require('./deploy-sources');
 
 /**
  * 部署脚本 - 准备生产环境部署文件
@@ -101,6 +102,22 @@ try {
   // 移动 dist 目录
   log('移动 dist 目录...', 'deploy');
   fs.renameSync(distPath, path.join(deployPath, 'dist'));
+
+  // 记录源码指纹：pnpm run check:deploy 据此判断部署包是否已落后于源码
+  const fingerprint = fingerprintSources(projectRoot);
+  fs.writeFileSync(
+    path.join(deployPath, 'deploy-manifest.json'),
+    `${JSON.stringify(
+      {
+        digest: fingerprint.digest,
+        builtAt: new Date().toISOString(),
+        files: fingerprint.files,
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  log(`记录源码指纹（${Object.keys(fingerprint.files).length} 个输入文件）`, 'check');
 
   // 动态生成生产环境 package.json
   log('生成生产环境 package.json...', 'build');

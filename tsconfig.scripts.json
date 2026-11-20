@@ -10,5 +10,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["scripts/deploy.js"]
+  "include": ["scripts/deploy.js", "scripts/deploy-sources.js", "scripts/check-deploy.js"]
 }
